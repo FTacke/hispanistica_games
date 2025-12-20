@@ -90,11 +90,7 @@
             </a>
             {% if role_value == 'admin' %}
               <div class="md3-user-menu__divider" role="separator"></div>
-              {# Admin Dashboard Link #}
-              <a href="{{ url_for('admin.dashboard') }}" class="md3-user-menu__item" role="menuitem">
-                <span class="material-symbols-rounded md3-user-menu__icon">dashboard</span>
-                <span class="md3-user-menu__label">Dashboard</span>
-              </a>
+              {# Admin User Management #}
               <a href="{{ url_for('auth.admin_users_page') }}" class="md3-user-menu__item" role="menuitem">
                 <span class="material-symbols-rounded md3-user-menu__icon">group</span>
                 <span class="md3-user-menu__label">Benutzer</span>
