@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block page_title %}Datenschutz · games.hispanistica{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/typography.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/hero.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/text-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-page" role="main" aria-label="Datenschutzerklärung">
+  <!-- Hero Header (Card Hero) -->
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">lock</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Rechtliche Informationen</p>
+        <h1 class="md3-headline-medium md3-hero__title">Datenschutzerklärung</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="md3-text-page">
+    <div class="md3-text-content">
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">1. Verantwortlicher</h2>
+      <p class="md3-body-large">
+        Verantwortlich für die Verarbeitung personenbezogener Daten auf dieser Website ist die:<br>
+        <strong>Philipps-Universität Marburg</strong><br>
+        Der Präsident<br>
+        Prof. Dr. Thomas Nauss<br>
+        Biegenstraße 10<br>
+        35037 Marburg<br>
+        Tel.: +49 6421 28-20<br>
+        Fax: +49 6421 28-22500<br>
+        Internet: <a href="https://www.uni-marburg.de" class="md3-text-link">https://www.uni-marburg.de</a><br>
+        E-Mail: <a href="mailto:info@uni-marburg.de" class="md3-text-link">info@uni-marburg.de</a>
+      </p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">2. Behördlicher Datenschutzbeauftragter</h2>
+      <p class="md3-body-large">
+        Philipps-Universität Marburg<br>
+        Behördlicher Datenschutzbeauftragter<br>
+        Dr. Rainer Viergutz<br>
+        Biegenstraße 10<br>
+        35037 Marburg<br>
+        Tel.: +49 6421 28-23525<br>
+        E-Mail: <a href="mailto:datenschutz@uni-marburg.de" class="md3-text-link">datenschutz@uni-marburg.de</a>
+      </p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">3. Zweck der Datenverarbeitung</h2>
+      <p class="md3-body-large">
+        Die Website CO.RA.PAN dient ausschließlich wissenschaftlichen und didaktischen Zwecken im Rahmen des Projekts CO.RA.PAN. Wir verarbeiten keine personenbezogenen Daten der Besucher für Marketing-, Analyse- oder Tracking-Zwecke.
+      </p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">4. Speicherung und Löschung von Daten</h2>
+      <p class="md3-body-large">
+        Es werden keine personenbezogenen Daten (z.B. Name, E-Mail-Adresse, IP-Adresse) von Besuchern in Datenbanken, Protokolldateien oder ähnlichen Systemen gespeichert. Darüber hinaus werden keine individualisierten Nutzungsprofile erstellt.
+      </p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">5. Verwendung von JWT (JSON Web Token) zur Authentifizierung</h2>
+      <p class="md3-body-large">
+        Auf dieser Website wird für die Zugriffskontrolle und Sitzungsverwaltung ein sogenannter JWT-Token (JSON Web Token) genutzt. Dieser Token wird bei erfolgreicher Anmeldung als Cookie in Ihrem Browser gespeichert. Dabei gelten folgende Grundsätze:
+      </p>
+      <ul class="md3-text-list md3-body-medium">
+        <li><strong>Art der Daten:</strong> Das Token enthält ausschließlich eine Angabe zur Benutzergruppe (z.B. „admin“, „guest“ usw.) sowie ein automatisches Ablaufdatum („exp“). Personenbezogene Daten wie Name, E-Mail-Adresse oder IP-Adresse werden nicht erfasst.</li>
+        <li><strong>Speicherort:</strong> Das JWT wird als Cookie ("jwt_token") in Ihrem Browser abgelegt. Es ist mit dem <code>HttpOnly</code>- und <code>Secure</code>-Flag versehen, wodurch es nur über HTTPS übertragen und nicht per JavaScript ausgelesen werden kann.</li>
+        <li><strong>Zweck:</strong> Der Token ist für die technische Bereitstellung geschützter Inhalte erforderlich, um zu prüfen, ob ein Benutzer bzw. eine Benutzergruppe die entsprechenden Zugriffsrechte besitzt.</li>
+        <li><strong>Ablauf/Löschung:</strong> Der Token verfällt automatisch nach einer Stunde (Standard-Sessiondauer). Schließen Sie den Browser, kann das Cookie zudem ungültig werden, wenn Ihr Browser für das automatische Löschen von Cookies konfiguriert ist.</li>
+        <li><strong>Refresh-Token (Session-Erneuerung):</strong> Zusätzlich verwendet die Anwendung ein lang laufendes, HttpOnly <code>refreshToken</code>-Cookie, welches nur über HTTPS übertragen werden kann (Secure + HttpOnly + SameSite policies) und ausschließlich dem Zweck dient, kurze Access-Tokens automatisch zu erneuern. Dieses Cookie enthält keine Klartext-Personenangaben.</li>
+        <li><strong>Keine Weitergabe:</strong> Es erfolgt keine Übermittlung dieser Daten an Dritte. Eine Profilbildung oder Auswertung personenbezogener Informationen findet nicht statt.</li>
+      </ul>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">6. Rechte der betroffenen Personen</h2>
+      <p class="md3-body-large">
+        Betroffene Personen haben folgende Rechte gemäß der Datenschutz-Grundverordnung (DSGVO):
+      </p>
+      <ul class="md3-text-list md3-body-medium">
+        <li>Auskunft über die gespeicherten Daten</li>
+        <li>Berichtigung unrichtiger Daten</li>
+        <li>Löschung oder Einschränkung der Verarbeitung von Daten</li>
+        <li>Widerspruch gegen die Datenverarbeitung</li>
+        <li>Übertragbarkeit der Daten</li>
+        <li>Beschwerde bei einer Datenschutzaufsichtsbehörde</li>
+      </ul>
+      <p class="md3-body-large">Für weitere Fragen wenden Sie sich bitte an den oben genannten Verantwortlichen.</p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">7. Auth-bezogene Daten & App‑Funktionen</h2>
+      <p class="md3-body-large">
+        Im Rahmen von Benutzerkonten verarbeitet die Anwendung die folgenden Daten zur Authentifizierung, Autorisierung und Auditing: <code>user_id</code>, <code>username</code>, <code>email</code>, <code>password_hash</code> (gesichert, nicht im Klartext), <code>role</code>, <code>is_active</code>, <code>must_reset_password</code>, <code>created_at</code>, <code>updated_at</code>, <code>last_login_at</code>, <code>login_failed_count</code>, <code>locked_until</code>, <code>deleted_at</code>, <code>deletion_requested_at</code> sowie verschlüsselte/geshashte Token-Metadaten (Refresh-/Reset-Token-Hashes).</p>
+      <p class="md3-body-large">
+        Betroffene Nutzer können folgende Funktionen in der Anwendung nutzen: <strong>GET /auth/account/data-export</strong> zur Datenübertragung und <strong>POST /auth/account/delete</strong> zum Anfordern der Löschung (Soft-Delete). Diese Endpunkte sind unter dem jeweiligen Nutzerkonto erreichbar und erfordern Authentifizierung.
+      </p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">8. Kontakt zur Datenschutzaufsicht</h2>
+      <p class="md3-body-large">
+        Sollten Sie der Meinung sein, dass Ihre Daten nicht datenschutzkonform verarbeitet werden, können Sie sich an die Datenschutzaufsichtsbehörde wenden:<br>
+        <strong>Der Hessische Beauftragte für Datenschutz und Informationsfreiheit</strong><br>
+        Postfach 31 63<br>
+        65021 Wiesbaden<br>
+        Tel.: +49 611 1408-0<br>
+        E-Mail: <a href="mailto:poststelle@datenschutz.hessen.de" class="md3-text-link">poststelle@datenschutz.hessen.de</a>
+      </p>
+    </section>
+    </div>
+  </main>
+</div>
+{% endblock %}

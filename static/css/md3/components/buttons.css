@@ -1,0 +1,304 @@
+/* ============================================================================
+   MD3 Buttons - Canonical Implementation
+   ============================================================================
+  Strict MD3 Button implementation per specification.
+   - Uses --md-sys-color-* tokens
+   - Uses --md-sys-typescale-* tokens
+   - Uses --space-* tokens
+   - No aliases or backward compatibility variables allowed.
+   ============================================================================ */
+
+/* Filled Button - High Emphasis */
+.md3-button--filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: 9999px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+  min-height: 48px;
+}
+
+/* Ensure anchor elements styled as filled buttons don't get overridden by link styles */
+a.md3-button.md3-button--filled,
+.md3-button.md3-button--filled {
+  color: var(--md-sys-color-on-primary) !important;
+}
+
+/* ============================================================================
+   Legacy aliases REMOVED (2025-01-27)
+   
+   The following classes were deprecated and are now removed:
+   - .md3-button--contained → use .md3-button--filled
+   - .md3-button--destructive → use .md3-button--danger
+   - .md3-destructive → use .md3-button--danger
+   
+   Templates have been migrated. See docs/ui-md3-styleguide.md for canonical classes.
+   ============================================================================ */
+
+.md3-button--filled:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 92%,
+    var(--md-sys-color-on-primary) 8%
+  ) !important;
+  box-shadow: var(--elev-1);
+}
+
+/* Filled + danger hover/focus — use token-driven container for hover */
+.md3-button--filled.md3-button--danger:hover,
+.md3-button--filled.md3-button--danger:focus-visible {
+  background-color: var(--md-sys-color-error-container) !important;
+  color: var(--md-sys-color-on-error-container) !important;
+  box-shadow: var(--elev-1);
+}
+
+/* Make hover layout-stable: do not change padding/size on hover.
+   Use box-sizing and consistent sizing to prevent layout shifts. */
+.md3-button:hover,
+.md3-button--filled:hover,
+.md3-button--outlined:hover,
+.md3-button--danger:hover,
+.md3-button--warning:hover {
+  box-sizing: border-box;
+}
+
+/* Small button variant - reduced touch target for inline/table use
+   Apply AFTER base button classes (--filled, --tonal, etc.) to override sizes.
+   Uses label-medium typography for compact but readable labels. */
+.md3-button--small,
+.md3-button--tonal.md3-button--small,
+.md3-button--filled.md3-button--small,
+.md3-button--outlined.md3-button--small {
+  padding: var(--space-2) var(--space-4);
+  min-height: 40px;
+  font-size: var(--md-sys-typescale-label-medium-font-size);
+}
+
+.md3-button--filled:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Tonal Button - Medium Emphasis */
+.md3-button--tonal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: 9999px;
+  border: none;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+  min-height: 48px;
+}
+
+.md3-button--tonal:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container) 92%,
+    var(--md-sys-color-on-primary-container) 8%
+  ) !important;
+  box-shadow: var(--elev-1);
+}
+
+.md3-button--tonal:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Outlined Button - Low Emphasis */
+.md3-button--outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: 9999px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease;
+  min-height: 48px;
+}
+
+.md3-button--outlined:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  border-color: var(--md-sys-color-primary);
+}
+
+.md3-button--outlined:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Text Button - Lowest Emphasis */
+.md3-button--text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+  min-height: 48px;
+}
+
+.md3-button--text:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+.md3-button--text:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Danger Button (Error State) */
+.md3-button--danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: 9999px;
+  border: none;
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+  min-height: 48px;
+}
+
+/* For filled danger buttons, use the canonical token mix:
+   Base: --md-sys-color-error / --md-sys-color-on-error
+   Hover: --md-sys-color-error-container / --md-sys-color-on-error-container
+*/
+.md3-button--danger:hover {
+  background: var(--md-sys-color-error-container) !important;
+  color: var(--md-sys-color-on-error-container) !important;
+  box-shadow: var(--elev-1);
+}
+
+.md3-button--danger:focus-visible {
+  outline: 2px solid var(--md-sys-color-error);
+  outline-offset: 2px;
+}
+
+/* Warning Button (Warning State) */
+.md3-button--warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: 9999px;
+  border: none;
+  background: var(--md-sys-color-warning);
+  color: var(--md-sys-color-on-warning);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease, box-shadow 200ms ease;
+  min-height: 48px;
+}
+
+.md3-button--warning:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-warning) 92%,
+    var(--md-sys-color-on-warning) 8%
+  ) !important;
+  box-shadow: var(--elev-1);
+}
+
+.md3-button--warning:focus-visible {
+  outline: 2px solid var(--md-sys-color-warning);
+  outline-offset: 2px;
+}
+
+/* Outlined + Danger variant — low emphasis but error color */
+.md3-button--outlined.md3-button--danger {
+  background: transparent;
+  border-color: var(--md-sys-color-error);
+  color: var(--md-sys-color-error);
+}
+
+.md3-button--outlined.md3-button--danger:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 8%, transparent);
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 92%, var(--md-sys-color-outline) 8%);
+}
+
+/* Button Icon */
+/* Ensure icons inside buttons render smaller than the raw material-symbols default
+   use a more specific selector to win over .material-symbols-rounded which is
+   declared later in material-symbols-fallback.css */
+.md3-button__icon,
+.md3-button .material-symbols-rounded.md3-button__icon,
+.md3-button__icon.material-symbols-rounded {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Disabled State */
+.md3-button--disabled,
+.md3-button--filled:disabled,
+.md3-button--tonal:disabled,
+.md3-button--outlined:disabled,
+.md3-button--text:disabled,
+.md3-button--danger:disabled {
+  background: rgba(28, 27, 31, 0.12) !important;
+  color: rgba(28, 27, 31, 0.38) !important;
+  border-color: transparent !important;
+  cursor: not-allowed;
+  pointer-events: none;
+}

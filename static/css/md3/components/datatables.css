@@ -1,0 +1,753 @@
+/* ============================================================================
+   DataTables & Corpus Table - From Legacy md3-components.css
+   ============================================================================
+   TRANSFERRED FROM: static/css/md3-components.css (Lines 2200-2700)
+   
+   STATUS: ⚠️ Uses legacy MD3 tokens (--md3-*), needs migration to --md-sys-*
+   
+  ⚠️ THEME BEHAVIOR: DataTables should follow MD3 theme tokens
+  - Removed forced light-mode overrides for dark mode compatibility
+  - Tables now adapt to dark/light theme via CSS variables when possible
+   
+   Contains:
+   - Corpus table structure (#corpus-table)
+   - DataTables wrapper customization
+   - Export buttons (CSV, Excel, PDF)
+   - Pagination styling
+   - Audio cell layouts
+   - Token ID styling
+   - Spectrogram overlay
+   
+   IMPORTANT: Table container expands to right as needed, beyond parent constraint.
+   ============================================================================ */
+
+/* Table Container - Expand to right as needed */
+.md3-corpus-table-container,
+.table-container {
+  width: 100%;
+  max-width: 100%; /* Match parent width, don't overflow */
+  overflow-x: auto; /* Scroll if table is too wide */
+  overflow-y: visible;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface);
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+#corpus-table_wrapper,
+#advanced-table_wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+#corpus-table,
+#advanced-table,
+#token-results-table {
+  width: 100%;
+  max-width: 100%;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  background: var(--md-sys-color-surface);
+  table-layout: auto; /* Auto layout for natural column widths */
+  margin: 0 !important; /* Prevent margin expansion */
+}
+
+#corpus-table thead th,
+#advanced-table thead th,
+#token-results-table thead th {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  background: var(--md-sys-color-surface-container-high) !important;
+  color: var(--md-sys-color-on-surface) !important;
+  font: var(--md-sys-typescale-body-medium-font);
+  font-weight: 600;
+  padding: var(--space-3) var(--space-2);
+  white-space: nowrap;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+}
+
+#corpus-table tbody td,
+#advanced-table tbody td,
+#token-results-table tbody td {
+  padding: var(--space-2) var(--space-2);
+  vertical-align: middle;
+  line-height: 1.4;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font: var(--md-sys-typescale-body-small-font);
+}
+
+#corpus-table tbody tr:nth-child(even),
+#advanced-table tbody tr:nth-child(even),
+#token-results-table tbody tr:nth-child(even) {
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+#corpus-table tbody tr:hover,
+#advanced-table tbody tr:hover,
+#token-results-table tbody tr:hover {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  background: var(--md-sys-color-surface-container-low) !important;
+}
+
+/* Audio Cell - Original layout */
+.audio-cell {
+  padding: 0.25rem !important;
+}
+
+.audio-buttons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.audio-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.audio-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  min-width: 28px;
+  font-family: "Courier New", monospace;
+  letter-spacing: -0.5px;
+}
+
+/* MD3 Audio Label for corpus results */
+.md3-corpus-audio-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: -0.5px;
+  display: inline-block;
+  min-width: 30px;
+}
+
+.audio-button,
+.download-button {
+  display: inline-block;
+  margin: 0;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1);
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.25rem;
+  text-decoration: none;
+}
+
+.audio-button i,
+.download-button i {
+  font-size: 0.8125rem;
+}
+
+.audio-button:hover,
+.download-button:hover {
+  color: var(--md-sys-color-primary);
+  opacity: 0.7;
+}
+
+.player-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1);
+  text-decoration: none;
+  padding: 0.125rem 0.25rem;
+}
+
+.player-button:hover {
+  color: var(--md-sys-color-primary);
+  opacity: 0.7;
+}
+
+/* Cell content styling */
+.token-id {
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 400;
+}
+
+.center-align {
+  text-align: center;
+}
+
+.right-align {
+  text-align: right;
+}
+
+.contexto {
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.3;
+}
+
+.palabra-buscada {
+  .md3-corpus-keyword {
+    display: inline-block;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    padding: 0.1rem 0.35rem;
+    border-radius: var(--radius-xs, 4px);
+    font-weight: 700;
+    font-size: var(--md-sys-typescale-body-medium-font-size);
+    line-height: 1;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease,
+      opacity 120ms ease;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .md3-corpus-keyword mark {
+    /* NEEDS_IMPORTANT: third-party DataTables override */
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+  }
+  .md3-corpus-keyword:hover,
+  .md3-corpus-keyword:focus {
+    transform: translateY(-1px);
+    box-shadow: var(--elev-2);
+    opacity: 0.98;
+  }
+
+  .md3-corpus-keyword:active {
+    transform: translateY(0);
+  }
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.palabra-buscada:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================================
+   DataTables Wrapper - Compact, clean layout
+   ============================================================================ */
+
+.dataTables_wrapper .top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: 0;
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font: var(--md-sys-typescale-body-small-font);
+  /* Match table container width */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* DataTables Scroll Head & Body: Keep header small & aligned */
+.dataTables_scrollHead table thead th,
+.dataTables_scrollHead table thead td,
+.dataTables_scrollHeadInner table thead th,
+.dataTables_scrollHeadInner table thead td,
+#token-results-table_wrapper .dataTables_scrollHead table thead th,
+#token-results-table_wrapper .dataTables_scrollHead table thead td,
+.md3-corpus-table-container .dataTables_scrollHead table thead th,
+.md3-corpus-table-container .dataTables_scrollHead table thead td {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  font-size: var(--md-sys-typescale-body-small-font-size) !important;
+  padding: var(--space-2) !important;
+}
+
+.dataTables_scrollBody table tbody td,
+#token-results-table_wrapper .dataTables_scrollBody table tbody td,
+.md3-corpus-table-container .dataTables_scrollBody table tbody td {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  font-size: var(--md-sys-typescale-body-small-font-size) !important;
+  padding: var(--space-2) !important;
+  line-height: 1.4;
+}
+
+/* Hide duplicated sizing elements used by DataTables for layout calculations */
+.dataTables_scrollHead .dataTables_sizing,
+.dataTables_scrollHeadInner .dataTables_sizing,
+#token-results-table_wrapper .dataTables_scrollHead .dataTables_sizing,
+.md3-corpus-table-container .dataTables_scrollHead .dataTables_sizing {
+  visibility: hidden !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+/* Hide potential duplicated header text only for token table sizing helper */
+.md3-corpus-table-container
+  .dataTables_scrollHead
+  table
+  thead
+  th
+  .dataTables_sizing,
+.md3-corpus-table-container
+  .dataTables_scrollHead
+  table
+  thead
+  th
+  .dataTables_sizing {
+  display: none !important;
+}
+
+/* Ensure token results table body and header colors & sizes match Advanced*/
+#token-results-table_wrapper .dataTables_scrollHead table thead th,
+#token-results-table thead th {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  color: var(--md-sys-color-on-surface) !important;
+  font-size: var(--md-sys-typescale-body-small-font-size) !important;
+}
+
+/* Force parity between Advanced and Token columns (context + match) */
+#advanced-table th,
+#token-results-table th {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  font-size: var(--md-sys-typescale-body-small-font-size) !important;
+  color: var(--md-sys-color-on-surface) !important;
+  font-weight: 600 !important;
+}
+
+#advanced-table td.md3-datatable__cell--context,
+#token-results-table td.md3-datatable__cell--context {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  white-space: normal !important;
+  word-break: break-word !important;
+  word-wrap: break-word !important;
+  color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+#advanced-table td.md3-datatable__cell--match,
+#token-results-table td.md3-datatable__cell--match {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  font-weight: 600 !important;
+  color: var(--md-sys-color-primary) !important;
+}
+
+/* Ensure table rows for advanced and token lists use a uniform base style */
+#advanced-table tbody td,
+#token-results-table tbody td {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  font-size: var(--md-sys-typescale-body-small-font-size) !important;
+  color: var(--md-sys-color-on-surface) !important;
+  padding: var(--space-2) !important;
+  vertical-align: middle !important;
+  line-height: 1.4 !important;
+}
+
+#token-results-table_wrapper .dataTables_scrollBody table tbody td,
+#token-results-table tbody td {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  color: var(--md-sys-color-on-surface) !important;
+  font-size: var(--md-sys-typescale-body-small-font-size) !important;
+}
+
+/* Force header row height to auto to reduce unexpected empty spacing */
+#token-results-table thead tr {
+  height: auto !important;
+}
+
+/* If DataTables inserts a sizing TR with height:0, ensure it's not rendered (token table only) */
+#token-results-table_wrapper
+  .dataTables_scrollHead
+  table
+  thead
+  tr[style*="height: 0px"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+#token-results-table_wrapper
+  .dataTables_scrollHead
+  table
+  thead
+  tr:not(:last-child) {
+  display: none !important;
+  height: 0 !important;
+  visibility: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#token-results-table_wrapper
+  .dataTables_scrollHeadInner
+  table
+  thead
+  tr:not(:last-child) {
+  display: none !important;
+  height: 0 !important;
+  visibility: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#token-results-table_wrapper
+  .dataTables_scrollHead
+  table
+  thead
+  tr[style*="height: 0px"]
+  th {
+  display: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  height: 0 !important;
+}
+
+/* Remove potential blank spacer row: enforce minimal height for empty cells */
+.dataTables_scrollBody table.dataTable tbody tr td:empty,
+.dataTables_scrollBody table.dataTable tbody tr:empty {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Ensure scrollHead and scrollBody use same table layout for alignment */
+.dataTables_scrollHead table,
+.dataTables_scrollBody table {
+  table-layout: fixed;
+}
+
+/* Ensure header box sizing consistent */
+.table.dataTable thead th,
+.table.dataTable thead td {
+  box-sizing: border-box;
+}
+
+.dataTables_wrapper .dt-buttons {
+  display: inline-flex;
+  gap: 0.375rem;
+  align-items: center;
+  flex-wrap: wrap;
+  order: 2;
+  flex: 0 0 auto;
+}
+
+.dataTables_wrapper .dataTables_length {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  order: 3;
+  margin-left: auto;
+  margin-right: var(--space-4);
+  font: var(--md-sys-typescale-body-small-font);
+}
+
+.dataTables_wrapper .dataTables_filter {
+  order: 4;
+  font: var(--md-sys-typescale-body-small-font);
+}
+
+/* Bottom area with separate rows */
+.dataTables_wrapper .bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--md-sys-color-surface-container);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font: var(--md-sys-typescale-body-small-font);
+  /* Match table container width */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* First row: Info */
+.dataTables_wrapper .dataTables_info {
+  margin: 0;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small-font);
+}
+
+/* Second row: Pagination (centered) */
+.dataTables_wrapper .dataTables_paginate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+/* DataTables Overrides - Compact MD3 buttons with same style as md3-button-filled */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 var(--space-2) !important;
+  margin: 0 !important;
+  border: 1px solid var(--md-sys-color-outline-variant) !important;
+  border-radius: var(--radius-full) !important;
+  color: var(--md-sys-color-on-surface) !important;
+  background: var(--md-sys-color-surface) !important;
+  font: var(--md-sys-typescale-body-small-font) !important;
+  line-height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Text must be above the ::before element */
+.dataTables_wrapper .dataTables_paginate .paginate_button * {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Active button - exactly like md3-button-filled */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+.dataTables_wrapper .dataTables_paginate span .paginate_button.current {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  background-color: var(--md-sys-color-primary) !important;
+  background: var(--md-sys-color-primary) !important;
+  color: var(--md-sys-color-on-primary) !important;
+  border: none !important;
+  border-color: transparent !important;
+  font-weight: 500 !important;
+  box-shadow: var(--elev-1) !important;
+}
+
+/* Hover overlay for active button */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: var(--radius-full) !important;
+  background: var(--md-sys-color-on-primary) !important;
+  opacity: 0 !important;
+  transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1) !important;
+  z-index: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  box-shadow: var(--elev-2) !important;
+  background: var(--md-sys-color-primary) !important;
+  color: var(--md-sys-color-on-primary) !important;
+}
+
+.dataTables_wrapper
+  .dataTables_paginate
+  .paginate_button.current:hover::before {
+  opacity: 0.08 !important;
+}
+
+/* Hover for inactive buttons */
+.dataTables_wrapper
+  .dataTables_paginate
+  .paginate_button:not(.current):not(.disabled):hover {
+  background: var(--md-sys-color-primary-container) !important;
+  border-color: var(--md-sys-color-primary) !important;
+  color: var(--md-sys-color-on-primary-container) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+  color: var(--md-sys-color-on-surface-variant) !important;
+  background: var(--md-sys-color-surface-variant) !important;
+  border-color: var(--md-sys-color-outline-variant) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled::before,
+.dataTables_wrapper
+  .dataTables_paginate
+  .paginate_button.disabled:hover::before {
+  display: none !important;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  border: 1px solid var(--md-sys-color-outline-variant) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: var(--space-1) var(--space-2) !important;
+  margin: 0 var(--space-1) !important;
+  background: var(--md-sys-color-surface) !important;
+  color: var(--md-sys-color-on-surface) !important;
+  font: var(--md-sys-typescale-body-small-font) !important;
+  height: 32px !important;
+}
+
+/* Compact export buttons */
+.dt-button {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  background: var(--md-sys-color-primary) !important;
+  color: var(--md-sys-color-on-primary) !important;
+  border: none !important;
+  padding: var(--space-2) var(--space-3) !important;
+  border-radius: var(--radius-full) !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  font: var(--md-sys-typescale-label-medium-font) !important;
+  height: 32px !important;
+  letter-spacing: 0.01em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: var(--space-1) !important;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.dt-button:hover {
+  /* NEEDS_IMPORTANT: third-party DataTables override */
+  box-shadow: var(--elev-1) !important;
+  opacity: 0.92 !important;
+}
+
+/* Search field right align */
+.dataTables_wrapper .dataTables_filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+}
+
+/* Hide "Buscar:" text, use placeholder instead */
+.dataTables_wrapper .dataTables_filter label::before {
+  content: none;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  margin: 0 !important;
+}
+
+/* ============================================================================
+   Spectrogram Overlay
+   ============================================================================ */
+
+.md3-spectrogram-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  /* MD3 Scrim: 32% opacity black per Material Design spec */
+  background: color-mix(in oklab, var(--md-sys-color-scrim, #000) 32%, transparent);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+.md3-spectrogram-content {
+  position: relative;
+  background: var(--md-sys-color-surface-container-high);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  max-width: 90vw;
+  max-height: 90vh;
+  box-shadow: var(--elev-2);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.md3-spectrogram-close {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
+}
+
+.md3-spectrogram-image {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+}
+
+.md3-spectrogram-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* ============================================================================
+   Responsive Adjustments
+   ============================================================================ */
+
+/* MD3 Compact (0-599px) */
+@media (max-width: 599px) {
+  .md3-corpus-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md3-corpus-table,
+  #corpus-table {
+    font-size: 0.8125rem;
+  }
+
+  #corpus-table th,
+  #corpus-table td {
+    padding: var(--space-2);
+  }
+}
+
+/* ============================================================================
+   Token-Chips Styling
+   ============================================================================ */
+
+/* Keep DataTables responsive - Chip styling defined in token-chips.css
+   Removed duplicate token chip rules here to avoid conflict with token-chips.css (single source of truth)
+*/
+
+/* Token ID Label */
+.tokid-chip__label {
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+/* Trailing Delete Button */
+.tokid-chip__trailing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+/* Trailing button styling for tokid chips handled in token-chips.css */
+
+/* Token Count Badge */
+.tokid-count {
+  font: var(--md-sys-typescale-label-small-font);
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

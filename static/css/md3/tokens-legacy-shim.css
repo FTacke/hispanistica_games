@@ -1,0 +1,66 @@
+/*
+ * MD3 Legacy Tokens Shim
+ *
+ * This file provides backward-compatible aliases for older "--md3-*"
+ * token names that still exist across the repository. The aliases map
+ * the legacy names to the canonical `--md-sys-*` / `--space-*` tokens.
+ *
+ * Purpose: Make the codebase behave identically while templates are
+ * gradually migrated to canonical tokens. This file is temporary and
+ * will be removed once the lint report shows no live uses of `--md3-*`.
+ */
+
+:root {
+  /* Spacing aliases */
+  --md3-space-1: var(--space-1);
+  --md3-space-2: var(--space-2);
+  --md3-space-3: var(--space-3);
+  --md3-space-4: var(--space-4);
+  --md3-space-5: var(--space-5);
+  --md3-space-6: var(--space-6);
+  --md3-space-8: var(--space-8);
+  --md3-space-10: var(--space-10);
+  --md3-space-12: var(--space-12);
+
+  /* Color aliases (common roles) */
+  --md3-color-primary: var(--md-sys-color-primary);
+  --md3-color-on-primary: var(--md-sys-color-on-primary);
+  --md3-color-primary-container: var(--md-sys-color-primary-container);
+  --md3-color-on-primary-container: var(--md-sys-color-on-primary-container);
+
+  --md3-color-secondary: var(--md-sys-color-secondary);
+  --md3-color-on-secondary: var(--md-sys-color-on-secondary);
+  --md3-color-tertiary: var(--md-sys-color-tertiary);
+  --md3-color-on-tertiary: var(--md-sys-color-on-tertiary);
+
+  --md3-color-surface: var(--md-sys-color-surface);
+  --md3-color-on-surface: var(--md-sys-color-on-surface);
+  --md3-color-on-surface-variant: var(--md-sys-color-on-surface-variant);
+  --md3-color-outline-variant: var(--md-sys-color-outline-variant);
+
+  --md3-color-background: var(--md-sys-color-background);
+  --md3-color-on-background: var(--md-sys-color-on-background);
+
+  --md3-color-surface-container-low: var(--md-sys-color-surface-container-low);
+  --md3-color-surface-container-mid: var(--md-sys-color-surface-container-mid);
+  --md3-color-surface-container: var(--md-sys-color-surface-container);
+  --md3-color-surface-container-high: var(--md-sys-color-surface-container-high);
+  --md3-color-surface-container-highest: var(--md-sys-color-surface-container-highest);
+
+  --md3-color-error: var(--md-sys-color-error);
+  --md3-color-on-error: var(--md-sys-color-on-error);
+
+  /* Radii / elevations */
+  --md3-radius-small: var(--radius-sm);
+  --md3-radius-medium: var(--radius-md);
+  --md3-radius-large: var(--radius-lg);
+
+  /* Motion / z-index helpers (still experimental) — keep safe defaults */
+  --md3-mobile-menu-duration: 220ms;
+}
+
+/*
+ * NOTE: This shim is intentionally limited to the most commonly found
+ * legacy names. When templates are fully migrated to `--md-sys-*`/`--space-*`
+ * this file can be removed entirely.
+ */

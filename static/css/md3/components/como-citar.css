@@ -1,0 +1,106 @@
+/* MD3 Como Citar Page — Responsive Grid Layout */
+
+/* DOI Resource Grid - Mobile First */
+.doi-resource-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  align-items: start;
+  width: 100%; /* Ensure grid doesn't overflow */
+  box-sizing: border-box; /* Include any padding in width */
+}
+
+/* Tablet and up: 2-3 columns with flexible minmax */
+@media (min-width: 600px) {
+  .doi-resource-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  }
+}
+
+/* Desktop: ensure max 3 columns for readability */
+@media (min-width: 900px) {
+  .doi-resource-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  }
+}
+
+/* DOI Resource Card - ensures equal height and proper padding */
+.doi-resource-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0; /* Allow cards to shrink below content width */
+}
+
+.doi-resource-card .card-body {
+  padding: 0;
+  flex: 1 1 auto;
+  min-width: 0; /* Allow content to shrink */
+}
+
+/* Ensure card content doesn't overflow */
+.doi-resource-card .card-body > * {
+  max-width: 100%;
+}
+
+/* DOI badges should be responsive */
+.doi-resource-card img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Token tooltip styling for inline code */
+.tooltip-token {
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.9em;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+  color: var(--md-sys-color-primary);
+  white-space: nowrap;
+}
+
+/* Code block container - prevent overflow */
+.md3-code-block {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevent container overflow */
+  margin: var(--space-6) 0;
+}
+
+.md3-code-block h3 {
+  margin-bottom: var(--space-3);
+}
+
+/* DOI Badge inline styling */
+.doi-badge {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+}
+
+/* MD3-compliant icon alignment for card titles */
+.doi-resource-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.doi-resource-card__title .material-symbols-rounded {
+  font-size: 1.25rem;
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+/* DOI link styling */
+.doi-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.doi-link:hover .doi-badge,
+.doi-link:focus .doi-badge {
+  opacity: 0.85;
+}

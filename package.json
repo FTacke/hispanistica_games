@@ -1,0 +1,11 @@
+{
+  "name": "corapan-webapp-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "^1.41.0"
+  },
+  "scripts": {
+    "test:e2e": "npx playwright test --config=playwright.config.js"
+  }
+}

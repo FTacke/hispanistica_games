@@ -1,0 +1,287 @@
+/* ============================================
+   CO.RA.PAN Editor Overview - MD3 Design System
+   ============================================ */
+
+/* Page Container */
+.md3-editor-overview {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  box-sizing: border-box;
+}
+
+/* Header */
+.md3-editor-header {
+  margin-bottom: var(--space-8);
+}
+
+.md3-editor-header h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2) 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-editor-header h1 i {
+  color: var(--md-sys-color-primary);
+  font-size: 1.75rem;
+}
+
+.md3-editor-subtitle {
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* Country Tabs */
+.md3-country-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding-bottom: var(--space-2);
+  overflow-x: auto;
+}
+
+.md3-country-tab {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  position: relative;
+  white-space: nowrap;
+}
+
+.md3-country-tab::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--md-sys-color-primary);
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-country-tab:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-country-tab.active {
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.md3-country-tab.active::after {
+  opacity: 1;
+}
+
+/* Files Table Container */
+.md3-files-table-container {
+  display: none;
+  animation: fadeIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-files-table-container.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Table */
+.md3-files-table {
+  width: 100%;
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--elev-1);
+  border-collapse: collapse;
+  box-sizing: border-box;
+}
+
+.md3-files-table th {
+  background: var(--md-sys-color-surface-container);
+  padding: var(--space-4);
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-files-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+}
+
+.md3-files-table tbody tr {
+  transition: background 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-files-table tbody tr:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.md3-files-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table Cell Styles */
+.md3-filename-cell {
+  font-family: "Courier New", "Consolas", monospace;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8125rem;
+}
+
+/* Status Badges */
+.md3-status-unchanged {
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+  font-size: 0.8125rem;
+}
+
+.md3-status-edited {
+  color: var(--md-sys-color-tertiary);
+  font-weight: 500;
+  font-size: 0.8125rem;
+}
+
+/* Edit Button */
+.md3-edit-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: background 0.2s cubic-bezier(0.2, 0, 0, 1);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.md3-edit-btn:hover {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-edit-btn i {
+  font-size: 1rem;
+}
+
+/* Empty State */
+.md3-empty-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-empty-state i {
+  font-size: 4rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.3;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-empty-state p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Responsive Design - Mobile First */
+
+/* Tablet: >= 600px */
+@media (min-width: 600px) {
+  .md3-editor-overview {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .md3-country-tabs {
+    gap: var(--space-3);
+  }
+
+  .md3-country-tab {
+    padding: var(--space-3) var(--space-5);
+  }
+}
+
+/* Desktop: >= 900px */
+@media (min-width: 900px) {
+  .md3-editor-header h1 {
+    font-size: 2rem;
+  }
+
+  .md3-editor-subtitle {
+    font-size: 1.125rem;
+  }
+}
+
+/* Mobile: < 600px - Optimized Table */
+@media (max-width: 599px) {
+  .md3-country-tabs {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md3-files-table {
+    font-size: 0.75rem;
+  }
+
+  .md3-files-table th,
+  .md3-files-table td {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .md3-files-table th {
+    font-size: 0.75rem;
+  }
+
+  .md3-filename-cell {
+    font-size: 0.75rem;
+    word-break: break-all;
+  }
+
+  .md3-edit-btn {
+    padding: var(--space-1) var(--space-3);
+    font-size: 0.75rem;
+  }
+
+  .md3-edit-btn i {
+    font-size: 0.875rem;
+  }
+
+  /* Optionally hide less important columns on very small screens */
+  .md3-files-table th:nth-child(4),
+  .md3-files-table td:nth-child(4) {
+    display: none;
+  }
+
+  .md3-files-table th:nth-child(5),
+  .md3-files-table td:nth-child(5) {
+    display: none;
+  }
+}

@@ -1,0 +1,720 @@
+/* ============================================
+   CO.RA.PAN Player Page - MD3 Design System
+   Übernommen von editor.css
+   
+   Layout, Speaker-Turns, Sidebar-Cards
+   ============================================ */
+
+/* ============================================
+   PLAYER PAGE LAYOUT
+   ============================================ */
+
+/* Player Page Container */
+.md3-player-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Page uses the global app background (dunkleres surface-container) */
+  background: var(--app-background);
+}
+
+/* Scope background override to Player page only */
+body.app-shell[data-page="player"] {
+  background-color: var(--app-background) !important;
+}
+
+/* Player Header */
+.md3-player-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--elev-1);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+  position: sticky;
+  top: 0; /* Sticky at top of transcript container */
+  z-index: 2;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4); /* Space between header and first turn */
+}
+
+/* Desktop: Narrower and centered transcription */
+@media (min-width: 992px) {
+  #transcriptionContainer,
+  .md3-player-header {
+    width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Back Link in Header (styled as button for CSP compliance) */
+.md3-player-header .back-link {
+  /* Reset button styles */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  /* Visual styles */
+  color: var(--md-sys-color-primary);
+  font-size: 1.5rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.md3-player-header .back-link:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-player-header .back-link:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs, 4px);
+}
+
+/* Document Title in Header */
+.md3-player-header .document-title {
+  flex: 1;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  font-family: "Consolas", "Courier New", monospace;
+  letter-spacing: 0.02em;
+}
+
+/* Player Container - Main Layout */
+.md3-player-container {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: var(--space-4);
+  flex: 1;
+  overflow: hidden;
+  padding: var(--space-4);
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  align-items: start; /* Sidebar startet oben */
+  /* Container ist transparent - nur Cards/Header sind heller */
+  background: transparent;
+}
+
+/* Player Sidebar - Fixed beim Scrollen */
+.player-sidebar {
+  position: sticky;
+  top: 0; /* Oben bündig mit Transcript */
+  max-height: 100vh;
+  overflow-y: none;
+  background: transparent; /* Kein weißer Hintergrund */
+  border: none; /* Keine Border */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+}
+
+/* Player Transcript (Left Column) */
+.md3-player-transcript {
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+  background: transparent; /* Kein weißer Hintergrund */
+  border-radius: var(--radius-md);
+}
+
+#transcriptionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Desktop: Narrower and centered transcription */
+@media (min-width: 992px) {
+  #transcriptionContainer {
+    width: 85%;
+    margin: 0 auto;
+  }
+}
+
+/* ============================================
+   TRANSCRIPTION RENDERING
+   Note: Shared transcription styles moved to transcription-shared.css
+   This file now contains only player-specific sidebar components
+   ============================================ */
+
+/* ============================================
+   SIDEBAR COMPONENTS - Player-spezifisch
+   ============================================ */
+
+/* Cards Container */
+.md3-player-sidebar-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+/* Card Component */
+.md3-player-card {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--elev-1);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Card Header */
+.md3-player-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-player-card-header i {
+  color: var(--md-sys-color-primary);
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.md3-player-card-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: 0.25px;
+  line-height: 1.2;
+  flex: 1;
+}
+
+/* Help Icon mit Tooltip - Wrapper für Positionierung */
+.md3-player-card-header {
+  position: relative; /* Wichtig für Tooltip-Positionierung */
+}
+
+/* Sidebar Help-Icon Wrapper - MD3 Tooltip Container */
+.sidebar-help-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  cursor: help;
+}
+
+/* Help Icon selbst - Material Symbols (MD3-konform) */
+.sidebar-help-icon {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 20px; /* MD3-Standard für Icons */
+  transition: color 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Material Symbols styling */
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 20;
+}
+
+.sidebar-help-wrapper:hover .sidebar-help-icon {
+  color: var(--md-sys-color-primary);
+  /* Filled on hover */
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 20;
+}
+
+/* Tooltip - MD3 Rich Tooltip Style (gemäß Specs) */
+.sidebar-help-wrapper .tooltip-text {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  padding: 12px 16px; /* MD3: 12px vertical, 16px horizontal */
+  border-radius: var(--radius-md);
+  /* MD3 Typography: body-small */
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  max-width: 320px;
+  min-width: 240px;
+  box-shadow: var(--elev-3);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: normal;
+  font-style: normal;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.sidebar-help-wrapper:hover .tooltip-text,
+.sidebar-help-wrapper .tooltip-text.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-text p {
+  margin: 0 0 8px 0; /* MD3: 8px spacing zwischen Paragraphen */
+}
+
+.tooltip-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* Tooltip styling zentral in transcription-shared.css */
+
+/* Word-Annotation-Tooltips sind jetzt in transcription-shared.css definiert */
+/* Hier nur Überschreibungen falls nötig */
+
+/* ============================================
+   METADATEN CARD
+   ============================================ */
+
+.md3-player-metadata-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.md3-player-metadata-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.md3-player-metadata-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.md3-player-metadata-value {
+  color: var(--md-sys-color-on-surface);
+  font-weight: 400;
+  flex: 1;
+}
+
+.md3-player-metadata-value--primary {
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+}
+
+/* ============================================
+   BUCHSTABENMARKIERUNG CARD
+   ============================================ */
+
+.md3-player-mark-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+  font-family: "Consolas", "Courier New", monospace;
+  transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
+  margin-bottom: var(--space-2);
+}
+
+.md3-player-mark-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+.md3-player-mark-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.6;
+}
+
+.md3-player-btn-primary {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-3);
+}
+
+.md3-player-btn-primary:hover:not(:disabled) {
+  box-shadow: var(--elev-1);
+  transform: translateY(-1px);
+}
+
+.md3-player-btn-primary:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* Markierungs-Buttons (Chips) */
+.md3-player-mark-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.letra {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Consolas", "Courier New", monospace;
+}
+
+.letra:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  transform: translateY(-1px);
+  box-shadow: var(--elev-1);
+}
+
+.result-count {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   TOKEN COLLECTOR CARD
+   ============================================ */
+
+.md3-player-token-input {
+  width: 100%;
+  min-height: 60px;
+  max-height: 120px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.75rem;
+  font-family: "Consolas", "Courier New", monospace;
+  resize: vertical;
+  margin-bottom: var(--space-2);
+  overflow-y: auto;
+}
+
+.md3-player-token-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+.md3-player-token-icons {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.token-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  border: none;
+}
+
+.token-icon:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-primary);
+}
+
+.token-icon.copy-success {
+  color: var(--md-sys-color-tertiary);
+  background: var(--md-sys-color-tertiary-container);
+}
+
+/* Copy-Success-Snackbar */
+.copy-snackbar {
+  position: fixed;
+  bottom: 100px; /* Über Audio-Player */
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elev-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.copy-snackbar.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.copy-snackbar i {
+  color: var(--md-sys-color-tertiary);
+  font-size: 1.125rem;
+}
+
+/* ============================================
+   SHORTCUTS CARD
+   ============================================ */
+
+.md3-player-shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px var(--space-1);
+  border-radius: 3px;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ============================================
+   EXPORT CARD
+   ============================================ */
+
+.md3-player-export-icons {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  align-items: center;
+}
+
+.download-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 1.5rem;
+}
+
+.download-link:hover {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--elev-2);
+}
+
+.download-link i {
+  font-size: 1.5rem;
+}
+
+/* ============================================
+   SCROLL TO TOP BUTTON
+   ============================================ */
+
+.scroll-to-top {
+  position: fixed;
+  bottom: 80px; /* Über Audio-Player */
+  right: var(--space-6);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--elev-3);
+  display: none; /* Versteckt bis sichtbar */
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  transition: all 0.2s ease;
+  z-index: 40;
+}
+
+.scroll-to-top.visible {
+  display: flex;
+}
+
+.scroll-to-top:hover {
+  background: var(--md-sys-color-on-surface);
+  transform: translateY(-4px);
+  box-shadow: var(--elev-4);
+}
+
+/* ============================================
+   RESPONSIVE - Player Page
+   ============================================ */
+
+/* Tablet: Sidebar über Transcript */
+@media (max-width: 1360px) {
+  .md3-player-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .md3-player-transcript {
+    order: 2;
+  }
+
+  .player-sidebar {
+    order: 1;
+    position: static; /* Kein Sticky auf Tablet */
+    max-height: none;
+  }
+
+  /* Hide specific sidebar cards on smaller displays (Tablet/Mobile) */
+  .card-shortcuts,
+  .card-export {
+    display: none;
+  }
+}
+
+/* Mobile: Kompaktere Abstände + kleinere Schrift */
+@media (max-width: 599px) {
+  .md3-player-header {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .md3-player-header .document-title {
+    font-size: 0.875rem;
+  }
+
+  .md3-player-container {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .md3-player-transcript {
+    padding: var(--space-3);
+  }
+
+  #transcriptionContainer {
+    gap: var(--space-4);
+  }
+
+  /* Note: Speaker turn mobile styles now in transcription-shared.css */
+
+  .player-sidebar {
+    position: static; /* Kein Sticky auf Mobile */
+    max-height: none;
+  }
+
+  .md3-player-sidebar-cards {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .md3-player-card {
+    padding: var(--space-2);
+  }
+
+  .scroll-to-top {
+    bottom: 70px;
+    right: var(--space-4);
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+.player-sidebar::-webkit-scrollbar,
+.md3-player-transcript::-webkit-scrollbar,
+.md3-player-token-input::-webkit-scrollbar {
+  width: 6px;
+}
+
+.player-sidebar::-webkit-scrollbar-track,
+.md3-player-transcript::-webkit-scrollbar-track,
+.md3-player-token-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.player-sidebar::-webkit-scrollbar-thumb,
+.md3-player-transcript::-webkit-scrollbar-thumb,
+.md3-player-token-input::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 3px;
+}
+
+.player-sidebar::-webkit-scrollbar-thumb:hover,
+.md3-player-transcript::-webkit-scrollbar-thumb:hover,
+.md3-player-token-input::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-outline);
+}

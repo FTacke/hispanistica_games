@@ -1,0 +1,35 @@
+<div class="md3-footer" data-element="site-footer">
+  <div class="md3-footer__content">
+    <!-- Logo as Border Marker -->
+    <img src="{{ url_for('static', filename='img/corapan_basic.png') }}"
+         alt="CO.RA.PAN Logo"
+         class="md3-footer__logo-marker"
+         width="40" height="40" decoding="async" />
+
+    <!-- Brand/Badge First -->
+    <a href="https://hispanistica.online.uni-marburg.de"
+       class="md3-footer__brand"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="Hispanistica – @ Marburg">
+      <img src="{{ url_for('static', filename='img/hispanistica_badge.png') }}"
+           alt="Hispanistica Badge"
+           width="85" height="20" decoding="async" />
+    </a>
+
+    <!-- Navigation -->
+    <nav class="md3-footer__nav md3-body-small" aria-label="Rechtliches">
+      <ul class="md3-footer__list">
+        <li><a href="{{ url_for('public.impressum_page') }}">Impressum</a></li>
+        <li><a href="{{ url_for('public.privacy_page') }}">Datenschutz</a></li>
+      </ul>
+    </nav>
+
+    <!-- Copyright -->
+    <p class="md3-footer__copy md3-body-small">
+      © {% if now is defined %}{{ now().year }}{% else %}{{ "2025" }}{% endif %} Philipps-Universität Marburg · Felix Tacke
+    </p>
+    
+    <!-- Build ID for deployment verification -->
+    <!-- BUILD {{ config.get('APP_BUILD_ID', 'dev') }} -->
+  </div>
+</div>

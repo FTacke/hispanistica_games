@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+title: "CO.RA.PAN Web Application"
+message: >
+  If you use this software or its infrastructure, please cite it using the
+  metadata from this file.
+type: software
+
+authors:
+  - given-names: Felix
+    family-names: Tacke
+    email: felix.tacke@uni-marburg.de
+    affiliation: Philipps-Universität Marburg
+    orcid: "https://orcid.org/0000-0002-6716-7839"
+
+repository-code: "https://github.com/FTacke/corapan-webapp"
+url: "https://corapan.online.uni-marburg.de"
+
+abstract: >
+  The CO.RA.PAN Web Application is the digital interface for the Corpus
+  Radiofónico Panhispánico, a comparative corpus of professional spoken Spanish
+  covering all Spanish-speaking countries. The platform integrates data
+  preparation workflows (audio acquisition, cleaning, automatic speech
+  recognition, manual verification and segmentation, structured JSON encoding,
+  and automatic linguistic annotation) with high-performance corpus search via
+  BlackLab Server, synchronized audio–transcript playback, metadata filtering,
+  and geolinguistic visualization.
+
+  The web application enables lexical, morphological, and syntactic queries,
+  supports the analysis of national standard and near-standard varieties, and
+  provides controlled scientific access to short audio–text extracts in
+  accordance with European copyright and text-and-data mining regulations.
+
+keywords:
+  - corpus linguistics
+  - Spanish linguistics
+  - pluricentric Spanish
+  - spoken language
+  - model speaker
+  - audio transcription
+  - ASR
+  - spaCy
+  - linguistic annotation
+  - BlackLab Server
+  - corpus search
+  - geolinguistics
+  - panhispanic variation
+  - web application
+  - Flask
+
+license: MIT
+
+version: "1.0.0"
+date-released: "2025-12-05"

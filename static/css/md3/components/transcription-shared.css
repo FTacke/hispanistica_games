@@ -1,0 +1,427 @@
+/* ============================================
+   CO.RA.PAN - Shared Transcription Styles
+   Verwendet von: player.html, editor_edit.html
+   
+   Enthält alle gemeinsamen Styles für:
+   - Speaker Turns Layout
+   - Word Elements & Highlighting
+   - Audio-Sync Visual Feedback
+   ============================================ */
+
+/* ============================================
+   SPEAKER TURNS - Shared Structure
+   ============================================ */
+
+/* Speaker Turn Container */
+.md3-speaker-turn {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: none; /* No border as requested */
+  transition: background 0.15s ease;
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-speaker-turn:hover {
+  /* Subtle hover effect as requested */
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+/* Speaker Header - Row: Edit-Icon | Name | Time */
+.md3-speaker-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
+/* Edit Icon (left) */
+.md3-speaker-edit-icon {
+  color: var(--md-sys-color-primary);
+  font-size: 0.75rem; /* Smaller icon */
+  cursor: pointer;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.md3-speaker-edit-icon:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Speaker Name (center) - Container for Chips */
+.md3-speaker-name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 1;
+  /* Reset previous text styles as it now contains chips */
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}
+
+/* MD3 Speaker Chips */
+.md3-speaker-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px; /* Smaller height */
+  padding: 0 6px; /* Smaller padding */
+  border-radius: 6px; /* Smaller radius */
+  font-family: "Roboto", sans-serif; /* MD3 default */
+  font-size: 0.65rem; /* Smaller font size */
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+/* Chip 1: Type + Sex */
+
+/* Hablante profesional masculino: indigo elevated */
+.md3-speaker-chip--type-pro.md3-speaker-chip--sex-m {
+  background-color: var(--md-sys-color-indigo);
+  color: var(--md-sys-color-on-indigo);
+  box-shadow: var(--elev-1);
+}
+
+/* Hablante profesional femenino: violet elevated */
+.md3-speaker-chip--type-pro.md3-speaker-chip--sex-f {
+  background-color: var(--md-sys-color-violet);
+  color: var(--md-sys-color-on-violet);
+  box-shadow: var(--elev-1);
+}
+
+/* Hablante no profesional masculino: indigo outline */
+.md3-speaker-chip--type-otro.md3-speaker-chip--sex-m {
+  background-color: transparent;
+  color: var(--md-sys-color-indigo);
+  border: 1px solid var(--md-sys-color-indigo);
+}
+
+/* Hablante no profesional femenino: violet outline */
+.md3-speaker-chip--type-otro.md3-speaker-chip--sex-f {
+  background-color: transparent;
+  color: var(--md-sys-color-violet);
+  border: 1px solid var(--md-sys-color-violet);
+}
+
+/* Fallback for 'otro' without sex */
+.md3-speaker-chip--type-otro {
+  background-color: var(--md-sys-color-neutral-container);
+  color: var(--md-sys-color-on-neutral-container);
+}
+
+/* Chip 2: Mode */
+
+/* Lectura: indigo container */
+.md3-speaker-chip--mode-lectura {
+  background-color: var(--md-sys-color-indigo-container);
+  color: var(--md-sys-color-on-indigo-container);
+}
+
+/* Habla libre: pink container */
+.md3-speaker-chip--mode-libre {
+  background-color: var(--md-sys-color-pink-container);
+  color: var(--md-sys-color-on-pink-container);
+}
+
+/* Habla pregrabada: info container */
+.md3-speaker-chip--mode-pre {
+  background-color: var(--md-sys-color-info-container);
+  color: var(--md-sys-color-on-info-container);
+  border: none;
+}
+
+/* Chip 3: Discourse */
+
+/* Tiempo: purple outline */
+.md3-speaker-chip--discourse-tie,
+.md3-speaker-chip--discourse-tiempo {
+  background-color: transparent;
+  color: var(--md-sys-color-purple);
+  border: 1px solid var(--md-sys-color-purple);
+}
+
+/* Tránsito: slate outline */
+.md3-speaker-chip--discourse-traf,
+.md3-speaker-chip--discourse-tránsito,
+.md3-speaker-chip--discourse-tráfico {
+  background-color: transparent;
+  color: var(--md-sys-color-slate);
+  border: 1px solid var(--md-sys-color-slate);
+}
+
+/* Discurso general: secondary outline */
+.md3-speaker-chip--discourse-general {
+  background-color: transparent;
+  color: var(--md-sys-color-secondary);
+  border: 1px solid var(--md-sys-color-secondary);
+}
+
+/* Speaker Time (right) */
+.md3-speaker-time {
+  font-size: 0.7rem; /* Significantly smaller */
+  font-family: "Roboto", sans-serif; /* MD3 default */
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Speaker Text - Monospace Text with Word Elements */
+.md3-speaker-text {
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 0.875rem; /* approx 14px */
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  word-wrap: break-word;
+}
+
+/* ============================================
+   WORD ELEMENTS - Interactive & Highlighting
+   ============================================ */
+
+/* Base Word Style */
+.md3-speaker-text .word {
+  display: inline;
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+  transition:
+    background 0.2s ease-out,
+    opacity 0.2s ease-out;
+  box-sizing: border-box;
+}
+
+.md3-speaker-text .word:hover {
+  background: var(--md-sys-color-primary-container);
+}
+
+/* Currently Playing Word - Bright Yellow Highlight */
+.md3-speaker-text .word.playing,
+.md3-speaker-text .word.is-current {
+  background: #ffeb3b; /* Material Yellow 500 */
+  color: #000000 !important; /* Force black text for contrast on yellow */
+  font-weight: 700;
+  padding: 0.1rem 0.2rem;
+  border-radius: 0; /* Sharp corners for emphasis */
+  box-sizing: border-box;
+  opacity: 1;
+}
+
+/* Past Words - Normal Text Color */
+.md3-speaker-text .word.is-past {
+  color: var(--md-sys-color-on-surface);
+  opacity: 1;
+}
+
+/* Future Words - Dimmed/Greyed Out */
+.md3-speaker-text .word.is-future {
+  color: var(
+    --md-sys-color-on-surface-variant
+  ); /* Darker than outline-variant */
+  opacity: 0.6; /* Adjust opacity to make it distinct but visible */
+}
+
+/* Active Group Context (Words in same group as current word) */
+.md3-speaker-text .word.is-active-group-context {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container),
+    transparent 70%
+  );
+  border-radius: 2px;
+}
+
+/* Preview Next Group */
+.md3-speaker-text .word.is-preview-group {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-surface-variant),
+    transparent 50%
+  );
+  border-radius: 2px;
+}
+
+/* Preview Next Word Group - Deprecated/Overridden by is-future but kept for safety */
+.md3-speaker-text .word.playing-preview {
+  background: var(--md-sys-color-primary-container);
+  opacity: 0.7;
+}
+
+/* Target Token Highlight (URL Parameter) */
+.md3-speaker-text .word.word-token-id {
+  background: #ffd600; /* Amber Yellow */
+  color: #000000;
+  font-weight: 700;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  animation: token-pulse 2s ease-in-out infinite;
+}
+
+@keyframes token-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Letter Marking (Player Feature) */
+.md3-speaker-text .word .highlight {
+  background-color: #ffeeb5;
+  border-radius: 2px;
+  padding: 0 0em 0.02em;
+  border-bottom: 2px solid #f4b400;
+}
+
+/* ============================================
+   TEXT SELECTION & EDITOR STATES
+   ============================================ */
+
+/* Custom text selection color (remove white line issue) */
+.md3-speaker-text ::selection {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-speaker-text ::-moz-selection {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* Word in Edit Mode */
+.md3-speaker-text .word.editing {
+  background: #ffeb3b !important;
+  color: #000000 !important; /* Ensure text is black */
+  font-weight: 700;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid #f57f17;
+  outline: none;
+  box-sizing: border-box;
+  opacity: 1 !important; /* Override any opacity from is-future */
+}
+
+/* Word Modified (Changed by Editor) */
+.md3-speaker-text .word.modified-word {
+  background: #81c784 !important; /* Green highlight for changes */
+  color: #000000 !important; /* Ensure text is black */
+  font-weight: 600;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+  box-sizing: border-box;
+  opacity: 1 !important; /* Override any opacity from is-future */
+}
+
+/* Word Modified with ::before indicator */
+.md3-speaker-text .word.modified-word::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  background: #2e7d32;
+  margin-right: 2px;
+  border-radius: 0;
+  vertical-align: text-bottom;
+}
+
+/* ============================================
+   WORD TOOLTIPS - Linguistic Information
+   ============================================ */
+
+/* Tooltip Container - Unified Style (Player + Editor) - Hell wie im Editor */
+.tooltip-text {
+  position: fixed;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.75rem;
+  z-index: 1000;
+  box-shadow: var(--elev-2);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s cubic-bezier(0.2, 0, 0, 1),
+    visibility 0.15s cubic-bezier(0.2, 0, 0, 1);
+  line-height: 1.4;
+  max-width: 320px;
+  word-wrap: break-word;
+}
+
+.tooltip-text.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-text.word-tooltip {
+  font-family: "Roboto Mono", "Consolas", "Courier New", monospace;
+}
+
+/* Tooltip Content Styling */
+.tooltip-high {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tooltip-bold {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.tooltip-italic {
+  font-style: italic;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.9;
+}
+
+.tooltip-token {
+  font-family: "Courier New", "Consolas", monospace;
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1px 4px;
+  border-radius: 2px;
+  color: var(--md-sys-color-primary);
+  font-weight: 500;
+  font-size: 0.65rem;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE - Shared
+   ============================================ */
+
+@media (max-width: 839px) {
+  .md3-speaker-turn {
+    padding: var(--space-2);
+  }
+
+  .md3-speaker-text {
+    font-size: 0.875rem;
+  }
+
+  .md3-speaker-header {
+    gap: var(--space-1);
+  }
+
+  .md3-speaker-name {
+    font-size: 0.75rem;
+  }
+
+  .md3-speaker-time {
+    font-size: 0.6875rem;
+  }
+}

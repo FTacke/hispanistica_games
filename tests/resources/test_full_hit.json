@@ -1,0 +1,6 @@
+﻿{"summary":{"params":{"patt":"[lemma=\"casa\"]","number":"1","wordsaroundhit":"3","listvalues":"tokid,start_ms,country_code,date","op":"hits","indexname":"corapan"},"pattern":{"json":{
+  "bcqlFragment" : "[lemma=\"casa\"]",
+  "type" : "regex",
+  "value" : "casa",
+  "annotation" : "lemma"
+},"bcql":"[lemma=\"casa\"]","fieldName":"contents"},"resultWindow":{"firstResult":0,"requestedSize":1,"actualSize":1,"hasPrevious":false,"hasNext":true},"resultsStats":{"status":"finished","hits":761,"documents":139,"timeMs":56}},"hits":[{"docPid":"35","start":1136,"end":1137,"before":{"tokid":["vend7b5b1974","venea4dceb1d","ven61a0bcbe8"],"start_ms":["407340","408060","408270"]},"match":{"tokid":["ven32e61a3eb"],"start_ms":["408390"]},"after":{"tokid":["venebbff359f","vend1198c0bd","ven2545dc59b"],"start_ms":["408690","409050","409140"]}}],"docInfos":{"35":{"metadata":{"fromInputFile":["\/data\/export\/tsv\/2022-01-18_VEN_RCR.tsv"]},"tokenCounts":[{"fieldName":"contents","tokens":9401}],"mayView":false}}}

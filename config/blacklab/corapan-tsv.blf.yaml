@@ -1,0 +1,297 @@
+﻿# CO.RA.PAN BlackLab Format Configuration - TSV (Tabular)
+#
+# This file defines how BlackLab should interpret the TSV export files
+# created by blacklab_index_creation.py.
+#
+# USAGE:
+#   IndexTool create /data/index/corapan exports/tsv/*.tsv corapan-tsv
+#
+# FORMAT: TSV with header row
+#   Columns: word, norm, lemma, pos, tense, mood, person, number, aspect,
+#            PastType, FutureType, tokid, start_ms, end_ms, sentence_id,
+#            utterance_id, speaker_code, speaker_type, speaker_sex, speaker_mode,
+#            speaker_discourse, file_id, country_code, country_scope,
+#            country_parent_code, country_region_code, city, radio, date, audio_path
+#
+# METADATA: Import from linked JSON files (one per TSV)
+#   Usage: --linked-file-dir /data/export/metadata
+
+displayName: "CO.RA.PAN Corpus (TSV)"
+description: "CO.RA.PAN Spanish Radio Transcripts with linguistic annotations"
+
+fileType: tabular
+
+corpusConfig:
+  # Use the automatically provided 'fromInputFile' metadata as persistent id.
+  # This contains the path of the input file and guarantees uniqueness during indexing.
+  specialFields:
+    pidField: fromInputFile
+
+fileTypeOptions:
+  type: tsv
+  columnNames: true
+
+annotatedFields:
+  contents:
+    displayName: "Contents"
+    description: "Main content field with token annotations"
+    
+    annotations:
+      # ===== WORD FORMS =====
+      - name: word
+        displayName: "Word"
+        description: "Original word form (case-sensitive)"
+        valuePath: word
+        sensitivity: sensitive
+        uiType: "text"
+      
+      - name: norm
+        displayName: "Normalized Form"
+        description: "Case/accent-insensitive normalized form for searching"
+        valuePath: norm
+        sensitivity: insensitive
+        uiType: "text"
+      
+      - name: lemma
+        displayName: "Lemma"
+        description: "Dictionary form"
+        valuePath: lemma
+        sensitivity: sensitive
+        uiType: "lemma"
+      
+      # ===== PART-OF-SPEECH =====
+      - name: pos
+        displayName: "POS"
+        description: "Part-of-speech tag (Universal Dependencies)"
+        valuePath: pos
+        uiType: "pos"
+      
+      # ===== MORPHOLOGICAL FEATURES =====
+      - name: tense
+        displayName: "Tense"
+        description: "Tense (from spaCy morph)"
+        valuePath: tense
+        uiType: "select"
+      
+      - name: mood
+        displayName: "Mood"
+        description: "Mood (from spaCy morph)"
+        valuePath: mood
+        uiType: "select"
+      
+      - name: person
+        displayName: "Person"
+        description: "Person (from spaCy morph)"
+        valuePath: person
+        uiType: "select"
+      
+      - name: number
+        displayName: "Number"
+        description: "Number (from spaCy morph)"
+        valuePath: number
+        uiType: "select"
+      
+      - name: aspect
+        displayName: "Aspect"
+        description: "Aspect (from spaCy morph)"
+        valuePath: aspect
+        uiType: "select"
+
+      - name: PastType
+        displayName: "Past Type"
+        description: "Detailed past tense classification"
+        valuePath: PastType
+        uiType: "select"
+        forwardIndex: true
+      
+      - name: FutureType
+        displayName: "Future Type"
+        description: "Detailed future tense classification"
+        valuePath: FutureType
+        uiType: "select"
+        forwardIndex: true
+      
+      # ===== IDENTIFIERS & TIMING =====
+      - name: tokid
+        displayName: "Token ID"
+        description: "Unique token identifier for linking to app"
+        valuePath: tokid
+        uiType: "text"
+      
+      - name: start_ms
+        displayName: "Start Time (ms)"
+        description: "Start time in milliseconds"
+        valuePath: start_ms
+        uiType: "numeric"
+      
+      - name: end_ms
+        displayName: "End Time (ms)"
+        description: "End time in milliseconds"
+        valuePath: end_ms
+        uiType: "numeric"
+      
+      # ===== STRUCTURAL IDs =====
+      - name: sentence_id
+        displayName: "Sentence ID"
+        description: "Sentence identifier for grouping"
+        valuePath: sentence_id
+        uiType: "text"
+      
+      - name: utterance_id
+        displayName: "Utterance ID"
+        description: "Utterance identifier for grouping"
+        valuePath: utterance_id
+        uiType: "text"
+      
+      # ===== SPEAKER =====
+      - name: speaker_code
+        displayName: "Speaker Code"
+        description: "Standardized speaker code (e.g. lib-pm, lec-pf)"
+        valuePath: speaker_code
+        uiType: "select"
+      
+      - name: speaker_type
+        displayName: "Speaker Type"
+        description: "Speaker type: pro, otro, n/a, or empty"
+        valuePath: speaker_type
+        uiType: "select"
+      
+      - name: speaker_sex
+        displayName: "Speaker Sex"
+        description: "Speaker sex: m, f, n/a, or empty"
+        valuePath: speaker_sex
+        uiType: "select"
+      
+      - name: speaker_mode
+        displayName: "Speaker Mode"
+        description: "Speaking mode: libre, lectura, pre, n/a, or empty"
+        valuePath: speaker_mode
+        uiType: "select"
+      
+      - name: speaker_discourse
+        displayName: "Speaker Discourse"
+        description: "Discourse type: general, tiempo, tránsito, foreign, or empty"
+        valuePath: speaker_discourse
+        uiType: "select"
+      
+      # ===== DOC-LEVEL METADATA (repeated per token) =====
+      - name: file_id
+        displayName: "File ID"
+        description: "Unique file identifier"
+        valuePath: file_id
+        uiType: "text"
+        forwardIndex: true
+
+      - name: country_code
+        displayName: "Country Code"
+        description: "Country code (e.g. ARG, ARG-CBA, ESP, ESP-SEV)"
+        valuePath: country_code
+        uiType: "select"
+      
+      - name: country_scope
+        displayName: "Country Scope"
+        description: "Geographic scope: national or regional"
+        valuePath: country_scope
+        uiType: "select"
+      
+      - name: country_parent_code
+        displayName: "Country Parent Code"
+        description: "Parent country code (e.g. ARG, ESP)"
+        valuePath: country_parent_code
+        uiType: "select"
+      
+      - name: country_region_code
+        displayName: "Country Region Code"
+        description: "Region code (e.g. CBA, SEV) or empty for national"
+        valuePath: country_region_code
+        uiType: "select"
+      
+      - name: date
+        displayName: "Recording Date"
+        description: "Date of recording (YYYY-MM-DD)"
+        valuePath: date
+        uiType: "text"
+      
+      - name: radio
+        displayName: "Radio Station"
+        description: "Radio station name"
+        valuePath: radio
+        uiType: "select"
+      
+      - name: city
+        displayName: "City"
+        description: "Recording city"
+        valuePath: city
+        uiType: "select"
+      
+      - name: audio_path
+        displayName: "Audio File"
+        description: "Path to MP3 file"
+        valuePath: audio_path
+        uiType: "text"
+
+# ===== METADATA FIELDS =====
+# Extract document metadata from token annotation values (using first token)
+metadata:
+  fields:
+    - name: doc
+      displayName: "Document ID"
+      description: "Internal document id (basename of input file)"
+      type: "untokenized"
+      valuePath: "@doc"
+    - name: file_id
+      displayName: "File ID"
+      description: "Unique file identifier"
+      type: "untokenized"
+      # Prefer linked per-file metadata  (linked-file-dir / docmeta files)
+      # (fallback to contents column is possible in absence of metadata)
+      valuePath: "@file_id"
+    
+    - name: country_code
+      displayName: "Country Code"
+      description: "Country code (e.g. ARG, ARG-CBA, ESP, ESP-SEV)"
+      type: "untokenized"
+      # Prefer document-level metadata
+      valuePath: "@country_code"
+    
+    - name: country_scope
+      displayName: "Country Scope"
+      description: "Geographic scope: national or regional"
+      type: "untokenized"
+      valuePath: "@country_scope"
+    
+    - name: country_parent_code
+      displayName: "Country Parent Code"
+      description: "Parent country code (e.g. ARG, ESP)"
+      type: "untokenized"
+      valuePath: "@country_parent_code"
+    
+    - name: country_region_code
+      displayName: "Country Region Code"
+      description: "Region code (e.g. CBA, SEV) or empty for national"
+      type: "untokenized"
+      valuePath: "@country_region_code"
+    
+    - name: date
+      displayName: "Recording Date"
+      description: "Date of recording (YYYY-MM-DD)"
+      type: "untokenized"
+      valuePath: "@date"
+    
+    - name: radio
+      displayName: "Radio Station"
+      description: "Radio station name"
+      type: "untokenized"
+      valuePath: "@radio"
+    
+    - name: city
+      displayName: "City"
+      description: "Recording city"
+      type: "untokenized"
+      valuePath: "@city"
+    
+    - name: audio_path
+      displayName: "Audio File"
+      description: "Path to MP3 file"
+      type: "untokenized"
+      valuePath: "@audio_path"

@@ -1,0 +1,13 @@
+/* Minimal status-banner styles.
+   The login-sheet / md3-sheet styles are consolidated in components/login.css.
+   Status banner is a small utility visual element used for transient site messages.
+*/
+
+.md3-status-banner {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}

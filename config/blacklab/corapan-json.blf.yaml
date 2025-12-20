@@ -1,0 +1,146 @@
+displayName: "CO.RA.PAN Corpus (JSON)"
+description: "CO.RA.PAN Spanish Radio Transcripts (JSON-based index format)"
+
+fileType: json
+
+fileTypeOptions:
+  type: json
+  # tokens live in top-level array 'tokens'
+  tokenPath: tokens[*]
+
+# Annotated token fields (these must match the flattened JSON converter)
+annotatedFields:
+  contents:
+    displayName: "Contents"
+    description: "Main content field with token annotations (JSON input)"
+    annotations:
+      - name: word
+        valuePath: word
+        sensitivity: sensitive
+        uiType: text
+      - name: norm
+        valuePath: norm
+        sensitivity: insensitive
+        uiType: text
+      - name: lemma
+        valuePath: lemma
+        uiType: lemma
+      - name: pos
+        valuePath: pos
+        uiType: pos
+      - name: tense
+        valuePath: tense
+        uiType: select
+      - name: mood
+        valuePath: mood
+        uiType: select
+      - name: person
+        valuePath: person
+        uiType: select
+      - name: number
+        valuePath: number
+        uiType: select
+      - name: aspect
+        valuePath: aspect
+        uiType: select
+      - name: PastType
+        valuePath: PastType
+        uiType: select
+        forwardIndex: true
+      - name: FutureType
+        valuePath: FutureType
+        uiType: select
+        forwardIndex: true
+      - name: tokid
+        valuePath: tokid
+        uiType: text
+      - name: start_ms
+        valuePath: start_ms
+        uiType: numeric
+      - name: end_ms
+        valuePath: end_ms
+        uiType: numeric
+      - name: sentence_id
+        valuePath: sentence_id
+        uiType: text
+      - name: utterance_id
+        valuePath: utterance_id
+        uiType: text
+      - name: speaker_code
+        valuePath: speaker_code
+        uiType: select
+      - name: speaker_type
+        valuePath: speaker_type
+        uiType: select
+      - name: speaker_sex
+        valuePath: speaker_sex
+        uiType: select
+      - name: speaker_mode
+        valuePath: speaker_mode
+        uiType: select
+      - name: speaker_discourse
+        valuePath: speaker_discourse
+        uiType: select
+      - name: file_id
+        valuePath: file_id
+        uiType: text
+        forwardIndex: true
+      - name: country_code
+        valuePath: country_code
+        uiType: select
+      - name: country_scope
+        valuePath: country_scope
+        uiType: select
+      - name: country_parent_code
+        valuePath: country_parent_code
+        uiType: select
+      - name: country_region_code
+        valuePath: country_region_code
+        uiType: select
+      - name: date
+        valuePath: date
+        uiType: text
+      - name: radio
+        valuePath: radio
+        uiType: select
+      - name: city
+        valuePath: city
+        uiType: select
+      - name: audio_path
+        valuePath: audio_path
+        uiType: text
+
+# Document-level metadata (read from top-level JSON properties)
+metadata:
+  containerPath: $
+  fields:
+    - name: doc
+      valuePath: file_id
+      type: untokenized
+    - name: file_id
+      valuePath: file_id
+      type: untokenized
+    - name: country_code
+      valuePath: country_code
+      type: untokenized
+    - name: country_scope
+      valuePath: country_scope
+      type: untokenized
+    - name: country_parent_code
+      valuePath: country_parent_code
+      type: untokenized
+    - name: country_region_code
+      valuePath: country_region_code
+      type: untokenized
+    - name: date
+      valuePath: date
+      type: untokenized
+    - name: radio
+      valuePath: radio
+      type: untokenized
+    - name: city
+      valuePath: city
+      type: untokenized
+    - name: audio_path
+      valuePath: audio_path
+      type: untokenized

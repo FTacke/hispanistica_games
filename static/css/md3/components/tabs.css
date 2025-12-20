@@ -1,0 +1,228 @@
+/* ============================================================================
+   MD3 Tabs - Goldstandard v1.2
+   ============================================================================
+   Canonical tab components with MD3 tokens and motion.
+   
+   Components:
+   - .md3-tabs: Primary tab container
+   - .md3-tab: Individual tab button
+   - .md3-sub-tabs: Secondary/nested tabs
+   - .md3-tabs--compact: Smaller variant for dense UIs
+   
+   Status: ✅ MD3-konform (uses --md-sys-* tokens)
+   ============================================================================ */
+
+.md3-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.md3-tab {
+  padding: var(--space-4) var(--space-6);
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  position: relative;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-on-surface);
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-tab:hover::before {
+  opacity: 0.08;
+}
+
+.md3-tab--active {
+  color: var(--md-sys-color-primary);
+}
+
+.md3-tab--active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--md-sys-color-primary);
+  border-radius: 3px 3px 0 0;
+}
+
+.md3-tab-content {
+  display: none;
+}
+
+.md3-tab-content--active {
+  display: block;
+}
+
+/* ============================================================================
+   MD3 Sub-Tabs (for Resultados | Estadísticas)
+   ============================================================================ */
+
+.md3-sub-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  margin-bottom: var(--space-4);
+}
+
+.md3-sub-tab {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-sub-tab:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.md3-sub-tab--active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* View content containers */
+.md3-view-content {
+  display: none;
+  animation: fadeIn 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-view-content--active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Chart-specific styles */
+.chart-host {
+  width: 100%;
+  min-height: 360px;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 360px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.chart-skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Disabled state (corpus-specific) */
+.md3-tab:disabled {
+  color: var(--md-sys-color-on-surface);
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   Responsive Overrides (from corpus responsive section)
+   ============================================================================ */
+
+/* TABLET: 601px - 1120px (accounting for 280px drawer) */
+@media (max-width: 1120px) {
+  .md3-tabs {
+    gap: var(--space-1);
+  }
+
+  .md3-tab {
+    padding: var(--space-3) var(--space-4);
+    font-size: 12px;
+  }
+}
+
+/* MOBILE STANDARD: MD3 Compact (0-599px) */
+@media (max-width: 599px) {
+  .md3-tabs {
+    gap: var(--space-1);
+    margin-bottom: var(--space-4);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md3-tab {
+    padding: var(--space-2) var(--space-3);
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* ============================================================================
+   Compact Tabs Variant (for editor country tabs, etc.)
+   ============================================================================ */
+
+.md3-tabs--compact {
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.md3-tabs--compact .md3-tab {
+  padding: var(--space-2) var(--space-4);
+  font-size: 13px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+/* Focus-visible state for accessibility */
+.md3-tab:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.md3-tab:focus-visible::before {
+  opacity: 0.12;
+}
+
+/* Active + focus combined state */
+.md3-tab--active:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Pressed state */
+.md3-tab:active::before {
+  opacity: 0.12;
+}

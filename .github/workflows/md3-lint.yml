@@ -1,0 +1,48 @@
+# MD3 Lint Workflow
+# -----------------
+# Variante A: Läuft nur bei Pull Requests gegen main.
+# Nicht bei jedem Push, um CI-Last zu reduzieren.
+# Für manuelles Auslösen: workflow_dispatch hinzufügen.
+#
+# Lokales Testen:
+#   python scripts/md3-lint.py
+#   python scripts/md3-forms-auth-guard.py
+
+name: MD3 Lint
+
+on:
+  # Nur PRs gegen main lösen den Workflow aus
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'templates/**'
+      - 'static/css/md3/components/**'
+      - 'scripts/**'
+  # Manuelles Auslösen jederzeit möglich
+  workflow_dispatch:
+
+jobs:
+  md3-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir -r requirements.txt || true
+
+      - name: Run md3-forms/auth guard
+        run: |
+          python scripts/md3-forms-auth-guard.py
+
+      - name: Run md3-lint
+        run: |
+          python scripts/md3-lint.py

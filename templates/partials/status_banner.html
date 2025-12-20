@@ -1,0 +1,14 @@
+{# Status banner helper — render inline status messages here (site-wide) #}
+{%- set user_name = g.user -%}
+{%- set is_authenticated = user_name is not none -%}
+
+<div class="md3-status-banner" role="status" aria-live="polite"> 
+  {# Minimal banner content — MD3 Goldstandard uses full-page login at /login.
+     Login sheet pattern was removed in favor of simple redirect-based auth.
+  #}
+  {% if is_authenticated %}
+    Willkommen, {{ user_name }}.
+  {% else %}
+    <span class="md3-body-small">Noch nicht angemeldet</span>
+  {% endif %}
+</div>

@@ -1,0 +1,26 @@
+displayName: JSON Metadata
+description: Read metadata from JSON files
+fileType: json
+metadata:
+  containerPath: $
+  fields:
+    - name: file_id
+      valuePath: file_id
+    - name: country_code
+      valuePath: country_code
+    - name: country_scope
+      valuePath: country_scope
+    - name: country_parent_code
+      valuePath: country_parent_code
+    - name: country_region_code
+      valuePath: country_region_code
+    - name: city
+      valuePath: city
+    - name: radio
+      valuePath: radio
+    - name: date
+      valuePath: date
+    - name: audio_path
+      valuePath: audio_path
+    - name: filename
+      valuePath: filename

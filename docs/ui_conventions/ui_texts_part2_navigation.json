@@ -1,0 +1,207 @@
+[
+  {
+    "id": "nav.drawer.main.inicio",
+    "old_text": "Inicio",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.proyecto",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.proyecto.overview",
+    "old_text": "El proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.proyecto.diseno",
+    "old_text": "Diseño",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.proyecto.quienes",
+    "old_text": "Quiénes somos",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.proyecto.citar",
+    "old_text": "Cómo citar",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.proyecto.referencias",
+    "old_text": "Referencias",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.corpus",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.corpus.consultar",
+    "old_text": "Consultar",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.corpus.guia",
+    "old_text": "Guía",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.corpus.composicion",
+    "old_text": "Composición",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.corpus.metadatos",
+    "old_text": "Metadatos",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.atlas",
+    "old_text": "Atlas",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.main.player",
+    "old_text": "Player",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.footer.editor",
+    "old_text": "Editor",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.footer.profil",
+    "old_text": "Profil",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.footer.dashboard",
+    "old_text": "Dashboard",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.footer.benutzer",
+    "old_text": "Benutzer",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.footer.logout",
+    "old_text": "Logout",
+    "new_text": ""
+  },
+  {
+    "id": "nav.drawer.footer.login",
+    "old_text": "Login",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.burger.aria",
+    "old_text": "Menú",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.title.site",
+    "old_text": "CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.theme.aria",
+    "old_text": "Darstellung umschalten",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.theme.title",
+    "old_text": "Darstellung: Hell",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.user.aria",
+    "old_text": "Angemeldet als {{ user_name }}, Rolle: {{ role_value }}",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.menu.profil",
+    "old_text": "Profil",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.menu.dashboard",
+    "old_text": "Dashboard",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.menu.benutzer",
+    "old_text": "Benutzer",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.menu.logout",
+    "old_text": "Logout",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.login.aria",
+    "old_text": "Login",
+    "new_text": ""
+  },
+  {
+    "id": "nav.topbar.login.title",
+    "old_text": "Login",
+    "new_text": ""
+  },
+  {
+    "id": "nav.footer.brand.aria",
+    "old_text": "Hispanistica – @ Marburg",
+    "new_text": ""
+  },
+  {
+    "id": "nav.footer.nav.aria",
+    "old_text": "Rechtliches",
+    "new_text": ""
+  },
+  {
+    "id": "nav.footer.link.impressum",
+    "old_text": "Impressum",
+    "new_text": ""
+  },
+  {
+    "id": "nav.footer.link.datenschutz",
+    "old_text": "Datenschutz",
+    "new_text": ""
+  },
+  {
+    "id": "nav.footer.copyright",
+    "old_text": "© {{ year }} Philipps-Universität Marburg · Felix Tacke",
+    "new_text": ""
+  },
+  {
+    "id": "nav.page.prev.label",
+    "old_text": "Anterior",
+    "new_text": ""
+  },
+  {
+    "id": "nav.page.next.label",
+    "old_text": "Siguiente",
+    "new_text": ""
+  },
+  {
+    "id": "nav.status.welcome",
+    "old_text": "Willkommen, {{ user_name }}.",
+    "new_text": ""
+  },
+  {
+    "id": "nav.status.not_logged_in",
+    "old_text": "Noch nicht angemeldet",
+    "new_text": ""
+  },
+  {
+    "id": "base.page_title",
+    "old_text": "CO.RA.PAN",
+    "new_text": ""
+  }
+]

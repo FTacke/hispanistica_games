@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js" data-theme="auto">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block page_title %}games.hispanistica{% endblock %}</title>
+    <!-- Theme color for consistent appearance -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14141A">
+    <!-- Critical inline CSS: Prevent flash during page load -->
+    <style>
+      /* Base colors - prevent flash during navigation */
+      :root {
+        --app-background: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --app-background: #14141A;
+        }
+      }
+
+      html, body {
+        background: var(--app-background);
+        color-scheme: light dark;
+        transition: none !important; /* Prevent any transition flash */
+        /* Disable tap highlight on touch devices (prevents blue flash on mobile) */
+        -webkit-tap-highlight-color: transparent;
+        tap-highlight-color: transparent;
+      }
+
+      
+      /* Hide selects during hydration to prevent options flash */
+      .corpus-hydrating .md3-corpus-filter-grid select[data-enhance]:not([data-enhanced]),
+      .md3-corpus-filter-grid select[data-enhance][data-enhance-pending] {
+        visibility: hidden;
+      }
+      .no-js .md3-corpus-filter-grid select[data-enhance] {
+        visibility: visible; /* Fallback without JS */
+      }
+      
+      /* Prevent focus effects during hydration */
+      body[data-hydrating] :focus,
+      body[data-hydrating] :focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+      }
+      
+      /* Font display swap for external fonts to prevent layout shift */
+      @font-face {
+        font-display: swap;
+      }
+      
+      /* htmx request indicator (optional) */
+      .htmx-indicator {
+        display: none;
+      }
+      .htmx-request .htmx-indicator {
+        display: block;
+      }
+    </style>
+    <!-- no-js removal moved to static/js/theme.js (externalized for CSP) -->
+    <!-- Preload critical resources to prevent FOUC -->
+    <link rel="preload" href="{{ url_for('static', filename='css/layout.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/md3/tokens.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/app-tokens.css') }}" as="style">
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <!-- Font Awesome 6.7.1 (fixes glyph bbox warnings) - async loaded -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" data-async-onload>
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css"></noscript>
+    <!-- Bootstrap Icons - async loaded -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" media="print" data-async-onload>
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css"></noscript>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <!-- MD3 Design System Foundation -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/tokens.css') }}">
+        <!-- App-specific token overrides (MUST come after tokens.css) -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/app-tokens.css') }}">
+        <!-- Brand-specific color overrides (MUST come after app-tokens.css) -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/branding.css') }}">
+        <!-- Legacy tokens shim: temporary mapping of --md3-* names to canonical tokens
+          (remove after migrating templates to --md-sys-* / --space-*) -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/tokens-legacy-shim.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/typography.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/layout.css') }}">
+    <!-- MD3 Components for Navigation/Footer -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/navigation-drawer.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/top-app-bar.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/material-symbols-fallback.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/status-banner.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/page-navigation.css') }}">
+    <!-- MD3 Common Components -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/hero.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/text-pages.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/cards.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/dialog.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/textfields.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/alerts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/snackbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/layout-helpers.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/stats.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/como-citar.css') }}">
+    <!-- Mobile Responsive Overrides (muss nach allen Komponenten kommen) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/mobile-responsive.css') }}">
+    
+    <!-- Global Theme Controller - muss vor allen anderen Scripts laden -->
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth-setup.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/logout.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/navigation-drawer-init.js') }}" defer></script>
+    <!-- htmx for progressive enhancement -->
+    <script src="{{ url_for('static', filename='vendor/htmx.min.js') }}" defer></script>
+    
+    {% block extra_head %}{% endblock %}
+  </head>
+  {# Prepare flash messages for snackbar display #}
+  {% set flash_messages = get_flashed_messages(with_categories=true) %}
+  {% set flash_json = [] %}
+  {% for category, message in flash_messages %}
+    {% set _ = flash_json.append({'category': category, 'message': message}) %}
+  {% endfor %}
+  <body class="app-shell" {% if page_name %}data-page="{{ page_name }}"{% endif %} data-config='{"allowPublicTempAudio": {{ "true" if allow_public_temp_audio else "false" }}}' {% if flash_json %}data-flash-messages='{{ flash_json | tojson | e }}'{% endif %}>
+     {# MD3 Navigation System #}
+     {# status_banner was removed from the top bar in favour of focused account UI.
+       If you need an inline status / flash area later, include partials/status_banner.html
+       in a page-specific template. Keeping the global slot was noisy under the drawer. #}
+    
+    <header id="top-app-bar">
+      {% include 'partials/_top_app_bar.html' %}
+    </header>
+    
+    <aside id="navigation-drawer">
+      {% include 'partials/_navigation_drawer.html' %}
+    </aside>
+    
+    {# Main Content - Standard MPA (no hx-boost by default) #}
+    {# Individual pages can opt-in to htmx enhancement as needed #}
+    <main id="main-content" class="site-main">
+      <div class="md3-content-wrapper">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+    
+    {# Modal Root for Login Sheet and other overlays #}
+    <div id="modal-root" aria-live="polite"></div>
+    
+    <footer id="site-footer" class="md3-footer">
+      {% include 'partials/footer.html' %}
+    </footer>
+    
+    <!-- Core Entry Point (handles Router, Auth, UI, CSRF) -->
+    <script type="module" src="{{ url_for('static', filename='js/modules/core/entry.js') }}" defer></script>
+    
+    {% block extra_scripts %}
+    {% endblock %}
+  </body>
+</html>

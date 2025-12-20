@@ -1,0 +1,117 @@
+# CO.RA.PAN Development Stack: App + PostgreSQL Auth DB + BlackLab
+# 
+# Usage:
+#   docker compose -f infra/docker-compose.dev.yml up -d          # Start all services
+#   docker compose -f infra/docker-compose.dev.yml up -d db       # Start only DB
+#   docker compose -f infra/docker-compose.dev.yml down           # Stop all
+#   docker compose -f infra/docker-compose.dev.yml logs -f web    # Follow app logs
+#
+# Environment variables can be set in .env file or shell
+# Default admin: admin / admin (set START_ADMIN_PASSWORD env to override)
+
+services:
+  db:
+    image: postgres:14
+    container_name: corapan-db-dev
+    environment:
+      POSTGRES_USER: corapan_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-corapan_dev_password}
+      POSTGRES_DB: corapan_auth
+    ports:
+      - "54320:5432"
+    volumes:
+      - corapan_postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "corapan_app", "-d", "corapan_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - corapan-dev
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: corapan-web-dev
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:5000"
+    environment:
+      # Flask / App config
+      FLASK_ENV: development
+      FLASK_DEBUG: "false"
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-dev-secret-change-in-production}
+      
+      # Auth Database: connect to 'db' service (hostname inside Docker network)
+      AUTH_DATABASE_URL: postgresql+psycopg2://corapan_app:${POSTGRES_PASSWORD:-corapan_dev_password}@db:5432/corapan_auth
+      DATABASE_URL: postgresql+psycopg2://corapan_app:${POSTGRES_PASSWORD:-corapan_dev_password}@db:5432/corapan_auth
+      
+      # JWT settings
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production}
+      JWT_COOKIE_SECURE: "false"
+      
+      # Admin user creation (on first start)
+      START_ADMIN_USERNAME: ${START_ADMIN_USERNAME:-admin}
+      START_ADMIN_PASSWORD: ${START_ADMIN_PASSWORD:-admin}
+      
+      # Hashing algorithm
+      AUTH_HASH_ALGO: argon2
+    volumes:
+      # Development: mount source code for hot-reload
+      - ./src:/app/src:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+      
+      # Media files
+      - ./media/mp3-full:/app/media/mp3-full:ro
+      - ./media/mp3-split:/app/media/mp3-split:ro
+      - ./media/mp3-temp:/app/media/mp3-temp
+      - ./media/transcripts:/app/media/transcripts:ro
+      
+      # Data directories
+      - ./data/db:/app/data/db
+      - ./data/counters:/app/data/counters
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - corapan-dev
+
+  blacklab:
+    image: instituutnederlandsetaal/blacklab:latest
+    container_name: corapan-blacklab-dev
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./data/blacklab_index:/data/index/corapan:ro
+      - ./config/blacklab:/etc/blacklab:ro
+    environment:
+      JAVA_OPTS: "-Xmx2g -Xms512m"
+      BLACKLAB_CONFIG_DIR: "/etc/blacklab"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/blacklab-server/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - corapan-dev
+
+networks:
+  corapan-dev:
+    name: corapan-network-dev
+
+volumes:
+  corapan_postgres_dev:
+    name: corapan_postgres_dev

@@ -1,0 +1,30 @@
+/* Material Design 3 Chips Component
+   Use .md3-chip for selectable chip components.
+*/
+
+.md3-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.md3-chip:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.md3-chip--selected {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.md3-chip__icon {
+  margin-right: var(--space-2);
+  font-size: 18px;
+}

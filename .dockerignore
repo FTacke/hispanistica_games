@@ -1,0 +1,103 @@
+# ============================================================================
+# Docker Build Optimierung - Unnötige Dateien ausschließen
+# ============================================================================
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.pyc
+*.pyo
+dist/
+build/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Node/Frontend Build (not used, but keeping for reference)
+# node_modules/
+# npm-debug.log*
+# yarn-error.log
+# static-build/
+# .static-cache/
+
+# Data & Media (werden via Volume gemountet, nicht im Image)
+media/mp3-full/
+media/mp3-split/
+media/mp3-temp/
+media/transcripts/
+data/db/
+data/db_public/
+data/counters/
+*.sqlite
+*.db
+
+# Secrets & Config (werden via Volume gemountet)
+config/keys/
+config/*.pem
+.env
+.env.local
+passwords.env
+
+# Logs (werden via Volume gemountet)
+logs/
+*.log
+
+# Backups (nicht im Image nötig)
+backups/
+design_backups/
+*.tar.gz
+*.zip
+
+# Local Development & Documentation (nicht für Runtime nötig)
+LOKAL/
+docs/
+*.md
+!README.md
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-spezifisch
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Temporary Files
+cache/
+*.tmp
+tmp/
+temp/
+.cache/
+
+# Docker-spezifisch (nicht im Image nötig)
+docker-compose.yml
+docker-compose.override.yml
+Dockerfile
+.dockerignore
+
+# Deployment-Scripts
+update.sh
+deploy.sh
+

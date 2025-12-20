@@ -1,0 +1,39 @@
+# BlackLab Server Configuration
+# CO.RA.PAN Development Setup
+# BlackLab 5.0.0-SNAPSHOT (Lucene 9.11.1)
+# ===============================================================
+
+# This indicates we're using the new index format
+configVersion: 2
+
+# Where indexes can be found
+# The directory /data/index will contain the blacklab_index folder
+indexLocations:
+  - /data/index
+
+# Settings related to tuning server load and client responsiveness
+performance:
+  # How many search tasks should be able to run simultaneously
+  # (-1 to autodetect based on available cores/threads)
+  maxConcurrentSearches: -1
+  
+  # How many threads may a single search task use at most?
+  # (-1 to autodetect)
+  maxThreadsPerSearch: -1
+
+# Search limits
+search:
+  maxHitsToCount: 20000
+  maxHitsToRetrieve: 20000
+
+# Settings for diagnosing problems
+debug:
+  # A list of IPs that will run in debug mode
+  addresses:
+    - 127.0.0.1       # IPv4 localhost
+    - 0:0:0:0:0:0:0:1 # IPv6 localhost
+
+# How to determine current user (optional for development)
+authentication:
+  system:
+    class: AuthHttpBasic

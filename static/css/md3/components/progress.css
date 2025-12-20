@@ -1,0 +1,232 @@
+/* ============================================
+   MD3 Progress Components - Goldstandard v1.2
+   ============================================
+   Loading indicators and skeleton loaders.
+   
+   Components:
+   - .md3-linear-progress: Horizontal progress bar
+   - .md3-circular-progress: Spinning indicator
+   - .md3-skeleton: Content placeholder
+   - .md3-button.is-loading: Button loading state
+   ============================================ */
+
+/* ============================================
+   Linear Progress Bar
+   ============================================ */
+
+.md3-linear-progress {
+  height: 4px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 2px;
+}
+
+.md3-linear-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: var(--md-sys-color-primary);
+  border-radius: 2px;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% { left: -30%; }
+  100% { left: 100%; }
+}
+
+/* Determinate Progress (with width set via style) */
+.md3-linear-progress--determinate::before {
+  animation: none;
+  transition: width var(--md-motion-duration-short4, 200ms) ease;
+}
+
+/* Hidden state for HTMX indicator pattern */
+.md3-linear-progress[hidden],
+.htmx-indicator:not(.htmx-request) {
+  display: none;
+}
+
+/* Under top-app-bar placement */
+.md3-linear-progress--fixed {
+  position: fixed;
+  top: 64px; /* Below top-app-bar */
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+@media (max-width: 839px) {
+  .md3-linear-progress--fixed {
+    top: 56px; /* Compact top-app-bar height */
+  }
+}
+
+/* ============================================
+   Circular Progress
+   ============================================ */
+
+.md3-circular-progress {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.md3-circular-progress__spinner {
+  width: 100%;
+  height: 100%;
+  border: 4px solid var(--md-sys-color-surface-container-highest);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.md3-circular-progress--small {
+  width: 24px;
+  height: 24px;
+}
+
+.md3-circular-progress--small .md3-circular-progress__spinner {
+  border-width: 2px;
+}
+
+/* ============================================
+   Button Loading State
+   ============================================ */
+
+.md3-button.is-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.md3-button__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hide label when loading (optional) */
+.md3-button.is-loading .md3-button__label {
+  visibility: hidden;
+}
+
+.md3-button.is-loading .md3-button__spinner {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Keep label visible variant */
+.md3-button.is-loading--inline .md3-button__label {
+  visibility: visible;
+  margin-left: var(--space-2);
+}
+
+.md3-button.is-loading--inline .md3-button__spinner {
+  position: static;
+  transform: none;
+}
+
+/* ============================================
+   Skeleton Loading
+   ============================================ */
+
+.md3-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container) 25%,
+    var(--md-sys-color-surface-container-high) 50%,
+    var(--md-sys-color-surface-container) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.md3-skeleton--text {
+  height: 1em;
+  margin-bottom: 0.5em;
+}
+
+.md3-skeleton--short {
+  width: 60%;
+}
+
+.md3-skeleton--medium {
+  width: 80%;
+}
+
+.md3-skeleton--circle {
+  border-radius: 50%;
+}
+
+.md3-skeleton--avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.md3-skeleton--button {
+  width: 100px;
+  height: 40px;
+  border-radius: 20px;
+}
+
+.md3-skeleton--card {
+  height: 200px;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Skeleton card with multiple elements */
+.md3-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.md3-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .md3-linear-progress::before,
+  .md3-circular-progress__spinner,
+  .md3-button__spinner,
+  .md3-skeleton {
+    animation: none;
+  }
+  
+  .md3-skeleton {
+    background: var(--md-sys-color-surface-container);
+  }
+}
+

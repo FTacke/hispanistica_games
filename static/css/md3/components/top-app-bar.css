@@ -1,0 +1,1003 @@
+/* ============================================
+  MD3 Top App Bar - Adaptive Opazität
+  (CANONICAL) — this file defines the canonical top-app-bar markup
+  and behavior. Templates should rely on `.md3-top-app-bar` and the
+  documented slot classes for consistent integration.
+   ============================================
+   Compact/Medium (<840px): OPAK mit Elevation - Burger links, Login/Account rechts
+   Expanded (≥840px): TRANSPARENT - KEIN Burger (permanenter Drawer), Login/Account rechts
+   KEIN Titel/Branding in der Bar
+   
+   POSITION: fixed – scrollt oben mit
+   Z-INDEX: 1001 – sitzt über Content, aber unter Dropdown/Modal
+   STRUKTUR: Aus CSS Grid entfernt, padding-top auf main kompensiert
+   ============================================ */
+
+/* ============================================
+   Base Styles - OPAK für Compact/Medium (Default)
+   ============================================ */
+
+.md3-top-app-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1200; /* MUSS über Leaflet Controls (1000) liegen! */
+
+  /* Default: Opak für Compact/Medium (<840px) */
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--elev-2); /* Elevation 2 im Ruhezustand */
+
+  transition:
+    box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    background 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   Expanded (≥840px): Transparent mit permanentem Drawer
+   ============================================ */
+
+@media (min-width: 840px) {
+  .md3-top-app-bar {
+    background: transparent;
+    box-shadow: none; /* Keine Elevation auf großen Screens */
+  }
+}
+
+/* ============================================
+   Scroll Elevation (nur für Compact/Medium)
+   ============================================ */
+
+body[data-scrolled="true"] .md3-top-app-bar {
+  box-shadow: var(--elev-3); /* Erhöhte Elevation beim Scrollen */
+}
+
+/* Auf Expanded: Keine Scroll-Elevation */
+@media (min-width: 840px) {
+  body[data-scrolled="true"] .md3-top-app-bar {
+    box-shadow: none;
+  }
+}
+
+.md3-top-app-bar__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 64px; /* MD3 Small Top App Bar */
+  max-width: 100%;
+
+  /* Safe Area Insets für Notches, Dynamic Island, etc. */
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+}
+
+/* ============================================
+   Navigation Icon (Burger)
+   ============================================ */
+
+.md3-top-app-bar__navigation-icon {
+  flex-shrink: 0;
+  margin-left: calc(-1 * var(--space-2)); /* Optical alignment */
+}
+
+/* ❌ Hide burger on Expanded (≥840px) - permanenter Drawer sichtbar */
+@media (min-width: 840px) {
+  .md3-top-app-bar__navigation-icon {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   Title (leer, kein Branding)
+   ============================================ */
+
+.md3-top-app-bar__title {
+  flex: 1;
+  margin: 0;
+  position: relative;
+  min-width: 0; /* Ermöglicht Text-Overflow */
+  overflow: hidden;
+  height: 24px; /* Verhindert Layout-Shifts */
+}
+
+/* ============================================
+   Adaptive Titles: Site → Page beim Scrollen
+   ============================================ */
+
+/* Base Styles: Beide Titel übereinander */
+.md3-top-app-bar__title-site,
+.md3-top-app-bar__title-page {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100vw - 200px); /* Platz für Burger + Actions */
+  will-change: opacity, transform;
+}
+
+/* Site Title: Sichtbar im Idle-State */
+.md3-top-app-bar__title-site {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  color: var(--md-sys-color-primary); /* Primary Color */
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Page Title: Versteckt im Idle-State */
+.md3-top-app-bar__title-page {
+  font-size: 1rem; /* 16px */
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  line-height: 1.2;
+  color: var(--md-sys-color-primary); /* Primary Color */
+  opacity: 0;
+  transform: translateY(-50%) translateX(24px); /* Startet rechts-versetzt */
+}
+
+/* ============================================
+   Scroll Transition: Site raus, Page rein
+   ============================================ */
+
+body[data-scrolled="true"] .md3-top-app-bar__title-site {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-24px); /* Gleitet nach links raus */
+}
+
+body[data-scrolled="true"] .md3-top-app-bar__title-page {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0); /* Gleitet von rechts rein */
+}
+
+/* ============================================
+   Motion Preference: Respektiert prefers-reduced-motion
+   ============================================ */
+
+/* Standard: Smooth Transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .md3-top-app-bar__title-site,
+  .md3-top-app-bar__title-page {
+    transition:
+      opacity 180ms cubic-bezier(0.4, 0, 0.2, 1),
+      transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Reduced Motion: Keine Animationen */
+@media (prefers-reduced-motion: reduce) {
+  .md3-top-app-bar__title-site,
+  .md3-top-app-bar__title-page {
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   Responsive: Max-Width Anpassung
+   ============================================ */
+
+/* Auf sehr kleinen Screens: Mehr Platz für Titel */
+@media (max-width: 400px) {
+  .md3-top-app-bar__title-site,
+  .md3-top-app-bar__title-page {
+    max-width: calc(100vw - 140px);
+  }
+}
+
+/* Auf Expanded: Titel ausblenden (Logo ist im Drawer) */
+@media (min-width: 840px) {
+  .md3-top-app-bar__title {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ============================================
+   Actions
+   ============================================ */
+
+.md3-top-app-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  margin-right: calc(-1 * var(--space-2)); /* Optical alignment */
+}
+
+/* ============================================
+   Icon Button
+   ============================================ */
+
+.md3-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  border-radius: 50%;
+  /* Anchors used as icon buttons should not show link underlines */
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+  flex-shrink: 0;
+}
+
+.md3-icon-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 8%,
+    transparent
+  );
+}
+
+.md3-icon-button:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md3-icon-button .material-symbols-rounded {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================
+   Small App Bar (Default)
+   ============================================ */
+
+.md3-top-app-bar--small {
+  height: 64px;
+}
+
+.md3-top-app-bar--small .md3-top-app-bar__headline-row {
+  display: none;
+}
+
+/* ============================================
+   Medium App Bar
+   ============================================ */
+
+.md3-top-app-bar--medium {
+  height: 112px;
+}
+
+.md3-top-app-bar--medium .md3-top-app-bar__title {
+  font-size: 1rem; /* Smaller in top row when medium */
+}
+
+.md3-top-app-bar__headline-row {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 var(--space-4) var(--space-4) var(--space-4);
+  height: 48px;
+}
+
+.md3-top-app-bar__headline {
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ============================================
+   Large App Bar
+   ============================================ */
+
+.md3-top-app-bar--large {
+  height: 152px;
+}
+
+.md3-top-app-bar--large .md3-top-app-bar__title {
+  font-size: 1rem; /* Smaller in top row when large */
+}
+
+.md3-top-app-bar--large .md3-top-app-bar__headline-row {
+  height: 88px;
+}
+
+.md3-top-app-bar--large .md3-top-app-bar__headline {
+  font-size: 2rem;
+}
+
+/* ============================================
+   Scroll Collapse (Medium/Large → Small)
+   ============================================ */
+
+.md3-top-app-bar--collapsed {
+  height: 64px !important;
+}
+
+.md3-top-app-bar--collapsed .md3-top-app-bar__title {
+  font-size: 1.375rem !important;
+}
+
+.md3-top-app-bar--collapsed .md3-top-app-bar__headline-row {
+  display: none !important;
+  opacity: 0;
+}
+
+/* ============================================
+   User Menu (Avatar mit Logout-Menü)
+   ============================================
+   Avatar ist Teil der sticky Top App Bar
+   – scrollt MIT der Bar mit (kein position: fixed)
+   – Dropdown hat höhere z-index um über Content zu liegen
+   ============================================ */
+
+.md3-user-menu {
+  position: relative; /* In Flexbox-Flow bleiben */
+  flex-shrink: 0; /* Nicht komprimieren */
+  z-index: 1; /* Dropdown braucht höheren z-index */
+}
+
+/* .md3-user-menu__toggle erbt md3-icon-button Styles */
+
+.md3-user-menu__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; /* Gleiche Größe wie Icon-Buttons */
+  height: 40px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* ============================================
+   Account Button (MD3) - new replacement for avatar trigger
+   --------------------------------------------
+   - Uses MD3 tokens (no hard colors)
+   - Shows icon + username + role label on larger screens
+   - Collapses to icon-only on small screens
+   - Has a subtle status-dot
+   ============================================ */
+
+.md3-top-app-bar__account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: none;
+  background: color-mix(in srgb, var(--md-sys-color-surface-variant) 10%, transparent);
+  cursor: pointer;
+  position: relative;
+  font: inherit;
+  color: var(--md-sys-color-on-surface);
+  min-height: 40px;
+}
+
+/* ============================================
+   Account chip (Assist Chip style: icon + label)
+   Replaces the prior Role Badge + Username layout with a single
+   compact, accessible component that signals the user's role
+   via a leading icon inside a pill-shaped 'chip'.
+   ============================================ */
+
+.md3-top-app-bar__account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  /* default visible container background so chip is always legible */
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  height: 48px; /* match icon buttons / theme toggle */
+  min-height: 48px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+/* Highest specificity — scoped inside the top app bar actions so it cannot be
+   overridden by generic button rules elsewhere. Keep contrast & add subtle
+   elevation so the chip is always visible even when the bar is transparent. */
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button.md3-top-app-bar__account-chip,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip {
+  background-color: var(--md-sys-color-surface-container-high);
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+/* Stronger-specificity override to ensure chip padding wins over
+   global .md3-button--text rules (avoids layout shift on hover). */
+.md3-button--text.md3-top-app-bar__account-chip,
+.md3-button.md3-top-app-bar__account-chip {
+  padding: 0.2rem 0.8rem; /* use the chip's compact token */
+  transition: background-color 180ms ease; /* don't include padding */
+}
+.md3-button--text.md3-top-app-bar__account-chip:hover,
+.md3-button.md3-top-app-bar__account-chip:hover {
+  padding: 0.2rem 0.8rem; /* explicitly keep padding stable on hover */
+}
+
+.md3-top-app-bar__account-chip:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-surface-variant) 8%, transparent);
+}
+
+/* Role color accents */
+/* Admin: tonal background, icon tinted with error color */
+.md3-top-app-bar__account-chip--admin {
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 18%, transparent);
+  /* tonal background layered on top of the surface-container so it's visible on transparent bars */
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 14%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip--admin,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip--admin {
+  /* same tonal background but scoped with higher specificity */
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 16%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip--admin:hover,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip--admin:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 22%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar__account-chip--admin:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 22%, var(--md-sys-color-surface));
+}
+.md3-top-app-bar__account-chip--admin .md3-top-app-bar__account-chip-icon {
+  color: var(--md-sys-color-error);
+}
+
+/* Editor: tonal background, icon tinted with primary color */
+.md3-top-app-bar__account-chip--editor {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 14%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip--editor,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip--editor {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 16%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip--editor:hover,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip--editor:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 22%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar__account-chip--editor:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 22%, var(--md-sys-color-surface));
+}
+.md3-top-app-bar__account-chip--editor .md3-top-app-bar__account-chip-icon {
+  color: var(--md-sys-color-primary);
+}
+
+/* Regular user: tonal background, icon tinted with secondary color */
+.md3-top-app-bar__account-chip--user {
+  border-color: color-mix(in srgb, var(--md-sys-color-secondary) 18%, transparent);
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary) 14%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip--user,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip--user {
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary) 16%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar .md3-top-app-bar__actions .md3-top-app-bar__account-chip--user:hover,
+.md3-top-app-bar .md3-top-app-bar__actions .md3-button--text.md3-top-app-bar__account-chip--user:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary) 22%, var(--md-sys-color-surface-container-high));
+}
+.md3-top-app-bar__account-chip--user:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary) 22%, var(--md-sys-color-surface));
+}
+.md3-top-app-bar__account-chip--user .md3-top-app-bar__account-chip-icon {
+  color: var(--md-sys-color-secondary);
+}
+
+.md3-top-app-bar__account-chip-icon {
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-top-app-bar__account-chip-label {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 160px; /* keeps chip compact */
+  /* label should be readable: use full on-surface token, not the muted variant */
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Ensure chip collapses sensibly on smaller screens (icon-only) */
+@media (max-width: 640px) {
+  .md3-top-app-bar__account-chip-label {
+    display: none;
+  }
+  /* mobile: keep a slightly tighter chip width (still override button default) */
+  /* Make the chip a perfect circle on small screens: center the icon and
+     remove horizontal padding so it's square (width = height) */
+  .md3-button--text.md3-top-app-bar__account-chip,
+  .md3-button.md3-top-app-bar__account-chip,
+  .md3-top-app-bar__account-chip {
+    padding: 0; /* remove horizontal padding so circle fits */
+    width: 48px;
+    height: 48px; /* match the icon button */
+    border-radius: 50%; /* make round */
+    justify-content: center; /* center icon */
+  }
+}
+
+.md3-top-app-bar__account-button:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-surface-variant) 16%, transparent);
+}
+
+.md3-top-app-bar__account-button:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md3-top-app-bar__account-icon {
+  font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Account name + role block */
+.md3-top-app-bar__account-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+  min-width: 0; /* prevent overflow in flex */
+}
+
+.md3-top-app-bar__account-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 160px;
+}
+
+.md3-top-app-bar__account-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-top-app-bar__role-icon {
+  font-size: 16px;
+}
+
+.md3-top-app-bar__role-icon--admin {
+  color: var(--md-sys-color-error);
+}
+
+.md3-top-app-bar__role-icon--editor {
+  color: var(--md-sys-color-secondary);
+}
+
+.md3-top-app-bar__role-icon--user {
+  color: var(--md-sys-color-primary);
+}
+
+/* Login/Guest neutral variant */
+.md3-top-app-bar__account-button--guest {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Status Dot */
+.md3-top-app-bar__account-status-dot {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px var(--md-sys-color-surface);
+}
+
+.md3-top-app-bar__account-button--guest .md3-top-app-bar__account-status-dot {
+  display: none;
+}
+
+/* ============================================
+   Responsive: collapse text on small screens
+   ============================================ */
+@media (max-width: 640px) {
+  .md3-top-app-bar__account-text {
+    display: none; /* only icons on small screens */
+  }
+
+  .md3-top-app-bar__account-button {
+    padding-inline: 0.5rem;
+  }
+
+  .md3-top-app-bar__account-status-dot {
+    right: 2px;
+    bottom: 2px;
+  }
+}
+
+/* User Menu Dropdown (Dashboard + Logout) */
+.md3-user-menu__dropdown {
+  position: fixed;
+  top: 64px;
+  right: 12px;
+  width: 256px;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  z-index: 2000; /* Über allem */
+  box-shadow: var(--elev-2);
+  /* Animation */
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  display: none;
+}
+
+/* Hidden state (legacy: [hidden] attribute) */
+.md3-user-menu__dropdown[hidden] {
+  display: none;
+}
+
+/* Open state: data-open attribute */
+.md3-user-menu__dropdown[data-open] {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Show state (legacy: :not([hidden]) selector) */
+.md3-user-menu__dropdown:not([hidden]) {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.md3-user-menu__form {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.md3-user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  text-align: left;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 200ms ease;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  min-height: 48px; /* Touch target */
+  white-space: nowrap;
+}
+
+.md3-user-menu__item:hover {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 8%,
+    transparent
+  );
+}
+
+.md3-user-menu__item:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.md3-user-menu__icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.md3-user-menu__label {
+  flex: 1;
+}
+
+.md3-user-menu__divider {
+  height: 1px;
+  margin: var(--space-2) 0;
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* ============================================
+   Login Sheet Styles
+   ============================================
+   MOVED TO: static/css/md3/components/status-banner.css
+   (Loaded BEFORE this file to ensure proper cascade)
+   ============================================ */
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+/* Compact (Mobile) */
+@media (max-width: 599px) {
+  .md3-top-app-bar__title {
+    font-size: 1.125rem;
+  }
+
+  .md3-top-app-bar--medium .md3-top-app-bar__headline {
+    font-size: 1.5rem;
+  }
+
+  .md3-top-app-bar--large .md3-top-app-bar__headline {
+    font-size: 1.75rem;
+  }
+}
+
+/* ============================================
+   Dark Theme Support
+   ============================================ */
+
+/* Dark Mode: Automatische Farbanpassung via CSS-Tokens */
+/* Tokens (surface, on-surface) passen sich automatisch an data-theme an */
+/* Keine zusätzlichen Regeln nötig - Media Queries oben gelten für beide Themes */
+
+/* Expanded: Bleibt transparent auch im Dark Mode */
+@media (min-width: 840px) {
+  :root[data-theme="dark"] .md3-top-app-bar,
+  .theme-dark .md3-top-app-bar {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* ============================================
+   Theme Toggle Button
+   ============================================ */
+
+.md3-theme-toggle {
+  /* Filled Tonal Variant für bessere Sichtbarkeit über transparentem Hintergrund */
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.md3-theme-toggle:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  border-color: var(--md-sys-color-outline);
+}
+
+.md3-theme-toggle:active {
+  background: var(--md-sys-color-surface-container);
+}
+
+.md3-theme-toggle[aria-pressed="true"] {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+.md3-theme-toggle[aria-pressed="true"]:hover {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary-container) 90%,
+    var(--md-sys-color-primary) 10%
+  );
+}
+
+/* Icon-Sizing für Theme Toggle */
+.md3-theme-toggle .material-symbols-rounded {
+  font-size: 22px;
+  line-height: 1;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 22;
+}
+
+.md3-theme-toggle[aria-pressed="true"] .material-symbols-rounded {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 500,
+    "GRAD" 0,
+    "opsz" 22;
+}
+
+/* ============================================
+   Pointer-Events-Optimierung (nur auf Expanded)
+   ============================================ */
+
+/* Bar ist nur auf Expanded transparent mit pointer-events: none */
+@media (min-width: 840px) {
+  .md3-top-app-bar {
+    pointer-events: none;
+  }
+
+  /* Nur interaktive Elemente fangen Pointer-Events ab */
+  .md3-top-app-bar__navigation-icon,
+  .md3-top-app-bar__actions,
+  .md3-icon-button,
+  .md3-user-menu,
+  .md3-user-menu__dropdown {
+    pointer-events: auto;
+  }
+}
+
+/* Auf Compact/Medium: Gesamte Bar interaktiv */
+@media (max-width: 839px) {
+  .md3-top-app-bar {
+    pointer-events: auto;
+  }
+}
+
+/* ============================================
+   Custom Properties for JS
+   ============================================ */
+
+:root {
+  --app-bar-height-small: 64px;
+  --app-bar-height-medium: 112px;
+  --app-bar-height-large: 152px;
+  --app-bar-transition-duration: 300ms;
+  --app-bar-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   Account Button & Badges (New MD3 Design)
+   ============================================ */
+
+/* Account-Button: Text-Button mit Icon */
+.md3-account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-2);
+  height: 40px;
+  border-radius: 9999px; /* Pill shape for text button */
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Username-Typo */
+.md3-account-button__user {
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ============================================
+   MD3 Badge - Goldstandard
+   ============================================ */
+.md3-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-inline: 8px;
+  height: 24px;
+  border-radius: 9999px;
+  font-size: var(--md-sys-typescale-label-small-font-size);
+  font-weight: var(--md-sys-typescale-label-small-font-weight);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Badge Icon - Material Symbols use 'font-size' for sizing */
+.md3-badge__icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  line-height: 1;
+}
+
+/* Ensure Material Symbols in badges respect the size */
+.md3-badge__icon.material-symbols-rounded {
+  font-size: inherit;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 14;
+}
+
+/* Small Variant */
+.md3-badge--small {
+  height: 20px;
+  padding-inline: 6px;
+  font-size: 11px;
+}
+
+.md3-badge--small .md3-badge__icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.md3-badge--small .md3-badge__icon.material-symbols-rounded {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 12;
+}
+
+/* ============================================
+   Role Badge Colors
+   ============================================ */
+.md3-badge--role-admin {
+  background: color-mix(in srgb, var(--md-sys-color-error) 16%, transparent);
+  color: var(--md-sys-color-error);
+}
+
+.md3-badge--role-editor {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+.md3-badge--role-user {
+  background: color-mix(in srgb, var(--md-sys-color-secondary) 16%, transparent);
+  color: var(--md-sys-color-secondary);
+}
+
+/* ============================================
+   Status Badge Colors
+   ============================================ */
+/* Success / Active */
+.md3-badge--success,
+.md3-badge--status-active {
+  background: color-mix(in srgb, var(--md-sys-color-success, #34a853) 16%, transparent);
+  color: var(--md-sys-color-success, #34a853);
+}
+
+/* Error */
+.md3-badge--error,
+.md3-badge--status-error {
+  background: color-mix(in srgb, var(--md-sys-color-error) 16%, transparent);
+  color: var(--md-sys-color-error);
+}
+
+/* Inactive / Neutral */
+.md3-badge--status-inactive {
+  background: color-mix(in srgb, var(--md-sys-color-outline) 24%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Pending / Warning */
+.md3-badge--status-pending,
+.md3-badge--warning {
+  background: color-mix(in srgb, var(--md-sys-color-warning, #f9a825) 16%, transparent);
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+/* Info */
+.md3-badge--info {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+/* Count Badge */
+.md3-badge--count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  justify-content: center;
+}

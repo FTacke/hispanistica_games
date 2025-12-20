@@ -1,0 +1,331 @@
+/* ============================================
+   MD3 ADMIN DASHBOARD LAYOUT
+   ============================================
+   
+   Styles für das Admin-Analytics-Dashboard.
+   Verwendet ausschließlich MD3-Tokens:
+   - Spacing: --space-{1-12}
+   - Farben: --md-sys-color-*
+   - Radien: --radius-*
+   - Typographie: .md3-* Klassen
+   
+   Erweitert bestehende MD3-Komponenten:
+   - .md3-card (cards.css)
+   - .md3-table (auth.css)
+   - .md3-skeleton (progress.css)
+   ============================================ */
+
+/* ============================================
+   Section Titles
+   ============================================ */
+.md3-section-title {
+  margin-bottom: var(--space-4);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ============================================
+   Responsive Metric Grid
+   - 1 Spalte: < 600px
+   - 2 Spalten: 600-899px  
+   - 4 Spalten: ≥ 900px (für 30-Tage Cards)
+   - 3 Spalten: ≥ 900px (für Gesamt-Cards mit --compact)
+   ============================================ */
+.md3-admin-metrics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+@media (min-width: 600px) {
+  .md3-admin-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .md3-admin-metrics {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-6);
+  }
+  
+  /* Compact variant für 3-spaltige Gesamt-Sektion */
+  .md3-admin-metrics--compact {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .md3-admin-metrics {
+    gap: var(--space-6);
+  }
+}
+
+/* ============================================
+   Metric Cards
+   Flavor-Erweiterung von .md3-card
+   ============================================ */
+.md3-metric-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  gap: var(--space-3);
+  height: 100%;
+  /* min-height: ca. 9rem, nutzt keine direkten Tokens */
+  min-height: 8.75rem;
+}
+
+@media (min-width: 600px) {
+  .md3-metric-card {
+    padding: var(--space-5);
+  }
+}
+
+/* Compact Variante für Gesamt-Cards */
+.md3-metric-card--compact {
+  min-height: 6.25rem;
+  padding: var(--space-4);
+}
+
+.md3-metric-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Icon Container mit Hintergrund */
+.md3-metric-card__icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-sm);
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  flex-shrink: 0;
+}
+
+.md3-metric-card__icon-wrapper--error {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 15%, transparent);
+  color: var(--md-sys-color-error);
+}
+
+/* Einzelnes Icon ohne Container (für compact) */
+.md3-metric-card__icon {
+  font-size: 24px;
+  color: var(--md-sys-color-primary);
+}
+
+.md3-metric-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.md3-metric-card__sub {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Skeleton innerhalb der Metric Card */
+.md3-metric-card__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.md3-metric-card__skeleton[hidden] {
+  display: none;
+}
+
+.md3-metric-card__data[hidden] {
+  display: none;
+}
+
+/* ============================================
+   Dashboard-spezifische Skeleton Varianten
+   ============================================ */
+.md3-skeleton--metric-value {
+  height: 2.25rem;
+  width: 5rem;
+  border-radius: var(--radius-sm);
+}
+
+.md3-skeleton--metric-sub {
+  height: 1rem;
+  width: 8.75rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Tabellen-Skeleton */
+.md3-table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.md3-table-skeleton[hidden] {
+  display: none;
+}
+
+.md3-skeleton--table-row {
+  height: 2.75rem;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Admin Table (erweitert .md3-table aus auth.css)
+   ============================================ */
+.md3-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.md3-admin-table th,
+.md3-admin-table td {
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  text-align: left;
+}
+
+@media (min-width: 600px) {
+  .md3-admin-table th,
+  .md3-admin-table td {
+    padding-inline: var(--space-6);
+  }
+}
+
+.md3-admin-table thead th {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
+}
+
+.md3-admin-table tbody td {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.md3-admin-table tbody tr:nth-child(even) {
+  background-color: var(--md-sys-color-surface-container-lowest);
+}
+
+/* Numeric columns right-aligned */
+.md3-admin-table td:nth-child(2),
+.md3-admin-table td:nth-child(3),
+.md3-admin-table th:nth-child(2),
+.md3-admin-table th:nth-child(3) {
+  text-align: right;
+}
+
+/* No data row */
+.md3-admin-table__empty {
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: var(--space-8) var(--space-4);
+}
+
+/* ============================================
+   Info Card (Datenschutz-Hinweis)
+   ============================================ */
+.md3-info-card {
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.md3-info-card .md3-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.md3-info-card__icon {
+  color: var(--md-sys-color-primary);
+  font-size: 24px;
+}
+
+.md3-info-list {
+  list-style: disc;
+  padding-left: var(--space-6);
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-info-list li + li {
+  margin-top: var(--space-2);
+}
+
+/* ============================================
+   Error State
+   ============================================ */
+.md3-error-banner {
+  margin-top: var(--space-6);
+}
+
+.md3-error-banner[hidden] {
+  display: none;
+}
+
+.md3-error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8);
+  gap: var(--space-4);
+}
+
+.md3-error-card__icon {
+  font-size: 48px;
+  color: var(--md-sys-color-error);
+}
+
+.md3-error-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.md3-error-card__content p {
+  margin: 0;
+}
+
+.md3-error-card__content .md3-body-medium {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================
+   No Data State
+   ============================================ */
+.md3-no-data-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-no-data-card__icon {
+  font-size: 48px;
+  color: var(--md-sys-color-outline);
+  margin-bottom: var(--space-4);
+}
+
+.md3-no-data-card__message {
+  margin-bottom: var(--space-2);
+}
+
+.md3-no-data-card__hint {
+  color: var(--md-sys-color-outline);
+}

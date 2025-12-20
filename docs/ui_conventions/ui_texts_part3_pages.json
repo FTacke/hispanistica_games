@@ -1,0 +1,702 @@
+[
+  {
+    "id": "pages.index.card.proyecto.title",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.index.card.proyecto.text",
+    "old_text": "Conoce los objetivos, la metodología y el equipo detrás del corpus.",
+    "new_text": "Conoce los objetivos, la metodología y el diseño del corpus."
+  },
+  {
+    "id": "pages.index.card.proyecto.btn",
+    "old_text": "Saber más",
+    "new_text": ""
+  },
+  {
+    "id": "pages.index.card.corpus.title",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.index.card.corpus.text",
+    "old_text": "Explora filtros y fragmentos de audio del corpus panhispánico.",
+    "new_text": "Accede a la búsqueda del corpus, su composición y las estadísticas."
+  },
+  {
+    "id": "pages.index.card.corpus.btn",
+    "old_text": "Abrir corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.index.card.atlas.title",
+    "old_text": "Atlas",
+    "new_text": ""
+  },
+  {
+    "id": "pages.index.card.atlas.text",
+    "old_text": "Consulta la cobertura geográfica y datos comparables por país.",
+    "new_text": "Descubre el panorama geográfico del corpus: países, regiones y emisoras."
+  },
+  {
+    "id": "pages.index.card.atlas.btn",
+    "old_text": "Explorar atlas",
+    "new_text": ""
+  },
+  {
+    "id": "pages.atlas.page_title",
+    "old_text": "Atlas · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.atlas.hero.eyebrow",
+    "old_text": "Atlas",
+    "new_text": ""
+  },
+  {
+    "id": "pages.atlas.hero.title",
+    "old_text": "Atlas panhispánico",
+    "new_text": ""
+  },
+  {
+    "id": "pages.atlas.hero.intro",
+    "old_text": "Vista geográfica de las emisoras del corpus CO.RA.PAN. Haz clic en un marcador para ver estadísticas y acceder a los metadatos del país.",
+    "new_text": "Panorama geográfico del corpus: países, regiones y emisoras."
+  },
+  {
+    "id": "pages.atlas.map.aria",
+    "old_text": "Mapa panhispánico de emisoras",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.page_title",
+    "old_text": "Admin-Dashboard · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.hero.eyebrow",
+    "old_text": "Admin",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.hero.title",
+    "old_text": "Admin-Dashboard",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.hero.intro",
+    "old_text": "Überwache Zugriffe, Besuche und Suchanfragen auf der Plattform. Die Daten werden automatisch aktualisiert.",
+    "new_text": "Zugrife, Besuche und Suchanfragen."
+  },
+  {
+    "id": "pages.admin.card.visits.title",
+    "old_text": "Besuche",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.visits.label",
+    "old_text": "Gesamt",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.visits.details",
+    "old_text": "Details nach Monat/Tag",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.visits.month",
+    "old_text": "Dieser Monat",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.visits.history",
+    "old_text": "Monatshistorie",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.access.title",
+    "old_text": "Corpus-Zugriffe",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.search.title",
+    "old_text": "Suchanfragen",
+    "new_text": ""
+  },
+  {
+    "id": "pages.admin.card.info.title",
+    "old_text": "Systeminformationen",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.overview.page_title",
+    "old_text": "CO.RA.PAN · El proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.overview.hero.eyebrow",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.overview.hero.title",
+    "old_text": "El proyecto CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.overview.section.marco",
+    "old_text": "Marco conceptual",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.overview.section.normas",
+    "old_text": "Normas de uso y normas mediáticas",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.overview.section.diseno",
+    "old_text": "Diseño comparativo",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.diseno.page_title",
+    "old_text": "Diseño · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.diseno.hero.eyebrow",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.diseno.hero.title",
+    "old_text": "Diseño",
+    "new_text": "Diseño del corpus"
+  },
+  {
+    "id": "pages.proyecto.diseno.section.obtencion",
+    "old_text": "Obtención y preparación de los datos",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.diseno.section.clasificacion",
+    "old_text": "Clasificación y anotación lingüística",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.diseno.section.base",
+    "old_text": "Base de datos, acceso y marco jurídico",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.diseno.section.webapp",
+    "old_text": "La webapp: Corpus y Atlas",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.page_title",
+    "old_text": "Quiénes somos · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.hero.eyebrow",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.hero.title",
+    "old_text": "Quiénes somos",
+    "new_text": "Equipo"
+  },
+  {
+    "id": "pages.proyecto.quienes.section.creditos",
+    "old_text": "Créditos",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.credito.responsable",
+    "old_text": "Responsable del proyecto y diseño",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.credito.estudiantes",
+    "old_text": "Estudiantes colaboradores (clasificación y corrección)",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.credito.contribuyentes",
+    "old_text": "Contribuyentes en fases previas",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.credito.gestion",
+    "old_text": "Gestión y procesamiento de datos",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.quienes.credito.diseno_web",
+    "old_text": "Diseño web y gráfico",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.page_title",
+    "old_text": "Cómo citar · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.hero.eyebrow",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.hero.title",
+    "old_text": "Cómo citar",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.section.referencia",
+    "old_text": "Referencia general del corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.section.bibtex",
+    "old_text": "Citas en bibtex",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.section.acceso",
+    "old_text": "Acceso a los datos",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.card.webapp.title",
+    "old_text": "Webapp",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.card.webapp.text",
+    "old_text": "Corpus interactivo: Interfaz de búsqueda avanzada y reproductor de audio con transcripciones anotadas.",
+    "new_text": "Interfaz de consulta del corpus con búsqueda simple y avanzada, transcripciones anotadas y posibilidad de reproducir audio."
+  },
+  {
+    "id": "pages.proyecto.citar.card.full.title",
+    "old_text": "Full Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.card.full.text",
+    "old_text": "Corpus completo en acceso restringido, protegido por derechos de autor. Solo para proyectos de investigación autorizados.",
+    "new_text": "Corpus completo en acceso restringido, con grabaciones, transcripciones anotadas y metadatos íntegros."
+  },
+  {
+    "id": "pages.proyecto.citar.card.sample.title",
+    "old_text": "Sample Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.card.sample.text",
+    "old_text": "Corpus de ejemplo con transcritos y estructura de datos, disponible públicamente para exploración y estudio.",
+    "new_text": "Muestra pública destinada a ilustrar la estructura de datos del corpus, sin acceso al material restringido."
+  },
+  {
+    "id": "pages.proyecto.citar.section.recomendacion",
+    "old_text": "Recomendación de cita",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.section.ejemplo",
+    "old_text": "Ejemplo de cita",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.citar.section.licencia",
+    "old_text": "Licencia y uso",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.referencias.page_title",
+    "old_text": "Referencias · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.referencias.hero.eyebrow",
+    "old_text": "Proyecto",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.referencias.hero.title",
+    "old_text": "Referencias",
+    "new_text": ""
+  },
+  {
+    "id": "pages.proyecto.referencias.section.refs",
+    "old_text": "Referencias",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.guia.page_title",
+    "old_text": "Guía de Búsqueda · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.guia.hero.eyebrow",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.guia.hero.title",
+    "old_text": "Guía paso a paso",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.guia.hero.intro",
+    "old_text": "Cómo utilizar todas las herramientas de búsqueda.",
+    "new_text": "Cómo utilizar las herramientas de búsqueda."
+  },
+  {
+    "id": "pages.corpus.guia.section.simple",
+    "old_text": "1. Consulta Simple: Para empezar",
+    "new_text": "Consulta Simple"
+  },
+  {
+    "id": "pages.corpus.guia.section.avanzado",
+    "old_text": "2. Modo Avanzado: Para profundizar",
+    "new_text": "Modo Avanzado"
+  },
+  {
+    "id": "pages.corpus.guia.section.token",
+    "old_text": "3. Búsqueda por Token: Precisión quirúrgica",
+    "new_text": "Búsqueda por Token"
+  },
+  {
+    "id": "pages.corpus.guia.section.resultados",
+    "old_text": "4. Resultados y Estadísticas",
+    "new_text": "Resultados y Estadísticas"
+  },
+  {
+    "id": "pages.corpus.composicion.page_title",
+    "old_text": "Composición · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.composicion.hero.eyebrow",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.composicion.hero.title",
+    "old_text": "Composición",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.composicion.section.completo",
+    "old_text": "Composición del corpus completo",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.composicion.fig.total.title",
+    "old_text": "Composición total del corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.composicion.fig.genero.title",
+    "old_text": "Distribución por sexo",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.composicion.fig.modo.title",
+    "old_text": "Modo de producción por sexo",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.page_title",
+    "old_text": "Metadatos · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.hero.eyebrow",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.hero.title",
+    "old_text": "Metadatos del corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.hero.intro",
+    "old_text": "Esta página presenta los metadatos del corpus CO.RA.PAN. Puede explorar el resumen global o consultar los datos por país.",
+    "new_text": "NULL"
+  },
+  {
+    "id": "pages.corpus.metadata.tab.resumen",
+    "old_text": "Resumen y descargas",
+    "new_text": "Resumen global"
+  },
+  {
+    "id": "pages.corpus.metadata.tab.paises",
+    "old_text": "Metadatos por país",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.title",
+    "old_text": "Resumen del corpus y descargas de metadatos",
+    "new_text": "Metadatos del corpus completo"
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.title",
+    "old_text": "Descargas de metadatos del corpus completo",
+    "new_text": "Descargar metadatos"
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.text",
+    "old_text": "Seleccione el formato de descarga para los metadatos de todas las grabaciones del corpus CO.RA.PAN.",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.btn",
+    "old_text": "Descargar metadatos",
+    "new_text": "Descargar"
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.tsv",
+    "old_text": "Formato TSV",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.json",
+    "old_text": "Formato JSON",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.jsonld",
+    "old_text": "Formato JSON-LD",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.resumen.download.tei",
+    "old_text": "Cabeceras TEI (ZIP)",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.paises.title",
+    "old_text": "Metadatos por país",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.loading",
+    "old_text": "Cargando metadatos...",
+    "new_text": ""
+  },
+  {
+    "id": "pages.corpus.metadata.error",
+    "old_text": "Error al cargar los metadatos. Por favor, recarga la página.",
+    "new_text": ""
+  },
+  {
+    "id": "pages.player.page_title",
+    "old_text": "Player · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.player.hero.eyebrow",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "pages.player.hero.title",
+    "old_text": "Player",
+    "new_text": ""
+  },
+  {
+    "id": "pages.player.hero.intro",
+    "old_text": "Seleccione un país para acceder a las grabaciones del corpus CO.RA.PAN mediante el reproductor integrado.",
+    "new_text": "NULL"
+  },
+  {
+    "id": "pages.player.loading",
+    "old_text": "Cargando grabaciones...",
+    "new_text": ""
+  },
+  {
+    "id": "pages.player.error",
+    "old_text": "Error al cargar las grabaciones. Por favor, recargue la página.",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.page_title",
+    "old_text": "Editor - CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.hero.eyebrow",
+    "old_text": "Editor",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.hero.title",
+    "old_text": "Editor de Transcripciones",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.hero.intro",
+    "old_text": "Gestionar y editar archivos JSON del corpus",
+    "new_text": "NULL"
+  },
+  {
+    "id": "pages.editor.table.header.filename",
+    "old_text": "Filename",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.table.header.duracion",
+    "old_text": "Duración",
+    "new_text": "Duration"
+  },
+  {
+    "id": "pages.editor.table.header.palabras",
+    "old_text": "Palabras",
+    "new_text": "Tokens"
+  },
+  {
+    "id": "pages.editor.table.header.last_edited",
+    "old_text": "Last Edited",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.table.header.last_editor",
+    "old_text": "Last Editor",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.table.header.acciones",
+    "old_text": "Acciones",
+    "new_text": "Actions"
+  },
+  {
+    "id": "pages.editor.table.unchanged",
+    "old_text": "unchanged",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.btn.edit",
+    "old_text": "Edit",
+    "new_text": ""
+  },
+  {
+    "id": "pages.editor.empty",
+    "old_text": "No hay archivos de transcripción disponibles.",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.page_title",
+    "old_text": "Impressum · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.hero.eyebrow",
+    "old_text": "Rechtliche Informationen",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.hero.title",
+    "old_text": "Impressum",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.anbieter",
+    "old_text": "Anbieter dieser Internetpräsenz im Rechtssinne ist",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.postanschrift",
+    "old_text": "Postanschrift",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.aufsicht",
+    "old_text": "Zuständige Aufsichtsbehörde",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.studienleitung",
+    "old_text": "Studienleitung",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.haftung",
+    "old_text": "Haftungsausschluss und rechtliche Hinweise",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.haftung.inhalte",
+    "old_text": "Haftung für Inhalte",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.haftung.links",
+    "old_text": "Haftung für Links",
+    "new_text": ""
+  },
+  {
+    "id": "pages.impressum.section.haftung.urheberrecht",
+    "old_text": "Urheberrecht",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.page_title",
+    "old_text": "Datenschutz · CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.hero.eyebrow",
+    "old_text": "Rechtliche Informationen",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.hero.title",
+    "old_text": "Datenschutzerklärung",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.1",
+    "old_text": "1. Verantwortlicher",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.2",
+    "old_text": "2. Behördlicher Datenschutzbeauftragter",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.3",
+    "old_text": "3. Zweck der Datenverarbeitung",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.4",
+    "old_text": "4. Speicherung und Löschung von Daten",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.5",
+    "old_text": "5. Verwendung von JWT (JSON Web Token) zur Authentifizierung",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.6",
+    "old_text": "6. Rechte der betroffenen Personen",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.7",
+    "old_text": "7. Auth-bezogene Daten & App-Funktionen",
+    "new_text": ""
+  },
+  {
+    "id": "pages.privacy.section.8",
+    "old_text": "8. Kontakt zur Datenschutzaufsicht",
+    "new_text": ""
+  }
+]

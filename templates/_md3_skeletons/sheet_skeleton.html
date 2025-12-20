@@ -1,0 +1,73 @@
+<!-- Sheet Skeleton (MD3 Bottom Sheet / Side Sheet) -->
+<!--
+  Use this skeleton for:
+  - Filter panels
+  - Action menus
+  - Detail panels that slide in from the side or bottom
+  
+  Behavior:
+  - Opens with JavaScript (add 'open' class or use dialog API)
+  - Contains focus when open
+  - Closes on backdrop click or Escape key
+  - Use appropriate ARIA attributes
+-->
+
+<aside class="md3-sheet md3-sheet--bottom" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="md3-sheet__scrim" data-md3-sheet-action="close"></div>
+  <div class="md3-sheet__container">
+    <!-- Drag handle (for bottom sheets on mobile) -->
+    <div class="md3-sheet__handle" aria-hidden="true">
+      <div class="md3-sheet__handle-bar"></div>
+    </div>
+    
+    <!-- Header (optional, but recommended for accessibility) -->
+    <header class="md3-sheet__header">
+      <h2 id="sheet-title" class="md3-title-large md3-sheet__title">Filtros</h2>
+      <button class="md3-icon-button" data-md3-sheet-action="close" aria-label="Cerrar">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+    
+    <!-- Content -->
+    <div class="md3-sheet__content md3-stack--sheet">
+      <!-- Form elements, lists, or other content -->
+      <div class="md3-form-field">
+        <label for="filter-example" class="md3-label-large">Filtro</label>
+        <select id="filter-example" class="md3-select">
+          <option value="">Todos</option>
+          <option value="option1">Opción 1</option>
+          <option value="option2">Opción 2</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Actions (optional) -->
+    <footer class="md3-sheet__actions">
+      <button class="md3-button md3-button--text" data-md3-sheet-action="close">Cancelar</button>
+      <button class="md3-button md3-button--filled" data-md3-sheet-action="apply">Aplicar</button>
+    </footer>
+  </div>
+</aside>
+
+<!--
+  JavaScript to control the sheet:
+  
+  // Open
+  const sheet = document.querySelector('.md3-sheet');
+  sheet.hidden = false;
+  sheet.classList.add('md3-sheet--open');
+  
+  // Close
+  sheet.classList.remove('md3-sheet--open');
+  setTimeout(() => { sheet.hidden = true; }, 300); // after animation
+  
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !sheet.hidden) {
+      closeSheet();
+    }
+  });
+  
+  // Close on scrim click
+  sheet.querySelector('.md3-sheet__scrim').addEventListener('click', closeSheet);
+-->

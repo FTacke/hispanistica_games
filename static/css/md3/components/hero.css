@@ -1,0 +1,381 @@
+/* ============================================================================
+   MD3 Page Heroes - Canonical Implementation
+   ============================================================================
+   Strict MD3 Hero/Header implementation per specification:
+   - 8dp grid spacing (MD3: 16dp body margins on mobile, 24dp on tablet+)
+   - MD3 type roles only
+   - Single H1 per page
+   - Max 1 high-emphasis CTA
+   - Touch targets ≥48×48 dp
+   
+   PADDING STRATEGY (MD3 Best Practice):
+   - Body/Page wrapper: Defines Edge-Padding (16px mobile, 24px tablet, 32px desktop)
+   - .md3-hero: Defines max-width & centering (NO horizontal padding)
+   - .md3-hero__container: Inner content padding
+   
+   SYSTEMATIC LAYOUT APPROACH:
+   - Edge-Padding kommt vom Page-Container (md3-text-page, md3-corpus-page, etc.)
+   - Hero selbst hat NUR max-width + centering
+   - Container-Variante (.md3-hero--container) hat zusätzlich Tonal-Background
+   ============================================================================ */
+
+/* Base Hero Wrapper - Centering & Max-Width (NO horizontal padding) */
+.md3-hero {
+  max-width: 900px;
+  margin: var(--space-6) auto 0; /* Centered with auto margins */
+  position: relative;
+}
+
+/* Hero Container - Inner padding for content */
+.md3-hero__container {
+  padding: var(--space-6) 0 0; /* Only top padding, no horizontal */
+  /* Keep hero content visually aligned with the canonical text page width */
+  max-width: var(--text-page-max-width, 900px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hero Eyebrow (Context Label) */
+.md3-hero__eyebrow {
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: var(--space-2);
+  display: block;
+  text-transform: uppercase;
+}
+
+/* Hero Title (H1) */
+.md3-hero__title {
+  font-size: var(--md-sys-typescale-display-small-font-size);
+  font-weight: var(--md-sys-typescale-display-small-font-weight);
+  line-height: var(--md-sys-typescale-display-small-line-height);
+  color: var(--md-sys-color-primary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.md3-hero__title--large {
+  font-size: var(--md-sys-typescale-display-small-font-size);
+  line-height: var(--md-sys-typescale-display-small-line-height);
+}
+
+/* Hero Intro Text */
+.md3-hero__intro {
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  font-weight: var(--md-sys-typescale-body-large-font-weight);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-letter-spacing);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--space-6) 0;
+  max-width: 65ch;
+}
+
+/* Hero Actions (CTA Buttons) */
+.md3-hero__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.md3-hero__actions .btn {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Hero Chips (Optional Filters/Metadata) */
+.md3-hero__chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* ============================================================================
+   Hero Variants
+   ============================================================================ */
+
+/* Variant A: Surface Hero (Elevated) */
+.md3-hero--surface {
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--elev-1);
+}
+
+/* Variant B: Container Hero (Tonal) - Tonal background with rounded corners */
+.md3-hero--container {
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-1);
+  max-width: 900px;
+  /* Centering + vertical margins (NO horizontal margins - Edge-Padding from page wrapper) */
+  margin: var(--space-6) auto var(--space-8);
+}
+
+.md3-hero--container .md3-hero__container {
+  /* Additional inner padding for tonal container */
+  padding: var(--space-6);
+}
+
+@media (max-width: 599px) {
+  .md3-hero--container {
+    border-radius: var(--radius-sm); /* Smaller radius on mobile */
+  }
+
+  .md3-hero--container .md3-hero__container {
+    /* Reduce inner padding on mobile */
+    padding: var(--space-4);
+  }
+}
+
+/* Variant C: Primary Container Hero (Strong Accent) */
+.md3-hero--primary-container {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-hero--primary-container .md3-hero__eyebrow {
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.8;
+}
+
+.md3-hero--primary-container .md3-hero__title {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-hero--primary-container .md3-hero__intro {
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.9;
+}
+
+/* Variant D: Minimal Hero (Borderless) */
+.md3-hero--minimal {
+  background: transparent;
+}
+
+.md3-hero--minimal .md3-hero__container {
+  padding-top: var(--space-8); /* Extra top padding for minimal variant */
+  padding-bottom: var(--space-6);
+}
+
+/* Variant E: Full-Width Hero */
+.md3-hero--full-width .md3-hero__container {
+  max-width: 100%; /* Full width, but still has padding */
+}
+
+/* ============================================================================
+   Responsive Breakpoints
+   ============================================================================ */
+
+/* Compact (Mobile) - Typography adjustments only */
+@media (max-width: 599px) {
+  .md3-hero__title {
+    font-size: 1.75rem;
+  }
+
+  .md3-hero__title--large {
+    font-size: 2rem;
+  }
+
+  .md3-hero__intro {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+
+  .md3-hero__actions {
+    margin-bottom: 12px;
+  }
+}
+
+/* Medium/Tablet - Content width adjustments */
+@media (min-width: 600px) and (max-width: 839px) {
+  .md3-hero__title {
+    max-width: 90%;
+  }
+}
+
+/* Expanded (Desktop) - Wider content */
+@media (min-width: 840px) {
+  .md3-hero__container {
+    padding-top: var(--space-6); /* Consistent top padding on desktop (24px) */
+  }
+
+  .md3-hero__title {
+    max-width: 85%;
+  }
+
+  .md3-hero__intro {
+    max-width: 70ch;
+  }
+}
+
+/* ============================================================================
+   Hero with Icon - Decorative Icon in eyebrow/top area
+   ============================================================================ */
+
+.md3-hero--with-icon {
+  position: relative;
+}
+
+.md3-hero--with-icon .md3-hero__container {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.md3-hero__icon {
+  /* Icon container used across hero variants: 40px circular container with 24px icon */
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px; /* icon size inside the circle */
+  color: var(--md-sys-color-primary);
+  opacity: 0.95;
+  line-height: 1;
+  margin-right: var(--space-3);
+  background: transparent; /* card variant will override with a colored background */
+}
+
+/* Card-hero modifier — tonal/elevated card for text-page headers */
+.md3-hero--card {
+  background: var(--md-sys-color-surface-container-high, var(--md-sys-color-surface-container));
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-8);
+  box-shadow: var(--elev-1);
+}
+
+.md3-hero--card .md3-hero__icon {
+  /* circular icon block inside card hero */
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px; /* layout uses margin-right for spacing in row layouts */
+  font-size: 24px; /* keep icon size consistent */
+}
+
+.md3-hero__content {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 599px) {
+  .md3-hero--with-icon .md3-hero__container {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .md3-hero__icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ============================================================================
+   Accessibility
+   ============================================================================ */
+
+.md3-hero__actions .btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* RTL Support */
+[dir="rtl"] .md3-hero__actions {
+  flex-direction: row-reverse;
+}
+
+/* ============================================================================
+   Back Link Pattern - Goldstandard Addition
+   ============================================================================ */
+
+.md3-page__nav {
+  margin-bottom: var(--space-4);
+}
+
+.md3-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  margin-left: calc(-1 * var(--space-3)); /* Optical alignment with content */
+  border-radius: var(--radius-full);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.md3-back-link:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-primary);
+}
+
+.md3-back-link:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md3-back-link .material-symbols-rounded {
+  font-size: 1.25rem;
+}
+
+/* ============================================================================
+   Page Header Wrapper - Goldstandard Addition
+   ============================================================================ */
+
+.md3-page-header {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+}
+
+.md3-page-header__nav {
+  margin-bottom: var(--space-4);
+}
+
+.md3-page-header__title {
+  font-size: var(--md-sys-typescale-headline-medium-font-size);
+  font-weight: var(--md-sys-typescale-headline-medium-font-weight);
+  line-height: var(--md-sys-typescale-headline-medium-line-height);
+  color: var(--md-sys-color-primary);
+  margin: 0 0 var(--space-2);
+}
+
+.md3-page-header__subtitle {
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  font-weight: var(--md-sys-typescale-body-large-font-weight);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  max-width: 65ch;
+}
+
+/* Responsive page header */
+@media (max-width: 599px) {
+  .md3-page-header {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+  
+  .md3-page-header__title {
+    font-size: var(--md-sys-typescale-headline-small-font-size);
+  }
+  
+  .md3-back-link {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--md-sys-typescale-label-medium-font-size);
+  }
+}

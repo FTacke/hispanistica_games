@@ -1,0 +1,537 @@
+[
+  {
+    "id": "search.advanced.page_title",
+    "old_text": "Consultar corpus · CO.RA.PAN",
+    "new_text": "Búsquedas"
+  },
+  {
+    "id": "search.advanced.hero.eyebrow",
+    "old_text": "Corpus",
+    "new_text": ""
+  },
+  {
+    "id": "search.advanced.hero.title",
+    "old_text": "Consultar corpus",
+    "new_text": "Búsquedas simples y avanzadas"
+  },
+  {
+    "id": "search.advanced.hero.intro",
+    "old_text": "Búsqueda con CQL (Corpus Query Language) vía BlackLab. Secuencias, POS, lemas, filtros por metadatos.",
+    "new_text": "Búsqueda CQL (Corpus Query Language) con BlackLab: simple o avanzada, sobre datos lingüísticos anotados (tokens, lemas, secuencias, POS) y filtrada por metadatos (países/regiones, hablantes, sexo, registro)."
+  },
+  {
+    "id": "search.advanced.tab.simple",
+    "old_text": "Consulta simple",
+    "new_text": ""
+  },
+  {
+    "id": "search.advanced.tab.advanced",
+    "old_text": "Consulta avanzada (CQL)",
+    "new_text": ""
+  },
+  {
+    "id": "search.advanced.tab.token",
+    "old_text": "Token",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.heading",
+    "old_text": "Consulta simple",
+    "new_text": "Buscar formas simples y secuencias"
+  },
+  {
+    "id": "search.simple.query.label",
+    "old_text": "Consulta",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.type.label",
+    "old_text": "Tipo",
+    "new_text": "Forma/Lema"
+  },
+  {
+    "id": "search.simple.type.forma",
+    "old_text": "Forma",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.type.forma_exacta",
+    "old_text": "Forma exacta",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.type.lema",
+    "old_text": "Lema",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.options.heading",
+    "old_text": "Opciones",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.options.regional",
+    "old_text": "Incluir emisoras regionales",
+    "new_text": "Incluir regiones"
+  },
+  {
+    "id": "search.simple.options.accents",
+    "old_text": "Ignorar acentos/mayúsculas",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.btn.reset",
+    "old_text": "Restablecer",
+    "new_text": ""
+  },
+  {
+    "id": "search.simple.btn.search",
+    "old_text": "Buscar",
+    "new_text": ""
+  },
+  {
+    "id": "search.advanced.heading",
+    "old_text": "Modo avanzado (CQL)",
+    "new_text": "Búsquedas mediante el constructor CQL"
+  },
+  {
+    "id": "search.advanced.btn.add_token",
+    "old_text": "Añadir palabra",
+    "new_text": "Añadir token"
+  },
+  {
+    "id": "search.advanced.cql.heading",
+    "old_text": "Consulta CQL",
+    "new_text": "Editor CQL (modo experto)"
+  },
+  {
+    "id": "search.advanced.cql.label",
+    "old_text": "Consulta CQL",
+    "new_text": ""
+  },
+  {
+    "id": "search.advanced.cql.manual",
+    "old_text": "Permitir editar manualmente",
+    "new_text": "Activar modo experto (editar CQL manualmente)"
+  },
+  {
+    "id": "search.advanced.cql.guide_link",
+    "old_text": "(Cómo hacerlo)",
+    "new_text": "(Guía rápida: usar un prompt para la IA)"
+  },
+  {
+    "id": "search.advanced.cql.warning",
+    "old_text": "La consulta CQL ha sido editada manualmente. El constructor no la sobrescribirá.",
+    "new_text": "Has modificado la consulta CQL manualmente. La configuración del constructor ya no se aplicará."
+  },
+  {
+    "id": "search.advanced.dialog.guide.title",
+    "old_text": "Ayuda CQL",
+    "new_text": "Guía de construcción de consultas CQL mediante un prompt"
+  },
+  {
+    "id": "search.advanced.dialog.guide.btn.close",
+    "old_text": "Cerrar",
+    "new_text": ""
+  },
+  {
+    "id": "search.advanced.dialog.guide.btn.copy",
+    "old_text": "Copiar prompt",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.tab.resultados",
+    "old_text": "Resultados",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.tab.estadisticas",
+    "old_text": "Estadísticas",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.num",
+    "old_text": "#",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.ctx_left",
+    "old_text": "Ctx.←",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.resultado",
+    "old_text": "Resultado",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.ctx_right",
+    "old_text": "Ctx.→",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.audio",
+    "old_text": "Audio",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.pais",
+    "old_text": "País",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.hablante",
+    "old_text": "Hablante",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.sexo",
+    "old_text": "Sexo",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.modo",
+    "old_text": "Modo",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.discurso",
+    "old_text": "Discurso",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.token_id",
+    "old_text": "Token-ID",
+    "new_text": ""
+  },
+  {
+    "id": "search.results.table.header.archivo",
+    "old_text": "Archivo",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.filter.label",
+    "old_text": "Seleccionar",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.filter.all",
+    "old_text": "Todos los países",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.btn.download",
+    "old_text": "Descargar CSV",
+    "new_text": "CSV"
+  },
+  {
+    "id": "search.stats.chart.pais.title",
+    "old_text": "País",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.chart.hablante.title",
+    "old_text": "Tipo de hablante",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.chart.sexo.title",
+    "old_text": "Sexo",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.chart.modo.title",
+    "old_text": "Modo de habla",
+    "new_text": ""
+  },
+  {
+    "id": "search.stats.chart.discurso.title",
+    "old_text": "Discurso",
+    "new_text": ""
+  },
+  {
+    "id": "search.token.heading",
+    "old_text": "Buscar por Token-IDs",
+    "new_text": "Búsqueda por Token-IDs"
+  },
+  {
+    "id": "search.token.input.label",
+    "old_text": "Token-IDs",
+    "new_text": ""
+  },
+  {
+    "id": "search.token.btn.add",
+    "old_text": "Añadir",
+    "new_text": ""
+  },
+  {
+    "id": "search.token.count",
+    "old_text": "0 IDs",
+    "new_text": ""
+  },
+  {
+    "id": "search.token.btn.clear",
+    "old_text": "Limpiar todo",
+    "new_text": ""
+  },
+  {
+    "id": "search.token.btn.visualize",
+    "old_text": "Visualizar",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.heading",
+    "old_text": "Filtros",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.pais.label",
+    "old_text": "País",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.pais.default",
+    "old_text": "Todos los países",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.hablante.label",
+    "old_text": "Hablante",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.hablante.default",
+    "old_text": "Todos",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.hablante.pro",
+    "old_text": "Profesional",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.hablante.otro",
+    "old_text": "Otro",
+    "new_text": "Otro (no profesional)"
+  },
+  {
+    "id": "search.filters.sexo.label",
+    "old_text": "Sexo",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.sexo.default",
+    "old_text": "Todos",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.sexo.m",
+    "old_text": "Masculino",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.sexo.f",
+    "old_text": "Femenino",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.modo.label",
+    "old_text": "Modo",
+    "new_text": "Modo/registro"
+  },
+  {
+    "id": "search.filters.modo.default",
+    "old_text": "Todos",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.modo.pre",
+    "old_text": "Anuncio",
+    "new_text": "Habla pregrabada (anuncio)"
+  },
+  {
+    "id": "search.filters.modo.lectura",
+    "old_text": "Lectura",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.modo.libre",
+    "old_text": "Habla libre",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.discurso.label",
+    "old_text": "Discurso",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.discurso.default",
+    "old_text": "Todos",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.discurso.general",
+    "old_text": "General",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.discurso.tiempo",
+    "old_text": "Tiempo",
+    "new_text": ""
+  },
+  {
+    "id": "search.filters.discurso.transito",
+    "old_text": "Tránsito",
+    "new_text": ""
+  },
+  {
+    "id": "errors.400.page_title",
+    "old_text": "400 - Solicitud Incorrecta \\| CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "errors.400.code",
+    "old_text": "400",
+    "new_text": ""
+  },
+  {
+    "id": "errors.400.title",
+    "old_text": "Solicitud Incorrecta",
+    "new_text": ""
+  },
+  {
+    "id": "errors.400.message",
+    "old_text": "La solicitud no pudo ser procesada debido a un error en los datos enviados.",
+    "new_text": "No se pudo procesar la solicitud."
+  },
+  {
+    "id": "errors.400.btn.home",
+    "old_text": "Volver al inicio",
+    "new_text": ""
+  },
+  {
+    "id": "errors.400.btn.retry",
+    "old_text": "Intentar de nuevo",
+    "new_text": ""
+  },
+  {
+    "id": "errors.401.page_title",
+    "old_text": "401 - No Autorizado \\| CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "errors.401.code",
+    "old_text": "401",
+    "new_text": ""
+  },
+  {
+    "id": "errors.401.title",
+    "old_text": "Acceso No Autorizado",
+    "new_text": ""
+  },
+  {
+    "id": "errors.401.message",
+    "old_text": "Debes iniciar sesión para acceder a este recurso.",
+    "new_text": "Este recurso requiere acceso autorizado. Si dispones de credenciales, inicia sesión."
+  },
+  {
+    "id": "errors.401.btn.login",
+    "old_text": "Iniciar sesión",
+    "new_text": ""
+  },
+  {
+    "id": "errors.401.btn.home",
+    "old_text": "Volver al inicio",
+    "new_text": ""
+  },
+  {
+    "id": "errors.403.page_title",
+    "old_text": "403 - Acceso Prohibido \\| CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "errors.403.code",
+    "old_text": "403",
+    "new_text": ""
+  },
+  {
+    "id": "errors.403.title",
+    "old_text": "Acceso Prohibido",
+    "new_text": ""
+  },
+  {
+    "id": "errors.403.message",
+    "old_text": "No tienes permisos suficientes para acceder a este recurso.",
+    "new_text": "Acceso no permitido."
+  },
+  {
+    "id": "errors.403.btn.home",
+    "old_text": "Volver al inicio",
+    "new_text": ""
+  },
+  {
+    "id": "errors.403.btn.back",
+    "old_text": "Página anterior",
+    "new_text": ""
+  },
+  {
+    "id": "errors.404.page_title",
+    "old_text": "404 - Página No Encontrada \\| CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "errors.404.code",
+    "old_text": "404",
+    "new_text": ""
+  },
+  {
+    "id": "errors.404.title",
+    "old_text": "Página No Encontrada",
+    "new_text": ""
+  },
+  {
+    "id": "errors.404.message",
+    "old_text": "Lo sentimos, la página que buscas no existe o ha sido movida.",
+    "new_text": ""
+  },
+  {
+    "id": "errors.404.btn.home",
+    "old_text": "Volver al inicio",
+    "new_text": ""
+  },
+  {
+    "id": "errors.404.btn.back",
+    "old_text": "Página anterior",
+    "new_text": ""
+  },
+  {
+    "id": "errors.500.page_title",
+    "old_text": "500 - Error Interno \\| CO.RA.PAN",
+    "new_text": ""
+  },
+  {
+    "id": "errors.500.code",
+    "old_text": "500",
+    "new_text": ""
+  },
+  {
+    "id": "errors.500.title",
+    "old_text": "Error Interno del Servidor",
+    "new_text": ""
+  },
+  {
+    "id": "errors.500.message",
+    "old_text": "Ocurrió un error inesperado. El equipo técnico ha sido notificado.",
+    "new_text": "Error inesperado."
+  },
+  {
+    "id": "errors.500.btn.home",
+    "old_text": "Volver al inicio",
+    "new_text": ""
+  },
+  {
+    "id": "errors.500.btn.reload",
+    "old_text": "Recargar página",
+    "new_text": ""
+  }
+]

@@ -1,0 +1,108 @@
+/* Corpus Search Form Component */
+/* Specific styles for #corpus-search-form (migrated from md3-components.css) */
+
+#corpus-search-form,
+.md3-corpus-form {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-8);
+}
+
+.md3-corpus-search-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: start;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+/* Desktop: Search + Mode nebeneinander */
+.md3-corpus-search-row .md3-outlined-textfield {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.md3-corpus-search-row .md3-outlined-textfield--flex {
+  flex: 1 1 auto;
+  min-width: 200px;
+}
+
+/* Modo/Search-Mode Select - Optimiert */
+#search_mode {
+  appearance: none;
+}
+
+/* Modo-Select auf Mobile kompakter (MD3 Compact: 0-599px) */
+@media (max-width: 599px) {
+  .md3-corpus-search-row .md3-outlined-textfield {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  #search_mode {
+    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 400px) {
+  #search_mode {
+    font-size: 0.875rem;
+    padding: var(--space-1) var(--space-2);
+    min-height: 36px;
+  }
+}
+
+.md3-corpus-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* Progressive Enhancement: Hide selects until enhanced with Select2 */
+/* Note: Select2 is now initialized by corpus/index.js, not init.js */
+.md3-corpus-filter-grid select[data-enhance="select2"]:not([data-enhanced]) {
+  /* Keeping visibility visible - initialization happens fast enough */
+  visibility: visible;
+}
+
+/* No-JS fallback: Show native selects if JavaScript is disabled */
+.no-js .md3-corpus-filter-grid select[data-enhance="select2"] {
+  visibility: visible;
+}
+
+.md3-corpus-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Mobile Responsiveness (accounting for 280px drawer on desktop) */
+@media (max-width: 1120px) {
+  #corpus-search-form,
+  .md3-corpus-form {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+}
+
+/* Mobile: Reduce padding (MD3 Compact: 0-599px) */
+@media (max-width: 599px) {
+  #corpus-search-form,
+  .md3-corpus-form {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .md3-corpus-filter-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}

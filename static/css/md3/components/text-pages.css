@@ -1,0 +1,611 @@
+/* Page-specific MD3 styles for text/editor pages */
+@import url("../tokens.css");
+
+.md3-text-page {
+  /* Use the project's body font when available, fall back to system fonts */
+  font-family: var(
+    --font-body,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial
+  );
+  color: var(--md-sys-color-on-surface);
+  background: var(--app-background);
+}
+
+/* ============================================================================
+   MD3 Text Pages Layout (Proyecto, Privacy, Impressum)
+   ============================================================================
+   
+   MD3 EDGE-PADDING STRATEGY (Best Practice):
+   - Page wrapper (.md3-text-page): Definiert Edge-Padding vom Bildschirmrand
+   - Mobile (0-599px): 16px Edge-Padding (MD3 Compact)
+   - Tablet (600-1199px): 24px Edge-Padding (MD3 Medium)
+   - Desktop (≥1200px): 32px Edge-Padding (MD3 Expanded)
+   
+   - Content container (.md3-text-content): Max-width + centering (NO padding)
+   - Content sections: Inherits padding from page wrapper
+   ============================================================================ */
+
+/* Page Wrapper - Defines Edge-Padding (MD3 Best Practice) */
+.md3-text-page {
+  /* Mobile: 16px Edge-Padding (MD3 Compact) */
+  padding: 0 var(--space-4);
+}
+
+/* Tablet+: 24px Edge-Padding (MD3 Medium) */
+@media (min-width: 600px) {
+  .md3-text-page {
+    padding: 0 var(--space-6);
+  }
+}
+
+/* Desktop: 32px Edge-Padding (MD3 Expanded) */
+@media (min-width: 1200px) {
+  .md3-text-page {
+    padding: 0 var(--space-8);
+  }
+}
+
+.md3-text-content {
+  /* Keep existing text width but reference canonical variable so all pages match
+     the new .md3-text-page preset. Reduce top margin to tighten vertical rhythm
+     between hero and main content to be visually closer to the previous layout. */
+  max-width: var(--text-page-max-width, 900px);
+  margin: var(--space-6) auto 0;
+  width: 100%;
+  box-sizing: border-box;
+  /* NO horizontal padding - Edge-Padding comes from page wrapper */
+  padding: 0 0 var(--space-12);
+}
+
+.md3-text-section {
+  /* No padding - Edge-Padding comes from page wrapper */
+  padding: 0;
+}
+
+/* Section with divider before heading */
+.md3-text-section--divider {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+/* Remove extra margin on first heading after divider */
+.md3-text-section--divider > h2:first-child,
+.md3-text-section--divider > .md3-text-heading:first-child {
+  margin-top: 0; /* Divider liefert schon genug Abstand */
+}
+
+.md3-text-list {
+  /* Ensure a clear gap after lists so following paragraphs don't stick to them */
+  margin: 0 0 1rem 0;
+  padding-left: 2rem; /* Erhöht von 1.25rem auf 2rem für bessere Sichtbarkeit */
+  list-style-position: outside; /* Standard: Marker außerhalb des Content-Box */
+}
+
+.md3-text-list li {
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem; /* Zusätzlicher Abstand zwischen Marker und Text */
+}
+
+/* Ensure images inside text content scale to the available width */
+.md3-text-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Reduce the vertical gaps between consecutive sections in text pages so
+   the Proyecto overview is less airy and aligns better with historical spacing. */
+/* We intentionally do not add extra margins between top-level children here,
+   because each section uses its own padding (.md3-page__section). Keeping
+   spacing single-sourced avoids stacked gaps between sections. */
+
+/* Definition List for Credits/Metadata */
+.md3-text-dl {
+  margin: 0;
+  display: grid;
+  gap: var(--space-5);
+}
+
+.md3-text-dl__item {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.md3-text-dl__item dt {
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+}
+
+.md3-text-dl__item dd {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Text Heading Utility */
+.md3-text-heading {
+  color: var(--md-sys-color-primary);
+  margin: var(--space-8) 0 var(--space-4);
+}
+
+/* Section / Subsection utility helpers for text pages
+   - Use MD3 tokens ONLY for colors/spacing
+   - Typographic sizes are provided via md3-title-medium on the element
+ */
+.md3-section-title {
+  color: var(--md-sys-color-primary);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-3);
+}
+
+.md3-subsection-title {
+  color: var(--md-sys-color-on-surface);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+.editor-overview {
+  background: var(--app-background);
+  color: var(--md-sys-color-on-surface);
+  padding: 1rem;
+}
+
+.editor-header h1 {
+  margin: 0 0 0.25rem 0;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
+}
+
+.editor-header .subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.95rem;
+}
+
+.country-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.country-tab {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid transparent;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.country-tab.active {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+.files-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.files-table thead th {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-variant);
+}
+
+.files-table tbody td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.filename-cell {
+  font-weight: 500;
+}
+
+.status-edited {
+  color: var(--md-sys-color-primary);
+}
+
+.status-unchanged {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================================================
+   Citation Block - MD3 Outlined Container
+   ============================================================================
+   Purpose: Visual container for citations, code blocks, and highlighted text
+   Design: Left border (accent) + subtle background + spacing following MD3 standards
+*/
+
+.md3-text-citation {
+  padding: var(--space-5);
+  background: var(--md-sys-color-surface-container-low);
+  border-left: 3px solid var(--md-sys-color-primary);
+  border-radius: var(--radius-sm);
+  margin: var(--space-6) 0 var(--space-8) 0;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-text-citation:hover {
+  background: var(--md-sys-color-surface-container);
+  border-left-color: var(--md-sys-color-primary-container);
+}
+
+.md3-text-citation p {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.6;
+}
+
+.md3-text-citation em {
+  font-style: italic;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Code Block - Similar to citation block */
+.md3-code-block {
+  margin: var(--space-6) 0 var(--space-8) 0;
+}
+
+/* Copyable code block variant */
+.md3-code-block--copyable {
+  position: relative;
+}
+
+/* Make pre the positioning context for the copy button */
+.md3-code-block--copyable pre {
+  position: relative;
+  padding-bottom: calc(var(--space-5) + 48px); /* Extra space for button */
+}
+
+.md3-code-block h3 {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-code-block pre {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  overflow-x: auto;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+/* Copy button for code blocks - positioned inside pre */
+.md3-code-block__copy {
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 200ms ease, color 200ms ease;
+  box-shadow: var(--elev-1);
+  z-index: 1;
+}
+
+.md3-code-block__copy:hover {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-code-block__copy:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md3-code-block__copy--success {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.md3-code-block__copy .material-symbols-rounded {
+  font-size: 20px;
+}
+
+/* ============================================================================
+   Links - MD3 Styled (used in text content)
+   ============================================================================
+   Purpose: Consistent link styling following Material Design 3 standards
+   - Unvisited: Primary color with underline
+   - Visited: Tertiary color (muted, to indicate visited state)
+   - Hover/Focus: Enhanced visibility
+*/
+
+.md3-text-page a {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--md-sys-color-primary);
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  word-break: break-word;
+  /* Prevent long URLs from breaking layout */
+}
+
+.md3-text-page a:visited {
+  color: var(--md-sys-color-tertiary);
+  border-bottom-color: var(--md-sys-color-tertiary);
+}
+
+.md3-text-content a:hover:not(.md3-button):not(.md3-button--filled):not(.md3-button--outlined):not(.md3-button--text):not(.md3-button--danger):not(.md3-button--tonal) {
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  border-bottom-color: var(--md-sys-color-on-primary-container);
+  padding: 0 0.2rem;
+}
+
+.md3-text-page a:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.md3-text-page a[target="_blank"]::after {
+  content: " ↗";
+  font-size: 0.85em;
+  margin-left: 0.25em;
+}
+
+/* ============================================================================
+   DOI & Badge Links - No underline, subtle hover
+   ============================================================================
+   Purpose: Links that contain only images (badges) or special elements
+   - No underline (badges have their own visual style)
+   - Subtle hover effect (opacity change)
+   - Maintained focus accessibility
+*/
+
+.md3-text-page a img,
+.md3-text-citation a,
+.md3-text-citation a:visited,
+.card a,
+.card a:visited {
+  border-bottom: none;
+  /* Remove underline for badge links and cards */
+}
+
+.md3-text-page a img:hover,
+.md3-text-citation a:hover,
+.card a:hover:not(.md3-button):not(.md3-button--filled):not(.btn) {
+  background: transparent;
+  opacity: 0.85;
+  /* Subtle hover feedback without background */
+}
+
+.md3-text-page a[href*="doi.org"],
+.md3-text-page a[href*="zenodo"],
+.md3-text-page a[href*="doi"] {
+  border-bottom: none;
+}
+
+.md3-text-page a[href*="doi.org"]:hover,
+.md3-text-page a[href*="zenodo"]:hover,
+.md3-text-page a[href*="doi"]:hover {
+  background: transparent;
+  opacity: 0.85;
+  padding: 0;
+}
+
+/* ============================================================================
+   MD3-style primary button (used for edit actions) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.btn-primary i {
+  font-size: 1rem;
+}
+
+.files-table-container {
+  margin-bottom: 1rem;
+}
+.files-table-container:not(.active) {
+  display: none;
+}
+.files-table-container.active {
+  display: block;
+}
+
+/* ============================================================================
+   Citation Block Component (MD3 Choice Chips + Textarea + Copy Button)
+   ============================================================================ */
+
+.citation-block {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: var(--space-4);
+}
+
+.citation-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label-small {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* Citation Format Choice Chips */
+.citation-format-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip.chip-choice {
+  border-radius: 999px;
+  padding: 0 0.75rem;
+  height: 28px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  font-weight: 500;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.chip.chip-choice:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.chip.chip-choice:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.chip.chip-choice.is-selected {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: transparent;
+}
+
+.chip.chip-choice.is-selected:hover {
+  background: var(--md-sys-color-secondary-container);
+  filter: brightness(0.95);
+}
+
+/* Citation Output Area */
+.citation-output {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.md3-textarea {
+  resize: none;
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-medium-font, ui-monospace, SFMono-Regular, Consolas, monospace);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.md3-textarea:focus {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+  border-color: var(--md-sys-color-primary);
+}
+
+/* Citation Copy Icon Button */
+.citation-block .icon-button {
+  border: none;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.citation-block .icon-button:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.citation-block .icon-button:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.citation-block .icon-button:active {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* Copy button feedback states */
+.citation-block .icon-button--success {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.citation-block .icon-button--error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* Responsive: Stack on very narrow screens */
+@media (max-width: 360px) {
+  .citation-output {
+    grid-template-columns: 1fr;
+  }
+  
+  .citation-block .icon-button {
+    justify-self: end;
+  }
+}
+
+/* Copy button feedback states */
+.md3-button--success .material-symbols-rounded {
+  color: var(--md-sys-color-primary);
+}
+
+.md3-button--error .material-symbols-rounded {
+  color: var(--md-sys-color-error);
+}
+
+/* Blockquote for citations */
+.md3-blockquote {
+  margin: var(--space-4) 0;
+  padding: var(--space-4) var(--space-6);
+  border-left: 4px solid var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.md3-blockquote p {
+  margin: 0;
+  font-style: italic;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Small caps for corpus abbreviation */
+.md3-smallcaps {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}

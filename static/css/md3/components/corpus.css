@@ -1,0 +1,231 @@
+/* ============================================================================
+   MD3 Corpus Page - Page-Specific Layouts Only
+   ============================================================================
+   Components are loaded from separate files:
+   - Hero: hero.css
+   - Buttons: buttons.css
+   - Textfields: textfields.css
+   - Tabs: tabs.css
+   - Forms (layouts, checkbox, filter grid): forms.css
+   
+   This file contains ONLY corpus-specific overrides and results section.
+   ============================================================================ */
+
+/* Base Page Container */
+.md3-corpus-page {
+  min-height: calc(100vh - 200px);
+  background: var(--app-background);
+}
+
+/* ============================================================================
+   Corpus Page Layout
+   ============================================================================
+   
+   MD3 EDGE-PADDING STRATEGY:
+   - Page wrapper (.md3-corpus-page): Definiert Edge-Padding vom Bildschirmrand
+   - Mobile (0-599px): 16px Edge-Padding (MD3 Compact)
+   - Tablet (600-1199px): 24px Edge-Padding (MD3 Medium)  
+   - Desktop (≥1200px): 32px Edge-Padding (MD3 Expanded)
+   ============================================================================ */
+
+/* Page Wrapper - Defines Edge-Padding */
+.md3-corpus-page {
+  /* Mobile: 16px Edge-Padding (MD3 Compact) */
+  padding: 0 var(--space-4);
+}
+
+/* Tablet+: 24px Edge-Padding (MD3 Medium) */
+@media (min-width: 600px) {
+  .md3-corpus-page {
+    padding: 0 var(--space-6);
+  }
+}
+
+/* Desktop: 32px Edge-Padding (MD3 Expanded) */
+@media (min-width: 1200px) {
+  .md3-corpus-page {
+    padding: 0 var(--space-8);
+  }
+}
+
+/* ============================================================================
+   Results Section
+   ============================================================================ */
+
+.md3-results-title {
+  font-family: var(
+    --md-sys-typescale-headline-small-font,
+    "Roboto",
+    sans-serif
+  );
+  font-size: var(--md-sys-typescale-headline-small-font-size);
+  font-weight: var(--md-sys-typescale-headline-small-font-weight);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+  color: var(--md-sys-color-on-surface, rgba(0, 0, 0, 0.87));
+  margin: 24px 0 16px 0;
+}
+
+.md3-view-content {
+  margin-top: 24px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   Content Section
+   ============================================================================ */
+
+.md3-corpus-content {
+  /* Corpus content sits on app background */
+  --_corpus-content-bg: var(--md-sys-color-background, #c7d5d8);
+  
+  max-width: 1400px;
+  margin: 0 auto;
+  /* NO horizontal padding - Edge-Padding from page wrapper */
+  padding: 0;
+  /* Label background inheritance for textfields */
+  --app-textfield-label-bg: var(--_corpus-content-bg);
+}
+
+/* ============================================================================
+   Results Section
+   ============================================================================ */
+
+.md3-corpus-results {
+  margin-top: var(--space-8);
+}
+
+/* Stats Grid - Grid layout for stats cards */
+.md3-corpus-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-6);
+}
+
+.md3-corpus-stat {
+  display: grid;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.md3-corpus-stat__label {
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+}
+
+.md3-corpus-stat__value {
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+}
+
+/* Responsive: Stack stats */
+@media (max-width: 1120px) {
+  .md3-corpus-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+}
+
+/* MD3 Compact (0-599px) */
+@media (max-width: 599px) {
+  .md3-corpus-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .md3-corpus-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .md3-corpus-stat:last-child {
+    border-bottom: none;
+  }
+
+  .md3-corpus-stat__label {
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .md3-corpus-stat__value {
+    font-size: 16px;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
+  }
+}
+
+@media (max-width: 400px) {
+  .md3-corpus-stats {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .md3-corpus-stat {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-1);
+  }
+
+  .md3-corpus-stat__label {
+    font-size: 0.75rem;
+  }
+
+  .md3-corpus-stat__value {
+    font-size: 14px;
+  }
+}
+
+/* ============================================================================
+   Loading Overlay (DISABLED - was blocking view)
+   ============================================================================ */
+
+.md3-corpus-loading {
+  /* Disabled: Loading overlay was blocking the corpus view */
+  display: none !important;
+}
+
+.md3-corpus-loading__spinner {
+  text-align: center;
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================================
+   Alert Messages
+   ============================================================================ */
+
+.md3-corpus-alert {
+  padding: var(--space-5);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error);
+  border: 1px solid var(--md-sys-color-error);
+  border-radius: var(--radius-sm);
+  line-height: 1.5;
+}
+
+/* ============================================================================
+  External Libraries (DataTables, Select2, TokenTab)
+   ============================================================================
+   These keep their own styling from CDN/external CSS.
+   DataTables custom overrides are in datatables.css
+   ============================================================================ */

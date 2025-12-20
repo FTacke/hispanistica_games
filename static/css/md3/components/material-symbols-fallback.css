@@ -1,0 +1,67 @@
+/* ============================================
+   Material Symbols Rounded - Local Font (Self-Hosted)
+   ============================================
+   Downloaded from: https://github.com/google/material-design-icons
+   Variable font with all icons included
+   ============================================ */
+
+/* Self-hosted Material Symbols Rounded Variable Font */
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  src: url("/static/fonts/MaterialSymbolsRounded.woff2") format(woff2)
+    tech(variations);
+  font-display: block; /* Prevents FOUC */
+}
+
+/* Base styles for Material Symbols */
+.material-symbols-rounded {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga"; /* CRITICAL: Enables ligatures for icon names */
+  vertical-align: middle;
+  /* Do not inherit link underlines */
+  text-decoration: none;
+
+  /* Variable font settings - schlanker/leichter für bessere Optik */
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 300,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+/* JavaScript will add this class if font doesn't load */
+.material-symbols-not-loaded .material-symbols-rounded {
+  display: none !important;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Hide icon containers entirely if font doesn't load */
+.material-symbols-not-loaded .md3-navigation-drawer__icon,
+.material-symbols-not-loaded .md3-navigation-drawer__chevron,
+.material-symbols-not-loaded
+  .md3-top-app-bar__navigation-icon
+  .material-symbols-rounded {
+  display: none;
+}
+
+/* Adjust spacing when icons are hidden */
+.material-symbols-not-loaded .md3-navigation-drawer__item {
+  padding-left: var(--space-4);
+}

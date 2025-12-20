@@ -1,0 +1,418 @@
+/* Auth & Profile Pages - MD3 Standards */
+
+/* 1) MD3-CARD-STANDARDS */
+.md3-auth-card {
+  /* Define local background color for consistency */
+  --_auth-card-bg: var(--md-sys-color-surface-container-high);
+  
+  max-width: 480px;
+  margin-inline: auto;
+  /* Use canonical token for card surface */
+  background: var(--_auth-card-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
+  --app-textfield-label-bg: var(--_auth-card-bg);
+  border-radius: var(--radius-sm);
+}
+
+.md3-card__header,
+.md3-card__content {
+  padding: var(--space-4);
+}
+
+.md3-card__header > h1,
+.md3-card__header > h2 {
+  margin: 0;
+}
+
+/* Auth-specific card header spacing & color */
+.md3-auth-card .md3-card__header {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-3);
+}
+
+.md3-auth-card .md3-card__title {
+  color: var(--md-sys-color-primary);
+}
+
+/* 2) MD3-TYPO & SPACING */
+.md3-card__content > * + * {
+  margin-top: var(--space-4);
+}
+
+.md3-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4); /* 16px vertical rhythm for form fields */
+  margin-top: var(--space-4);
+}
+
+/* If a paragraph precedes a form in card content (e.g. password forgot)
+   give slightly more breathing room for better form separation */
+.md3-card__content > p + .md3-auth-form {
+  margin-top: var(--space-6);
+}
+
+/* Remove utility classes effect if present */
+.md3-auth-card .mt-3,
+.md3-auth-card .mb-3 {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* 3) MD3-OUTLINED TEXTFIELDS (Auth specific overrides) */
+.md3-auth-card .md3-outlined-textfield,
+.md3-dialog__surface .md3-outlined-textfield {
+  width: 100%;
+}
+
+/* Label background now inherited via --app-textfield-label-bg from .md3-auth-card */
+
+.md3-auth-card .md3-outlined-textfield__input,
+.md3-dialog__surface .md3-outlined-textfield__input,
+.md3-sheet__surface .md3-outlined-textfield__input {
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-auth-card .md3-outlined-textfield__outline,
+.md3-dialog__surface .md3-outlined-textfield__outline,
+.md3-sheet__surface .md3-outlined-textfield__outline {
+  border-color: var(--md-sys-color-outline-variant);
+}
+
+.md3-auth-card .md3-outlined-textfield--focused .md3-outlined-textfield__outline,
+.md3-dialog__surface .md3-outlined-textfield--focused .md3-outlined-textfield__outline,
+.md3-sheet__surface .md3-outlined-textfield--focused .md3-outlined-textfield__outline {
+  border-color: var(--md-sys-color-primary);
+}
+
+/* 4) MD3-BUTTON-STANDARDS (Auth specific) */
+/* Removed overrides to enforce canonical button styles (pill shape, 48px height, etc.) */
+
+.md3-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* Responsive Actions - Stack on Mobile */
+@media (max-width: 600px) {
+  .md3-actions--stack,
+  .md3-auth-card .md3-actions {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .md3-actions--stack .md3-button,
+  .md3-auth-card .md3-actions .md3-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Order: Primary first, then secondary, danger last */
+  .md3-actions .md3-button--filled:not(.md3-button--danger) {
+    order: 1;
+  }
+  
+  .md3-actions .md3-button--outlined:not(.md3-button--danger) {
+    order: 2;
+  }
+  
+  .md3-actions .md3-button--text {
+    order: 3;
+  }
+  
+  .md3-actions .md3-button--danger {
+    order: 4;
+  }
+}
+
+/* 5) DIALOGE UND SHEETS
+   Dialog surface and generic dialog styling are handled centrally in
+   static/css/md3/components/dialog.css so auth-specific page styles
+   must not override dialog surfaces. */
+
+/* Wide dialog variant for edit dialogs */
+.md3-dialog--wide .md3-dialog__surface {
+  max-width: 480px;
+  width: calc(100vw - var(--space-6));
+  padding: var(--space-5);
+}
+
+/* Form within dialog needs consistent spacing */
+.md3-dialog__content .md3-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 6) PAGE LAYOUT & SPACING */
+.md3-auth-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4); /* Space between cards */
+  padding-bottom: var(--space-6);
+}
+
+.md3-auth-page > .md3-card {
+  margin-bottom: 0; /* Let gap handle spacing */
+}
+
+/* 7) FILTER CHIPS for admin lists */
+.md3-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* 8) FIELDSET for edit dialog sections */
+.md3-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.md3-fieldset:not(:last-of-type) {
+  margin-bottom: var(--space-4);
+}
+
+.md3-fieldset legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Spacing within fieldsets */
+.md3-fieldset > .md3-outlined-textfield {
+  margin-top: var(--space-3);
+}
+
+.md3-fieldset > .md3-outlined-textfield:first-of-type {
+  margin-top: var(--space-2);
+}
+
+.md3-fieldset > .md3-switch-row {
+  margin-top: var(--space-2);
+}
+
+.md3-fieldset > .md3-button {
+  margin-top: var(--space-3);
+}
+
+.md3-fieldset > .md3-body-small {
+  margin-top: var(--space-1);
+}
+
+/* 9) ALERT for inline error/info messages */
+.md3-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  margin-bottom: var(--space-3);
+}
+
+/* Hidden state for alerts - must hide completely */
+.md3-alert[hidden] {
+  display: none !important;
+}
+
+.md3-alert--error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.md3-alert--success {
+  background: color-mix(in srgb,
+    var(--md-sys-color-surface) 70%,
+    var(--md-sys-color-success-container, #e6f4ea) 30%
+  );
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-alert__icon {
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.md3-alert__message {
+  flex: 1;
+}
+
+/* 10) TEXTFIELD error state */
+.md3-outlined-textfield__input--error {
+  border-color: var(--md-sys-color-error) !important;
+}
+
+.md3-outlined-textfield__error {
+  display: block;
+  color: var(--md-sys-color-error);
+  font-size: 12px;
+  margin-top: var(--space-1);
+}
+
+/* Only show height when error has content */
+.md3-outlined-textfield__error:empty {
+  display: none;
+}
+
+/* 11) TEXT COLOR utilities for feedback */
+.md3-text-success {
+  color: var(--md-sys-color-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.md3-text-error {
+  color: var(--md-sys-color-error);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* 12) Loading state for buttons */
+.md3-button__icon--loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 13) Profile Info Display */
+.md3-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.md3-profile-info__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.md3-profile-info__row .md3-label-medium {
+  font-size: var(--font-size-sm);
+}
+
+.md3-profile-info__row .md3-body-large {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+}
+
+/* Divider within cards */
+.md3-auth-card .md3-divider {
+  border: none;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  margin: var(--space-4) 0;
+}
+
+/* ============================================================================
+   14) ADMIN PAGES - RESPONSIVE TOOLBAR & TABLES
+   ============================================================================ */
+
+/* Toolbar: Buttons nebeneinander auf Desktop */
+.md3-toolbar {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Table Container für horizontales Scrollen */
+.md3-table-container {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface);
+}
+
+/* Admin Table Styles */
+.md3-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+}
+
+.md3-table th {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
+  padding: var(--space-3) var(--space-2);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  vertical-align: middle;
+}
+
+.md3-table tbody tr:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+/* Row between: Search + Toolbar */
+.md3-row--between {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Mobile: Admin Toolbar */
+@media (max-width: 839px) {
+  .md3-toolbar {
+    flex-direction: column;
+    width: 100%;
+    gap: var(--space-2);
+  }
+  
+  .md3-toolbar .md3-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .md3-row--between {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .md3-row--between > * {
+    width: 100%;
+  }
+  
+  /* Search field full width */
+  .md3-row .md3-fill-max,
+  .md3-row.md3-fill-max {
+    max-width: 100%;
+  }
+}
+
+/* Sehr kleine Screens */
+@media (max-width: 480px) {
+  .md3-toolbar .md3-button {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.875rem;
+  }
+  
+  /* Hide desktop columns on very small screens */
+  .md3-hide-mobile {
+    display: none;
+  }
+}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Profil &middot; CO.RA.PAN{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-page">
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">account_circle</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Konto</p>
+        <h1 class="md3-headline-medium md3-hero__title">Dein Profil</h1>
+        <p class="md3-hero__intro">Persönliche Daten und Einstellungen.</p>
+      </div>
+    </div>
+  </header>
+  <main class="md3-page__main">
+    <section class="md3-page__section md3-auth-page md3-stack--section">
+      <article class="md3-card md3-card--outlined md3-auth-card">
+      <header class="md3-card__header">
+        <h2 class="md3-title-large">Grunddaten</h2>
+      </header>
+      <div class="md3-card__content">
+        <!-- Current profile info (loaded via JS) -->
+        <div id="profile-info" class="md3-profile-info">
+          <div class="md3-profile-info__row">
+            <span class="md3-label-medium md3-text-variant">Benutzername</span>
+            <span id="current-username" class="md3-body-large">–</span>
+          </div>
+          <div class="md3-profile-info__row">
+            <span class="md3-label-medium md3-text-variant">E-Mail</span>
+            <span id="current-email" class="md3-body-large">–</span>
+          </div>
+        </div>
+
+        <hr class="md3-divider">
+
+        <form id="profile-form" class="md3-auth-form" novalidate>
+          <p class="md3-body-small md3-text-variant">Änderungen speichern.</p>
+          
+          <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <input id="username" name="username" class="md3-outlined-textfield__input" aria-label="Neuer Benutzername" placeholder=" ">
+            <label class="md3-outlined-textfield__label" for="username">Neuer Benutzername</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+          </div>
+
+          <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <input id="email" name="email" type="email" class="md3-outlined-textfield__input" aria-label="Neue E-Mail" placeholder=" ">
+            <label class="md3-outlined-textfield__label" for="email">Neue E-Mail</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+          </div>
+
+          {# display_name removed — not required in Profile UI; keep server-side data intact #}
+
+          <div class="md3-actions">
+            <button id="save" class="md3-button md3-button--filled" type="button">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">save</span>
+              Speichern
+            </button>
+          </div>
+        </form>
+        <!-- Status messages (populated by JS) -->
+        <div id="status" class="md3-form-status" role="status" aria-live="polite"></div>
+      </div>
+    </article>
+
+    <article class="md3-card md3-card--outlined md3-auth-card">
+      <header class="md3-card__header">
+        <h2 class="md3-title-large">Zugang</h2>
+      </header>
+      <div class="md3-card__content">
+        <p class="md3-body-medium">Hier kannst du dein Passwort ändern.</p>
+        <div class="md3-actions">
+            <a href="{{ url_for('auth.account_password_page') }}" class="md3-button md3-button--filled" role="button">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">lock_reset</span>
+              Passwort ändern
+            </a>
+        </div>
+      </div>
+    </article>
+
+    <article class="md3-card md3-card--outlined md3-card--danger md3-auth-card">
+      <header class="md3-card__header">
+        <h2 class="md3-title-large">Gefahrenzone</h2>
+      </header>
+      <div class="md3-card__content">
+        <p class="md3-body-medium">Hier kannst du dein Konto löschen. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        <div class="md3-actions">
+            <button id="delete-account-btn" class="md3-button md3-button--filled md3-button--danger" type="button">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">delete_forever</span>
+              Konto löschen
+            </button>
+        </div>
+      </div>
+    </article>
+    </section>
+  </main>
+</div>
+
+<dialog id="delete-dialog" class="md3-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+  <div class="md3-dialog__container">
+    <div class="md3-dialog__surface">
+      <header class="md3-dialog__header">
+        <h2 id="delete-dialog-title" class="md3-title-large md3-dialog__title">Konto löschen?</h2>
+      </header>
+
+      <div class="md3-dialog__content md3-stack--dialog">
+        <p class="md3-body-medium">Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten werden unwiderruflich gelöscht. Zum Fortfahren bitte dein Passwort eingeben.</p>
+
+        <div class="md3-outlined-textfield md3-outlined-textfield--block">
+          <input id="delete-password" name="password" type="password" class="md3-outlined-textfield__input" required aria-label="Passwort zur Löschung" aria-describedby="delete-error" />
+          <label class="md3-outlined-textfield__label" for="delete-password">Dein Passwort</label>
+          <button type="button" class="md3-outlined-textfield__icon--trailing" data-toggle="delete-password" aria-label="Passwort anzeigen/verstecken">
+            <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">visibility</span>
+          </button>
+          <span class="md3-outlined-textfield__outline">
+            <span class="md3-outlined-textfield__outline-start"></span>
+            <span class="md3-outlined-textfield__outline-notch"></span>
+            <span class="md3-outlined-textfield__outline-end"></span>
+          </span>
+        </div>
+
+        <!-- Field error (populated by JS) -->
+        <div id="delete-error" class="md3-field-error" role="alert" aria-live="assertive"></div>
+      </div>
+
+      <div class="md3-dialog__actions">
+        <button class="md3-button md3-button--text" id="cancel-delete">Abbrechen</button>
+        <button class="md3-button md3-button--filled md3-button--danger" id="confirm-delete" type="button">Löschen</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script type="module" src="{{ url_for('static', filename='js/auth/account_profile.js') }}"></script>
+{% endblock %}

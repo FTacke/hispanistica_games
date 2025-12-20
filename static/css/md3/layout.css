@@ -1,0 +1,576 @@
+/*
+ * MD3 Layout Utilities — Core
+ *
+ * Canonical layout classes (use these in NEW templates):
+ *  - .md3-page                 — Page shell (outer container)
+ *  - .md3-page__header         — Hero/header area (eyebrow, title, intro)
+ *  - .md3-page__section        — Logical sections inside a page
+ *  - .md3-stack--page          — vertical rhythm between sections (uses --space-6 / --space-8)
+ *  - .md3-stack--section       — spacing inside a section (title → body → actions)
+ *  - .md3-grid--responsive     — default responsive grid for cards / stats
+ *
+ * Deprecated utilities and migration guidance
+ * -------------------------------------------
+ * The repository currently contains a Bootstrap-like set of utility
+ * classes (.m-*, .mt-*, .mb-*, .mx-auto, etc.). These are marked
+ * deprecated — please prefer the token-driven semantic layout classes
+ * above for new templates. The old utilities remain for backward
+ * compatibility during the migration.
+ */
+
+/* --- Canonical page layout helpers (token driven) --- */
+.md3-text-page {
+  /* Canonical narrow text page container used for long-form pages
+     (Impressum / Datenschutzerklärung / Proyecto pages). The width
+     mirrors existing templates' text-content max-width to preserve
+     current layout (900px). Using a variable so this can be referenced
+     by other components (hero containers) to ensure visual parity. */
+  --text-page-max-width: 900px; /* exact value observed in current text-pages.css */
+  margin: 0 auto;
+  max-width: var(--text-page-max-width);
+  padding-bottom: var(--space-10);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.md3-page {
+  /* Define local background for consistent label-bg inheritance */
+  --_page-bg: var(--md-sys-color-surface);
+  
+  /* Edge padding: use the token that matches current common site padding
+     (templates and md3-container commonly use 1.5rem = 24px) */
+  padding: 0 var(--space-6); /* 24px horizontal edge padding — replaces legacy .m-4 / mt-4 usage */
+  max-width: 1200px;
+  margin: 0 auto;
+  /* PAGE-LEVEL LABEL-BG: Default for textfields on page surface.
+     Containers (cards, dialogs) override this with their own background. */
+  --app-textfield-label-bg: var(--_page-bg);
+}
+
+.md3-page__header {
+  /* Provide consistent header vertical rhythm. Use --space-6 (24px)
+     to match hero components and the dominant page spacing in templates. */
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+}
+
+.md3-page__section {
+  /* Section vertical padding: use the repository's dominant spacing.
+     Many templates use .mt-4 / 1.5rem between blocks — map to token --space-6 (24px). */
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+}
+.md3-auth-page {
+  /* Centered auth page container for login/profile/password flows.
+     Keeps a safe max-width for auth content and token-driven padding.
+     Use .md3-page__section.md3-auth-page on pages to limit card width. */
+  max-width: 900px;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+  padding-block: var(--space-6);
+  box-sizing: border-box;
+}
+
+.md3-auth-card {
+  /* Define local background for consistent label-bg inheritance */
+  --_auth-card-bg: var(--md-sys-color-surface);
+  
+  /* Auth pages use a constrained card for forms — centered and token-driven.
+     Keep values token-based and avoid hard-coded px in templates. */
+  max-width: 480px; /* canonical width for auth cards */
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--_auth-card-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
+  --app-textfield-label-bg: var(--_auth-card-bg);
+  box-sizing: border-box;
+}
+
+/* Auth-specific form helper: column layout + consistent gap between controls */
+.md3-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Responsive tweaks for auth page / card */
+@media (max-width: 599px) {
+  .md3-auth-page {
+    padding-block: var(--space-4);
+    padding-inline: var(--space-3);
+  }
+
+  .md3-auth-card {
+    padding: var(--space-3);
+  }
+}
+.md3-align--center { margin-left: auto; margin-right: auto; }
+
+.md3-stack--page > * + * {
+  /* Major page-level rhythm: use a larger gap between top-level sections.
+     Chosen because templates commonly use mt-4 / 1.5rem for section spacing
+     but larger separations are occasionally applied; pick --space-8 to
+     clearly separate top-level content areas. */
+  margin-top: var(--space-8); /* 32px (major section spacing) */
+}
+
+.md3-stack--section > * + * {
+  /* Section-local rhythm: map the most commonly used margin (.mt-4)
+     to token --space-6 (24px). This keeps visuals consistent with
+     current templates where .mt-4 / 1.5rem appears most often between
+     headings and body content. */
+  margin-top: var(--space-6); /* 24px (section spacing) */
+}
+
+/* Compact stack for tight layouts (form fields, inline elements) */
+.md3-stack--compact > * + * {
+  margin-top: var(--space-2); /* 8px (compact spacing) */
+}
+
+/* Card stack for form dialogs and cards */
+.md3-stack--card > * + * {
+  margin-top: var(--space-4); /* 16px (card internal spacing) */
+}
+
+.md3-grid--responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+
+.md3-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.md3-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.md3-space-1 {
+  margin: 0.25rem;
+}
+.md3-space-2 {
+  margin: 0.5rem;
+}
+.md3-space-3 {
+  margin: 0.75rem;
+}
+.md3-space-4 {
+  margin: 1rem;
+}
+.md3-space-6 {
+  margin: 1.5rem;
+}
+.md3-space-8 {
+  margin: 2rem;
+}
+.md3-space-10 {
+  margin: 2.5rem;
+}
+.md3-space-16 {
+  margin: 4rem;
+}
+
+/* Spacing Utilities (Bootstrap-like) — DEPRECATED
+  ------------------------------------------------
+  These utility classes are retained for compatibility but are
+  considered legacy. Use `.md3-stack--*`, `.md3-page__section` or
+  token-driven spacing in new templates instead. Avoid using new
+  `.m-*` utilities in new code.
+*/
+.m-0 { margin: 0 !important; }
+.mt-0 { margin-top: 0 !important; }
+.mb-0 { margin-bottom: 0 !important; }
+
+.m-1 { margin: 0.25rem !important; }
+.mt-1 { margin-top: 0.25rem !important; }
+.mb-1 { margin-bottom: 0.25rem !important; }
+.mr-1 { margin-right: 0.25rem !important; }
+.ml-1 { margin-left: 0.25rem !important; }
+
+.m-2 { margin: 0.5rem !important; }
+.mt-2 { margin-top: 0.5rem !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mr-2 { margin-right: 0.5rem !important; }
+.ml-2 { margin-left: 0.5rem !important; }
+
+.m-3 { margin: 1rem !important; }
+.mt-3 { margin-top: 1rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mr-3 { margin-right: 1rem !important; }
+.ml-3 { margin-left: 1rem !important; }
+
+.m-4 { margin: 1.5rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mr-4 { margin-right: 1.5rem !important; }
+.ml-4 { margin-left: 1.5rem !important; }
+
+.m-5 { margin: 3rem !important; }
+.mt-5 { margin-top: 3rem !important; }
+.mb-5 { margin-bottom: 3rem !important; }
+
+.m-auto { margin: 0 auto !important; }
+.mx-auto { margin-left: auto !important; margin-right: auto !important; }
+
+/* Width Utilities */
+.w-100 { width: 100% !important; }
+.max-w-400 { max-width: 400px; }
+.max-w-600 { max-width: 600px; }
+
+/* Flex Utilities */
+.d-flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
+.align-items-center { align-items: center !important; }
+.justify-content-between { justify-content: space-between !important; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 1rem; }
+
+/* Form spacing helpers and sane defaults for dialogs / cards */
+.md3-text-field + .md3-text-field {
+  margin-top: var(--space-3);
+}
+
+.md3-text-field + .md3-actions,
+.md3-text-field.mb-3 + .md3-actions,
+.md3-text-field.mb-4 + .md3-actions {
+  margin-top: var(--space-3);
+}
+
+.md3-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* Generic form layout: use token-driven gap for consistent spacing
+   across all MD3 forms. This avoids inline styles and keeps spacing
+   consistent across cards, dialogs and pages. */
+.md3-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Ensure actions inside a form align visually with other fields
+   and don't rely on extra bottom margins on fields. */
+.md3-form .md3-actions {
+  margin-top: 0;
+}
+
+/* For screens where compactness is desired (e.g. account pages) we
+   keep a small utility class '.md3-form--compact' to override the
+   default gap without changing component tokens globally. */
+.md3-form--compact {
+  gap: var(--space-2) !important;
+}
+
+/* When a form uses the .md3-form layout, prefer the native gap instead
+   of individual margin utilities; override utility bottoms inside forms
+   so spacing is consistent and avoids accidental zero-gap situations. */
+.md3-form > .mb-1,
+.md3-form > .mb-2,
+.md3-form > .mb-3,
+.md3-form > .mb-4,
+.md3-form > .mb-5 {
+  margin-bottom: 0 !important;
+}
+
+/* Ensure consecutive fields inside a form rely on gap rather than
+   extra element-level margins; this helps keep spacing predictable. */
+.md3-form > .md3-text-field + .md3-text-field {
+  margin-top: 0 !important;
+}
+
+/* Make sure the actions are spaced by the form's gap, not additional
+   margins. */
+.md3-form > .md3-actions {
+  margin-top: 0 !important;
+}
+
+/* Column width helpers for tables (useful for admin tables) */
+.col-w-10 { width: 10% !important; }
+.col-w-15 { width: 15% !important; }
+.col-w-20 { width: 20% !important; }
+.col-w-25 { width: 25% !important; }
+
+/* Make code blocks wrap long strings cleanly inside dialogs / tables */
+.md3-code-block__content {
+  word-break: break-all; /* safe default for tokens/links */
+  white-space: pre-wrap;
+}
+
+/* ============================================
+   MD3 Tables - Goldstandard
+   ============================================ */
+
+/* Table Container */
+.md3-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure tables inside cards are visually aligned and have a top gap */
+.md3-card__content > .md3-table-container {
+  margin-top: var(--space-3);
+}
+
+/* Elevated Table Container */
+.md3-table-container--elevated {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+  overflow: hidden;
+}
+
+/* Outlined Table Container */
+.md3-table-container--outlined {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Base Table */
+.md3-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  min-width: 500px; /* Prevent excessive compression */
+}
+
+.md3-table th,
+.md3-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  text-align: left;
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+}
+
+.md3-table thead th {
+  background: var(--md-sys-color-surface-container);
+  font-weight: 600;
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+.md3-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table Row Hover */
+.md3-table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.md3-table tbody tr:hover {
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+/* Clickable Table Rows */
+.md3-table--clickable tbody tr {
+  cursor: pointer;
+}
+
+/* Selected Row */
+.md3-table tbody tr.is-selected {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+.md3-table tbody tr.is-selected td:first-child {
+  border-left: 3px solid var(--md-sys-color-primary);
+}
+
+/* Disabled Row */
+.md3-table tbody tr.is-disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.md3-table tbody tr.is-disabled:hover {
+  background-color: transparent;
+}
+
+/* Actions Column */
+.md3-table__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* Column Width Utilities */
+.col-w-10 { width: 10%; }
+.col-w-15 { width: 15%; }
+.col-w-20 { width: 20%; }
+.col-w-25 { width: 25%; }
+.col-w-30 { width: 30%; }
+
+/* Empty Row */
+.md3-table__empty-row td {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.md3-empty-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================
+   MD3 Empty State
+   ============================================ */
+.md3-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  min-height: 200px;
+}
+
+.md3-empty-state__icon {
+  font-size: 48px;
+  margin-bottom: var(--space-4);
+  color: var(--md-sys-color-outline);
+}
+
+.md3-empty-state__title {
+  font-family: var(--md-sys-typescale-title-medium-font-family, inherit);
+  font-size: var(--md-sys-typescale-title-medium-font-size, 1rem);
+  font-weight: var(--md-sys-typescale-title-medium-font-weight, 500);
+  line-height: var(--md-sys-typescale-title-medium-line-height, 1.5rem);
+  margin: 0 0 var(--space-2);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-empty-state__text {
+  font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
+  font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
+  line-height: var(--md-sys-typescale-body-medium-line-height, 1.25rem);
+  margin: 0 0 var(--space-4);
+  max-width: 320px;
+}
+
+/* Legacy alias */
+.md3-empty-state__hint {
+  font-size: var(--md-sys-typescale-body-small-font-size, 0.75rem);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.md3-empty-state .md3-button {
+  margin-top: var(--space-2);
+}
+
+/* ============================================
+   MD3 Icon Button
+   ============================================ */
+.md3-button--icon {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease;
+}
+
+.md3-button--icon:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+}
+
+.md3-button--icon:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md3-button--icon:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   MD3 Toolbar
+   ============================================ */
+.md3-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 600px) {
+  .md3-toolbar {
+    flex-wrap: wrap;
+  }
+  
+  .md3-toolbar .md3-button {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
+
+/* ============================================
+   Responsive Table Utilities
+   ============================================ */
+@media (max-width: 600px) {
+  .md3-hide-mobile {
+    display: none !important;
+  }
+  
+  .md3-table {
+    min-width: 400px;
+  }
+  
+  .md3-empty-state {
+    padding: var(--space-6);
+  }
+  
+  .md3-empty-state__icon {
+    font-size: 40px;
+  }
+}
+
+/* ============================================
+   Accessibility Utilities
+   ============================================ */
+
+/* Screen reader only - visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Live region marker for ARIA announcements */
+.md3-status-live {
+  /* Marker class for consistency with role="status" elements */
+  /* Combined with sr-only for screen-reader-only live regions */
+  pointer-events: none;
+}

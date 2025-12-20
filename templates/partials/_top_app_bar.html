@@ -1,0 +1,135 @@
+{# MD3 Top App Bar - Adaptive Opazität via CSS Media Queries #}
+{# Expanded (≥840px): Transparent, kein Burger, kein Titel (permanenter Drawer sichtbar) #}
+{# Compact/Medium (<840px): Opak mit Elevation, Burger links, kein Titel (modaler Drawer) #}
+{# Rechts: Login-Button ODER Avatar mit Logout-Menü #}
+
+{% set user_name = g.user %}
+{% set user_role = g.role %}
+{% set is_authenticated = user_name is not none %}
+{% set role_value = user_role.value if user_role else '' %}
+
+<header class="md3-top-app-bar" 
+        role="banner"
+        data-element="top-app-bar"
+        data-size="small"
+        data-auth="{{ 'true' if is_authenticated else 'false' }}">
+  <div class="md3-top-app-bar__row">
+    {# Left: Burger Icon (nur Compact/Medium, versteckt auf Expanded via CSS) #}
+    <button type="button" 
+            class="md3-icon-button md3-top-app-bar__navigation-icon" 
+            aria-label="Menú"
+            aria-controls="navigation-drawer-modal"
+            aria-expanded="false"
+            data-action="open-drawer">
+      <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">menu</span>
+    </button>
+
+    {# Center: Adaptive Title (Site → Page beim Scrollen) #}
+    <div class="md3-top-app-bar__title" aria-live="polite" aria-atomic="true">
+      <span class="md3-top-app-bar__title-site" id="siteTitle" data-site-title>games.hispanistica</span>
+      <span class="md3-top-app-bar__title-page" id="pageTitle" data-page-title-el></span>
+    </div>
+
+    {# Right: Login/Account Actions #}
+    <div class="md3-top-app-bar__actions">
+      {# Theme Toggle (Light/Dark) - erscheint immer #}
+      <button id="themeToggle"
+              type="button"
+              class="md3-icon-button md3-theme-toggle" 
+              aria-label="Darstellung umschalten"
+              aria-pressed="false"
+              title="Darstellung: Hell">
+        <span id="themeIcon" class="material-symbols-rounded" aria-hidden="true">light_mode</span>
+      </button>
+
+      {% if is_authenticated %}
+        {# Authenticated: Account button (MD3) - Text button with badge #}
+        <div class="md3-user-menu" data-user-menu-root>
+          <button
+              class="md3-top-app-bar__account-chip md3-button md3-button--text md3-top-app-bar__account-chip--{{ role_value }}"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-label="Angemeldet als {{ user_name }}, Rolle: {{ role_value }}"
+              aria-controls="user-menu-dropdown"
+              data-account-menu-trigger
+              data-user-menu-toggle>
+            {# Combined account chip: leading role icon + username label. No extra role text. #}
+            {% if role_value == 'admin' %}
+              <span class="material-symbols-rounded md3-top-app-bar__account-chip-icon" aria-hidden="true">admin_panel_settings</span>
+            {% elif role_value == 'editor' %}
+              <span class="material-symbols-rounded md3-top-app-bar__account-chip-icon" aria-hidden="true">person_edit</span>
+            {% else %}
+              <span class="material-symbols-rounded md3-top-app-bar__account-chip-icon" aria-hidden="true">person_check</span>
+            {% endif %}
+
+            <span class="md3-top-app-bar__account-chip-label">
+              {%- if g.user -%}
+                {%- if g.user.display_name -%}
+                  {{ g.user.display_name }}
+                {%- elif g.user.username -%}
+                  {{ g.user.username }}
+                {%- else -%}
+                  {{ g.user }}
+                {%- endif -%}
+              {%- endif -%}
+            </span>
+          </button>
+
+          {# User Menu (Profil, Admin-Links, Logout) #}
+          <div class="md3-user-menu__dropdown" 
+               id="user-menu-dropdown"
+               role="menu"
+               aria-label="Benutzermenü"
+               data-user-menu
+               hidden>
+            {# Common profile actions for authenticated users #}
+            <a href="{{ url_for('auth.account_profile_page') }}" class="md3-user-menu__item" role="menuitem">
+              <span class="material-symbols-rounded md3-user-menu__icon">account_circle</span>
+              <span class="md3-user-menu__label">Profil</span>
+            </a>
+            {% if role_value == 'admin' %}
+              <div class="md3-user-menu__divider" role="separator"></div>
+              {# Admin Dashboard Link #}
+              <a href="{{ url_for('admin.dashboard') }}" class="md3-user-menu__item" role="menuitem">
+                <span class="material-symbols-rounded md3-user-menu__icon">dashboard</span>
+                <span class="md3-user-menu__label">Dashboard</span>
+              </a>
+              <a href="{{ url_for('auth.admin_users_page') }}" class="md3-user-menu__item" role="menuitem">
+                <span class="material-symbols-rounded md3-user-menu__icon">group</span>
+                <span class="md3-user-menu__label">Benutzer</span>
+              </a>
+              <div class="md3-user-menu__divider" role="separator"></div>
+            {% endif %}
+            {# Logout via POST (fetch-based)
+              Desired client behaviour: perform a full page redirect after logout
+              (no partial fragment replacement / no login-sheet). The frontend
+              uses `data-logout="fetch"` and should navigate to a server-provided
+              redirect or to the site root. #}
+            <a href="{{ url_for('auth.logout_any') }}"
+              data-logout="fetch"
+              data-logout-method="POST"
+              data-logout-url="{{ url_for('auth.logout_any') }}"
+              class="md3-user-menu__item md3-user-menu__item--logout"
+              role="menuitem">
+              <span class="material-symbols-rounded md3-user-menu__icon">logout</span>
+              <span class="md3-user-menu__label">Logout</span>
+            </a>
+          </div>
+        </div>
+      {% else %}
+          {# Unauthenticated: Login Button — navigate to canonical login page (/login) #}
+          <a href="{{ url_for('public.login', next=request.full_path|default(request.path)) }}"
+            class="md3-icon-button" 
+            aria-label="Login"
+            title="Login">
+          <span class="material-symbols-rounded">account_circle</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{# Login Sheet removed - now defined globally in status_banner.html #}
+{# This ensures a single, consistent login experience across the app #}
+

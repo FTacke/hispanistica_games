@@ -1,0 +1,46 @@
+# CO.RA.PAN Development Stack: PostgreSQL (Auth-DB) + BlackLab Server
+# Start with: docker compose -f docker-compose.dev-postgres.yml up -d
+# Stop with:  docker compose -f docker-compose.dev-postgres.yml down
+#
+# Default auth DB URL: postgresql+psycopg://corapan_auth:corapan_auth@localhost:54320/corapan_auth
+
+services:
+  corapan_auth_db:
+    image: postgres:15
+    container_name: corapan_auth_db
+    environment:
+      POSTGRES_USER: corapan_auth
+      POSTGRES_PASSWORD: corapan_auth
+      POSTGRES_DB: corapan_auth
+    ports:
+      - "54320:5432"
+    volumes:
+      - ./data/db/postgres_dev:/var/lib/postgresql/data
+      - ./:/app:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "corapan_auth", "-d", "corapan_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  blacklab-server-v3:
+    image: instituutnederlandsetaal/blacklab:latest
+    container_name: blacklab-server-v3
+    ports:
+      - "8081:8080"
+    volumes:
+      # Mount index as /data/index/corapan so BlackLab sees corpus "corapan"
+      - ./data/blacklab_index:/data/index/corapan:ro
+      - ./config/blacklab:/etc/blacklab:ro
+    environment:
+      JAVA_OPTS: "-Xmx2g -Xms512m"
+      BLACKLAB_CONFIG_DIR: "/etc/blacklab"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/blacklab-server/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped

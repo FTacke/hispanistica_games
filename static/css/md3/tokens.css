@@ -1,0 +1,510 @@
+/* 
+ * MD3 Token System - Canonical Definition
+ *
+ * API (canonical):
+ * - Colors:       --md-sys-color-* (canonical)
+ * - Typography:   --md-sys-typescale-* (canonical)
+ * - Spacing:      --space-{1,2,3,4,5,6,8,10,12}
+ * - Shape/Elevation: --radius-*, --elev-*
+ *
+ * BACKWARDS COMPATIBILITY / MIGRATION NOTE
+ * ---------------------------------------
+ * Historically the project used "--md3-*" token names and other
+ * legacy variable sets. The long-term canonical names are the
+ * --md-sys-* / --space-* set above. During the migration period
+ * a *shim* of aliases is provided in
+ *   static/css/md3/tokens-legacy-shim.css
+ * which maps the most commonly-used `--md3-*` names to the
+ * canonical tokens. New code and templates MUST use `--md-sys-*`
+ * and `--space-*` tokens — do not add new `--md3-*` usages.
+ *
+ * RULES:
+ *  - --md-sys-* = canonical
+ *  - --md3-*      = legacy alias (temporary; will be removed later)
+ */
+
+/* MD3 Farb-Tokens — generiert und gepflegt mit generate-tokens.py */
+
+:root {
+  /* Core color roles (light theme) */
+  --md-sys-color-primary: #0a5981;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #91a0b1;
+  --md-sys-color-on-primary-container: #000000;
+  --md-sys-color-secondary: #095378;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #8c9aa9;
+  --md-sys-color-on-secondary-container: #000000;
+
+  /* Tertiary role (für subtile Highlights) */
+  --md-sys-color-tertiary: #7d5260;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #ffd9e3;
+  --md-sys-color-on-tertiary-container: #31101d;
+
+  /* Surface & background */
+  --md-sys-color-surface: #ffffff;
+  --md-sys-color-on-surface: #1c1b1f;
+  --md-sys-color-surface-variant: #f3edf7;
+  --md-sys-color-on-surface-variant: color-mix(
+    in oklab,
+    var(--md-sys-color-on-surface) 60%,
+    transparent
+  );
+  --_on-surface-variant-static: #4a4f55; /* Fallback für Browser ohne OKLab/color-mix */
+  --md-sys-color-outline: #79747e; /* Standard-Divider */
+  --md-sys-color-outline-variant: #cac4d0;
+  --md-sys-color-background: #c7d5d8;
+  --md-sys-color-on-background: #000000;
+  
+  /* NOTE: --app-background is defined in app-tokens.css, not here.
+     This allows app-level customization without modifying core tokens. */
+
+  /* Surface containers for tonal cards (light theme) — derived from preview */
+  --md-sys-color-surface-container-lowest: color-mix(
+    in oklab,
+    var(--md-sys-color-surface) 98%,
+    var(--md-sys-color-primary) 2%
+  );
+  --md-sys-color-surface-container-low: color-mix(
+    in oklab,
+    var(--md-sys-color-surface) 96%,
+    var(--md-sys-color-primary) 4%
+  );
+  --md-sys-color-surface-container-mid: color-mix(
+    in oklab,
+    var(--md-sys-color-surface) 94%,
+    var(--md-sys-color-primary) 6%
+  );
+  --md-sys-color-surface-container: color-mix(
+    in oklab,
+    var(--md-sys-color-surface) 88%,
+    var(--md-sys-color-primary) 12%
+  );
+  --md-sys-color-surface-container-high: color-mix(
+    in oklab,
+    var(--md-sys-color-surface) 80%,
+    var(--md-sys-color-primary) 20%
+  );
+  --md-sys-color-surface-container-highest: color-mix(
+    in oklab,
+    var(--md-sys-color-surface) 72%,
+    var(--md-sys-color-primary) 28%
+  );
+
+  /* Error */
+  --md-sys-color-error: #b3261e;
+  --md-sys-color-on-error: #ffffff;
+
+  /* Inverse surface (für Tooltips) */
+  --md-sys-color-inverse-surface: #313033;
+  --md-sys-color-inverse-on-surface: #f4eff4;
+
+  /* Spacing tokens (from preview) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shape tokens (border radius) */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Elevation tokens (box-shadow) - MD3 Goldstandard */
+  --elev-1: 0 1px 2px rgb(0 0 0 / 6%), 0 1px 1px rgb(0 0 0 / 5%);
+  --elev-2: 0 2px 6px rgb(0 0 0 / 10%), 0 1px 2px rgb(0 0 0 / 6%);
+  --elev-3: 0 4px 8px rgb(0 0 0 / 12%), 0 2px 4px rgb(0 0 0 / 8%);
+  --elev-4: 0 6px 12px rgb(0 0 0 / 15%), 0 3px 6px rgb(0 0 0 / 10%);
+  --elev-5: 0 8px 16px rgb(0 0 0 / 18%), 0 4px 8px rgb(0 0 0 / 12%);
+
+  /* Motion tokens - MD3 Goldstandard */
+  --md-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-motion-easing-decelerate: cubic-bezier(0, 0, 0, 1);
+  --md-motion-easing-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  
+  --md-motion-duration-short1: 50ms;
+  --md-motion-duration-short2: 100ms;
+  --md-motion-duration-short3: 150ms;
+  --md-motion-duration-short4: 200ms;
+  --md-motion-duration-medium1: 250ms;
+  --md-motion-duration-medium2: 300ms;
+  --md-motion-duration-medium3: 350ms;
+  --md-motion-duration-medium4: 400ms;
+
+  /* State layer opacity tokens */
+  --md-state-hover-opacity: 0.08;
+  --md-state-focus-opacity: 0.12;
+  --md-state-pressed-opacity: 0.12;
+  --md-state-dragged-opacity: 0.16;
+
+  /* Typography Base */
+  --md-sys-typescale-base-font-family: "Roboto", "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --md-sys-typescale-base-font-weight-regular: 400;
+  --md-sys-typescale-base-font-weight-medium: 500;
+
+  /* Typography Scale - Display */
+  --md-sys-typescale-display-large-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-display-large-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-display-large-font-size: 57px;
+  --md-sys-typescale-display-large-line-height: 64px;
+  --md-sys-typescale-display-large-letter-spacing: -0.25px;
+
+  --md-sys-typescale-display-medium-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-display-medium-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-display-medium-font-size: 45px;
+  --md-sys-typescale-display-medium-line-height: 52px;
+  --md-sys-typescale-display-medium-letter-spacing: 0px;
+
+  --md-sys-typescale-display-small-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-display-small-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-display-small-font-size: 36px;
+  --md-sys-typescale-display-small-line-height: 44px;
+  --md-sys-typescale-display-small-letter-spacing: 0px;
+
+  /* Typography Scale - Headline */
+  --md-sys-typescale-headline-large-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-headline-large-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-headline-large-font-size: 32px;
+  --md-sys-typescale-headline-large-line-height: 40px;
+  --md-sys-typescale-headline-large-letter-spacing: 0px;
+
+  --md-sys-typescale-headline-medium-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-headline-medium-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-headline-medium-font-size: 28px;
+  --md-sys-typescale-headline-medium-line-height: 36px;
+  --md-sys-typescale-headline-medium-letter-spacing: 0px;
+
+  --md-sys-typescale-headline-small-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-headline-small-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-headline-small-font-size: 24px;
+  --md-sys-typescale-headline-small-line-height: 32px;
+  --md-sys-typescale-headline-small-letter-spacing: 0px;
+
+  /* Typography Scale - Title */
+  --md-sys-typescale-title-large-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-title-large-font-weight: var(--md-sys-typescale-base-font-weight-regular); /* MD3 default is regular for Title Large, but typography.css had 500. Sticking to 400 for standard MD3 or 500? typography.css had 500. Let's use 500 to match existing look. */
+  --md-sys-typescale-title-large-font-size: 22px;
+  --md-sys-typescale-title-large-line-height: 28px;
+  --md-sys-typescale-title-large-letter-spacing: 0px;
+
+  --md-sys-typescale-title-medium-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-title-medium-font-weight: var(--md-sys-typescale-base-font-weight-medium);
+  --md-sys-typescale-title-medium-font-size: 16px;
+  --md-sys-typescale-title-medium-line-height: 24px;
+  --md-sys-typescale-title-medium-letter-spacing: 0.15px;
+
+  --md-sys-typescale-title-small-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-title-small-font-weight: var(--md-sys-typescale-base-font-weight-medium);
+  --md-sys-typescale-title-small-font-size: 14px;
+  --md-sys-typescale-title-small-line-height: 20px;
+  --md-sys-typescale-title-small-letter-spacing: 0.1px;
+
+  /* Typography Scale - Body */
+  --md-sys-typescale-body-large-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-body-large-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-body-large-font-size: 16px;
+  --md-sys-typescale-body-large-line-height: 24px;
+  --md-sys-typescale-body-large-letter-spacing: 0.5px;
+
+  --md-sys-typescale-body-medium-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-body-medium-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-body-medium-font-size: 14px;
+  --md-sys-typescale-body-medium-line-height: 20px;
+  --md-sys-typescale-body-medium-letter-spacing: 0.25px;
+
+  --md-sys-typescale-body-small-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-body-small-font-weight: var(--md-sys-typescale-base-font-weight-regular);
+  --md-sys-typescale-body-small-font-size: 12px;
+  --md-sys-typescale-body-small-line-height: 16px;
+  --md-sys-typescale-body-small-letter-spacing: 0.4px;
+
+  /* Typography Scale - Label */
+  --md-sys-typescale-label-large-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-label-large-font-weight: var(--md-sys-typescale-base-font-weight-medium);
+  --md-sys-typescale-label-large-font-size: 14px;
+  --md-sys-typescale-label-large-line-height: 20px;
+  --md-sys-typescale-label-large-letter-spacing: 0.1px;
+
+  --md-sys-typescale-label-medium-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-label-medium-font-weight: var(--md-sys-typescale-base-font-weight-medium);
+  --md-sys-typescale-label-medium-font-size: 12px;
+  --md-sys-typescale-label-medium-line-height: 16px;
+  --md-sys-typescale-label-medium-letter-spacing: 0.5px;
+
+  --md-sys-typescale-label-small-font-family: var(--md-sys-typescale-base-font-family);
+  --md-sys-typescale-label-small-font-weight: var(--md-sys-typescale-base-font-weight-medium);
+  --md-sys-typescale-label-small-font-size: 11px;
+  --md-sys-typescale-label-small-line-height: 16px;
+  --md-sys-typescale-label-small-letter-spacing: 0.5px;
+
+  /* Typography helpers */
+  --md-typography-heading-accent: var(--md-sys-color-primary);
+
+  /* Extended Colors (Light Mode) */
+  --md-sys-color-success: #006e1c;
+  --md-sys-color-on-success: #ffffff;
+  --md-sys-color-success-container: #94f990;
+  --md-sys-color-on-success-container: #002204;
+
+  --md-sys-color-warning: #7a5900;
+  --md-sys-color-on-warning: #ffffff;
+  --md-sys-color-warning-container: #ffdea3;
+  --md-sys-color-on-warning-container: #261900;
+
+  --md-sys-color-info: #006874;
+  --md-sys-color-on-info: #ffffff;
+  --md-sys-color-info-container: #97f0ff;
+  --md-sys-color-on-info-container: #001f24;
+
+  --md-sys-color-neutral: #5e5e5e;
+  --md-sys-color-on-neutral: #ffffff;
+  --md-sys-color-neutral-container: #e2e2e2;
+  --md-sys-color-on-neutral-container: #1b1b1b;
+
+  --md-sys-color-rose: #9c4146;
+  --md-sys-color-on-rose: #ffffff;
+  --md-sys-color-rose-container: #ffdad9;
+  --md-sys-color-on-rose-container: #40000a;
+
+  --md-sys-color-orange: #8b5000;
+  --md-sys-color-on-orange: #ffffff;
+  --md-sys-color-orange-container: #ffdcbe;
+  --md-sys-color-on-orange-container: #2c1600;
+
+  --md-sys-color-lime: #566500;
+  --md-sys-color-on-lime: #ffffff;
+  --md-sys-color-lime-container: #d8ed7c;
+  --md-sys-color-on-lime-container: #191e00;
+
+  --md-sys-color-cyan: #006876;
+  --md-sys-color-on-cyan: #ffffff;
+  --md-sys-color-cyan-container: #a6eeff;
+  --md-sys-color-on-cyan-container: #001f25;
+
+  --md-sys-color-violet: #7d4e7d;
+  --md-sys-color-on-violet: #ffffff;
+  --md-sys-color-violet-container: #ffd7f9;
+  --md-sys-color-on-violet-container: #320936;
+
+  --md-sys-color-purple: #7d4c9e;
+  --md-sys-color-on-purple: #ffffff;
+  --md-sys-color-purple-container: #f2daff;
+  --md-sys-color-on-purple-container: #2e004e;
+
+  --md-sys-color-teal: #006a60;
+  --md-sys-color-on-teal: #ffffff;
+  --md-sys-color-teal-container: #74f8e5;
+  --md-sys-color-on-teal-container: #00201c;
+
+  --md-sys-color-brown: #86533e;
+  --md-sys-color-on-brown: #ffffff;
+  --md-sys-color-brown-container: #ffdbd0;
+  --md-sys-color-on-brown-container: #361206;
+
+  --md-sys-color-indigo: #3f51b5;
+  --md-sys-color-on-indigo: #ffffff;
+  --md-sys-color-indigo-container: #e8eaf6;
+  --md-sys-color-on-indigo-container: #1a237e;
+
+  --md-sys-color-pink: #e91e63;
+  --md-sys-color-on-pink: #ffffff;
+  --md-sys-color-pink-container: #fce4ec;
+  --md-sys-color-on-pink-container: #880e4f;
+
+  --md-sys-color-gold: #ffd700;
+  --md-sys-color-on-gold: #000000;
+  --md-sys-color-gold-container: #fff9c4;
+  --md-sys-color-on-gold-container: #332b00;
+
+  --md-sys-color-mint: #00e676;
+  --md-sys-color-on-mint: #000000;
+  --md-sys-color-mint-container: #b9f6ca;
+  --md-sys-color-on-mint-container: #00331a;
+
+  --md-sys-color-slate: #607d8b;
+  --md-sys-color-on-slate: #ffffff;
+  --md-sys-color-slate-container: #cfd8dc;
+  --md-sys-color-on-slate-container: #263238;
+
+  --md-sys-color-crimson: #dc143c;
+  --md-sys-color-on-crimson: #ffffff;
+  --md-sys-color-crimson-container: #ffcdd2;
+  --md-sys-color-on-crimson-container: #4a000e;
+}
+
+/* Fallback für Browser ohne OKLab/color-mix Unterstützung */
+@supports not (color: oklab(0 0 0)) {
+  :root {
+    --md-sys-color-on-surface-variant: var(--_on-surface-variant-static);
+  }
+}
+
+/* ========================================
+   GLOBAL DARK MODE (MD3-konform)
+   ======================================== */
+
+:root {
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"],
+:root[data-theme="auto"][data-system-dark="true"] {
+  /* Core color roles (dark theme) */
+  --md-sys-color-primary: #9bb9ff;
+  --md-sys-color-on-primary: #0b1220;
+  --md-sys-color-primary-container: color-mix(
+    in oklab,
+    #9bb9ff 24%,
+    #14141a 76%
+  );
+  --md-sys-color-on-primary-container: #dde6ff;
+
+  --md-sys-color-secondary: #97b3cb;
+  --md-sys-color-on-secondary: #0e141a;
+  --md-sys-color-secondary-container: color-mix(
+    in oklab,
+    #97b3cb 24%,
+    #14141a 76%
+  );
+  --md-sys-color-on-secondary-container: #d8e3f0;
+
+  /* Tertiary role (dark) */
+  --md-sys-color-tertiary: #efb8c8;
+  --md-sys-color-on-tertiary: #4a2532;
+  --md-sys-color-tertiary-container: #633b48;
+  --md-sys-color-on-tertiary-container: #ffd9e3;
+
+  /* Background & Surface */
+  --md-sys-color-background: #0b0b0e;
+  --md-sys-color-on-background: #e7e7ea;
+  --md-sys-color-surface: #14141a;
+  --md-sys-color-on-surface: #e6e1e5;
+  
+  /* NOTE: --app-background is defined in app-tokens.css, not here. */
+  --md-sys-color-surface-variant: #2a2a30;
+  --md-sys-color-on-surface-variant: #c6c6ca;
+  --_on-surface-variant-static: #c6c6ca;
+  --md-sys-color-outline: #79747e;
+  --md-sys-color-outline-variant: #3a3a40;
+
+  /* Surface container hierarchy (dark) */
+  --md-sys-color-surface-container-lowest: #0e0e13;
+  --md-sys-color-surface-container-low: #17171d;
+  --md-sys-color-surface-container: #1b1b22;
+  --md-sys-color-surface-container-high: #1f1f27;
+  --md-sys-color-surface-container-highest: #23232c;
+
+  /* Error (dark) */
+  --md-sys-color-error: #f2b8b5;
+  --md-sys-color-on-error: #601410;
+
+  /* Inverse surface (dark → light) */
+  --md-sys-color-inverse-surface: #f4eff4;
+  --md-sys-color-inverse-on-surface: #313033;
+
+  /* Extended Colors (Dark Mode) */
+  --md-sys-color-success: #78dc77;
+  --md-sys-color-on-success: #00390a;
+  --md-sys-color-success-container: #005313;
+  --md-sys-color-on-success-container: #94f990;
+
+  --md-sys-color-warning: #fbc02d;
+  --md-sys-color-on-warning: #412d00;
+  --md-sys-color-warning-container: #5d4200;
+  --md-sys-color-on-warning-container: #ffdea3;
+
+  --md-sys-color-info: #4fd8eb;
+  --md-sys-color-on-info: #00363d;
+  --md-sys-color-info-container: #004f58;
+  --md-sys-color-on-info-container: #97f0ff;
+
+  --md-sys-color-neutral: #c6c6c6;
+  --md-sys-color-on-neutral: #303030;
+  --md-sys-color-neutral-container: #474747;
+  --md-sys-color-on-neutral-container: #e2e2e2;
+
+  --md-sys-color-rose: #ffb3b6;
+  --md-sys-color-on-rose: #5f131c;
+  --md-sys-color-rose-container: #7e2a30;
+  --md-sys-color-on-rose-container: #ffdad9;
+
+  --md-sys-color-orange: #ffb870;
+  --md-sys-color-on-orange: #4a2800;
+  --md-sys-color-orange-container: #6a3b00;
+  --md-sys-color-on-orange-container: #ffdcbe;
+
+  --md-sys-color-lime: #bcd063;
+  --md-sys-color-on-lime: #2c3400;
+  --md-sys-color-lime-container: #404c00;
+  --md-sys-color-on-lime-container: #d8ed7c;
+
+  --md-sys-color-cyan: #83d2e3;
+  --md-sys-color-on-cyan: #00363d;
+  --md-sys-color-cyan-container: #004f58;
+  --md-sys-color-on-cyan-container: #a6eeff;
+
+  --md-sys-color-violet: #edb7ec;
+  --md-sys-color-on-violet: #4a204c;
+  --md-sys-color-violet-container: #633664;
+  --md-sys-color-on-violet-container: #ffd7f9;
+
+  --md-sys-color-purple: #e1b6ff;
+  --md-sys-color-on-purple: #4c166c;
+  --md-sys-color-purple-container: #643284;
+  --md-sys-color-on-purple-container: #f2daff;
+
+  --md-sys-color-teal: #53dbca;
+  --md-sys-color-on-teal: #003731;
+  --md-sys-color-teal-container: #005048;
+  --md-sys-color-on-teal-container: #74f8e5;
+
+  --md-sys-color-brown: #ffb59d;
+  --md-sys-color-on-brown: #502414;
+  --md-sys-color-brown-container: #6b3b28;
+  --md-sys-color-on-brown-container: #ffdbd0;
+
+  --md-sys-color-indigo: #7986cb;
+  --md-sys-color-on-indigo: #000000;
+  --md-sys-color-indigo-container: #283593;
+  --md-sys-color-on-indigo-container: #e8eaf6;
+
+  --md-sys-color-pink: #f06292;
+  --md-sys-color-on-pink: #000000;
+  --md-sys-color-pink-container: #880e4f;
+  --md-sys-color-on-pink-container: #fce4ec;
+
+  --md-sys-color-gold: #fff176;
+  --md-sys-color-on-gold: #000000;
+  --md-sys-color-gold-container: #f57f17;
+  --md-sys-color-on-gold-container: #fff9c4;
+
+  --md-sys-color-mint: #69f0ae;
+  --md-sys-color-on-mint: #000000;
+  --md-sys-color-mint-container: #004d40;
+  --md-sys-color-on-mint-container: #b9f6ca;
+
+  --md-sys-color-slate: #90a4ae;
+  --md-sys-color-on-slate: #000000;
+  --md-sys-color-slate-container: #37474f;
+  --md-sys-color-on-slate-container: #cfd8dc;
+
+  --md-sys-color-crimson: #ef5350;
+  --md-sys-color-on-crimson: #000000;
+  --md-sys-color-crimson-container: #b71c1c;
+  --md-sys-color-on-crimson-container: #ffcdd2;
+}

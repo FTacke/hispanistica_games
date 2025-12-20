@@ -1,0 +1,100 @@
+<!-- Dialog Skeleton (MD3 Confirmation/Alert Dialog) -->
+<!--
+  Use this skeleton for:
+  - Confirmation dialogs ("Are you sure?")
+  - Alert messages
+  - Simple prompts
+  
+  For auth-specific dialogs (login, password), use auth_dialog_skeleton.html
+  
+  Behavior:
+  - Modal: blocks interaction with background
+  - Focus trapped inside dialog
+  - Closes on Escape key
+  - Use native <dialog> element for accessibility
+-->
+
+<dialog class="md3-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title-id">
+  <div class="md3-dialog__container">
+    <div class="md3-dialog__surface">
+      
+      <!-- Icon (optional, for emphasis) -->
+      <div class="md3-dialog__icon" aria-hidden="true">
+        <span class="material-symbols-rounded">warning</span>
+      </div>
+      
+      <!-- Header -->
+      <header class="md3-dialog__header">
+        <h2 id="dialog-title-id" class="md3-title-large md3-dialog__title">
+          Título del diálogo
+        </h2>
+      </header>
+      
+      <!-- Content -->
+      <div class="md3-dialog__content md3-stack--dialog">
+        <p class="md3-body-medium">
+          Contenido del diálogo. Explica la acción que el usuario debe confirmar
+          o la información que necesita ver.
+        </p>
+        
+        <!-- Optional: Additional content like form fields -->
+        <!--
+        <div class="md3-form-field">
+          <label for="dialog-input" class="md3-label-large">Razón</label>
+          <input type="text" id="dialog-input" class="md3-textfield">
+        </div>
+        -->
+      </div>
+      
+      <!-- Actions -->
+      <div class="md3-dialog__actions">
+        <button class="md3-button md3-button--text" data-md3-dialog-action="cancel">
+          Cancelar
+        </button>
+        <button class="md3-button md3-button--filled" data-md3-dialog-action="confirm">
+          Confirmar
+        </button>
+      </div>
+      
+    </div>
+  </div>
+</dialog>
+
+<!--
+  JavaScript to control the dialog:
+  
+  const dialog = document.querySelector('.md3-dialog');
+  
+  // Open (using native dialog API)
+  dialog.showModal();
+  
+  // Close
+  dialog.close();
+  
+  // Handle actions
+  dialog.querySelectorAll('[data-md3-dialog-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.md3DialogAction;
+      if (action === 'confirm') {
+        // Handle confirm
+      }
+      dialog.close();
+    });
+  });
+  
+  // Close on backdrop click
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) {
+      dialog.close();
+    }
+  });
+-->
+
+<!--
+  Variant: Danger Dialog (for destructive actions)
+  Replace the confirm button with:
+  
+  <button class="md3-button md3-button--filled md3-button--danger" data-md3-dialog-action="confirm">
+    Eliminar
+  </button>
+-->

@@ -1,0 +1,83 @@
+/* Layout helper utilities for MD3 pages — tokenized units
+   Use these small utilities to create consistent spacing/layout in templates
+   without inline styles.
+*/
+
+.md3-row {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.md3-row--between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.md3-row--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.md3-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.md3-block-spaced > * + * {
+  margin-top: var(--space-4);
+}
+
+.md3-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Helper for inputs that should grow but cap at a sane width */
+.md3-fill-max {
+  flex: 1;
+  max-width: 520px;
+}
+
+/* ============================================================
+   MD3 Spacing Utilities
+   Use instead of Bootstrap mt-*, mb-*, etc.
+   Based on --space-N tokens (4px base unit)
+   ============================================================ */
+
+/* Margin Top */
+.md3-mt-0 { margin-top: 0; }
+.md3-mt-1 { margin-top: var(--space-1); }   /* 4px */
+.md3-mt-2 { margin-top: var(--space-2); }   /* 8px */
+.md3-mt-3 { margin-top: var(--space-3); }   /* 12px */
+.md3-mt-4 { margin-top: var(--space-4); }   /* 16px */
+.md3-mt-5 { margin-top: var(--space-5); }   /* 20px */
+.md3-mt-6 { margin-top: var(--space-6); }   /* 24px */
+.md3-mt-8 { margin-top: var(--space-8); }   /* 32px */
+.md3-mt-10 { margin-top: var(--space-10); } /* 40px */
+
+/* Margin Bottom */
+.md3-mb-0 { margin-bottom: 0; }
+.md3-mb-1 { margin-bottom: var(--space-1); }
+.md3-mb-2 { margin-bottom: var(--space-2); }
+.md3-mb-3 { margin-bottom: var(--space-3); }
+.md3-mb-4 { margin-bottom: var(--space-4); }
+.md3-mb-5 { margin-bottom: var(--space-5); }
+.md3-mb-6 { margin-bottom: var(--space-6); }
+.md3-mb-8 { margin-bottom: var(--space-8); }
+
+/* Padding */
+.md3-p-0 { padding: 0; }
+.md3-p-2 { padding: var(--space-2); }
+.md3-p-3 { padding: var(--space-3); }
+.md3-p-4 { padding: var(--space-4); }
+.md3-p-6 { padding: var(--space-6); }
+
+/* Reset margins (for elements like <p> in meta text) */
+.md3-m-0 { margin: 0; }

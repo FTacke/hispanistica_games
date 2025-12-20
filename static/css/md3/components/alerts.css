@@ -1,0 +1,421 @@
+/* ============================================
+   MD3 Alert Banner Component - Goldstandard
+   ============================================
+   Purpose: Error/warning/info/success alerts with icon, title, and message
+   Dependencies: tokens.css, typography.css
+   
+   Components:
+   - .md3-alert: Base alert container
+   - .md3-alert--banner: Full-width banner for page/section alerts
+   - .md3-alert--inline: Compact inline alerts for forms
+   - .md3-field-support: Field supporting text
+   - .md3-field-error: Field error messages
+   
+   Variants:
+   - .md3-alert--error: Error state (red, uses error-container)
+   - .md3-alert--warning: Warning state (amber)
+   - .md3-alert--info: Info state (primary blue)
+   - .md3-alert--success: Success state (green)
+   ============================================ */
+
+/* ============================================
+   1. Alert Base Container
+   ============================================ */
+.md3-alert {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 4px solid transparent;
+  align-items: flex-start;
+  animation: alert-slide-down 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Default: neutral surface */
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ============================================
+   2. Alert Layout Variants
+   ============================================ */
+
+/* Banner variant: Full-width for page/section alerts */
+.md3-alert--banner {
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
+  border-left-width: 6px;
+}
+
+/* Inline variant: Compact for form contexts */
+.md3-alert--inline {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left-width: 4px;
+}
+
+/* ============================================
+   3. Alert Icon
+   ============================================ */
+.md3-alert__icon {
+  font-size: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Align with first line of text */
+  margin-top: 1px;
+}
+
+.md3-alert--inline .md3-alert__icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ============================================
+   4. Alert Content
+   ============================================ */
+.md3-alert__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex-grow: 1;
+  min-width: 0; /* Allow text wrapping */
+}
+
+/* Alert Title - md3-title-small */
+.md3-alert__title {
+  font-family: var(--md-sys-typescale-title-small-font-family, inherit);
+  font-size: var(--md-sys-typescale-title-small-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-title-small-font-weight, 500);
+  line-height: var(--md-sys-typescale-title-small-line-height, 1.25rem);
+  letter-spacing: var(--md-sys-typescale-title-small-letter-spacing, 0.1px);
+  margin: 0;
+}
+
+/* Alert Text - md3-body-medium */
+.md3-alert__text {
+  font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
+  font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-body-medium-font-weight, 400);
+  line-height: var(--md-sys-typescale-body-medium-line-height, 1.25rem);
+  letter-spacing: var(--md-sys-typescale-body-medium-letter-spacing, 0.25px);
+  margin: 0;
+}
+
+/* Alert Message (legacy alias for text) */
+.md3-alert__message {
+  font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
+  font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-body-medium-font-weight, 400);
+  line-height: var(--md-sys-typescale-body-medium-line-height, 1.25rem);
+  letter-spacing: var(--md-sys-typescale-body-medium-letter-spacing, 0.25px);
+  margin: 0;
+}
+
+/* Inline variant: tighter typography */
+.md3-alert--inline .md3-alert__title {
+  font-size: var(--md-sys-typescale-label-large-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-label-large-font-weight, 500);
+  line-height: var(--md-sys-typescale-label-large-line-height, 1.25rem);
+}
+
+.md3-alert--inline .md3-alert__text,
+.md3-alert--inline .md3-alert__message {
+  font-size: var(--md-sys-typescale-body-small-font-size, 0.75rem);
+  line-height: var(--md-sys-typescale-body-small-line-height, 1rem);
+}
+
+/* ============================================
+   5. Color Variants - MD3 Container Colors
+   ============================================ */
+
+/* Error Variant - Uses error-container tokens */
+.md3-alert--error {
+  background-color: var(--md-sys-color-error-container, #fdecea);
+  border-left-color: var(--md-sys-color-error, #b3261e);
+  color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+.md3-alert--error .md3-alert__icon {
+  color: var(--md-sys-color-error, #b3261e);
+}
+
+.md3-alert--error .md3-alert__title {
+  color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+.md3-alert--error .md3-alert__text,
+.md3-alert--error .md3-alert__message {
+  color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+/* Warning Variant - Amber tones */
+.md3-alert--warning {
+  background-color: var(--md-sys-color-warning-container, #fff3e0);
+  border-left-color: var(--md-sys-color-warning, #f9a825);
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+.md3-alert--warning .md3-alert__icon {
+  color: var(--md-sys-color-warning, #f9a825);
+}
+
+.md3-alert--warning .md3-alert__title {
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+.md3-alert--warning .md3-alert__text,
+.md3-alert--warning .md3-alert__message {
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+/* Info Variant - Primary container tones */
+.md3-alert--info {
+  background-color: var(--md-sys-color-primary-container, #e8f0fe);
+  border-left-color: var(--md-sys-color-primary, #1a73e8);
+  color: var(--md-sys-color-on-primary-container, #0d3c61);
+}
+
+.md3-alert--info .md3-alert__icon {
+  color: var(--md-sys-color-primary, #1a73e8);
+}
+
+.md3-alert--info .md3-alert__title {
+  color: var(--md-sys-color-on-primary-container, #0d3c61);
+}
+
+.md3-alert--info .md3-alert__text,
+.md3-alert--info .md3-alert__message {
+  color: var(--md-sys-color-on-primary-container, #0d3c61);
+}
+
+/* Success Variant - Muted green tones (less prominent than errors) */
+.md3-alert--success {
+  background-color: color-mix(in srgb,
+    var(--md-sys-color-surface) 70%,
+    var(--md-sys-color-success-container, #e6f4ea) 30%
+  );
+  border-left-color: color-mix(in srgb,
+    var(--md-sys-color-outline) 40%,
+    var(--md-sys-color-success, #34a853) 60%
+  );
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-alert--success .md3-alert__icon {
+  color: color-mix(in srgb,
+    var(--md-sys-color-on-surface-variant) 30%,
+    var(--md-sys-color-success, #34a853) 70%
+  );
+}
+
+.md3-alert--success .md3-alert__title {
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-alert--success .md3-alert__text,
+.md3-alert--success .md3-alert__message {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================
+   6. Field Support Text
+   ============================================ */
+.md3-field-support {
+  margin-top: var(--space-1);
+  padding-left: var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-field-support p {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+/* ============================================
+   7. Field Error Messages
+   ============================================ */
+.md3-field-error {
+  margin-top: var(--space-1);
+  padding-left: var(--space-4);
+  color: var(--md-sys-color-error);
+  min-height: 0;
+  overflow: hidden;
+  transition: opacity 150ms ease-out, max-height 150ms ease-out;
+}
+
+.md3-field-error:empty {
+  display: none;
+}
+
+.md3-field-error p {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+/* Legacy compatibility: md3-error-text maps to field-error styling */
+.md3-error-text {
+  color: var(--md-sys-color-error);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+/* ============================================
+   8. Animation
+   ============================================ */
+@keyframes alert-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   9. Responsive
+   ============================================ */
+@media (max-width: 480px) {
+  .md3-alert {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-3);
+  }
+
+  .md3-alert--banner {
+    padding: var(--space-3) var(--space-4);
+    border-left-width: 4px;
+  }
+
+  .md3-alert--inline {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .md3-alert__icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .md3-alert__title {
+    font-size: var(--md-sys-typescale-label-large-font-size);
+    font-weight: var(--md-sys-typescale-label-large-font-weight);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+  }
+
+  .md3-alert__text,
+  .md3-alert__message {
+    font-size: var(--md-sys-typescale-body-small-font-size);
+    line-height: var(--md-sys-typescale-body-small-line-height);
+  }
+  
+  .md3-field-support,
+  .md3-field-error {
+    padding-left: var(--space-3);
+  }
+}
+
+/* ============================================
+   10. Form Status Container
+   ============================================
+   Used for JS-populated status messages in forms.
+   When empty, hidden. When populated by JS with
+   md3-alert content, displays properly.
+   ============================================ */
+.md3-form-status {
+  margin-top: var(--space-3);
+}
+
+.md3-form-status:empty {
+  display: none;
+}
+
+/* Ensure alerts inside status container have no extra margin */
+.md3-form-status > .md3-alert:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   11. Alert Positioning Utilities
+   ============================================ */
+
+/* Alert above form (default behavior) */
+.md3-alert--above {
+  margin-bottom: var(--space-4);
+  margin-top: 0;
+}
+
+/* Alert below content */
+.md3-alert--below {
+  margin-top: var(--space-4);
+  margin-bottom: 0;
+}
+
+/* Alert inside card (uses card's internal spacing) */
+.md3-card__content > .md3-alert:first-child {
+  margin-top: 0;
+}
+
+.md3-card__content > .md3-alert:last-child {
+  margin-bottom: 0;
+}
+
+/* Dismissible alert (with close button) */
+.md3-alert--dismissible {
+  padding-right: var(--space-10);
+  position: relative;
+}
+
+.md3-alert__close {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.md3-alert__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.md3-alert__close .material-symbols-rounded {
+  font-size: 1.25rem;
+}
+
+/* ============================================
+   12. Screen Reader Only Status
+   ============================================ */
+.md3-sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

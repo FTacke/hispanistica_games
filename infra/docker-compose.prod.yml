@@ -1,0 +1,116 @@
+# CO.RA.PAN Production Stack: App + PostgreSQL Auth DB
+#
+# Usage:
+#   docker compose -f infra/docker-compose.prod.yml up -d --build    # Deploy
+#   docker compose -f infra/docker-compose.prod.yml down             # Stop
+#   docker compose -f infra/docker-compose.prod.yml logs -f web      # Follow logs
+#
+# REQUIRED environment variables (set in shell or .env file):
+#   FLASK_SECRET_KEY     - Strong random secret (generate: python -c "import secrets; print(secrets.token_hex(32))")
+#   JWT_SECRET_KEY       - Strong random secret for JWT
+#   POSTGRES_PASSWORD    - Database password
+#   START_ADMIN_PASSWORD - Initial admin password (first deploy only)
+#
+# Production checklist:
+#   [ ] Set all required environment variables
+#   [ ] Configure reverse proxy (nginx) for HTTPS
+#   [ ] Set up backup for postgres volume
+
+services:
+  db:
+    image: postgres:14
+    container_name: corapan-db-prod
+    environment:
+      POSTGRES_USER: corapan_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: corapan_auth
+    volumes:
+      - corapan_postgres_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "corapan_app", "-d", "corapan_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: always
+    networks:
+      - corapan-prod
+    # Production: no external port exposure, only internal network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: corapan-web-prod
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Expose on host for reverse proxy (nginx)
+      - "127.0.0.1:6000:5000"
+    environment:
+      # Flask / App config
+      FLASK_ENV: production
+      FLASK_DEBUG: "false"
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY is required}
+      
+      # Auth Database: connect to 'db' service (hostname inside Docker network)
+      AUTH_DATABASE_URL: postgresql+psycopg2://corapan_app:${POSTGRES_PASSWORD}@db:5432/corapan_auth
+      DATABASE_URL: postgresql+psycopg2://corapan_app:${POSTGRES_PASSWORD}@db:5432/corapan_auth
+      
+      # JWT settings (production: secure cookies)
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      JWT_COOKIE_SECURE: "true"
+      
+      # Session cookies
+      FLASK_SESSION_SECURE: "true"
+      FLASK_SESSION_SAMESITE: lax
+      
+      # Admin user creation (only needed on first deploy)
+      START_ADMIN_USERNAME: ${START_ADMIN_USERNAME:-admin}
+      START_ADMIN_PASSWORD: ${START_ADMIN_PASSWORD:-}
+      
+      # Hashing algorithm
+      AUTH_HASH_ALGO: argon2
+    volumes:
+      # Production: only mount data directories, no source code
+      # Media files (managed externally)
+      - ~/corapan/media/mp3-full:/app/media/mp3-full:ro
+      - ~/corapan/media/mp3-split:/app/media/mp3-split:ro
+      - ~/corapan/media/mp3-temp:/app/media/mp3-temp
+      - ~/corapan/media/transcripts:/app/media/transcripts:ro
+      
+      # Config & Keys (read-only)
+      - ~/corapan/config/keys:/app/config/keys:ro
+      
+      # Database files (read-only corpus data)
+      - ~/corapan/data/db:/app/data/db:ro
+      
+      # Runtime data (read-write)
+      - ~/corapan/data/counters:/app/data/counters
+      - ~/corapan/logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: always
+    networks:
+      - corapan-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  corapan-prod:
+    name: corapan-network-prod
+
+volumes:
+  corapan_postgres_prod:
+    name: corapan_postgres_prod

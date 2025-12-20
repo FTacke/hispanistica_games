@@ -1,0 +1,373 @@
+/* ============================================================================
+   Corpus Metadata Page Styles
+   ============================================================================
+   Two-tab layout: "Resumen y descargas" vs. "Metadatos por país"
+   with country filter chips and download menus.
+   
+   Follows MD3 patterns from layout.css and cards.css.
+   Uses canonical stack classes for vertical rhythm.
+   ============================================================================ */
+
+/* ============================================================================
+   Page Layout
+   ============================================================================ */
+
+.md3-metadata-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--space-4) var(--space-12);
+}
+
+@media (min-width: 600px) {
+  .md3-metadata-page {
+    padding: 0 var(--space-6) var(--space-12);
+  }
+}
+
+/* Text secondary helper */
+.md3-text-secondary {
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* ============================================================================
+   Download Menu Container
+   ============================================================================ */
+
+.md3-download-menu {
+  position: relative;
+  display: inline-block;
+}
+
+/* ============================================================================
+   Country Filter Chips
+   Uses chip-like styling for country selection
+   ============================================================================ */
+
+.md3-country-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-12);
+}
+
+.md3-country-chip {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in oklab, var(--md-sys-color-primary) 30%, var(--md-sys-color-outline-variant));
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--md-sys-color-primary) 8%, transparent);
+  color: var(--md-sys-color-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-country-chip:hover {
+  background: color-mix(in oklab, var(--md-sys-color-primary) 16%, transparent);
+  border-color: var(--md-sys-color-primary);
+}
+
+.md3-country-chip--selected {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-country-chip--selected:hover {
+  background: var(--md-sys-color-primary-container);
+  box-shadow: var(--elev-1);
+}
+
+.md3-country-chip:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 599px) {
+  .md3-country-filter {
+    gap: var(--space-1);
+    margin-bottom: var(--space-4);
+  }
+
+  .md3-country-chip {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.75rem;
+  }
+}
+
+/* ============================================================================
+   Country Panels Container
+   ============================================================================ */
+
+.md3-country-panels {
+  min-height: 300px;
+}
+
+.md3-country-panel {
+  display: none;
+  animation: fadeIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-country-panel[data-active="true"] {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   Country Panel Header
+   ============================================================================ */
+
+.md3-country-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-country-panel-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.md3-country-panel-title {
+  margin: 0;
+  font-weight: 500;
+  color: var(--md-sys-color-primary);
+}
+
+.md3-country-panel-stats {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.md3-country-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.md3-country-stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.md3-country-stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   Files Table - MD3 Data Table Pattern
+   ============================================================================ */
+
+.md3-metadata-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-metadata-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.md3-metadata-table th,
+.md3-metadata-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-metadata-table thead {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.md3-metadata-table th {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.md3-metadata-table tbody tr {
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-metadata-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.md3-metadata-table tbody tr:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.md3-metadata-table td {
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.md3-metadata-table .right-align {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 599px) {
+  .md3-metadata-table th,
+  .md3-metadata-table td {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.8125rem;
+  }
+}
+
+/* ============================================================================
+   Player Link in Table
+   ============================================================================ */
+
+.md3-metadata-player-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-metadata-player-link:hover {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+}
+
+.md3-metadata-player-link .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================================
+   Country Statistics Figure
+   ============================================================================ */
+
+.md3-country-stats-figure {
+  margin: var(--space-4) 0 0 0;
+}
+
+.md3-country-stats-image-container {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  cursor: pointer;
+  transition: box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-country-stats-image-container:hover {
+  box-shadow: var(--elev-2);
+}
+
+.md3-country-stats-image {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+}
+
+.md3-country-stats-caption {
+  margin-top: var(--space-3);
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+}
+
+/* ============================================================================
+   Loading & Error States
+   ============================================================================ */
+
+.md3-metadata-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  gap: var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-metadata-loading__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--md-sys-color-outline-variant);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.md3-metadata-loading[hidden],
+.md3-metadata-error[hidden] {
+  display: none;
+}
+
+.md3-metadata-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  gap: var(--space-4);
+  color: var(--md-sys-color-error);
+  text-align: center;
+}
+
+.md3-metadata-error .material-symbols-rounded {
+  font-size: 48px;
+}
+
+/* ============================================================================
+   Empty State
+   ============================================================================ */
+
+.md3-metadata-empty {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-sm);
+}

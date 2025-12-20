@@ -1,0 +1,192 @@
+# CO.RA.PAN BlackLab Format Configuration - WPL (With Structures)
+#
+# This file defines how BlackLab should interpret the WPL export files
+# with hierarchical structures (utterances and sentences).
+#
+# USAGE:
+#   IndexTool create /data/index/corapan exports/wpl/*.wpl corapan-wpl
+#
+# FORMAT: WPL with inline tags
+#   <doc id="...">
+#     <utt id="..." start_ms="..." end_ms="..." speaker_code="...">
+#       <s id="..." start_ms="..." end_ms="...">
+#         word  word="..." norm="..." lemma="..." pos="..." ...
+#       </s>
+#     </utt>
+#   </doc>
+#
+# METADATA: Import from docmeta.jsonl (same as TSV)
+
+displayName: "CO.RA.PAN Corpus (WPL with structures)"
+description: "CO.RA.PAN Spanish Radio Transcripts with hierarchical structures"
+
+fileType: text
+
+# ===== INLINE TAG DEFINITIONS =====
+inlineTags:
+  # Sentence level
+  - path: .//s
+    displayName: "Sentence"
+    mapAttributes:
+      - from: id
+        to: sentence_id
+      - from: start_ms
+        to: sent_start_ms
+      - from: end_ms
+        to: sent_end_ms
+  
+  # Utterance level
+  - path: .//utt
+    displayName: "Utterance"
+    mapAttributes:
+      - from: id
+        to: utterance_id
+      - from: start_ms
+        to: utt_start_ms
+      - from: end_ms
+        to: utt_end_ms
+      - from: speaker_code
+        to: speaker_code
+
+# ===== TOKEN ANNOTATIONS =====
+annotatedFields:
+  contents:
+    displayName: "Contents"
+    description: "Main content field with token annotations"
+    
+    # Tokenization: whitespace-separated
+    tokenPath: .
+    
+    annotations:
+      # ===== WORD FORMS =====
+      - name: word
+        displayName: "Word"
+        description: "Original word form (case-sensitive)"
+        valuePath: "@word"
+        sensitivity: sensitive
+        uiType: "text"
+      
+      - name: norm
+        displayName: "Normalized Form"
+        description: "Case/accent-insensitive normalized form"
+        valuePath: "@norm"
+        sensitivity: insensitive
+        uiType: "text"
+      
+      - name: lemma
+        displayName: "Lemma"
+        description: "Dictionary form"
+        valuePath: "@lemma"
+        sensitivity: sensitive
+        uiType: "lemma"
+      
+      # ===== PART-OF-SPEECH =====
+      - name: pos
+        displayName: "POS"
+        description: "Part-of-speech tag"
+        valuePath: "@pos"
+        uiType: "pos"
+        values:
+          - NOUN
+          - VERB
+          - ADJ
+          - ADV
+          - PRON
+          - DET
+          - ADP
+          - CONJ
+          - SCONJ
+          - NUM
+          - PROPN
+          - AUX
+          - PART
+          - INTJ
+          - PUNCT
+          - SYM
+          - X
+      
+      # ===== LEGACY TENSE =====
+      - name: past_type
+        displayName: "Past Type (Legacy)"
+        valuePath: "@past_type"
+        uiType: "select"
+      
+      - name: future_type
+        displayName: "Future Type (Legacy)"
+        valuePath: "@future_type"
+        uiType: "select"
+      
+      # ===== MORPHOLOGICAL FEATURES =====
+      - name: tense
+        displayName: "Tense"
+        valuePath: "@tense"
+        uiType: "select"
+      
+      - name: mood
+        displayName: "Mood"
+        valuePath: "@mood"
+        uiType: "select"
+      
+      - name: person
+        displayName: "Person"
+        valuePath: "@person"
+        uiType: "select"
+      
+      - name: number
+        displayName: "Number"
+        valuePath: "@number"
+        uiType: "select"
+      
+      - name: aspect
+        displayName: "Aspect"
+        valuePath: "@aspect"
+        uiType: "select"
+      
+      # ===== IDENTIFIERS & TIMING =====
+      - name: tokid
+        displayName: "Token ID"
+        valuePath: "@tokid"
+        uiType: "text"
+      
+      - name: start_ms
+        displayName: "Start Time (ms)"
+        valuePath: "@start_ms"
+        uiType: "numeric"
+      
+      - name: end_ms
+        displayName: "End Time (ms)"
+        valuePath: "@end_ms"
+        uiType: "numeric"
+
+# ===== METADATA FIELDS =====
+metadata:
+  fields:
+    - name: file_id
+      displayName: "File ID"
+      type: "text"
+      valuePath: "@doc"
+    
+    - name: country_code
+      displayName: "Country"
+      type: "text"
+      valuePath: "@country_code"
+    
+    - name: date
+      displayName: "Recording Date"
+      type: "text"
+      valuePath: "@date"
+    
+    - name: radio
+      displayName: "Radio Station"
+      type: "text"
+      valuePath: "@radio"
+    
+    - name: city
+      displayName: "City"
+      type: "text"
+      valuePath: "@city"
+    
+    - name: audio_path
+      displayName: "Audio File"
+      type: "text"
+      valuePath: "@audio_path"

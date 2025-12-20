@@ -1,0 +1,400 @@
+﻿html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.app-shell {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: var(--md-sys-typescale-base-font-family);
+  font-size: 0;
+  background: var(--app-background);
+  color: var(--md-sys-color-on-background);
+  min-height: 100vh;
+  display: grid;
+  grid-template-areas:
+    "main"
+    "footer";
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 0;
+  /* App Bar ist fixed – oben außerhalb des Grid */
+}
+
+/* Expanded layout (Desktop ≥840px mit permanentem Standard Drawer) */
+@media (min-width: 840px) {
+  body.app-shell {
+    /* Grid-Layout: Drawer links, Content (main+footer) rechts */
+    grid-template-areas:
+      "drawer main"
+      "drawer footer";
+    grid-template-columns: 280px 1fr; /* Fixed drawer width */
+    grid-template-rows: 1fr auto; /* Main nimmt verfügbaren Platz, Footer auto */
+    min-height: 100vh;
+    /* Body scrollt normal - kein overflow:hidden */
+  }
+  
+  /* Navigation Drawer: Fixed am linken Rand, scrollt eigenständig */
+  #navigation-drawer {
+    grid-area: drawer;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    overflow-y: auto;
+    box-shadow: var(--elev-2);
+    overflow-x: visible;
+    z-index: 5;
+  }
+  
+  /* Main Content: Normale Höhe, kein internes Scrollen */
+  #main-content,
+  main.site-main,
+  .site-main {
+    grid-area: main;
+    height: auto;
+    min-height: calc(100vh - 200px); /* Mindesthöhe für kurze Seiten */
+    overflow: visible;
+  }
+  
+  /* Footer wird normal am Ende angezeigt */
+  #site-footer {
+    grid-area: footer;
+  }
+}
+
+body.app-shell.login-open,
+body.overflow-hidden {
+  /* Prevent scrolling while modal is open */
+  overflow: hidden;
+}
+
+/* Turbo Loading Indicator - Subtil am oberen Rand */
+body.turbo-loading::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--md-sys-color-primary) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: turbo-progress 1s ease-in-out infinite;
+  z-index: 9999;
+}
+
+@keyframes turbo-progress {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* On mobile (<840px), we need position: fixed to prevent scroll */
+@media (max-width: 839px) {
+  body.app-shell.login-open,
+  body.overflow-hidden {
+    position: fixed;
+    top: var(--scroll-lock-offset, 0);
+    left: 0;
+    right: 0;
+  }
+}
+
+/* MD3 Navigation - Top App Bar */
+#top-app-bar,
+.md3-top-app-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10; /* Low level: erlaubt Content darunter */
+  width: 100%;
+  /* Grid area entfernt – nicht mehr Teil des Grid */
+  /* grid-area: appbar; */
+}
+
+/* Kompensation für fixed Top App Bar */
+.md3-content-wrapper {
+  margin-top: 100px; /* Height of small app bar - applies to all content */
+}
+
+/* MD3 Navigation - Standard Drawer (Expanded only) */
+#navigation-drawer,
+.md3-navigation-drawer--standard {
+  grid-area: drawer;
+}
+
+/* Main Content - Turbo Drive oder normale Main */
+#main-content,
+main.site-main,
+.site-main {
+  grid-area: main;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0; /* No padding on main, containers define their own */
+  font-size: 1rem;
+  display: block;
+  background: transparent; /* Prevent color flash on first paint */
+}
+
+/* Remove focus outline on main container */
+main.site-main:focus,
+.site-main:focus {
+  outline: none;
+}
+
+/* Remove focus outline on programmatically focused headings (from Turbo navigation) */
+h1:focus[tabindex="-1"],
+h2:focus[tabindex="-1"],
+h3:focus[tabindex="-1"],
+h4:focus[tabindex="-1"],
+h5:focus[tabindex="-1"],
+h6:focus[tabindex="-1"] {
+  outline: none;
+}
+
+/* Footer */
+#site-footer {
+  grid-area: footer;
+}
+
+/* Unified Page Layout */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 5vw, 2.5rem);
+  /* margin-top wird via Media Query gesetzt für App Bar Offset */
+}
+
+.page-header {
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.page-eyebrow {
+  margin: 1rem 0 0.5rem 0;
+  font-size: var(--md-sys-typescale-label-small-font-size);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.page-title {
+  margin: 0 0 1rem 0;
+  font-family: var(--md-sys-typescale-base-font-family);
+  font-size: clamp(1.75rem, 4.5vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--md-sys-color-primary);
+}
+
+.page-intro {
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  line-height: 1.65;
+  color: var(--md-sys-color-on-surface);
+}
+
+.page-intro p {
+  margin: 0 0 0.75rem 0;
+}
+
+.page-intro p:last-child {
+  margin-bottom: 0;
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
+}
+
+.page-section {
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
+}
+
+.page-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: var(--md-sys-typescale-title-large-font-size);
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+}
+
+.page-section h3 {
+  margin: 1.5rem 0 0.75rem 0;
+  font-size: var(--md-sys-typescale-title-medium-font-size);
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.page-section p {
+  margin: 0 0 0.75rem 0;
+  line-height: 1.65;
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  color: var(--md-sys-color-on-surface);
+}
+
+.page-section p:last-child {
+  margin-bottom: 0;
+}
+
+.page-section strong {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+}
+
+.page-section ul,
+.page-section ol {
+  margin: 0 0 0.75rem 0;
+  padding-left: 1.5rem;
+  line-height: 1.65;
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  color: var(--md-sys-color-on-surface);
+}
+
+.page-section li {
+  margin-bottom: 0.35rem;
+}
+
+.page-section a {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.page-section a:hover {
+  border-bottom-color: var(--md-sys-color-primary);
+}
+
+/* Exclude MD3 buttons from page-section link styling */
+.page-section a.md3-button {
+  border-bottom: none;
+}
+
+.page-divider {
+  margin: clamp(1.5rem, 3vw, 2rem) 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.page-note {
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 1rem;
+  background: var(--md-sys-color-surface-container-low);
+  border-left: 3px solid var(--md-sys-color-primary);
+  border-radius: 0.25rem;
+}
+
+.site-footer {
+  grid-area: footer;
+  padding: var(--space-4) clamp(1rem, 6vw, 4rem);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--elev-2);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+}
+
+.hero {
+  display: grid;
+  place-items: center;
+  padding: var(--space-10) 0 var(--space-8);
+}
+
+.hero-card {
+  background: var(--md-sys-color-surface);
+  padding: clamp(2rem, 5vw, 3rem);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-2);
+  text-align: center;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.hero-title {
+  font-family: var(--md-sys-typescale-base-font-family);
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0;
+}
+
+.hero-subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+}
+
+.hero-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.hero-search input[type="search"] {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--md-sys-color-outline);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.feature-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: var(--space-8);
+}
+
+.feature-card {
+  background: var(--md-sys-color-surface);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--elev-2);
+  display: grid;
+  gap: var(--space-2);
+  color: var(--md-sys-color-on-surface);
+}
+
+@media (max-width: 1120px) {
+  .hero-search {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
+.text-primary {
+  color: var(--md-sys-color-primary) !important;
+}
+
+.text-on-surface-variant {
+  color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+.mt-2 { margin-top: 0.5rem !important; }
+.mt-4 { margin-top: 1rem !important; }
+.mt-6 { margin-top: 1.5rem !important; }
+.mt-8 { margin-top: 2rem !important; }
+
+.m-0 { margin: 0 !important; }
+.overflow-visible { overflow: visible !important; }
+.flex { display: flex !important; }
+.w-full { width: 100% !important; }
+
+.p-4 { padding: 1rem !important; }

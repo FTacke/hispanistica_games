@@ -1,0 +1,198 @@
+/* MD3 Error Pages - Simple Layout */
+
+/* Force white background for the entire page including header/footer */
+body {
+  background: var(--md-sys-color-surface) !important;
+}
+
+.md3-nav, 
+.md3-footer {
+  background: var(--md-sys-color-surface) !important;
+  border-color: transparent !important;
+}
+
+.md3-error-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--md-sys-color-surface);
+}
+
+.md3-error-container {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.md3-error-icon {
+  font-size: 80px;
+  color: var(--md-sys-color-primary);
+  margin-bottom: var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-error-icon .material-symbols-rounded {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+}
+
+.md3-error-code {
+  color: var(--md-sys-color-primary);
+  margin: 0;
+  font-family: var(--md-sys-typescale-display-large-font-family);
+  font-weight: var(--md-sys-typescale-display-large-font-weight);
+  font-size: var(--md-sys-typescale-display-large-font-size);
+  line-height: var(--md-sys-typescale-display-large-line-height);
+  letter-spacing: var(--md-sys-typescale-display-large-letter-spacing);
+}
+
+.md3-error-title {
+  color: var(--md-sys-color-on-surface);
+  margin: var(--space-2) 0 var(--space-6);
+  font-family: var(--md-sys-typescale-headline-medium-font-family);
+  font-weight: var(--md-sys-typescale-headline-medium-font-weight);
+  font-size: var(--md-sys-typescale-headline-medium-font-size);
+  line-height: var(--md-sys-typescale-headline-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-headline-medium-letter-spacing);
+}
+
+.md3-error-message {
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: var(--space-10);
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: var(--md-sys-typescale-body-large-font-family);
+  font-weight: var(--md-sys-typescale-body-large-font-weight);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-letter-spacing);
+}
+
+.md3-error-actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Small inline error text for forms / dialogs */
+.md3-error-text {
+  color: var(--md-sys-color-error);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  margin-top: var(--space-2);
+}
+
+/* ============================================================================
+   MD3 Empty State - Goldstandard v1.2
+   ============================================================================
+   For empty lists, no search results, etc.
+   ============================================================================ */
+
+.md3-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8);
+  gap: var(--space-3);
+}
+
+.md3-empty-state__icon {
+  font-size: 48px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-empty-state__text {
+  font-size: var(--md-sys-typescale-title-medium-font-size);
+  font-weight: var(--md-sys-typescale-title-medium-font-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.md3-empty-state__hint {
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  max-width: 320px;
+}
+
+/* Empty state with action button */
+.md3-empty-state .md3-button {
+  margin-top: var(--space-4);
+}
+
+/* ============================================================================
+   MD3 Error Card - Goldstandard v1.2
+   ============================================================================
+   For inline error display within content areas.
+   ============================================================================ */
+
+.md3-error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8);
+  gap: var(--space-4);
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-md);
+}
+
+.md3-error-card__icon {
+  font-size: 48px;
+  color: var(--md-sys-color-error);
+}
+
+.md3-error-card__title {
+  font-size: var(--md-sys-typescale-headline-small-font-size);
+  font-weight: var(--md-sys-typescale-headline-small-font-weight);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.md3-error-card__message {
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  max-width: 320px;
+}
+
+/* ============================================================================
+   MD3 Offline Banner - Goldstandard v1.2
+   ============================================================================
+   For connection lost / offline status.
+   ============================================================================ */
+
+.md3-offline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  font-size: var(--md-sys-typescale-label-medium-font-size);
+  font-weight: var(--md-sys-typescale-label-medium-font-weight);
+}
+
+.md3-offline-banner__icon {
+  font-size: 18px;
+}
+
+.md3-offline-banner[hidden] {
+  display: none;
+}
+
+/* Buttons are already styled by md3/components/buttons.css, 
+   but we might need to ensure they are loaded or use specific classes */
+

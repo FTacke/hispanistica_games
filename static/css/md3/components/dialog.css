@@ -1,0 +1,375 @@
+/* ============================================================================
+   MD3 Dialogs - Canonical Implementation
+   ============================================================================
+   Generic dialog styles extracted from advanced-search.css for global use.
+   ============================================================================ */
+
+/* Dialog Base */
+.md3-dialog {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-3);
+  min-width: 280px;
+  max-width: 560px;
+  display: none;
+  flex-direction: column;
+  transform: scale(0.9);
+  transition: transform 0.2s ease;
+  border: none; /* Reset native border */
+  padding: 0; /* Reset native padding */
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Native dialog backdrop */
+.md3-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(2px);
+}
+
+/* When open */
+.md3-dialog[open] {
+  transform: scale(1);
+  display: flex; /* Override native display: block */
+}
+
+/* Dialog Container (Inner Wrapper) */
+.md3-dialog__container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: var(--space-4);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* Surface wrapper (semantic surface inside the dialog element) */
+.md3-dialog__surface {
+    /* Dialog surfaces should be plain page surfaces (white) — dialogs must
+      not use tonal container backgrounds in our design. This keeps dialog
+      surfaces visually consistent, and prevents the surface from blending
+      into page or card tonal containers. */
+  /* Keep dialog inner padding aligned with cards for consistent rhythm */
+  padding: var(--space-4);
+  max-width: 560px;
+    /* width accounts for container edge padding (var(--space-4) per side)
+      and caps at 560px for large dialogs */
+    width: min(100% - calc(var(--space-4) * 2), 560px);
+  /* MD3 lever: dialogs look best with a larger radius than cards */
+  border-radius: 28px;
+  /* Use the canonical page surface token — dialogs should be non-tonal */
+  background: var(--md-sys-color-surface);
+  box-sizing: border-box;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Plain variant: dialogs that should use neutral surface (non-tonal, like page surfaces) */
+.md3-dialog--tonal .md3-dialog__surface {
+  /* Tonal variant: use container-high background when a dialog should appear as a tonal card */
+  --_dialog-bg: var(--md-sys-color-surface-container-high);
+  background: var(--_dialog-bg);
+  /* LABEL-BG INHERITANCE: Match tonal background */
+  --app-textfield-label-bg: var(--_dialog-bg);
+}
+
+/* Dialog Header */
+.md3-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Dialog Title */
+.md3-dialog__title {
+  margin: 0;
+  padding: var(--space-2) 0 var(--space-1);  /* Vertical only - surface already has horizontal padding */
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  letter-spacing: 0.15px;
+}
+
+/* Dialog Content */
+.md3-dialog__content {
+  padding: 0 0 var(--space-3) 0;
+  font-size: 0.9375rem; /* slightly larger body for dialogs */
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* Dialog Actions */
+.md3-dialog__actions {
+  padding: var(--space-4) 0 0 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  /* avoid heavy divider; keep actions visually separate by padding only */
+  border-top: none;
+  margin-top: var(--space-4);
+  flex-shrink: 0;
+}
+
+/* Dialog Icon */
+.md3-dialog__icon {
+  color: var(--md-sys-color-secondary);
+  font-size: 24px;
+}
+
+/* Large Variant */
+.md3-dialog--large {
+  max-width: 900px;
+  width: min(900px, 95vw);
+}
+
+/* Error Variant */
+.md3-dialog--error .md3-dialog__title {
+  color: var(--md-sys-color-error);
+}
+
+/* Code block inside dialog */
+.md3-dialog__content .md3-code-block pre {
+  max-height: 56vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
+}
+
+/* Helper row for code + icon actions inside dialogs (e.g. invite link + copy) */
+.md3-dialog__code-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.md3-snippet {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--md-sys-color-surface-container-mid);
+  font-family: var(--md-sys-typescale-body-small-font, ui-monospace, monospace);
+}
+
+.md3-snippet--code .md3-snippet__code {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.md3-snippet__copy {
+  flex-shrink: 0;
+}
+.md3-dialog__code-row .md3-code-block__content,
+.md3-dialog__code-row pre {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+/* Meta / small info text inside dialogs */
+.md3-dialog__content .md3-body-small.md3-text-variant {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Local stack variant for dialog internals — smaller than page sections */
+.md3-stack--dialog > * + * {
+  margin-top: var(--space-4); /* 16px between elements in dialogs */
+}
+
+/* ============================================================================
+   MD3 Dialog Responsive - Goldstandard Additions
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   Mobile Small (≤599px) - Dialoge als Cards
+   ---------------------------------------------------------------------------- */
+@media (max-width: 599px) {
+  .md3-dialog {
+    max-width: calc(100vw - var(--space-6));
+    margin: var(--space-4);
+  }
+  
+  .md3-dialog__surface {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: none;
+  }
+  
+  .md3-dialog__container {
+    padding: var(--space-3);
+  }
+  
+  .md3-dialog__title {
+    font-size: var(--md-sys-typescale-title-large-font-size);
+  }
+  
+  .md3-dialog__actions {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  
+  .md3-dialog__actions .md3-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Reverse order for stacked: Primary first on mobile */
+  .md3-dialog__actions .md3-button--filled:not(.md3-button--danger) {
+    order: 1;
+  }
+  
+  .md3-dialog__actions .md3-button--danger {
+    order: 2;
+  }
+  
+  .md3-dialog__actions .md3-button--outlined {
+    order: 3;
+  }
+  
+  .md3-dialog__actions .md3-button--text {
+    order: 4;
+  }
+}
+
+/* Danger/Error Dialog Variant */
+.md3-dialog--danger .md3-dialog__icon,
+.md3-dialog--error .md3-dialog__icon {
+  color: var(--md-sys-color-error);
+}
+
+.md3-dialog--danger .md3-dialog__title {
+  color: var(--md-sys-color-error);
+}
+
+/* Full-screen Dialog Variant (primarily for mobile) */
+.md3-dialog--fullscreen {
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  margin: 0;
+}
+
+.md3-dialog--fullscreen .md3-dialog__surface {
+  border-radius: 0;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 600px) {
+  .md3-dialog--fullscreen {
+    max-width: 560px;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    border-radius: var(--radius-lg);
+    margin: auto;
+  }
+  
+  .md3-dialog--fullscreen .md3-dialog__surface {
+    border-radius: 28px;
+    width: min(100% - calc(var(--space-4) * 2), 560px);
+    height: auto;
+  }
+}
+
+/* Dialog with divider between content and actions */
+.md3-dialog__actions--divider {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: var(--space-4);
+}
+
+/* ============================================================================
+   MD3 Dialog - Sheet-like Behavior on Very Small Screens
+   ============================================================================
+   Auf sehr kleinen Screens (≤480px) werden Auth/Admin-Dialoge
+   wie Bottom Sheets behandelt: Fast volle Breite, max-height begrenzt.
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  /* Standard Dialoge: Sheet-like */
+  .md3-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    max-height: calc(100vh - 56px); /* Platz für App-Bar */
+    transform-origin: bottom center;
+  }
+  
+  .md3-dialog[open] {
+    transform: translateY(0);
+  }
+  
+  .md3-dialog__surface {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-4) var(--space-4) var(--space-6);
+  }
+  
+  .md3-dialog__container {
+    padding: 0;
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+  }
+  
+  .md3-dialog__content {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding-bottom: var(--space-4);
+  }
+  
+  /* Wide variant auch als Sheet */
+  .md3-dialog--wide {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  
+  .md3-dialog--wide .md3-dialog__surface {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* Actions sticky am unteren Rand */
+  .md3-dialog__actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--md-sys-color-surface);
+    padding: var(--space-3) 0 0;
+    margin-top: var(--space-4);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+  
+  /* Dense spacing für Formularfelder */
+  .md3-stack--dialog > * + * {
+    margin-top: var(--space-3);
+  }
+  
+  /* Fieldsets kompakter */
+  .md3-fieldset:not(:last-of-type) {
+    margin-bottom: var(--space-3);
+  }
+}
+  padding-top: var(--space-4);
+}

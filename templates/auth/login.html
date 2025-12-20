@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Anmelden - games.hispanistica{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-page">
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">login</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Zugang</p>
+        <h1 class="md3-headline-medium md3-hero__title">Anmelden</h1>
+        <p class="md3-body-medium md3-hero__intro">Melden Sie sich an, um auf alle Funktionen zuzugreifen.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="md3-page__main md3-stack--page">
+    <section class="md3-page__section md3-stack--section">
+      <!-- Login Card -->
+      <article class="md3-card md3-card--outlined md3-auth-card login-card">
+        <div class="md3-card__content">
+
+          <!-- Error Messages (if any) -->
+          {# Global form error banner (MD3, compact inline) #}
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="md3-alert md3-alert--error md3-alert--inline" role="alert" aria-live="assertive">
+                <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">error</span>
+                <div class="md3-alert__content">
+                  <p class="md3-alert__title">Error</p>
+                  {% for category, message in messages %}
+                    <p class="md3-alert__text">{{ message }}</p>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <!-- Login Form - Standard HTML POST (no HTMX) -->
+          <form id="login-form" 
+              class="md3-auth-form" 
+              method="post" 
+              action="{{ url_for('auth.login_post') }}"
+              novalidate>
+            
+            <!-- Username Field -->
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input 
+                type="text" 
+                class="md3-outlined-textfield__input" 
+                name="username" 
+                id="login-username"
+                autocomplete="username" 
+                required
+                  aria-label="Usuario"
+                minlength="1"
+                maxlength="50">
+              <label class="md3-outlined-textfield__label" for="login-username">Usuario</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+
+            <!-- Password Field -->
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input 
+                type="password" 
+                class="md3-outlined-textfield__input" 
+                name="password" 
+                id="login-password"
+                autocomplete="current-password" 
+                required
+                aria-label="Contraseña"
+                minlength="1">
+              <label class="md3-outlined-textfield__label" for="login-password">Contraseña</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+
+            <div class="md3-row--between md3-actions">
+               <a class="md3-button md3-button--text" href="{{ url_for('auth.password_forgot_page') }}">¿Olvidó su contraseña?</a>
+               <button type="submit" class="md3-button md3-button--filled">
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">login</span>
+                Entrar
+              </button>
+            </div>
+
+            <!-- Hidden next URL (for redirect after login) -->
+            {% if next %}
+              <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+          </form>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+{% endblock %}

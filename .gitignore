@@ -1,0 +1,222 @@
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# =============================================================================
+# Virtual Environments
+# =============================================================================
+venv/
+env/
+.venv/
+ENV/
+.python-version
+
+# =============================================================================
+# Environment Variables & Secrets (CRITICAL - NEVER COMMIT!)
+# =============================================================================
+.env
+.env.local
+.env.production
+passwords.env
+*.env.backup
+
+# JWT Keys (CRITICAL - NEVER COMMIT!)
+config/keys/
+*.key
+*.pem
+*.crt
+*.cer
+
+# =============================================================================
+# Node.js & Frontend Build
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.backup
+
+# =============================================================================
+# Build & Cache Directories
+# =============================================================================
+# .static-cache/  # Not used
+# static-build/   # Not used
+.pytest_cache/
+.coverage
+.ruff_cache/
+.mypy_cache/
+.tox/
+htmlcov/
+
+# =============================================================================
+# External Tools & Dependencies (User-downloaded)
+# =============================================================================
+# BlackLab JAR files (large binaries, downloaded by user)
+tools/blacklab/*.jar
+# BlackLab WAR file and opt/ directory (large binaries for local dev)
+opt/
+
+# =============================================================================
+# Logs (NEVER COMMIT - may contain sensitive data)
+# =============================================================================
+*.log
+logs/
+*.log.*
+
+# =============================================================================
+# Data & Media (NEVER COMMIT - generated data, databases, media files)
+# =============================================================================
+# Entire directories are ignored but structure is preserved with .gitkeep
+# This keeps the directory structure for Docker volume mounts while excluding:
+#   • data/db/                    (SQLite databases)
+#   • data/counters/              (Search counter cache)
+#   • data/stats_temp/            (Temporary statistics)
+#   • data/blacklab_index/        (Generated BlackLab index, can be very large)
+#   • data/exports/               (Generated export files)
+#   • media/mp3-full/             (Full MP3 audio files)
+#   • media/mp3-split/            (Split MP3 segments)
+#   • media/mp3-temp/             (Temporary MP3 processing)
+#   • media/transcripts/          (Transcript files)
+data/
+media/
+
+# Keep directory structure for deployment
+!data/.gitkeep
+!media/.gitkeep
+
+# =============================================================================
+# IDEs & Editors
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+
+# =============================================================================
+# OS-specific
+# =============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+.Spotlight-V100
+.Trashes
+
+# =============================================================================
+# Backups (NEVER COMMIT)
+# =============================================================================
+backups/
+*.tar.gz
+*.zip
+*.bak
+*.backup
+*.old
+
+# =============================================================================
+# Local Development & Documentation (NOT for production)
+# =============================================================================
+LOKAL/
+corapan-webapp-old/
+design_backups/
+startme.md
+CLEAN_UP.md
+
+# =============================================================================
+# Legacy/Deprecated Files
+# =============================================================================
+templates/legacy/
+static/js/*.old
+static/js/*.bak
+
+# =============================================================================
+# Temporary Files
+# =============================================================================
+*.tmp
+tmp/
+temp/
+.cache/
+*.swp
+*.swo
+_tmp_*
+*.scratch.*
+
+# =============================================================================
+# Testing
+# =============================================================================
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+# Playwright outputs (now under tests/e2e/)
+tests/e2e/playwright-results/
+tests/e2e/playwright-report/
+# Legacy root-level paths (can be removed once no longer generated)
+test-results/
+playwright-report/
+
+# =============================================================================
+# Generated Reports (Local development only)
+# =============================================================================
+# These are generated by lint/audit scripts and should not be committed
+# (the canonical reports live in docs/ if needed for reference)
+reports/*.json
+reports/*.md
+build.log
+
+# =============================================================================
+# Temporary Test Directories
+# =============================================================================
+_rsync_test_local/
+
+# =============================================================================
+# Root-level Dev Databases (use data/db/ instead)
+# =============================================================================
+auth.db
+
+# =============================================================================
+# NOTE: Files that SHOULD be in Git (Commit these!)
+# =============================================================================
+# ✅ BUILD & DEPLOYMENT:
+#    - .dockerignore, docker-compose.yml, Dockerfile
+#    - update.sh, backup.sh, Makefile
+#    - requirements.txt, pyproject.toml, package.json
+#    - tailwind.config.js, vite.config.js
+#
+# ✅ CONFIGURATION (Templates & Formats):
+#    - config/blacklab/*.blf.yaml (BlackLab format configs)
+#    - passwords.env.template (setup template)
+#
+# ✅ SOURCE CODE:
+#    - src/ (Python backend)
+#    - templates/ (Jinja2 templates)
+#    - static/ (CSS, JS, images - except build outputs)
+#
+# ✅ OPERATIONS:
+#    - scripts/ops/*.service (systemd units)
+#    - scripts/*.py, scripts/*.sh, scripts/*.ps1 (automation)
+#
+# ✅ DOCUMENTATION:
+#    - docs/ (all subdirectories)
+#    - README.md, CONTRIBUTING.md
+#
+# ✅ DIRECTORY STRUCTURE (Keep empty dirs):
+#    - data/.gitkeep, media/.gitkeep (placeholder files)
+
+

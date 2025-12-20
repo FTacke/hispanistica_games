@@ -1,0 +1,591 @@
+/* Statistics component styles migrated from md3-components.css
+   Purpose: keep stats-specific rules in a dedicated component file for easier maintenance.
+   Uses MD3 tokens defined in static/css/md3/tokens.css
+*/
+
+/* Corpus Statistics Grid - Responsive with auto-fit */
+.md3-stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  margin: var(--space-8) 0;
+  max-width: 100%;
+}
+
+/* Individual Figure Container */
+.md3-stats-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(var(--elev-1));
+  transition: box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-stats-figure:hover {
+  box-shadow: var(var(--elev-2));
+}
+
+/* Image Container with Fixed Aspect Ratio - Responsive scaling */
+.md3-stats-image-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  overflow: visible;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: zoom-in;
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-stats-image-container:hover {
+  transform: scale(1.02);
+}
+
+/* Stats Header & Controls (Clean Sweep) */
+.md3-stats-header {
+  display: block;
+}
+
+.md3-stats-summary {
+  margin-bottom: var(--space-4);
+}
+
+.md3-stats-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.md3-stats-filter-group {
+  margin: 0;
+}
+
+.md3-stats-filter-label {
+  margin: 0;
+}
+
+.md3-stats-action-end {
+  margin-left: auto;
+}
+
+/* Caption Styling */
+.md3-stats-caption {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Country Selector Section */
+.md3-stats-country-section {
+
+}
+
+.md3-stats-country-selector {
+  max-width: 500px;
+  margin: var(--space-6) auto;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.md3-stats-country-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+.md3-stats-country-select {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  min-height: 48px;
+  /* arrow icon uses currentColor so it follows tokens (no hardcoded hex) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 10l5 5 5-5z' fill='currentColor'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: var(--space-10);
+  transition:
+    border-color 200ms cubic-bezier(0.2, 0, 0, 1),
+    border-width 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-stats-country-select:hover {
+  border-color: var(--md-sys-color-on-surface);
+}
+
+.md3-stats-country-select:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+  padding: calc(var(--space-3) - 1px) calc(var(--space-4) - 1px);
+  padding-right: calc(var(--space-10) - 1px);
+}
+
+.md3-stats-country-select option {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  padding: var(--space-3);
+}
+
+/* Country Display Area */
+.md3-stats-country-display {
+  max-width: 100%;
+  margin: var(--space-8) 0;
+  /* don't reserve vertical space while empty; when content is present we apply a min-height */
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-stats-country-display:not(:empty) {
+  min-height: 400px;
+}
+
+/* Placeholder when no country selected */
+.md3-stats-placeholder {
+  padding: var(--space-10);
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--md-sys-color-outline-variant);
+}
+
+/* Country Figure with Fade Animation */
+.md3-stats-country-figure {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(var(--elev-1));
+  opacity: 0;
+  transition:
+    opacity 300ms var(cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-stats-country-figure.visible {
+  opacity: 1;
+}
+
+.md3-stats-country-figure:hover {
+  box-shadow: var(var(--elev-2));
+}
+
+.md3-stats-country-image-container {
+  position: relative;
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+  overflow: visible;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: zoom-in;
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-stats-country-image-container:hover {
+  transform: scale(1.02);
+}
+
+.md3-stats-country-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  max-width: 100%;
+  border-radius: var(--radius-lg);
+  font-size: clamp(12px, 2.5vw, 16px);
+}
+
+/* Form field helper: stack label above control and keep spacing consistent */
+.md3-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+/* Caption title inside figcaption (project guideline): no <strong> in caption; use a title span) */
+.md3-stats-caption__title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: calc(var(--space-1) / 2);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Keep images stacked vertically (same presentation as before). We intentionally avoid
+   switching to a multi-column grid so images remain one-per-row and centered.
+   The .md3-stats-image-container width:60% is preserved for the visual look.
+*/
+
+/* ========== ZOOM MODAL ========== */
+/* Full-screen image zoom functionality with modern MD3 tokens */
+
+.md3-stats-zoom-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: zoom-out;
+  padding: var(--space-4);
+  box-sizing: border-box;
+}
+
+.md3-stats-zoom-modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.md3-stats-zoom-modal-content {
+  position: relative;
+  max-width: 95%;
+  max-height: 95vh;
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-5);
+  padding: var(--space-6);
+  transform: scale(0.92);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-stats-zoom-modal.active .md3-stats-zoom-modal-content {
+  transform: scale(1);
+}
+
+.md3-stats-zoom-modal-image {
+  display: block;
+  max-width: 100%;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  border-radius: var(--radius-lg);
+  object-fit: contain;
+}
+
+.md3-stats-zoom-modal-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-highest);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  z-index: 10;
+  color: var(--md-sys-color-on-surface);
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.md3-stats-zoom-modal-close:hover {
+  background: var(--md-sys-color-primary-container);
+  transform: scale(1.08);
+}
+
+.md3-stats-zoom-modal-close:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Close button X icon using pseudo-elements */
+.md3-stats-zoom-modal-close::before,
+.md3-stats-zoom-modal-close::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background: var(--md-sys-color-on-surface);
+  border-radius: 1px;
+  transition: background 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-stats-zoom-modal-close::before {
+  transform: rotate(45deg);
+}
+
+.md3-stats-zoom-modal-close::after {
+  transform: rotate(-45deg);
+}
+
+.md3-stats-zoom-modal-close:hover::before,
+.md3-stats-zoom-modal-close:hover::after {
+  background: var(--md-sys-color-on-primary-container);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .md3-stats-zoom-modal {
+    padding: var(--space-2);
+  }
+
+  .md3-stats-zoom-modal-content {
+    max-width: 98%;
+    max-height: 98vh;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+
+  .md3-stats-zoom-modal-image {
+    max-height: 90vh;
+  }
+
+  .md3-stats-zoom-modal-close {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    top: var(--space-3);
+    right: var(--space-3);
+  }
+
+  .md3-stats-zoom-modal-close::before,
+  .md3-stats-zoom-modal-close::after {
+    width: 18px;
+    height: 1.5px;
+  }
+}
+
+/* ========== INTERACTIVE CHARTS (Corpus Search Results) ========== */
+/* Stats section with tabs and ECharts visualizations */
+
+/* Stats Section Container */
+.md3-stats-section {
+  margin-top: var(--space-6);
+}
+
+/* Stats Header */
+.md3-stats-header {
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.md3-stats-title {
+  margin: 0 0 var(--space-2) 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* View content panels inherit from app background */
+.md3-view-content {
+  --_view-content-bg: var(--md-sys-color-background, #c7d5d8);
+}
+
+/* Textfield labels inside view content - use !important to override base rules */
+.md3-view-content .md3-outlined-textfield .md3-outlined-textfield__label {
+  background: var(--md-sys-color-background, #c7d5d8) !important;
+}
+
+/* Country Filter */
+.md3-stats-filter {
+  /* Stats filter sits on app background */
+  --_stats-filter-bg: var(--md-sys-color-background, #c7d5d8);
+  
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Textfield labels inside stats filter - use !important to override base rules */
+.md3-stats-filter .md3-outlined-textfield .md3-outlined-textfield__label {
+  background: var(--md-sys-color-background, #c7d5d8) !important;
+}
+
+.md3-stats-filter-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.md3-stats-filter-select {
+  width: 100%;
+  max-width: 300px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.md3-stats-filter-select:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.md3-stats-filter-select:focus {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* MD3 Stats Sub-Tabs (Resultados | Estadísticas) */
+.md3-stats-tabs {
+  display: flex;
+  gap: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  margin-bottom: var(--space-6);
+}
+
+.md3-stats-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.md3-stats-tab:hover {
+  background: var(--md-sys-color-surface-container);
+}
+
+.md3-stats-tab:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.md3-stats-tab--active {
+  color: var(--md-sys-color-primary);
+  border-bottom-color: var(--md-sys-color-primary);
+}
+
+.md3-stats-tab .material-symbols-rounded {
+  font-size: 1.25rem;
+}
+
+/* Stats Charts Grid */
+.md3-stats-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .md3-stats-charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(350px, 100%), 1fr));
+  }
+}
+
+/* Stats Chart Card */
+.md3-stats-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.md3-stats-card-title-wrapper {
+  flex: 1;
+}
+
+.md3-stats-card-title {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* MD3 Segmented Buttons (Toggle n/%) */
+.md3-segmented {
+  display: inline-flex;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.md3-segmented-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  min-width: 48px;
+  min-height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.md3-segmented-btn:not(:last-child) {
+  border-right: 1px solid var(--md-sys-color-outline);
+}
+
+.md3-segmented-btn:hover:not(.is-selected) {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.md3-segmented-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.md3-segmented-btn.is-selected {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md3-segmented-btn .material-symbols-rounded {
+  font-size: 1.125rem;
+}
+
+/* Chart Host Container */
+.chart-host {
+  width: 100%;
+  height: 300px;
+  min-height: 300px;
+}

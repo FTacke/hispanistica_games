@@ -1,0 +1,316 @@
+/* ============================================================================
+   MD3 Forms - Corpus-specific layouts (From Legacy md3-components.css)
+   ============================================================================
+   TRANSFERRED FROM: static/css/md3-components.css (Lines 1471-1732)
+  STATUS: ⚠️ Uses some legacy MD3 tokens (--md3-*) in older rules; these
+  should be migrated. NOTE: This file also contains a custom checkbox
+  implementation which is NOT MD3-canonical. See the TODO below.
+   CUSTOM: Corpus search form, filter grid, regional filter section
+   ============================================================================ */
+
+/* Form Container */
+.md3-corpus-form {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-8);
+}
+
+/* Search Row (Query + Mode Select) */
+.md3-corpus-search-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: start;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+/* Desktop: Search + Mode nebeneinander */
+.md3-corpus-search-row .md3-outlined-textfield {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.md3-corpus-search-row .md3-outlined-textfield--flex {
+  flex: 1 1 auto;
+  min-width: 200px;
+}
+
+/* Modo/Search-Mode Select - Optimiert */
+#search_mode {
+  appearance: none;
+}
+
+/* Filter Grid (5 columns on desktop) */
+.md3-corpus-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+/* Regional filter section (below grid) */
+.md3-regional-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+/* Regional select field - match grid column width */
+.md3-regional-select {
+  margin-top: var(--space-1);
+  width: 200px;
+  min-width: 200px;
+}
+
+/* Ensure Select2 inside regional filter takes full width */
+.md3-regional-select .select2-container {
+  width: 200px !important;
+}
+
+/* ============================================================================
+  Material Design 3 Checkbox (Custom Implementation)
+
+  STATUS: ⚠️ Custom implementation, NOT canonical MD3
+  @deprecated: this custom checkbox is a legacy implementation. It is
+  kept to preserve current UI behavior, but the long-term plan is to
+  replace it with a canonical `.md3-checkbox` implementation that
+  matches the MD3 spec (focus ring, correct ripple behaviour, aria states).
+  TODO: Provide a canonical `.md3-checkbox` implementation in a later
+  change and migrate templates to `.md3-checkbox-legacy` when necessary.
+  ============================================================================ */
+
+.md3-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  padding: 8px 0;
+  position: relative;
+}
+
+.md3-checkbox-container input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.md3-checkbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 2px;
+  background-color: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+/* Hover state */
+.md3-checkbox-container:hover .md3-checkbox {
+  border-color: var(--md-sys-color-on-surface);
+}
+
+/* Checked state */
+.md3-checkbox-container input[type="checkbox"]:checked + .md3-checkbox {
+  background-color: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+/* Checkmark */
+.md3-checkbox__checkmark {
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.md3-checkbox-container
+  input[type="checkbox"]:checked
+  + .md3-checkbox
+  .md3-checkbox__checkmark {
+  opacity: 1;
+}
+
+.md3-checkbox__checkmark-path {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  transition: stroke-dashoffset 0.2s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+}
+
+.md3-checkbox-container
+  input[type="checkbox"]:checked
+  + .md3-checkbox
+  .md3-checkbox__checkmark-path {
+  stroke-dashoffset: 0;
+}
+
+/* Focus state */
+.md3-checkbox-container input[type="checkbox"]:focus + .md3-checkbox {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Label */
+.md3-checkbox__label {
+  /* font-family inherited from typography.css */
+  font-size: 14px;
+  line-height: 1.4;
+  /* Use on-surface for better readability (not on-surface-variant) */
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+}
+
+/* Disabled state */
+.md3-checkbox-container input[type="checkbox"]:disabled + .md3-checkbox {
+  border-color: var(--md-sys-color-outline-variant);
+  opacity: 0.38;
+}
+
+.md3-checkbox-container input[type="checkbox"]:disabled ~ .md3-checkbox__label {
+  color: var(--md-sys-color-on-surface);
+  opacity: 0.38;
+}
+
+/* Ripple effect (optional, simple version) */
+.md3-checkbox::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.md3-checkbox-container:active .md3-checkbox::before {
+  opacity: 0.12;
+}
+
+/* Region field transition */
+.md3-region-field {
+  transition:
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* Actions Row (Buttons Container) */
+.md3-corpus-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   Responsive Overrides (from corpus responsive section)
+   ============================================================================ */
+
+/* MD3 Compact (0-599px) */
+@media (max-width: 599px) {
+  .md3-corpus-search-row .md3-outlined-textfield {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  #search_mode {
+    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+    min-height: 40px;
+  }
+
+  #search_mode::after {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  #search_mode {
+    font-size: 0.875rem;
+    padding: var(--space-1) var(--space-2);
+    min-height: 36px;
+  }
+}
+
+/* TABLET: 601px - 1120px (accounting for 280px drawer) */
+@media (max-width: 1120px) {
+  .md3-corpus-form {
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .md3-corpus-search-row {
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+
+  .md3-corpus-filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+}
+
+/* MOBILE STANDARD: MD3 Compact (0-599px) */
+@media (max-width: 599px) {
+  .md3-corpus-form {
+    gap: var(--space-5);
+    padding: var(--space-4) var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+
+  .md3-corpus-search-row {
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  /* Suchfeld volle Breite */
+  .md3-corpus-search-row .md3-outlined-textfield--flex {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Mode-Select auch volle Breite */
+  .md3-corpus-search-row .md3-outlined-textfield {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .md3-corpus-filter-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .md3-regional-select {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .md3-regional-select .select2-container {
+    width: 100% !important;
+  }
+}
+
+/* MOBILE SMALL: ≤ 400px */
+@media (max-width: 400px) {
+  .md3-corpus-form {
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+}

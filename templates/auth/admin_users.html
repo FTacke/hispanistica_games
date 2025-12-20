@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Benutzerverwaltung &middot; CO.RA.PAN{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/search-ui.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-page">
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">group</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Admin</p>
+        <h1 class="md3-headline-medium md3-hero__title">Benutzerverwaltung</h1>
+        <p class="md3-hero__intro">Verwalte Benutzerkonten, Rollen und Zugriffsrechte.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="md3-page__main">
+    <section class="md3-page__section md3-auth-page md3-stack--section">
+    <div class="md3-card md3-card--outlined">
+      <div class="md3-card__content md3-stack--section">
+        <div class="md3-row--between align-items-center">
+            <div class="md3-row md3-fill-max max-w-400">
+              <div class="md3-outlined-textfield w-100">
+              <input id="admin-search" class="md3-outlined-textfield__input" aria-label="Benutzer suchen">
+              <label class="md3-outlined-textfield__label" for="admin-search">Benutzer suchen</label>
+              <div class="md3-outlined-textfield__outline">
+                <div class="md3-outlined-textfield__outline-start"></div>
+                <div class="md3-outlined-textfield__outline-notch"></div>
+                <div class="md3-outlined-textfield__outline-end"></div>
+              </div>
+            </div>
+          </div>
+          <div class="md3-toolbar">
+            <button id="refresh" class="md3-button md3-button--outlined">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">refresh</span>
+              Aktualisieren
+            </button>
+            <button id="create" class="md3-button md3-button--filled">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">add</span>
+              Benutzer anlegen
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="md3-filter-chips" role="group" aria-label="Filteroptionen">
+          <button type="button" id="filter-inactive" class="md3-chip" aria-pressed="false">
+            <span class="material-symbols-rounded md3-chip__icon" aria-hidden="true">visibility_off</span>
+            <span class="md3-chip__label">Inaktive anzeigen</span>
+          </button>
+        </div>
+
+        <div class="md3-table-container">
+          <table class="md3-table" id="users-table">
+            <thead>
+              <tr>
+                <th class="col-w-20">Benutzername</th>
+                <th class="col-w-25">Email</th>
+                <th class="col-w-10">Rolle</th>
+                <th class="col-w-10">Status</th>
+                <th class="col-w-20 md3-hide-mobile">Erstellt am</th>
+                <th class="col-w-15">Aktionen</th>
+              </tr>
+            </thead>
+            <tbody id="list-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </section>
+  </main>
+</div>
+
+<!-- Create User Dialog (rewritten for improved layout / accessibility) -->
+<dialog id="create-user-dialog" class="md3-dialog" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+  <div class="md3-dialog__container">
+    <div class="md3-dialog__surface">
+      <header class="md3-dialog__header">
+        <h2 id="create-user-title" class="md3-title-large md3-dialog__title">Neuen Benutzer anlegen</h2>
+      </header>
+
+      <div class="md3-dialog__content md3-stack--dialog">
+        <p class="md3-body-medium">Der Benutzer erhält einen Einladungs-Link (Reset Token).</p>
+
+        <form id="create-user-form" method="post" class="md3-form">
+          <!-- Textfields: gap via .md3-form (--space-3 / 12px) -->
+          <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <input type="text" id="new-username" name="username" class="md3-outlined-textfield__input" required autofocus aria-label="Benutzername">
+            <label class="md3-outlined-textfield__label" for="new-username">Benutzername</label>
+            <div class="md3-outlined-textfield__outline">
+              <div class="md3-outlined-textfield__outline-start"></div>
+              <div class="md3-outlined-textfield__outline-notch"></div>
+              <div class="md3-outlined-textfield__outline-end"></div>
+            </div>
+          </div>
+
+          <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <input type="email" id="new-email" name="email" class="md3-outlined-textfield__input" aria-label="Email (optional)">
+            <label class="md3-outlined-textfield__label" for="new-email">Email (optional)</label>
+            <div class="md3-outlined-textfield__outline">
+              <div class="md3-outlined-textfield__outline-start"></div>
+              <div class="md3-outlined-textfield__outline-notch"></div>
+              <div class="md3-outlined-textfield__outline-end"></div>
+            </div>
+          </div>
+
+          <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <select id="new-role" name="role" class="md3-outlined-textfield__input md3-outlined-textfield__input--select" aria-label="Rolle">
+              <option value="user" selected>User</option>
+              <option value="editor">Editor</option>
+              <option value="admin">Admin</option>
+            </select>
+            <label class="md3-outlined-textfield__label md3-outlined-textfield__label--select" for="new-role">Rolle</label>
+            <div class="md3-outlined-textfield__outline">
+              <div class="md3-outlined-textfield__outline-start"></div>
+              <div class="md3-outlined-textfield__outline-notch"></div>
+              <div class="md3-outlined-textfield__outline-end"></div>
+            </div>
+          </div>
+
+          <div class="md3-dialog__actions">
+            <button type="button" class="md3-button md3-button--text" id="cancel-create">Abbrechen</button>
+            <button type="submit" class="md3-button md3-button--filled">Anlegen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Invite Link Dialog (rewritten for improved layout & copy feedback) -->
+<dialog id="invite-dialog" class="md3-dialog" role="dialog" aria-modal="true" aria-labelledby="invite-title">
+  <div class="md3-dialog__container">
+    <div class="md3-dialog__surface">
+      <header class="md3-dialog__header">
+        <h2 id="invite-title" class="md3-title-large md3-dialog__title">Benutzer angelegt</h2>
+      </header>
+      <div class="md3-dialog__content md3-stack--dialog">
+        <p class="md3-body-medium">Bitte sende diesen Link an den neuen Benutzer:</p>
+
+        <div class="md3-snippet md3-snippet--code" aria-label="Reset-Link">
+          <code id="invite-link" class="md3-snippet__code" aria-live="polite" aria-atomic="true"></code>
+          <button id="copy-invite" class="md3-button md3-button--icon md3-snippet__copy" title="Kopieren" aria-label="Invite-Link kopieren">
+            <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+          </button>
+        </div>
+
+        <p id="invite-meta" class="md3-body-small md3-text-variant">&nbsp;</p>
+        <!-- Live region for copy feedback (screen reader) -->
+        <div id="invite-copy-status"
+             class="sr-only md3-status-live"
+             role="status"
+             aria-live="polite"></div>
+      </div>
+
+      <div class="md3-dialog__actions">
+        <button type="button" class="md3-button md3-button--filled" id="close-invite">Schließen</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- User Edit Dialog (MD3-conform) -->
+<dialog id="user-edit-dialog" class="md3-dialog md3-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="user-edit-title">
+  <div class="md3-dialog__container">
+    <div class="md3-dialog__surface">
+      <header class="md3-dialog__header">
+        <h2 class="md3-title-large md3-dialog__title" id="user-edit-title">Benutzer bearbeiten</h2>
+      </header>
+
+      <div class="md3-dialog__content md3-stack--dialog">
+        <form id="user-edit-form" class="md3-form">
+          <!-- Error display area -->
+          <div id="user-edit-error" class="md3-alert md3-alert--error" role="alert" hidden>
+            <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">error</span>
+            <span class="md3-alert__message"></span>
+          </div>
+
+          <!-- Section: Account -->
+          <fieldset class="md3-fieldset">
+            <legend class="md3-label-large">Account</legend>
+            
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input type="text" id="edit-username" name="username" class="md3-outlined-textfield__input" readonly aria-label="Benutzername">
+              <label class="md3-outlined-textfield__label md3-outlined-textfield__label--floating" for="edit-username">Benutzername</label>
+              <div class="md3-outlined-textfield__outline">
+                <div class="md3-outlined-textfield__outline-start"></div>
+                <div class="md3-outlined-textfield__outline-notch"></div>
+                <div class="md3-outlined-textfield__outline-end"></div>
+              </div>
+            </div>
+
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input type="email" id="edit-email" name="email" class="md3-outlined-textfield__input" aria-label="E-Mail">
+              <label class="md3-outlined-textfield__label" for="edit-email">E-Mail</label>
+              <div class="md3-outlined-textfield__outline">
+                <div class="md3-outlined-textfield__outline-start"></div>
+                <div class="md3-outlined-textfield__outline-notch"></div>
+                <div class="md3-outlined-textfield__outline-end"></div>
+              </div>
+              <span class="md3-outlined-textfield__error" id="edit-email-error"></span>
+            </div>
+          </fieldset>
+
+          <!-- Section: Role -->
+          <fieldset class="md3-fieldset">
+            <legend class="md3-label-large">Rolle</legend>
+            
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <select id="edit-role" name="role" class="md3-outlined-textfield__input md3-outlined-textfield__input--select" aria-label="Rolle">
+                <option value="user">user</option>
+                <option value="editor">editor</option>
+                <option value="admin">admin</option>
+              </select>
+              <label class="md3-outlined-textfield__label md3-outlined-textfield__label--select" for="edit-role">Rolle</label>
+              <div class="md3-outlined-textfield__outline">
+                <div class="md3-outlined-textfield__outline-start"></div>
+                <div class="md3-outlined-textfield__outline-notch"></div>
+                <div class="md3-outlined-textfield__outline-end"></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Section: Status -->
+          <fieldset class="md3-fieldset">
+            <legend class="md3-label-large">Status</legend>
+            
+            <div class="md3-switch-row">
+              <label for="edit-is-active" class="md3-switch-row__label">Konto aktiv</label>
+              <input type="checkbox" id="edit-is-active" name="is_active" class="md3-switch-input" checked>
+              <label for="edit-is-active" class="md3-switch">
+                <span class="md3-switch__track">
+                  <span class="md3-switch__thumb"></span>
+                </span>
+              </label>
+            </div>
+            <p class="md3-body-small md3-text-variant">Inaktive Konten können sich nicht mehr anmelden, bleiben aber im System erhalten.</p>
+          </fieldset>
+
+          <!-- Section: Password / Invite -->
+          <fieldset class="md3-fieldset">
+            <legend class="md3-label-large">Passwort / Einladung</legend>
+            <p class="md3-body-small md3-text-variant">Einen neuen Link zur Passwort-Erstellunge generieren (zur Erstanmeldung oder zum Wiederherstellen).</p>
+            <button type="button" id="edit-reset-password" class="md3-button md3-button--tonal">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">mail</span>
+              Passwort / Einladung
+            </button>
+          </fieldset>
+
+          <input type="hidden" id="edit-user-id" name="user_id">
+        </form>
+      </div>
+
+      <div class="md3-dialog__actions">
+        <button type="button" class="md3-button md3-button--text" id="cancel-edit">Abbrechen</button>
+        <button type="button" class="md3-button md3-button--filled" id="save-edit">Speichern</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script src="{{ url_for('static', filename='js/auth/admin_users.js') }}" defer></script>
+{% endblock %}

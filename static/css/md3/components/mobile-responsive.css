@@ -1,0 +1,517 @@
+/* ============================================================================
+   Mobile Responsive Overrides - MD3 Design System
+   ============================================================================
+   Zentrale Datei für mobile Responsivität.
+   Ergänzt bestehende Komponenten-CSS ohne sie zu überschreiben.
+   
+   Schwerpunkte:
+   1. Horizontales Scrollen für breite Inhalte (nur Mobile)
+   2. Kompaktere Formular-Typografie auf Mobile
+   3. Z-Index-Hierarchie für konsistente Layer-Ordnung
+   4. Viewport-Overflow-Schutz
+   ============================================================================ */
+
+/* ============================================================================
+   1. VIEWPORT OVERFLOW SCHUTZ
+   ============================================================================
+   Verhindert, dass breite Inhalte die gesamte Seite breiter machen
+   und die Top-App-Bar "schrumpfen" lassen.
+   ============================================================================ */
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Main Content Container soll nie breiter als Viewport sein */
+#main-content,
+.site-main,
+.md3-content-wrapper {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ============================================================================
+   2. HORIZONTALES SCROLLEN FÜR BREITE INHALTE
+   ============================================================================
+   Mobile: Container scrollen horizontal bei breitem Inhalt.
+   Desktop: Overflow-Regeln werden zurückgesetzt (normales Verhalten).
+   WICHTIG: Kein overflow-y: auto für Tab-Container (normales Seiten-Scrollen).
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   2a. DESKTOP DEFAULTS (≥840px) - Reset Mobile Overflows
+   ---------------------------------------------------------------------------- */
+@media (min-width: 840px) {
+  /* Search Results: Desktop-Defaults */
+  #panel-resultados,
+  #token-results,
+  #token-panel-resultados,
+  .md3-view-content {
+    overflow-x: visible;
+    overflow-y: visible;
+    height: auto;
+    max-height: none;
+  }
+  
+  /* Metadata Tab Panels: Desktop-Defaults */
+  #tab-panel-paises,
+  #tab-panel-resumen,
+  .md3-tab-content {
+    overflow-x: visible;
+    overflow-y: visible;
+    height: auto;
+    max-height: none;
+  }
+  
+  /* Country Panels: Desktop-Defaults */
+  .md3-country-panels {
+    overflow-y: visible;
+    height: auto;
+    min-height: auto;
+  }
+  
+  /* DataTables Container: Desktop - nur X-Scroll wenn nötig */
+  .dataTables_wrapper,
+  .md3-corpus-table-container,
+  .md3-advanced__tablewrap,
+  .md3-table-container {
+    overflow-x: auto; /* Bleibt für sehr breite Tabellen */
+    overflow-y: visible;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   2b. MOBILE OVERFLOWS (≤839px) - Horizontal Scroll für breite Inhalte
+   ---------------------------------------------------------------------------- */
+@media (max-width: 839px) {
+  /* Search Results Panel */
+  #panel-resultados,
+  .md3-view-content {
+    overflow-x: auto;
+    overflow-y: visible; /* Kein eigener Y-Scroll */
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    /* Keine feste Höhe */
+    height: auto;
+    max-height: none;
+  }
+  
+  /* Token Results Section */
+  #token-results,
+  #token-panel-resultados {
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Metadata Tab Panels - KEIN separater Y-Scroll */
+  #tab-panel-paises,
+  #tab-panel-resumen,
+  .md3-tab-content {
+    overflow-x: auto;
+    overflow-y: visible; /* Inhalt fließt normal, Seite scrollt */
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    /* Keine feste Höhe */
+    height: auto !important;
+    max-height: none !important;
+  }
+  
+  /* Country Panels - keine feste Höhe */
+  .md3-country-panels {
+    min-height: auto;
+    height: auto;
+    overflow-y: visible;
+  }
+  
+  /* DataTables Container */
+  .dataTables_wrapper,
+  .md3-corpus-table-container,
+  .md3-advanced__tablewrap {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  
+  /* Charts Container */
+  .md3-chart-container,
+  .md3-stats-chart,
+  [data-chart-container] {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Search Card - allow scrolling for complex forms */
+  .md3-search-card {
+    max-width: 100%;
+  }
+  
+  /* Pattern Builder can get wide with multiple tokens */
+  .md3-pattern-builder,
+  #cql-builder-container {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+}
+
+/* ============================================================================
+   3. KOMPAKTERE FORMULAR-TYPOGRAFIE (Mobile)
+   ============================================================================
+   Reduzierte Schriftgrößen und Abstände für dichtere Darstellung,
+   ohne Touch-Targets unter 44px zu verkleinern.
+   ============================================================================ */
+
+@media (max-width: 599px) {
+  /* Filter Labels - kompakter */
+  .md3-filter-field__label,
+  .md3-outlined-textfield__label {
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+  
+  /* Filter Inputs - reduziertes Padding */
+  .md3-filter-field__input,
+  .md3-outlined-textfield__input,
+  .md3-outlined-textfield__input--select {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    /* Touch Target bleibt >= 44px */
+    min-height: 44px;
+  }
+  
+  /* Select2 Anpassungen */
+  .select2-container--md3 .select2-selection--single,
+  .select2-container--md3 .select2-selection--multiple {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.875rem;
+  }
+  
+  .select2-container--md3 .select2-selection__placeholder,
+  .select2-container--md3 .select2-selection__rendered {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+  
+  /* Checkbox Labels - kompakter */
+  .md3-checkbox__label,
+  .md3-checkbox-container span:not(.md3-checkbox) {
+    font-size: 0.875rem;
+    line-height: 1.3;
+  }
+  
+  /* Section Headings in Search Cards */
+  .md3-search-card__heading,
+  .md3-expert-section__title {
+    font-size: 0.9375rem;
+  }
+  
+  /* Options Row - engeres Spacing */
+  .md3-options-row {
+    gap: var(--space-2);
+  }
+  
+  /* Active Filters Bar - kompakter */
+  .md3-active-filters {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+  
+  .md3-active-filters__label {
+    font-size: 0.75rem;
+  }
+  
+  /* Filter Chips - kleiner */
+  .md3-active-filters__chip,
+  .md3-filter-chip {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.75rem;
+    min-height: 28px;
+  }
+  
+  /* Search Card Padding reduzieren */
+  .md3-search-card {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+  
+  /* Expert Section kompakter */
+  .md3-expert-section {
+    padding: var(--space-3);
+  }
+  
+  /* Tab Navigation kompakter */
+  .md3-tabs .md3-tab {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+  
+  /* Corpus Page Content */
+  .md3-corpus-content {
+    padding: var(--space-3);
+  }
+}
+
+/* Sehr kleine Screens - noch kompakter */
+@media (max-width: 400px) {
+  .md3-filter-field__input,
+  .md3-outlined-textfield__input {
+    font-size: 0.8125rem;
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  .md3-search-card {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+  
+  .md3-tabs .md3-tab {
+    padding: var(--space-2);
+    font-size: 0.8125rem;
+  }
+}
+
+/* ============================================================================
+   4. Z-INDEX HIERARCHIE
+   ============================================================================
+   Klare Schichtung für konsistentes Verhalten:
+   - Background/Content: 0-99
+   - Map Controls: 100-400  
+   - Map Popups: 500-900
+   - Sticky Headers: 1000
+   - Top App Bar: 1200
+   - Dropdowns/Menus: 1300
+   - Modal Drawer: 1400
+   - Dialogs/Modals: 1500
+   - Snackbar/Toast: 1600
+   ============================================================================ */
+
+/* Base Z-Index Variables (kann von Komponenten verwendet werden) */
+:root {
+  --z-index-content: 1;
+  --z-index-map-tiles: 200;
+  --z-index-map-controls: 400;
+  --z-index-map-markers: 600;
+  --z-index-map-popups: 800;
+  --z-index-sticky: 1000;
+  --z-index-top-app-bar: 1200;
+  --z-index-dropdown: 1300;
+  --z-index-drawer-modal: 1400;
+  --z-index-dialog: 1500;
+  --z-index-snackbar: 1600;
+}
+
+/* Top App Bar muss immer über Map sein */
+.md3-top-app-bar,
+#top-app-bar {
+  z-index: var(--z-index-top-app-bar, 1200);
+}
+
+/* Modal Drawer über App Bar */
+.drawer[open],
+#navigation-drawer-modal[open] {
+  z-index: var(--z-index-drawer-modal, 1400);
+}
+
+/* Dialoge ganz oben */
+.md3-dialog,
+dialog[open] {
+  z-index: var(--z-index-dialog, 1500);
+}
+
+/* Snackbar/Toast am höchsten */
+.md3-snackbar {
+  z-index: var(--z-index-snackbar, 1600);
+}
+
+/* User Menu Dropdown */
+.md3-user-menu__dropdown {
+  z-index: var(--z-index-dropdown, 1300);
+}
+
+/* Select2 Dropdowns */
+.select2-container--open .select2-dropdown {
+  z-index: var(--z-index-dropdown, 1300);
+}
+
+/* ============================================================================
+   5. ATLAS MAP SPECIFIC OVERRIDES
+   ============================================================================
+   Korrigiert Z-Index Probleme und Popup-Sichtbarkeit
+   ============================================================================ */
+
+/* Map Container darf keinen eigenen Stacking Context erzeugen */
+.md3-atlas-map-container {
+  position: relative;
+  z-index: auto; /* Nicht 0 oder positiv setzen */
+  /* Overflow visible für Popups die über den Rand hinausragen */
+  overflow: visible;
+}
+
+/* Leaflet-spezifische Z-Index Anpassungen */
+.md3-atlas-map .leaflet-tile-pane {
+  z-index: var(--z-index-map-tiles, 200) !important;
+}
+
+.md3-atlas-map .leaflet-overlay-pane {
+  z-index: 300 !important;
+}
+
+.md3-atlas-map .leaflet-marker-pane {
+  z-index: var(--z-index-map-markers, 600) !important;
+}
+
+.md3-atlas-map .leaflet-popup-pane {
+  z-index: var(--z-index-map-popups, 800) !important;
+}
+
+.md3-atlas-map .leaflet-control-container {
+  z-index: var(--z-index-map-controls, 400) !important;
+}
+
+/* Leaflet Controls einzeln */
+.md3-atlas-map .leaflet-top,
+.md3-atlas-map .leaflet-bottom {
+  z-index: var(--z-index-map-controls, 400) !important;
+}
+
+/* Popups über Markern */
+.md3-atlas-map .leaflet-popup {
+  z-index: calc(var(--z-index-map-popups, 800) + 50) !important;
+}
+
+/* Tooltips */
+.md3-atlas-map .leaflet-tooltip {
+  z-index: calc(var(--z-index-map-popups, 800) + 25) !important;
+}
+
+/* Mobile: Popup-Breite begrenzen und nicht abschneiden */
+@media (max-width: 599px) {
+  .md3-atlas-map .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 48px);
+  }
+  
+  .md3-atlas-map .leaflet-popup {
+    /* Popups sollen immer vollständig sichtbar sein */
+    max-width: 90vw;
+  }
+  
+  .atlas-tooltip {
+    min-width: 160px;
+    max-width: calc(100vw - 60px);
+  }
+}
+
+/* ============================================================================
+   6. PREVENT LAYOUT SHIFT & DATATABLE MOBILE FIX
+   ============================================================================
+   Verhindert Layout-Verschiebungen durch breite Elemente.
+   DataTables behalten feste min-width und scrollen horizontal.
+   ============================================================================ */
+
+/* Tables sollten nie den Container sprengen */
+table {
+  max-width: 100%;
+}
+
+/* ============================================================================
+   DATATABLE MIN-WIDTH RULES
+   Tabellen dürfen auf Mobile nicht schrumpfen, sondern scrollen.
+   ============================================================================ */
+
+/* Corpus/Advanced Tables - breite Tabellen mit vielen Spalten */
+#corpus-table,
+#advanced-table,
+#token-results-table {
+  min-width: 1200px; /* Mindestbreite für komplexe Tabellen */
+  width: max-content;
+  table-layout: auto;
+}
+
+/* Admin Users Table - weniger Spalten */
+#users-table {
+  min-width: 800px;
+  width: max-content;
+  table-layout: auto;
+}
+
+/* Generic MD3 Tables */
+.md3-table {
+  min-width: 600px;
+  width: max-content;
+}
+
+/* Tabellenzellen: Kein aggressives Text-Umbrechen */
+#corpus-table td,
+#advanced-table td,
+#token-results-table td,
+#users-table td,
+.md3-table td {
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+/* Bestimmte Spalten dürfen umbrechen (Context-Spalten) */
+.md3-datatable__cell--context,
+td.wrap-text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  min-width: 150px;
+  max-width: 300px;
+}
+
+/* ============================================================================
+   SCROLLBARE CONTAINER (alle Viewports < 1200px)
+   ============================================================================ */
+
+@media (max-width: 1199px) {
+  /* Primäre Ergebnis-Container */
+  #panel-resultados,
+  #token-results,
+  #token-panel-resultados {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Metadaten Tab Panels */
+  #tab-panel-paises,
+  #tab-panel-resumen {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* DataTables Wrapper */
+  .dataTables_wrapper,
+  .md3-corpus-table-container,
+  .md3-advanced__tablewrap,
+  .md3-table-container {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+}
+
+/* Mobile-spezifisch (< 840px) */
+@media (max-width: 839px) {
+  /* DataTables Wrapper */
+  .dataTables_wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+

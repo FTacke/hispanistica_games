@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block page_title %}Impressum · games.hispanistica{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/typography.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/hero.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/text-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-page" role="main" aria-label="Impressum">
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">gavel</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Rechtliche Informationen</p>
+        <h1 class="md3-headline-medium md3-hero__title">Impressum</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content: formatted with canonical MD3 page/section classes -->
+  <main class="md3-text-page">
+    <div class="md3-text-content">
+      <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">Anbieter dieser Internetpräsenz im Rechtssinne ist</h2>
+      <p class="md3-body-large">
+        <strong>Philipps-Universität Marburg</strong><br>
+        Der Präsident<br>
+        Prof. Dr. Thomas Nauss<br>
+        Biegenstraße 10<br>
+        35037 Marburg<br>
+        Tel.: +49 6421 28-20<br>
+        Fax: +49 6421 28-22500<br>
+        Internet: <a href="https://www.uni-marburg.de" class="md3-text-link">https://www.uni-marburg.de</a><br>
+        E-Mail: <a href="mailto:info@uni-marburg.de" class="md3-text-link">info@uni-marburg.de</a>
+      </p>
+      <p class="md3-body-large">
+        Umsatzsteuer-Identifikationsnummer: <strong>DE 112590692</strong>
+      </p>
+    </section>
+
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">Postanschrift</h2>
+      <p class="md3-body-large">
+        Philipps-Universität Marburg<br>
+        Postfach<br>
+        35032 Marburg
+      </p>
+    </section>
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">Zuständige Aufsichtsbehörde</h2>
+      <p class="md3-body-large">
+        Hessisches Ministerium für Wissenschaft und Kunst<br>
+        Rheinstraße 23-25<br>
+        65185 Wiesbaden
+      </p>
+    </section>
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">Studienleitung</h2>
+      <p class="md3-body-large">
+        Prof. Dr. Felix Tacke<br>
+        Philipps-Universität Marburg<br>
+        Institut für Romanische Philologie<br>
+        Wilhelm-Röpke-Str. 6D<br>
+        35032 Marburg<br>
+        Tel.: +49 6421 28-24776<br>
+        E-Mail: <a href="mailto:felix.tacke@uni-marburg.de" class="md3-text-link">felix.tacke@uni-marburg.de</a>
+      </p>
+    </section>
+    <section class="md3-text-section">
+      <h2 class="md3-title-large md3-section-title">Haftungsausschluss und rechtliche Hinweise</h2>
+
+      <h3 class="md3-title-medium md3-subsection-title">Haftung für Inhalte</h3>
+      <p class="md3-body-large">
+        Die Inhalte dieser Website werden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte wird jedoch keine Gewähr übernommen.
+      </p>
+
+      <h3 class="md3-title-medium md3-subsection-title">Haftung für Links</h3>
+      <p class="md3-body-large">
+        Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten sind ausschließlich deren Betreiber verantwortlich.
+      </p>
+
+      <h3 class="md3-title-medium md3-subsection-title">Urheberrecht</h3>
+      <p class="md3-body-large">
+        Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+      </p>
+    </div>
+  </main>
+</div>
+{% endblock %}

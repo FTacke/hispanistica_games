@@ -1,0 +1,271 @@
+/* MD3 Footer Component
+ * Konforme Umsetzung nach Material Design 3 Richtlinien
+ * Keine feste Höhe, Höhe folgt dem Inhalt
+ * 4-dp-Raster, WCAG 2.2 AA Zielgrößen (24×24 CSS-px minimum)
+ * Responsive Grid-Layout mit klarer DOM-Reihenfolge = Fokus-Reihenfolge
+ * Badge zuerst → Nav → Copyright
+ */
+
+.md3-footer {
+  border-top: 0px solid var(--md-sys-color-outline-variant);
+  background: var(--app-background);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: var(--space-12);
+  /* ~64px margin top for spacing from content */
+
+  padding-block: var(--space-4);
+  /* ~16px vertical padding (mobile), scale up responsively */
+}
+
+/* Tablet: 20px vertical (1.25rem) */
+@media (min-width: 600px) {
+  .md3-footer {
+    padding-block: var(--space-5);
+  }
+}
+
+/* Desktop/Large: 24px vertical (1.5rem) */
+@media (min-width: 840px) {
+  .md3-footer {
+    padding-block: var(--space-6);
+  }
+}
+
+/* Editor and Player pages: Footer matches page background (darker) */
+body[data-page="editor"] .md3-footer,
+body[data-page="player"] .md3-footer {
+  background: var(--app-background);
+}
+
+/* Dark mode override for Editor/Player if needed (assuming they stay light or handle dark mode differently) */
+@media (prefers-color-scheme: dark) {
+  body[data-page="editor"] .md3-footer,
+  body[data-page="player"] .md3-footer {
+    background: var(--app-background);
+  }
+}
+
+/* ========== CONTENT CONTAINER ========== */
+.md3-footer__content {
+  max-width: 72rem;
+  /* ~1200px container width, standard for content */
+
+  margin-inline: auto;
+  /* Center container horizontally (RTL-safe) */
+
+  padding-inline: 1rem;
+  /* 16px horizontal padding base */
+
+  display: grid;
+  gap: 0.75rem;
+  /* Gap between grid items */
+
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+
+  /* Always stacked vertically (no responsive layout changes) */
+  grid-template-areas:
+    "logo"
+    "brand"
+    "nav"
+    "copy";
+}
+
+/* ========== GRID AREAS & ELEMENTS ========== */
+
+/* Brand/Badge - First (highest priority visually) */
+.md3-footer__brand {
+  grid-area: brand;
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  /* Center always */
+
+  min-height: 24px;
+  /* WCAG 2.2 AA minimum target size */
+
+  text-decoration: none;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.md3-footer__brand:hover {
+  opacity: 0.9;
+}
+
+.md3-footer__brand:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md3-footer__brand img {
+  display: block;
+  height: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Logo Marker - Border divider */
+.md3-footer__logo-marker {
+  grid-area: logo;
+  display: block;
+  width: auto;
+  height: 30px;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.8;
+  transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-footer__logo-marker:hover {
+  opacity: 1;
+}
+
+/* Navigation */
+.md3-footer__nav {
+  grid-area: nav;
+  width: 100%;
+  /* Ensure nav takes full width on mobile */
+}
+
+.md3-footer__list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
+  width: 100%;
+  /* Center on all screens */
+}
+
+.md3-footer__list > li {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Separator dots between list items */
+.md3-footer__list > li + li::before {
+  content: "";
+  margin-inline: 0.25rem 0.5rem;
+  color: var(--md-sys-color-outline-variant);
+}
+
+/* Links */
+.md3-footer__list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  /* WCAG 2.2 AA minimum target size */
+
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  border-radius: var(--radius-sm);
+}
+
+.md3-footer__list a:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-footer__list a:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Copyright */
+.md3-footer__copy {
+  grid-area: copy;
+  margin: 0;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ========== RESPONSIVE: Only adjust gap and padding on larger screens ========== */
+
+/* Tablet: slightly larger gap */
+@media (min-width: 600px) {
+  .md3-footer__content {
+    gap: 1rem;
+  }
+}
+
+/* Desktop: larger gap and optional two-line wrap for many links */
+@media (min-width: 840px) {
+  .md3-footer__content {
+    gap: 1.5rem;
+  }
+
+  .md3-footer__list {
+    column-gap: 1.25rem;
+    row-gap: 0.5rem;
+  }
+}
+
+/* ========== TOUCH OPTIMIZATIONS ========== */
+@media (pointer: coarse) {
+  .md3-footer__list a {
+    padding-block: 0.5rem;
+    /* Extra vertical space for touch targets */
+  }
+}
+
+/* ========== REDUCED MOTION ========== */
+@media (prefers-reduced-motion: reduce) {
+  .md3-footer__brand,
+  .md3-footer__list a {
+    transition: none;
+  }
+}
+
+/* ========== MICRO-FOOTER (Optional: Before Sticky Elements) ========== */
+/* Use this when Footer would be hidden behind sticky player or consent banner */
+/* Apply class "app-has-sticky" to body or main element */
+
+.app-has-sticky .md3-footer {
+  padding-bottom: 0;
+  /* Reduce bottom padding when Micro-Footer follows */
+}
+
+.md3-legal-micro {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface-variant);
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+
+  font-size: 0.75rem;
+  /* Compact typography */
+}
+
+.md3-legal-micro a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-legal-micro a:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-legal-micro a:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 1px;
+}
+
+.md3-legal-micro > span + span::before {
+  content: "·";
+  margin-inline: 0.25rem;
+  color: var(--md-sys-color-outline-variant);
+}

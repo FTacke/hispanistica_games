@@ -1,0 +1,36 @@
+[Unit]
+Description=CO.RA.PAN Flask App (Gunicorn)
+After=network.target blacklab-server.service
+Wants=blacklab-server.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/corapan
+Environment="PATH=/var/www/corapan/.venv/bin"
+Environment="FLASK_ENV=production"
+Environment="BLS_BASE_URL=http://localhost:8081/blacklab-server"
+Environment="RATE_LIMIT_ENABLED=1"
+Environment="RATE_LIMIT_SEARCH=30 per minute"
+ExecStart=/var/www/corapan/.venv/bin/gunicorn \
+    --bind 0.0.0.0:8000 \
+    --workers 4 \
+    --worker-class sync \
+    --timeout 180 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --access-logfile /var/log/corapan/access.log \
+    --error-logfile /var/log/corapan/error.log \
+    --log-level info \
+    src.app.main:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+PrivateTmp=true
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

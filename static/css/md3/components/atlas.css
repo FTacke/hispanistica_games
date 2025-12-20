@@ -1,0 +1,244 @@
+/* ============================================================================
+   Atlas Page Components - MD3 Migration
+   ============================================================================
+   Map-only layout für Atlas-Seite
+   - Leaflet Map Container
+   - Map Popup/Tooltip Styles
+   
+   Note: Hero styles are in hero.css (canonical component)
+   ============================================================================ */
+
+/* ============================================================================
+   Content Wrapper
+   ============================================================================ */
+
+.md3-atlas-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 var(--space-4) var(--space-12);
+}
+
+/* Tablet+: 24px Edge-Padding */
+@media (min-width: 600px) {
+  .md3-atlas-content {
+    padding: 0 var(--space-6) var(--space-12);
+  }
+}
+
+/* Desktop: 32px Edge-Padding */
+@media (min-width: 1200px) {
+  .md3-atlas-content {
+    padding: 0 var(--space-8) var(--space-12);
+  }
+}
+
+/* ============================================================================
+   Main Layout
+   ============================================================================ */
+
+.md3-atlas-layout {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* ============================================================================
+   Map Container (Leaflet Integration)
+   ============================================================================ */
+
+/* Mobile First: Larger height for map-only view */
+.md3-atlas-map-container {
+  width: 100%;
+  height: 500px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container);
+  box-sizing: border-box;
+}
+
+/* Tablet+ */
+@media (min-width: 600px) {
+  .md3-atlas-map-container {
+    height: 600px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 900px) {
+  .md3-atlas-map-container {
+    height: 700px;
+  }
+}
+
+.md3-atlas-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Leaflet Controls z-index (unter Top App Bar z-index: 1000) */
+.md3-atlas-map .leaflet-top,
+.md3-atlas-map .leaflet-bottom,
+.md3-atlas-map .leaflet-control,
+.md3-atlas-map .leaflet-control-container {
+  z-index: 400 !important;
+}
+
+/* Popup Pane muss über den Controls sein - erhöht für Mobile */
+.md3-atlas-map .leaflet-popup-pane {
+  z-index: 800 !important;
+}
+
+/* Popups selbst noch höher für Mobile-Sicherheit */
+.md3-atlas-map .leaflet-popup {
+  z-index: 850 !important;
+}
+
+/* Marker Pane */
+.md3-atlas-map .leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+/* Tile Pane niedrig halten */
+.md3-atlas-map .leaflet-tile-pane {
+  z-index: 200 !important;
+}
+
+/* Mobile: Popup besser positionieren */
+@media (max-width: 599px) {
+  .atlas-popup .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 48px);
+  }
+  
+  .atlas-tooltip {
+    min-width: 180px;
+    max-width: 280px;
+  }
+  
+  .atlas-tooltip-links {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  
+  .atlas-tooltip-link {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* ============================================================================
+   Atlas Popup/Tooltip Styles
+   ============================================================================ */
+
+/* Custom popup styling */
+.atlas-popup .leaflet-popup-content-wrapper {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-3);
+  padding: 0;
+}
+
+.atlas-popup .leaflet-popup-content {
+  margin: 0;
+  padding: 0;
+}
+
+.atlas-popup .leaflet-popup-tip {
+  background: var(--md-sys-color-surface);
+}
+
+.atlas-popup .leaflet-popup-close-button {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 20px;
+  padding: 8px;
+  top: 4px;
+  right: 4px;
+}
+
+.atlas-popup .leaflet-popup-close-button:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Tooltip inner content */
+.atlas-tooltip {
+  padding: var(--space-4);
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.atlas-tooltip-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--md-sys-color-primary);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.atlas-tooltip-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.atlas-tooltip-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.atlas-tooltip-value {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.4;
+}
+
+.atlas-tooltip-empty {
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+}
+
+/* Tooltip Links */
+.atlas-tooltip-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.atlas-tooltip-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.atlas-tooltip-link:hover {
+  background: color-mix(in oklab, var(--md-sys-color-primary-container) 85%, var(--md-sys-color-on-primary-container) 15%);
+  color: var(--md-sys-color-on-primary-container);
+  text-decoration: none;
+  box-shadow: var(--elev-1);
+}
+
+.atlas-tooltip-link:focus {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.atlas-tooltip-link .material-symbols-rounded {
+  font-size: 18px;
+}

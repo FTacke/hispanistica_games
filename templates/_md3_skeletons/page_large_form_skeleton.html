@@ -1,0 +1,116 @@
+<!-- templates/_md3_skeletons/page_large_form_skeleton.html -->
+<div class="md3-page md3-page--form">
+  <!-- Canonical Hero -->
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">assignment</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Formulario</p>
+        <h1 class="md3-headline-medium md3-hero__title">Seitentitel</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="md3-page__main">
+    <article class="md3-card md3-card--outlined md3-auth-card md3-auth-card--large-form">
+      <header class="md3-card__header">
+        <h2 class="md3-headline-small">Formularabschnitt (H2)</h2>
+        <p class="md3-body-medium md3-card__description">
+          Optionaler Abschnittstext, der erklärt, was in diesem Formularabschnitt zu tun ist.
+        </p>
+      </header>
+      <div class="md3-card__content">
+
+      <form class="md3-form md3-form--two-column" method="post">
+        <!-- Zeile 1 -->
+        <div class="md3-form__row">
+          <div class="md3-form__field md3-form__field--half">
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input
+                class="md3-outlined-textfield__input"
+                type="text"
+                name="first_name"
+                required
+              >
+              <label class="md3-outlined-textfield__label">Vorname</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="md3-form__field md3-form__field--half">
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input
+                class="md3-outlined-textfield__input"
+                type="text"
+                name="last_name"
+                required
+              >
+              <label class="md3-outlined-textfield__label">Nachname</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zeile 2 (vollbreit) -->
+        <div class="md3-form__row">
+          <div class="md3-form__field md3-form__field--full">
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input
+                class="md3-outlined-textfield__input"
+                type="email"
+                name="email"
+                required
+              >
+              <label class="md3-outlined-textfield__label">E-Mail-Adresse</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+            <!-- Field error: use md3-field-error with proper ARIA -->
+            <div class="md3-field-error" id="email-error" role="alert" aria-live="assertive">
+              <!-- Error message populated by JS -->
+            </div>
+            <!-- OR: Field support text (non-error hints) -->
+            <div class="md3-field-support" id="email-support">
+              <p class="md3-body-small">Wir senden keine Werbung an diese Adresse.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checkboxzeile -->
+        <div class="md3-form__row md3-form__row--compact">
+          <div class="md3-form__field md3-form__field--full">
+            <label class="md3-checkbox">
+              <input type="checkbox" name="terms" required>
+              <span class="md3-checkbox__icon"></span>
+              <span class="md3-checkbox__label">
+                Ich akzeptiere die Nutzungsbedingungen.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Aktionen -->
+        <div class="md3-form__actions">
+          <button type="button" class="md3-button md3-button--text">
+            Abbrechen
+          </button>
+          <button type="submit" class="md3-button md3-button--filled">
+            Speichern
+          </button>
+        </div>
+      </form>
+      </div>
+    </article>
+  </main>
+</div>

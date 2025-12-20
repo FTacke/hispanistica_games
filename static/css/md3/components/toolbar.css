@@ -1,0 +1,235 @@
+/* ============================================================================
+   MD3 Toolbar - Goldstandard v1.2
+   ============================================================================
+   Unified toolbar component for filters + actions.
+   
+   Components:
+   - .md3-toolbar: Main container (flex, space-between)
+   - .md3-toolbar__filters: Filter inputs section (left)
+   - .md3-toolbar__actions: Action buttons section (right)
+   - .md3-toolbar--compact: Actions only, no filters
+   - .md3-toolbar--stacked: Vertical layout for mobile
+   ============================================================================ */
+
+.md3-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.md3-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0; /* Allow shrinking */
+}
+
+.md3-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Compact variant: only actions, right-aligned */
+.md3-toolbar--compact {
+  justify-content: flex-end;
+}
+
+/* Stacked variant: vertical layout */
+.md3-toolbar--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.md3-toolbar--stacked .md3-toolbar__filters,
+.md3-toolbar--stacked .md3-toolbar__actions {
+  width: 100%;
+}
+
+.md3-toolbar--stacked .md3-toolbar__actions {
+  justify-content: flex-end;
+}
+
+/* ============================================================================
+   Responsive: Stack on mobile
+   ============================================================================ */
+
+@media (max-width: 599px) {
+  .md3-toolbar:not(.md3-toolbar--compact) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .md3-toolbar__filters {
+    width: 100%;
+  }
+  
+  .md3-toolbar__actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: var(--space-3);
+  }
+}
+
+/* ============================================================================
+   MD3 Search Field - Goldstandard v1.2
+   ============================================================================
+   Standalone search input with icon and clear button.
+   
+   Components:
+   - .md3-searchfield: Container
+   - .md3-searchfield__icon: Search icon (left)
+   - .md3-searchfield__input: Text input
+   - .md3-searchfield__clear: Clear button (right)
+   ============================================================================ */
+
+.md3-searchfield {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 48px;
+  padding: 0 var(--space-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 24px;
+  transition: outline 150ms ease;
+}
+
+.md3-searchfield:focus-within {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 0;
+}
+
+.md3-searchfield__icon {
+  font-size: 24px;
+  color: var(--md-sys-color-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.md3-searchfield__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  outline: none;
+  min-width: 0;
+}
+
+.md3-searchfield__input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-searchfield__clear {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface);
+  transition: background-color 150ms ease;
+  flex-shrink: 0;
+}
+
+.md3-searchfield__clear:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* Show clear when input has value (requires JS to toggle) */
+.md3-searchfield__clear.is-visible,
+.md3-searchfield__input:not(:placeholder-shown) + .md3-searchfield__clear {
+  display: flex;
+}
+
+/* Inline variant for toolbars */
+.md3-searchfield--inline {
+  max-width: 320px;
+  flex: 1 1 200px;
+}
+
+/* Outlined variant */
+.md3-searchfield--outlined {
+  background: transparent;
+  border: 1px solid var(--md-sys-color-outline);
+}
+
+.md3-searchfield--outlined:focus-within {
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+  padding: 0 calc(var(--space-4) - 1px); /* Compensate for border */
+}
+
+/* Mobile */
+@media (max-width: 599px) {
+  .md3-searchfield {
+    width: 100%;
+    height: 40px;
+  }
+  
+  .md3-searchfield__input {
+    font-size: 14px;
+  }
+  
+  .md3-searchfield--inline {
+    max-width: none;
+  }
+}
+
+/* ============================================================================
+   MD3 Pagination - Goldstandard v1.2
+   ============================================================================
+   Navigation for paginated content.
+   
+   Components:
+   - .md3-pagination: Container (flex, centered)
+   - .md3-pagination__info: Status text (Seite X von Y)
+   - Uses .md3-button--outlined for prev/next
+   ============================================================================ */
+
+.md3-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6) 0;
+}
+
+.md3-pagination__info {
+  font-size: var(--md-sys-typescale-label-medium-font-size);
+  font-weight: var(--md-sys-typescale-label-medium-font-weight);
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  min-width: 120px;
+}
+
+/* Compact variant: icons only */
+.md3-pagination--compact {
+  gap: var(--space-3);
+}
+
+.md3-pagination--compact .md3-pagination__info {
+  min-width: auto;
+}
+
+/* Mobile: reorder for better UX */
+@media (max-width: 599px) {
+  .md3-pagination {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  
+  .md3-pagination__info {
+    order: -1;
+    width: 100%;
+    margin-bottom: var(--space-2);
+  }
+}

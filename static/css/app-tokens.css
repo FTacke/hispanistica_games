@@ -1,0 +1,47 @@
+/* =================================================================
+   APP TOKENS
+   
+   Application-specific design tokens that extend the MD3 system.
+   These are NOT brand-specific and generally don't need changing
+   when adapting the template for a new project.
+   
+   For brand colors (primary, secondary, etc.), see branding.css
+   ================================================================= */
+
+:root {
+  /* -----------------------------------------------------------------
+     APP: Semantic Colors
+     These are app-level semantic tokens, not brand colors.
+     ----------------------------------------------------------------- */
+  --app-color-success: #1b5e20;
+  --app-color-on-success: #ffffff;
+  --app-color-success-container: #bdfcc9;
+  --app-color-on-success-container: #002200;
+  
+  /* -----------------------------------------------------------------
+     APP: Page Backgrounds
+     ----------------------------------------------------------------- */
+  --app-color-login-bg: #f0f2f5;
+  --app-background: var(--md-sys-color-surface-container);
+  
+  /* -----------------------------------------------------------------
+     APP: Animation Timings
+     ----------------------------------------------------------------- */
+  --app-mobile-menu-duration: 250ms;
+  
+  /* -----------------------------------------------------------------
+     APP: Textfield Label Background
+     Enables containers (cards, dialogs, sheets) to set the background
+     color for floating textfield labels. Set --app-textfield-label-bg
+     on container elements to match their background color.
+     See: docs/md3-template/md3-spacing-system.md
+     ----------------------------------------------------------------- */
+  --app-textfield-label-bg: var(--md-sys-color-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-color-login-bg: #14141A;
+  }
+}
+

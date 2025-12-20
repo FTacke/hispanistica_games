@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block page_title %}400 - Solicitud Incorrecta | CO.RA.PAN{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/errors.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-error-page">
+  <div class="md3-error-container">
+    <div class="md3-error-icon">
+      <span class="material-symbols-rounded">warning</span>
+    </div>
+    
+    <h1 class="md3-error-code md3-display-large">400</h1>
+    <h2 class="md3-error-title md3-headline-medium">Solicitud Incorrecta</h2>
+    
+    <p class="md3-error-message md3-body-large">
+      No se pudo procesar la solicitud.
+    </p>
+    
+    <div class="md3-error-actions">
+      <a href="{{ url_for('public.landing_page') }}" class="md3-button--filled">
+        <span class="material-symbols-rounded">home</span>
+        <span>Volver al inicio</span>
+      </a>
+      <a href="javascript:history.back()" class="md3-button--outlined">
+        <span class="material-symbols-rounded">arrow_back</span>
+        <span>Intentar de nuevo</span>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

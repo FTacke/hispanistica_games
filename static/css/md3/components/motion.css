@@ -1,0 +1,303 @@
+/* ============================================================================
+   MD3 Motion & State Layer - Goldstandard v1.2
+   ============================================================================
+   Global motion system and interactive state layers.
+   
+   Motion:
+   - Dialog transitions (scale + fade)
+   - Snackbar slide-up
+   - Navigation drawer slide
+   - Focus/hover state transitions
+   
+   State Layers:
+   - Hover: 8% opacity overlay
+   - Focus: 12% opacity overlay
+   - Pressed: 12% opacity overlay
+   ============================================================================ */
+
+/* ============================================================================
+   Global State Layer Base
+   ============================================================================ */
+
+/* Apply to any interactive element that needs state layer */
+.md3-interactive {
+  position: relative;
+  overflow: hidden; /* Contain the state layer */
+}
+
+.md3-interactive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-on-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-motion-duration-short3) var(--md-motion-easing-standard);
+  border-radius: inherit;
+}
+
+.md3-interactive:hover::before {
+  opacity: var(--md-state-hover-opacity);
+}
+
+.md3-interactive:focus-visible::before {
+  opacity: var(--md-state-focus-opacity);
+}
+
+.md3-interactive:active::before {
+  opacity: var(--md-state-pressed-opacity);
+}
+
+/* For elements on primary-colored backgrounds */
+.md3-interactive--on-primary::before {
+  background: var(--md-sys-color-on-primary);
+}
+
+/* For elements on surface-variant backgrounds */
+.md3-interactive--on-surface-variant::before {
+  background: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================================================
+   Focus Visible Global Style
+   ============================================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Remove default focus ring for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Buttons already handle focus internally */
+.md3-button:focus-visible,
+.md3-icon-button:focus-visible {
+  outline-offset: 0;
+}
+
+/* ============================================================================
+   Dialog Motion
+   ============================================================================ */
+
+/* Dialog enter animation */
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dialog exit animation */
+@keyframes dialog-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.md3-dialog[open] {
+  animation: dialog-enter var(--md-motion-duration-short4) var(--md-motion-easing-emphasized);
+}
+
+.md3-dialog.is-closing {
+  animation: dialog-exit var(--md-motion-duration-short3) var(--md-motion-easing-accelerate);
+}
+
+/* Backdrop fade */
+.md3-dialog::backdrop {
+  animation: backdrop-fade var(--md-motion-duration-short3) var(--md-motion-easing-standard);
+}
+
+@keyframes backdrop-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Navigation Drawer Motion
+   ============================================================================ */
+
+/* Modal drawer slide animation */
+.md3-navigation-drawer--modal {
+  transform: translateX(-100%);
+  transition: transform var(--md-motion-duration-medium1) var(--md-motion-easing-emphasized);
+}
+
+.md3-navigation-drawer--modal.is-open {
+  transform: translateX(0);
+}
+
+/* Scrim fade */
+.md3-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  opacity: 0;
+  visibility: hidden;
+  transition: 
+    opacity var(--md-motion-duration-short3) var(--md-motion-easing-standard),
+    visibility var(--md-motion-duration-short3);
+  z-index: 999;
+}
+
+.md3-scrim.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================================================
+   Content Transitions
+   ============================================================================ */
+
+/* Fade-in for tab content, view switches */
+@keyframes content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.md3-fade-in {
+  animation: content-fade-in var(--md-motion-duration-short4) var(--md-motion-easing-decelerate);
+}
+
+/* Fade-out */
+@keyframes content-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.md3-fade-out {
+  animation: content-fade-out var(--md-motion-duration-short3) var(--md-motion-easing-accelerate);
+}
+
+/* ============================================================================
+   Card Hover Elevation
+   ============================================================================ */
+
+.md3-card--interactive {
+  transition: box-shadow var(--md-motion-duration-short3) var(--md-motion-easing-standard);
+}
+
+.md3-card--interactive:hover {
+  box-shadow: var(--elev-2);
+}
+
+.md3-card--interactive:active {
+  box-shadow: var(--elev-1);
+}
+
+/* ============================================================================
+   Button Transitions
+   ============================================================================ */
+
+.md3-button {
+  transition: 
+    background-color var(--md-motion-duration-short3) var(--md-motion-easing-standard),
+    box-shadow var(--md-motion-duration-short3) var(--md-motion-easing-standard),
+    color var(--md-motion-duration-short3) var(--md-motion-easing-standard);
+}
+
+/* ============================================================================
+   Alert/Snackbar Slide Animation
+   ============================================================================ */
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+.md3-slide-up {
+  animation: slide-up var(--md-motion-duration-medium2) var(--md-motion-easing-decelerate);
+}
+
+.md3-slide-down {
+  animation: slide-down var(--md-motion-duration-short4) var(--md-motion-easing-accelerate);
+}
+
+/* ============================================================================
+   Progress Indicator Animations
+   ============================================================================ */
+
+@keyframes progress-indeterminate {
+  0% { left: -30%; }
+  100% { left: 100%; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================================
+   Reduced Motion Support
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .md3-dialog[open] {
+    animation: none;
+  }
+  
+  .md3-snackbar {
+    transition: none;
+  }
+  
+  .md3-navigation-drawer--modal {
+    transition: none;
+  }
+}

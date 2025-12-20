@@ -1,0 +1,253 @@
+/* =================================================================
+   BRANDING TOKENS – games.hispanistica
+   
+   This file contains project-specific branding tokens.
+   Source: docs_migration/md3-color-tokens_games-hispanistica.md
+   
+   Primary: #0F4C5C
+   Secondary: #276D7B
+   ================================================================= */
+
+:root {
+  /* -----------------------------------------------------------------
+     BRAND: Project Identity
+     ----------------------------------------------------------------- */
+  /* --brand-project-name: "games.hispanistica"; */
+  /* --brand-project-tagline: "Spielerisch Sprache lernen"; */
+
+  /* -----------------------------------------------------------------
+     BRAND: Primary Color (#0F4C5C)
+     ----------------------------------------------------------------- */
+  --brand-primary: #0F4C5C;
+  --brand-on-primary: #FFFFFF;
+  --brand-primary-container: #D4DFE2;
+  --brand-on-primary-container: #0F4C5C;
+
+  /* -----------------------------------------------------------------
+     BRAND: Secondary Color (#276D7B)
+     ----------------------------------------------------------------- */
+  --brand-secondary: #276D7B;
+  --brand-on-secondary: #FFFFFF;
+  --brand-secondary-container: #D4E2E5;
+  --brand-on-secondary-container: #276D7B;
+
+  /* -----------------------------------------------------------------
+     BRAND: Tertiary Color
+     ----------------------------------------------------------------- */
+  --brand-tertiary: #3B6570;
+  --brand-on-tertiary: #FFFFFF;
+  --brand-tertiary-container: #D7E2E6;
+  --brand-on-tertiary-container: #18343B;
+
+  /* -----------------------------------------------------------------
+     BRAND: Error Color
+     ----------------------------------------------------------------- */
+  --brand-error: #B3261E;
+  --brand-on-error: #FFFFFF;
+  --brand-error-container: #EAD7D6;
+  --brand-on-error-container: #B3261E;
+
+  /* -----------------------------------------------------------------
+     BRAND: Neutrals / Layout
+     ----------------------------------------------------------------- */
+  --brand-background: #F3F6F7;
+  --brand-on-background: #061E25;
+  --brand-surface: #EEF2F4;
+  --brand-on-surface: #061E25;
+  --brand-surface-variant: #E2EAEB;
+  --brand-on-surface-variant: #0A313C;
+
+  /* -----------------------------------------------------------------
+     BRAND: Surface Containers (MD3)
+     ----------------------------------------------------------------- */
+  --brand-surface-container-lowest: #FFFFFF;
+  --brand-surface-container-low: #F7FAFB;
+  --brand-surface-container: #F0F5F6;
+  --brand-surface-container-high: #E8EFF1;
+  --brand-surface-container-highest: #E1EAEC;
+
+  /* -----------------------------------------------------------------
+     BRAND: Outlines / Dividers
+     ----------------------------------------------------------------- */
+  --brand-outline: #072229;
+  --brand-outline-variant: #B7C9CE;
+
+  /* -----------------------------------------------------------------
+     BRAND: Inverse (für Tooltips etc.)
+     ----------------------------------------------------------------- */
+  --brand-inverse-surface: #041317;
+  --brand-inverse-on-surface: #FFFFFF;
+  --brand-inverse-primary: #638B95;
+
+  /* -----------------------------------------------------------------
+     BRAND: Feedback Colors
+     ----------------------------------------------------------------- */
+  --brand-warning: #7A4D00;
+  --brand-on-warning: #FFFFFF;
+  --brand-warning-container: #F2E0C2;
+  --brand-on-warning-container: #4A2F00;
+
+  --brand-success: #146C2E;
+  --brand-on-success: #FFFFFF;
+  --brand-success-container: #D7E8DD;
+  --brand-on-success-container: #0D3F1C;
+
+  --brand-info: #1A5A8A;
+  --brand-on-info: #FFFFFF;
+  --brand-info-container: #D7E7F3;
+  --brand-on-info-container: #103856;
+
+  /* -----------------------------------------------------------------
+     MAP: Brand → MD3 System Tokens
+     ----------------------------------------------------------------- */
+  --md-sys-color-primary: var(--brand-primary);
+  --md-sys-color-on-primary: var(--brand-on-primary);
+  --md-sys-color-primary-container: var(--brand-primary-container);
+  --md-sys-color-on-primary-container: var(--brand-on-primary-container);
+  
+  --md-sys-color-secondary: var(--brand-secondary);
+  --md-sys-color-on-secondary: var(--brand-on-secondary);
+  --md-sys-color-secondary-container: var(--brand-secondary-container);
+  --md-sys-color-on-secondary-container: var(--brand-on-secondary-container);
+  
+  --md-sys-color-tertiary: var(--brand-tertiary);
+  --md-sys-color-on-tertiary: var(--brand-on-tertiary);
+  --md-sys-color-tertiary-container: var(--brand-tertiary-container);
+  --md-sys-color-on-tertiary-container: var(--brand-on-tertiary-container);
+  
+  --md-sys-color-error: var(--brand-error);
+  --md-sys-color-on-error: var(--brand-on-error);
+  --md-sys-color-error-container: var(--brand-error-container);
+  --md-sys-color-on-error-container: var(--brand-on-error-container);
+
+  --md-sys-color-background: var(--brand-background);
+  --md-sys-color-on-background: var(--brand-on-background);
+  --md-sys-color-surface: var(--brand-surface);
+  --md-sys-color-on-surface: var(--brand-on-surface);
+  --md-sys-color-surface-variant: var(--brand-surface-variant);
+  --md-sys-color-on-surface-variant: var(--brand-on-surface-variant);
+
+  --md-sys-color-outline: var(--brand-outline);
+  --md-sys-color-outline-variant: var(--brand-outline-variant);
+
+  --md-sys-color-inverse-surface: var(--brand-inverse-surface);
+  --md-sys-color-inverse-on-surface: var(--brand-inverse-on-surface);
+  --md-sys-color-inverse-primary: var(--brand-inverse-primary);
+
+  --md-sys-color-surface-container-lowest: var(--brand-surface-container-lowest);
+  --md-sys-color-surface-container-low: var(--brand-surface-container-low);
+  --md-sys-color-surface-container: var(--brand-surface-container);
+  --md-sys-color-surface-container-mid: var(--brand-surface-container);
+  --md-sys-color-surface-container-high: var(--brand-surface-container-high);
+  --md-sys-color-surface-container-highest: var(--brand-surface-container-highest);
+
+  /* App background override */
+  --app-background: var(--brand-background);
+}
+
+/* -----------------------------------------------------------------
+   DARK MODE – games.hispanistica
+   ----------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Primary (lighter for dark backgrounds) */
+    --brand-primary: #7FA7B2;
+    --brand-on-primary: #041D23;
+    --brand-primary-container: #0B3A46;
+    --brand-on-primary-container: #CFE0E4;
+
+    /* Secondary */
+    --brand-secondary: #8DB4BE;
+    --brand-on-secondary: #072129;
+    --brand-secondary-container: #1E5661;
+    --brand-on-secondary-container: #D4E2E5;
+
+    /* Tertiary */
+    --brand-tertiary: #93B0B8;
+    --brand-on-tertiary: #071B20;
+    --brand-tertiary-container: #23434C;
+    --brand-on-tertiary-container: #D7E2E6;
+
+    /* Error */
+    --brand-error: #F2B8B5;
+    --brand-on-error: #3A0A06;
+    --brand-error-container: #8C1D18;
+    --brand-on-error-container: #F2B8B5;
+
+    /* Neutrals / Layout */
+    --brand-background: #041317;
+    --brand-on-background: #E6F0F2;
+    --brand-surface: #041317;
+    --brand-on-surface: #E6F0F2;
+    --brand-surface-variant: #0A313C;
+    --brand-on-surface-variant: #C6D7DB;
+
+    /* Surface Containers */
+    --brand-surface-container-lowest: #020B0D;
+    --brand-surface-container-low: #061A1F;
+    --brand-surface-container: #081F26;
+    --brand-surface-container-high: #0A252D;
+    --brand-surface-container-highest: #0C2B34;
+
+    /* Outlines */
+    --brand-outline: #8AA4AA;
+    --brand-outline-variant: #2A444C;
+
+    /* Inverse */
+    --brand-inverse-surface: #E6F0F2;
+    --brand-inverse-on-surface: #041317;
+    --brand-inverse-primary: #0F4C5C;
+
+    /* Feedback */
+    --brand-warning: #F2C26B;
+    --brand-on-warning: #2A1A00;
+    --brand-warning-container: #5A3A00;
+    --brand-on-warning-container: #F2C26B;
+
+    --brand-success: #7FD59A;
+    --brand-on-success: #05210E;
+    --brand-success-container: #0F4C22;
+    --brand-on-success-container: #7FD59A;
+
+    --brand-info: #9BCBEE;
+    --brand-on-info: #062033;
+    --brand-info-container: #0F3E5E;
+    --brand-on-info-container: #9BCBEE;
+  }
+}
+
+/* -----------------------------------------------------------------
+   BRAND: Special Elements
+   ----------------------------------------------------------------- */
+
+/* Navigation drawer brand text */
+.md3-navigation-drawer__brand-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--md-sys-color-primary);
+  padding: var(--space-4);
+}
+
+/* Index page brand styling */
+.md3-index-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.md3-index-brand__icon {
+  font-size: 48px;
+  color: var(--md-sys-color-primary);
+}
+
+.md3-index-brand__text {
+  color: var(--md-sys-color-on-background);
+}
+
+.md3-index-tagline {
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: var(--space-6);
+}

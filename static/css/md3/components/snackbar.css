@@ -1,0 +1,135 @@
+/* ============================================
+   MD3 Snackbar Component
+   ============================================
+   Purpose: Toast notifications for success/info/error messages
+   Dependencies: tokens.css
+   
+   Components:
+   - .md3-snackbar: Base snackbar container
+   - .md3-snackbar--success: Success variant (green)
+   - .md3-snackbar--error: Error variant (red)
+   - .md3-snackbar--info: Info variant (blue)
+   ============================================ */
+
+.md3-snackbar {
+  position: fixed;
+  bottom: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 10000;
+  
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  
+  min-width: 288px;
+  max-width: min(560px, calc(100vw - var(--space-8)));
+  
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elev-3);
+  
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 200ms ease,
+              visibility 200ms ease;
+}
+
+.md3-snackbar.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.md3-snackbar__icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.md3-snackbar__message {
+  flex: 1;
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.md3-snackbar__action {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-inverse-primary);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color 150ms ease;
+}
+
+.md3-snackbar__action:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Success Variant */
+.md3-snackbar--success {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.md3-snackbar--success .md3-snackbar__icon {
+  color: var(--md-sys-color-on-primary);
+}
+
+.md3-snackbar--success .md3-snackbar__action {
+  color: var(--md-sys-color-on-primary);
+}
+
+/* Error Variant */
+.md3-snackbar--error {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
+.md3-snackbar--error .md3-snackbar__icon {
+  color: var(--md-sys-color-on-error);
+}
+
+.md3-snackbar--error .md3-snackbar__action {
+  color: var(--md-sys-color-on-error);
+}
+
+/* Info Variant */
+.md3-snackbar--info {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Warning Variant */
+.md3-snackbar--warning {
+  background: var(--md-sys-color-warning-container, #fff3e0);
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+.md3-snackbar--warning .md3-snackbar__icon {
+  color: var(--md-sys-color-warning, #f9a825);
+}
+
+.md3-snackbar--warning .md3-snackbar__action {
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .md3-snackbar {
+    left: var(--space-4);
+    right: var(--space-4);
+    transform: translateX(0) translateY(100px);
+    min-width: auto;
+  }
+  
+  .md3-snackbar.visible {
+    transform: translateX(0) translateY(0);
+  }
+}

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: corapan-container
+    ports:
+      # Port 6000 (extern) -> 8000 (intern im Container)
+      # nginx reverse proxy leitet dann an localhost:6000 weiter
+      - "6000:8000"
+    volumes:
+      # Media-Dateien (read-only, da auf Server extern gepflegt)
+      - ~/corapan/media/mp3-full:/app/media/mp3-full:ro
+      - ~/corapan/media/mp3-split:/app/media/mp3-split:ro
+      - ~/corapan/media/mp3-temp:/app/media/mp3-temp
+      - ~/corapan/media/transcripts:/app/media/transcripts:ro
+      
+      # Config & Credentials (read-only)
+      # NOTE: mounting passwords.env is legacy (env-based auth). Migrations use DB-based auth (AUTH_BACKEND=db).
+      # This mount is kept only for rollback/legacy compatibility and will be removed in a final cleanup step.
+      - ~/corapan/passwords.env:/app/passwords.env:ro
+      - ~/corapan/config/keys:/app/config/keys:ro
+      
+      # Datenbank (read-only, wird extern neu geschrieben bei neuen Medien)
+      - ~/corapan/data/db:/app/data/db:ro
+      
+      # Counters (read-write, App muss schreiben können)
+      - ~/corapan/data/counters:/app/data/counters
+      
+      # Logs (damit sie auf dem Host bleiben)
+      - ~/corapan/logs:/app/logs
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    
+    # Resource Limits (optional, für kleine VPS anpassen)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  default:
+    name: corapan-network

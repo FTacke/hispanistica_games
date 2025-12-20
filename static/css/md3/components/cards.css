@@ -1,0 +1,392 @@
+/* MD3 Card Components — canonical styles from md3_preview.css
+ *
+ * Migration note: Historically `.card`, `.card-outlined`, `.card-elevated`
+ * variants have been used. Prefer `.md3-card` and `.md3-card--outlined` /
+ * `.md3-card--elevated` variants in new code. Older `.card-*` names remain
+ * as compatibility aliases and should be marked `@deprecated`.
+ */
+
+/* Base card class */
+.card {
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-sizing: border-box; /* Include padding in width calculation */
+  width: 100%; /* Ensure cards don't overflow container */
+}
+
+/* Canonical md3-card mapping (keeps parity with legacy .card classes) */
+.md3-card {
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Tonal variant (canonical) */
+.md3-card--tonal,
+.md3-card.md3-card--tonal {
+  --_card-bg: var(--md-sys-color-surface-container);
+  background: var(--_card-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
+  --app-textfield-label-bg: var(--_card-bg);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Outlined variant */
+.md3-card--outlined,
+.md3-card.md3-card--outlined {
+  --_card-bg: var(--md-sys-color-surface-container-low);
+  background: var(--_card-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
+  --app-textfield-label-bg: var(--_card-bg);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Elevated variant (canonical) */
+.md3-card--elevated,
+.md3-card.md3-card--elevated {
+  --_card-bg: var(--md-sys-color-surface-container-low);
+  background: var(--_card-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
+  --app-textfield-label-bg: var(--_card-bg);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.md3-card--elevated:hover {
+  box-shadow: var(--elev-2);
+}
+
+/* ============================================================================
+   Landing Card Variant - Index Page Cards (MD3 Goldstandard)
+   ============================================================================
+   Landing cards match Hero-Card brightness using surface-container-high.
+   They use flex layout to push buttons to bottom-right corner.
+   ============================================================================ */
+.md3-card--landing,
+.md3-card.md3-card--landing {
+  --_card-bg: var(--md-sys-color-surface-container-high);
+  background: var(--_card-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
+  --app-textfield-label-bg: var(--_card-bg);
+  border: none;
+  box-shadow: var(--elev-2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  /* Flex layout for button alignment at bottom */
+  display: flex;
+  flex-direction: column;
+}
+
+.md3-card--landing .md3-card__content {
+  flex-grow: 1;
+}
+
+.md3-card--landing .md3-card__footer,
+.md3-card--landing .md3-card__actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  border-top: none;
+  padding: 0;
+  background: transparent;
+}
+
+.md3-card--landing:hover {
+  box-shadow: var(--elev-3);
+}
+
+/* MD3 Card Content */
+.md3-card__content {
+  padding: var(--space-4);
+}
+
+.card .card-title {
+  font-size: var(--md-sys-typescale-title-medium-font-size);
+  font-weight: var(--md-sys-typescale-title-medium-font-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-letter-spacing);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.card .card-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* Card Variants */
+.card-elevated {
+  background: var(--md-sys-color-surface);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.card-outlined {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Danger variant for outlined cards (e.g. account deletion) */
+.card-outlined--danger,
+.md3-card.card-outlined--danger {
+  border-color: var(--md-sys-color-error);
+}
+
+.card-outlined--danger .card-title,
+.md3-card.card-outlined--danger .md3-card__header .md3-title-medium {
+  color: var(--md-sys-color-error);
+}
+
+.card-filled {
+  background: var(--md-sys-color-surface-container);
+  border: none;
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Tonal Card Variants (different background tones) */
+.card-tonal-lowest {
+  background: var(--md-sys-color-surface-container-lowest);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.card-tonal-low {
+  background: var(--md-sys-color-surface-container-low);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.card-tonal {
+  background: var(--md-sys-color-surface-container);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.card-tonal-mid {
+  background: var(--md-sys-color-surface-container-mid);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.card-tonal-high {
+  background: var(--md-sys-color-surface-container-high);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* md3-card header spacing & title normalization */
+.md3-card__header {
+  /* Normalize card header spacing to MD3 expectations:
+     - top + sides: ~16px (var(--space-4))
+     - bottom: 0 (title controls vertical rhythm)
+     This plays nicely with .md3-card padding which is also var(--space-4).
+     Having a header wrapper allows consistent spacing whether templates
+     use explicit header blocks or only a title element. */
+  padding: var(--space-4) var(--space-4) 0;
+  margin: 0 0 0 0;
+}
+
+/* Ensure title spacing below the header matches MD3 approx 12px */
+.md3-card__header .md3-title-medium,
+.md3-card__header .card-title,
+.card .card-title,
+.md3-card__header .md3-title-large {
+  margin: 0 0 var(--space-3) 0;
+}
+
+/* Keep previous reset for titles inside header in case some templates rely on it */
+.md3-card__header .md3-title-medium,
+.md3-card__header .card-title {
+  margin-top: 0;
+}
+
+/* Code blocks with tonal styling */
+pre.highlight {
+  background: var(--md-sys-color-surface-container-low);
+  border: none;
+  box-shadow: var(--elev-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
+  overflow-x: auto; /* Horizontal scroll for long code lines */
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  /* Prevent overflow on small screens */
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: pre-wrap; /* Allow line breaks on mobile */
+  word-wrap: break-word; /* Break long words if needed */
+  overflow-wrap: break-word; /* Modern alternative to word-wrap */
+}
+
+/* Mobile: smaller font size for better readability */
+@media (max-width: 599px) {
+  pre.highlight {
+    font-size: 0.75rem; /* Smaller code on mobile */
+    padding: var(--space-3); /* Less padding on mobile */
+  }
+}
+
+pre.highlight code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  white-space: pre-wrap; /* Inherit wrapping behavior */
+  word-wrap: break-word;
+}
+
+/* ============================================================================
+   MD3 Card Actions & Footer - Goldstandard Additions
+   ============================================================================ */
+
+/* Card Actions Zone - for buttons at card bottom */
+.md3-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  margin-top: var(--space-4);
+}
+
+/* Actions without border (when inside card content) */
+.md3-card__actions--borderless {
+  border-top: none;
+  padding-top: 0;
+  margin-top: var(--space-4);
+}
+
+/* Stacked actions for mobile or compact layouts */
+.md3-card__actions--stacked {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.md3-card__actions--stacked .md3-button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Left-aligned actions */
+.md3-card__actions--start {
+  justify-content: flex-start;
+}
+
+/* Space-between actions (e.g., Cancel on left, Confirm on right) */
+.md3-card__actions--between {
+  justify-content: space-between;
+}
+
+/* Card Footer - for metadata/secondary info */
+.md3-card__footer {
+  padding: var(--space-3) var(--space-5);
+  background: var(--md-sys-color-surface-container-low);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Card Description (subtitle under title) */
+.md3-card__description {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  font-weight: var(--md-sys-typescale-body-medium-font-weight);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+/* Card Title color standardization */
+.md3-card__header .md3-title-large,
+.md3-card__header .md3-title-medium {
+  color: var(--md-sys-color-primary);
+}
+
+/* Danger card variant */
+.md3-card--danger {
+  border-color: var(--md-sys-color-error);
+}
+
+.md3-card--danger .md3-card__header .md3-title-large,
+.md3-card--danger .md3-card__header .md3-title-medium {
+  color: var(--md-sys-color-error);
+}
+
+/* Vertical rhythm inside card content */
+.md3-card__content > * + * {
+  margin-top: var(--space-4);
+}
+
+/* First element in content should not have top margin */
+.md3-card__content > *:first-child {
+  margin-top: 0;
+}
+
+/* ============================================================================
+   Responsive Card Adjustments
+   ============================================================================ */
+@media (max-width: 599px) {
+  .md3-card__header,
+  .md3-card__content,
+  .md3-card__actions,
+  .md3-card__footer {
+    padding-inline: var(--space-4);
+  }
+  
+  /* Stack actions on mobile by default for auth cards */
+  .md3-auth-card .md3-card__actions {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  
+  .md3-auth-card .md3-card__actions .md3-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Card Grid for layouts */
+.md3-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 599px) {
+  .md3-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

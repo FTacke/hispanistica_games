@@ -1,0 +1,952 @@
+/**
+ * Search UI Redesign Styles
+ * Material Design 3 Components for the unified search interface
+ * 
+ * Components:
+ * - .md3-search-card: Main search form card
+ * - .md3-filter-field: Custom facet filter fields
+ * - .md3-active-filters: Chip bar for active filters
+ * - .md3-expert-area: Advanced mode section
+ * - .md3-pattern-builder: Token pattern builder
+ * - .md3-cql-preview: CQL preview area
+ * - .md3-templates: Quick templates section
+ */
+
+/* ========================================
+   SEARCH CARD (Main Form Container)
+   ======================================== */
+
+.md3-search-card {
+  /* Define local background color variable for consistency */
+  --_search-card-bg: var(--md-sys-color-surface-container);
+  
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+  padding: var(--space-6, 1.5rem);
+  background: var(--_search-card-bg);
+  border: 1px solid var(--md-sys-color-outline-variant, #ccc);
+  border-radius: var(--radius-lg, 12px);
+  margin-bottom: var(--space-6, 1.5rem);
+  /* Label background inheritance for textfields inside search card
+     Uses same variable to guarantee color match */
+  --app-textfield-label-bg: var(--_search-card-bg);
+}
+
+/* Textfield labels inside search card must match card background exactly
+   Higher specificity to override base textfield rules */
+.md3-search-card .md3-outlined-textfield .md3-outlined-textfield__label {
+  background: var(--md-sys-color-surface-container) !important;
+}
+
+/* Ensure inputs inside search card remain transparent (not white) */
+.md3-search-card .md3-outlined-textfield__input {
+  background: transparent !important;
+}
+
+.md3-search-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.md3-search-card__section--toggle {
+  padding-top: var(--space-4, 1rem);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+.md3-search-card__heading {
+  font-size: var(--md-sys-typescale-title-medium-size, 1rem);
+  font-weight: var(--md-sys-typescale-title-medium-weight, 500);
+  line-height: var(--md-sys-typescale-title-medium-line-height, 1.5);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+}
+
+.md3-search-card__query-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3, 0.75rem);
+  align-items: end;
+}
+
+.md3-search-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3, 0.75rem);
+  padding-top: var(--space-4, 1rem);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+/* ========================================
+   FILTER FIELDS (Custom MD3 Design)
+   ======================================== */
+
+.md3-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-3, 0.75rem);
+}
+
+@media (max-width: 1200px) {
+  .md3-filters-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 839px) {
+  .md3-filters-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .md3-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.md3-filter-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* allow grid children to shrink and enable text-overflow */
+}
+
+.md3-filter-field__trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px 40px 12px 16px; /* Right padding for icon */
+  background: var(--md-sys-color-surface, #fff);
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  border-radius: var(--radius-xs, 4px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 56px;
+  position: relative;
+  overflow: hidden; /* Prevent content overflow */
+  min-width: 0; /* Important for truncation inside flex/grid items */
+}
+
+.md3-filter-field__trigger:hover {
+  border-color: var(--md-sys-color-on-surface, #1c1b1f);
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.md3-filter-field__trigger:focus {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-filter-field__trigger[aria-expanded="true"] {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  /* Keep border width and padding stable to avoid layout shifts; apply subtle ring instead */
+  box-shadow: 0 0 0 4px rgba(103, 80, 164, 0.06);
+}
+
+.md3-filter-field__label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.md3-filter-field__value {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  pointer-events: none;
+  max-width: 100%;
+  min-width: 0; /* allow flex item to shrink to enable ellipsis */
+  box-sizing: border-box;
+  padding-right: 24px; /* Space for icon */
+}
+
+.md3-filter-field__value:empty::before {
+  content: attr(data-placeholder);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-filter-field__icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.md3-filter-field__trigger[aria-expanded="true"] .md3-filter-field__icon {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.md3-filter-field__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  border-radius: var(--radius-xs, 4px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.md3-filter-field__menu[hidden] {
+  display: none;
+}
+
+.md3-filter-field__menu-content {
+  padding: 8px 0;
+}
+
+.md3-filter-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.md3-filter-option:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.md3-filter-option input[type="checkbox"] {
+  /* Keep native input accessible but visually hidden. */
+  position: absolute;
+  opacity: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.md3-filter-option {
+  position: relative;
+  padding-left: 40px; /* space for custom checkbox */
+}
+
+.md3-filter-option span {
+  display: inline-block;
+  position: relative;
+}
+
+/* custom checkbox using the label span pseudo element */
+.md3-filter-option span::before {
+  content: "";
+  position: absolute;
+  left: -28px; /* align with label padding */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--md-sys-color-outline, #79747e);
+  border-radius: 2px;
+  background: transparent;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.md3-filter-option span::after {
+  content: "";
+  position: absolute;
+  left: -24px; /* center checkmark inside box */
+  top: 50%;
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid var(--md-sys-color-on-primary, #fff);
+  border-bottom: 2px solid var(--md-sys-color-on-primary, #fff);
+  transform: translateY(-60%) rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.15s ease;
+}
+
+.md3-filter-option input[type="checkbox"]:checked + span::before {
+  background: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-filter-option input[type="checkbox"]:checked + span::after {
+  transform: translateY(-60%) rotate(-45deg) scale(1);
+}
+
+/* Ensure focus outlines for accessibility */
+.md3-filter-option input[type="checkbox"]:focus + span::before {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   ACTIVE FILTERS (Chip Bar)
+   ======================================== */
+
+.md3-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-4, 1rem);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: var(--radius-md, 8px);
+  margin-top: calc(-1 * var(--space-3, 0.75rem));
+}
+
+/* Ensure the active filters chip-bar negative margin is applied inside a search card */
+.md3-search-card .md3-active-filters {
+  /* Ensure the active filters chip-bar maintains a small vertical separation
+     from UI elements above. Use a positive margin to avoid overlap and ensure
+     consistent spacing across different layouts.
+  */
+  margin-top: var(--space-3, 0.75rem) !important;
+  transform: none !important;
+}
+
+/* For the token chips (in the token tab), ensure there is a clear separation from the
+   search UI above. This applies only to the token chips container. */
+#tokid-chip-container.md3-active-filters {
+  margin-top: var(--space-3, 0.75rem) !important;
+  transform: none !important;
+}
+
+.md3-active-filters[hidden] {
+  display: none;
+}
+
+.md3-active-filters__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-active-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  flex: 1;
+}
+
+.md3-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.md3-filter-chip:hover {
+  filter: brightness(0.95);
+}
+
+.md3-filter-chip:focus {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+}
+
+/* Chip colors for different facets - using MD3 token system
+   Each facet gets a tinted version derived from semantic colors */
+.md3-filter-chip--pais {
+  --_chip-tint: var(--md-sys-color-primary);
+  background: color-mix(in oklab, var(--_chip-tint) 12%, transparent);
+  color: color-mix(in oklab, var(--_chip-tint) 80%, var(--md-sys-color-on-surface));
+  border-color: color-mix(in oklab, var(--_chip-tint) 20%, transparent);
+}
+
+.md3-filter-chip--hablante {
+  --_chip-tint: var(--md-sys-color-tertiary);
+  background: color-mix(in oklab, var(--_chip-tint) 12%, transparent);
+  color: color-mix(in oklab, var(--_chip-tint) 80%, var(--md-sys-color-on-surface));
+  border-color: color-mix(in oklab, var(--_chip-tint) 20%, transparent);
+}
+
+.md3-filter-chip--sexo {
+  --_chip-tint: #9c27b0; /* Purple - semantic for gender */
+  background: color-mix(in oklab, var(--_chip-tint) 12%, transparent);
+  color: color-mix(in oklab, var(--_chip-tint) 80%, var(--md-sys-color-on-surface));
+  border-color: color-mix(in oklab, var(--_chip-tint) 20%, transparent);
+}
+
+.md3-filter-chip--modo {
+  --_chip-tint: var(--md-sys-color-secondary);
+  background: color-mix(in oklab, var(--_chip-tint) 12%, transparent);
+  color: color-mix(in oklab, var(--_chip-tint) 80%, var(--md-sys-color-on-surface));
+  border-color: color-mix(in oklab, var(--_chip-tint) 20%, transparent);
+}
+
+.md3-filter-chip--discurso {
+  --_chip-tint: var(--md-sys-color-error);
+  background: color-mix(in oklab, var(--_chip-tint) 12%, transparent);
+  color: color-mix(in oklab, var(--_chip-tint) 80%, var(--md-sys-color-on-surface));
+  border-color: color-mix(in oklab, var(--_chip-tint) 20%, transparent);
+}
+
+.md3-filter-chip__close {
+  font-size: 18px;
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400;
+  margin-left: 2px;
+}
+
+/* ========================================
+   OPTIONS ROW (Checkboxes)
+   ======================================== */
+
+.md3-options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4, 1rem);
+}
+
+/* ========================================
+   SWITCH ROW (Advanced Mode Toggle)
+   ======================================== */
+
+.md3-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+
+.md3-switch-row__label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.md3-switch-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.md3-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 32px;
+  cursor: pointer;
+  flex-shrink: 0; /* Prevent switch from shrinking */
+}
+
+.md3-switch__track {
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-surface-variant, #e7e0ec);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.md3-switch-input:checked + .md3-switch .md3-switch__track {
+  background: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-switch__thumb {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  background: var(--md-sys-color-surface, #fff);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.md3-switch-input:checked + .md3-switch .md3-switch__thumb {
+  transform: translateX(16px);
+  background: var(--md-sys-color-on-primary, #fff);
+  width: 20px;
+  height: 20px;
+  top: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* keep contrast on colored track */
+}
+
+/* ========================================
+   EXPERT AREA (Advanced Mode)
+   ======================================== */
+
+.md3-expert-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+  padding: var(--space-6, 1.5rem);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--radius-md, 8px);
+  margin-top: var(--space-4, 1rem);
+
+  /* Animation */
+  transition: all 0.3s ease-out;
+  opacity: 1;
+  max-height: 2000px; /* Arbitrary large value */
+  overflow: hidden;
+  transform-origin: top;
+}
+
+.md3-expert-area[hidden] {
+  display: flex; /* Override UA style */
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border: none;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.md3-expert-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.md3-expert-section__title {
+  font-size: var(--md-sys-typescale-title-medium-size, 1rem);
+  font-weight: var(--md-sys-typescale-title-medium-weight, 500);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+}
+
+.md3-expert-section__description {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ========================================
+   PATTERN BUILDER
+   ======================================== */
+
+.md3-pattern-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.md3-pattern-builder__tokens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.md3-token-row {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 2fr auto;
+  gap: var(--space-3, 0.75rem);
+  align-items: end;
+  padding: var(--space-3, 0.75rem);
+  background: var(--md-sys-color-surface, #fff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.md3-token-row__number {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding-bottom: 16px;
+  white-space: nowrap;
+}
+
+.md3-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-icon-button:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.md3-icon-button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   DISTANCE RULE
+   ======================================== */
+
+.md3-distance-rule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-4, 1rem);
+  background: var(--md-sys-color-surface, #fff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.md3-distance-rule__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+}
+
+.md3-radio-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  cursor: pointer;
+}
+
+.md3-radio {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--md-sys-color-on-surface-variant, #49454f);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.md3-radio-container input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.md3-radio-container input[type="radio"]:focus + .md3-radio {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+}
+
+/* Checked state: add inner dot instead of thick border */
+.md3-radio-container input[type="radio"]:checked + .md3-radio {
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-radio::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary, #6750a4);
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.md3-radio-container input[type="radio"]:checked + .md3-radio::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.md3-radio__label {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+/* ========================================
+   CQL PREVIEW
+   ======================================== */
+
+.md3-cql-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.md3-cql-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  background: var(--md-sys-color-surface, #fff);
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  border-radius: var(--radius-xs, 4px);
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.md3-cql-textarea:focus {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-cql-textarea[readonly] {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  cursor: not-allowed;
+}
+
+/* REMOVED: Explicit white background rules for inputs that were breaking
+   the MD3 outlined textfield design. The inputs should be transparent
+   and let the outline provide the visual structure. */
+
+textarea#cql_query.md3-outlined-textfield__input[readonly] {
+  /* readonly CQL stays visually distinct but shouldn't appear editable.
+     Use transparent background so the outline notch is visible.
+     The parent container provides the surface backdrop. */
+  background-color: transparent !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  /* Ensure border is visible via outline styling */
+}
+
+.md3-cql-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem);
+  background: rgba(255, 152, 0, 0.12);
+  border-left: 4px solid #ff9800;
+  border-radius: var(--radius-xs, 4px);
+  font-size: 14px;
+  color: #e65100;
+}
+
+.md3-cql-warning[hidden] {
+  display: none;
+}
+
+.md3-cql-warning .material-symbols-rounded {
+  font-size: 20px;
+  color: #ff9800;
+}
+
+/* ========================================
+   TEMPLATES
+   ======================================== */
+
+.md3-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* ========================================
+   SUB-TABS (Resultados / Estadísticas)
+   ======================================== */
+
+.md3-stats-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  margin-bottom: var(--space-6, 1.5rem);
+}
+
+.md3-stats-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: all 0.2s ease;
+}
+
+.md3-stats-tab:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.md3-stats-tab--active {
+  color: var(--md-sys-color-primary, #6750a4);
+  border-bottom-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-stats-tab .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.md3-view-content {
+  display: none;
+}
+
+.md3-view-content--active {
+  display: block;
+}
+
+/* ========================================
+   PLACEHOLDER PANEL
+   ======================================== */
+
+.md3-placeholder-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-8, 2rem);
+  text-align: center;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: var(--radius-lg, 12px);
+  min-height: 300px;
+}
+
+.md3-placeholder-panel__icon {
+  font-size: 64px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-placeholder-panel__title {
+  font-size: var(--md-sys-typescale-headline-small-size, 1.5rem);
+  font-weight: var(--md-sys-typescale-headline-small-weight, 400);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+}
+
+.md3-placeholder-panel__text {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  max-width: 400px;
+  margin: 0;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 839px) {
+  .md3-search-card__query-row {
+    grid-template-columns: 1fr;
+  }
+
+  .md3-token-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2, 0.5rem);
+  }
+
+  .md3-token-row__number {
+    padding-bottom: 0;
+  }
+
+  .md3-search-card__footer {
+    flex-direction: column-reverse;
+  }
+
+  .md3-search-card__footer button {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.md3-outlined-textfield--fixed {
+  min-width: 200px;
+}
+
+/* ========================================
+   BUTTON FIXES (MD3 Consistency)
+   ======================================== */
+
+/* Ensure all buttons follow MD3 design system */
+.md3-button,
+.md3-button--filled,
+.md3-button--outlined,
+.template-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  min-height: 48px;
+  border-radius: 9999px;
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
+  cursor: pointer;
+  transition: background-color 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.md3-button--filled,
+button[type="submit"] {
+  background: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #fff);
+  box-shadow: var(--elev-1);
+}
+
+.md3-button--filled:hover,
+button[type="submit"]:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 92%, var(--md-sys-color-on-primary) 8%);
+  box-shadow: var(--elev-1);
+}
+
+.md3-button--outlined,
+.template-btn {
+  background: transparent;
+  color: var(--md-sys-color-primary, #6750a4);
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+}
+
+.md3-button--outlined:hover,
+.template-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-button .material-symbols-rounded,
+.md3-button--filled .material-symbols-rounded,
+.md3-button--outlined .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* Add token button specific styles */
+#add-token-btn {
+  margin-top: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

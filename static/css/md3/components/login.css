@@ -1,0 +1,308 @@
+/* Login Page & Sheet Styles - MD3 Tokenized */
+
+/* ============================================
+   LOGIN PAGE (Full Page)
+   ============================================ */
+.md3-login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  /* Use app background or surface */
+  background: var(--app-background); 
+  padding: var(--space-4);
+}
+
+.md3-login-page__wrapper {
+  width: 100%;
+  max-width: 480px; /* slightly larger and consistent with auth-card */
+}
+
+.md3-login-card {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-md);
+  /* Align with auth spacing requirements: ~24-32px vertical padding */
+  padding: var(--space-8) var(--space-6);
+  box-shadow: var(--elev-2);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-login-card__header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.md3-login-card__title {
+  font-size: var(--md-sys-typescale-headline-small-font-size);
+  font-weight: var(--md-sys-typescale-headline-small-font-weight);
+  margin: 0 0 var(--space-2) 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-login-card__subtitle {
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.md3-login-card__errors {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  background: var(--md-sys-color-error-container);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--md-sys-color-on-error-container);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  margin: 0;
+}
+
+.error-message .material-symbols-rounded {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  color: var(--md-sys-color-error);
+}
+
+.md3-login-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+/* Text Field Styles - reusing MD3 structure if possible, or styling these classes */
+.md3-text-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.md3-text-field__label {
+  font-size: var(--md-sys-typescale-label-medium-font-size);
+  font-weight: var(--md-sys-typescale-label-medium-font-weight);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: var(--space-2);
+}
+
+.md3-text-field__input {
+  padding: var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--radius-sm);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-text-field__input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 3px var(--md-sys-color-primary-container); /* Approximation of focus ring */
+}
+
+.md3-button {
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--md-sys-typescale-body-large-font-size);
+  font-weight: var(--md-sys-typescale-base-font-weight-medium);
+  border: none;
+  border-radius: 9999px; /* MD3 pill shape */
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.md3-button--contained {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.md3-button--contained:hover {
+  background: var(--md-sys-color-primary-container); /* Or darken? MD3 uses state layer */
+  color: var(--md-sys-color-on-primary-container);
+  box-shadow: var(--elev-1);
+}
+
+.md3-button--contained:active {
+  background: var(--md-sys-color-primary);
+  opacity: 0.8;
+}
+
+.md3-link {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.md3-link:hover {
+  color: var(--md-sys-color-secondary);
+  text-decoration: underline;
+}
+
+/* Inline link variant (within text) */
+.md3-link--inline {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md3-link--inline:hover {
+  text-decoration-thickness: 2px;
+}
+
+.md3-login-card__footer {
+  text-align: center;
+  padding-top: 1.5rem;
+}
+
+.md3-login-card__footer-text {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .md3-login-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .md3-login-card__title {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================
+   LOGIN SHEET (Overlay)
+   ============================================ */
+.md3-login-sheet, .md3-sheet {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  /* Center by default, but on wide viewports move slightly toward top */
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 840px) {
+  .md3-login-sheet, .md3-sheet {
+    align-items: flex-start;
+    padding-top: var(--space-12); /* give breathing room on big screens */
+  }
+  .md3-login-sheet__container, .md3-sheet__surface {
+    margin-top: 0.5rem; /* small offset from very top */
+  }
+}
+
+.md3-login-backdrop, .md3-sheet__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Scrim */
+  backdrop-filter: blur(2px);
+}
+
+.md3-login-sheet__container, .md3-sheet__surface {
+  /* Define local background color for consistency */
+  --_sheet-bg: var(--md-sys-color-surface);
+  
+  position: relative;
+  width: 100%;
+  max-width: 560px; /* Keep sheet large but constrained */
+  /* Sheets/dialogs should use the canonical page surface (non-tonal)
+     so overlays appear as independent white surfaces. */
+  background: var(--_sheet-bg);
+  /* LABEL-BG INHERITANCE: Textfield labels inherit this to match sheet bg */
+  --app-textfield-label-bg: var(--_sheet-bg);
+  /* Dialog-like surface: visually distinct from full page cards */
+  border-radius: 28px;
+  padding: 24px; /* compact and consistent padding inside dialogs/sheets */
+  box-shadow: var(--elev-3);
+  z-index: 1001;
+  margin: 1rem; /* Add margin to prevent touching edges on small screens */
+}
+
+.md3-login-sheet__header, .md3-sheet__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.md3-login-sheet__title, .md3-sheet__title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-login-sheet__close-button, .md3-sheet__close-button {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-login-sheet__close-button:hover {
+  background: var(--md-sys-color-surface-variant);
+}
+
+.md3-login-sheet__form, .md3-sheet__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.md3-login-sheet__errors, .md3-sheet__errors {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+
+/* Make outlined textfields more visible on sheet surfaces (improve contrast) */
+.md3-sheet__surface .md3-outlined-textfield__outline .md3-outlined-textfield__outline-start,
+.md3-sheet__surface .md3-outlined-textfield__outline .md3-outlined-textfield__outline-notch,
+.md3-sheet__surface .md3-outlined-textfield__outline .md3-outlined-textfield__outline-end {
+  /* Keep outlines neutral on dialog surfaces — color only, not weight */
+  border-color: var(--md-sys-color-outline-variant);
+}
+
+.md3-sheet__surface .md3-outlined-textfield__input {
+  min-height: 48px;
+  padding: var(--space-3);
+  background: transparent;
+}
+
+/* subtle elevated touch for focused fields inside sheets */
+.md3-sheet__surface .md3-outlined-textfield:focus-within .md3-outlined-textfield__outline {
+  /* Subtle focus ring — color only (no outline width change) */
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.md3-login-sheet__button, .md3-sheet__button {
+  margin-top: 1rem;
+  width: 100%; /* Ensure full width if that was the intention */
+}
+
+/* Removed overrides that conflict with canonical .md3-button--filled */
+

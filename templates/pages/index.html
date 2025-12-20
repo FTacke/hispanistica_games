@@ -1,0 +1,57 @@
+﻿{% extends 'base.html' %}
+{% set page_name = 'index' %}
+{% block page_title %}games.hispanistica{% endblock %}
+
+{% block extra_head %}
+  <!-- Index-page specific styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<article class="md3-index-page">
+  <!-- Seitentitel für App-Bar (sr-only für Accessibility) -->
+  <h1 class="sr-only">games.hispanistica – Startseite</h1>
+  
+  <section class="md3-index-logo">
+    <div class="md3-index-brand">
+      <span class="material-symbols-rounded md3-index-brand__icon" aria-hidden="true">sports_esports</span>
+      <span class="md3-display-small md3-index-brand__text">games.hispanistica</span>
+    </div>
+    <p class="md3-body-large md3-index-tagline">
+      Spielerisch Sprache lernen und entdecken
+    </p>
+  </section>
+  
+  <section class="md3-index-cards">
+
+    <article class="md3-card md3-card--filled md3-card--landing">
+      <div class="md3-card__content">
+        <span class="material-symbols-rounded md3-index-card__icon" aria-hidden="true">sports_esports</span>
+        <h2 class="md3-title-large md3-index-card__title">Gamification</h2>
+        <p class="md3-body-large md3-index-card__text">Entdecke spielerische Lernmodule für Sprachwissen und Grammatik.</p>
+      </div>
+      <footer class="md3-card__footer md3-card__actions">
+        <a href="{{ url_for('public.gamification_page') }}" class="md3-button md3-button--filled">
+          <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">arrow_forward</span>
+          Entdecken
+        </a>
+      </footer>
+    </article>
+
+    <article class="md3-card md3-card--filled md3-card--landing">
+      <div class="md3-card__content">
+        <span class="material-symbols-rounded md3-index-card__icon" aria-hidden="true">quiz</span>
+        <h2 class="md3-title-large md3-index-card__title">Quiz</h2>
+        <p class="md3-body-large md3-index-card__text">Teste und erweitere dein Sprachwissen mit interaktiven Quiz-Modulen.</p>
+      </div>
+      <footer class="md3-card__footer md3-card__actions">
+        <a href="{{ url_for('public.quiz_page') }}" class="md3-button md3-button--filled">
+          <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">arrow_forward</span>
+          Starten
+        </a>
+      </footer>
+    </article>
+    
+  </section>
+</article>
+{% endblock %}
