@@ -9,14 +9,15 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#041317">
     <!-- Critical inline CSS: Prevent flash during page load -->
     <style>
-      /* Base colors - prevent flash during navigation */
-      :root {
+      /* Base colors - prevent flash during navigation 
+         ALWAYS start light, even if system prefers dark (user can toggle later) */
+      :root,
+      :root[data-theme="light"] {
         --app-background: #F3F6F7;
       }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --app-background: #041317;
-        }
+      :root[data-theme="dark"],
+      :root[data-theme="auto"][data-system-dark="true"] {
+        --app-background: #041317;
       }
 
       html, body {

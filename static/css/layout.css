@@ -301,7 +301,7 @@ h6:focus[tabindex="-1"] {
 .site-footer {
   grid-area: footer;
   padding: var(--space-4) clamp(1rem, 6vw, 4rem);
-  background: transparent;
+  background: var(--app-background);
   color: var(--md-sys-color-on-surface);
   border-top: 1px solid var(--md-sys-color-outline-variant);
   box-shadow: var(--elev-2);

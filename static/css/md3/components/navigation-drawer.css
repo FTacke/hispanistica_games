@@ -112,9 +112,11 @@
 }
 
 .md3-navigation-drawer__logo {
-  height: 48px;
-  width: auto;
+  width: 180px;
+  height: auto;
+  padding: var(--space-3) var(--space-4);
   display: block;
+  border-radius: var(--radius-md);
   /* Keine Border/Outline auf dem Bild selbst */
   border: none;
   outline: none;

@@ -37,14 +37,6 @@ body[data-page="player"] .md3-footer {
   background: var(--app-background);
 }
 
-/* Dark mode override for Editor/Player if needed (assuming they stay light or handle dark mode differently) */
-@media (prefers-color-scheme: dark) {
-  body[data-page="editor"] .md3-footer,
-  body[data-page="player"] .md3-footer {
-    background: var(--app-background);
-  }
-}
-
 /* ========== CONTENT CONTAINER ========== */
 .md3-footer__content {
   max-width: 72rem;

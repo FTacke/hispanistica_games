@@ -40,12 +40,6 @@
   --app-textfield-label-bg: var(--md-sys-color-surface);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --app-color-login-bg: #041317;
-  }
-}
-
 /* MD3 Theme Attribute Support (data-theme="dark" / "auto") */
 :root[data-theme="dark"],
 :root[data-theme="auto"][data-system-dark="true"] {

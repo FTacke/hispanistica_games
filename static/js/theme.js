@@ -26,7 +26,16 @@
   const setSysFlag = () => {
     root.dataset.systemDark = sysDark() ? "true" : "false";
   };
-  const load = () => localStorage.getItem(KEY) || "light"; // Default: light
+  // HARDENED DEFAULT: auto is mapped to light on initial load
+  // User MUST explicitly choose dark mode (no implicit following of system preference)
+  const load = () => {
+    const stored = localStorage.getItem(KEY);
+    // If no stored preference or 'auto', enforce light mode
+    if (!stored || stored === "auto") {
+      return "light";
+    }
+    return stored;
+  };
   const save = (v) => localStorage.setItem(KEY, v);
   const apply = (v) => {
     root.dataset.theme = v;

@@ -37,8 +37,10 @@
       <a href="{{ url_for('public.landing_page') }}" 
          class="md3-navigation-drawer__logo-link"
          tabindex="-1"
-         aria-hidden="true">
-        <span class="md3-navigation-drawer__brand-text">games.hispanistica</span>
+         aria-label="Zur Startseite">
+        <img src="{{ url_for('static', filename='img/hispanistica_games_logo.png') }}" 
+             alt="games.hispanistica" 
+             class="md3-navigation-drawer__logo">
       </a>
     </div>
 
@@ -104,8 +106,10 @@
     <a href="{{ url_for('public.landing_page') }}" 
        class="md3-navigation-drawer__logo-link"
        tabindex="-1"
-       aria-hidden="true">
-      <span class="md3-navigation-drawer__brand-text">games.hispanistica</span>
+       aria-label="Zur Startseite">
+      <img src="{{ url_for('static', filename='img/hispanistica_games_logo.png') }}" 
+           alt="games.hispanistica" 
+           class="md3-navigation-drawer__logo">
     </a>
   </div>
 

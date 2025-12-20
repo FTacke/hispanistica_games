@@ -9,11 +9,26 @@
   background: var(--app-background);
 }
 
+/* Brand Container (Inner wrapper) */
+.md3-index-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+/* Brand Icon (wenn verwendet statt Logo-Bild) */
+.md3-index-brand__icon {
+  font-size: 48px;
+  color: var(--md-sys-color-primary);
+}
+
 .md3-index-logo__img {
   width: 100%;
   max-width: 600px; /* Reduziert auf 600px statt 700px */
   height: auto;
   display: block;
+  border-radius: var(--radius-lg);
 }
 
 /* Ab 600px: Logo kann auf bis zu 700px wachsen */
