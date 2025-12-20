@@ -16,6 +16,7 @@ This is the consolidated MD3 documentation for the CO.RA.PAN webapp and reusable
 | [20_app_spec_corapan.md](./20_app_spec_corapan.md) | **CO.RA.PAN-specific** layer: token values, custom components, language rules |
 | [30_patterns_and_skeletons.md](./30_patterns_and_skeletons.md) | Skeleton templates and page patterns for new pages |
 | [40_tooling_and_ci.md](./40_tooling_and_ci.md) | Guard/lint scripts, CI integration, hard rules |
+| [background-color-standard.md](./background-color-standard.md) | **Background Color Standard** – Kanonische Token-Nutzung für Backgrounds |
 | [90_archive/](./90_archive/) | Historical documents (audits, migration reports) – for reference only |
 
 ---

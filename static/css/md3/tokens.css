@@ -26,79 +26,51 @@
 /* MD3 Farb-Tokens — generiert und gepflegt mit generate-tokens.py */
 
 :root {
-  /* Core color roles (light theme) */
-  --md-sys-color-primary: #0a5981;
-  --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #91a0b1;
-  --md-sys-color-on-primary-container: #000000;
-  --md-sys-color-secondary: #095378;
-  --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-secondary-container: #8c9aa9;
-  --md-sys-color-on-secondary-container: #000000;
+  /* Core color roles (light theme) - games.hispanistica branding */
+  --md-sys-color-primary: #0F4C5C;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #D4DFE2;
+  --md-sys-color-on-primary-container: #0F4C5C;
+  --md-sys-color-secondary: #276D7B;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #D4E2E5;
+  --md-sys-color-on-secondary-container: #276D7B;
 
   /* Tertiary role (für subtile Highlights) */
-  --md-sys-color-tertiary: #7d5260;
-  --md-sys-color-on-tertiary: #ffffff;
-  --md-sys-color-tertiary-container: #ffd9e3;
-  --md-sys-color-on-tertiary-container: #31101d;
+  --md-sys-color-tertiary: #3B6570;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #D7E2E6;
+  --md-sys-color-on-tertiary-container: #18343B;
 
   /* Surface & background */
-  --md-sys-color-surface: #ffffff;
-  --md-sys-color-on-surface: #1c1b1f;
-  --md-sys-color-surface-variant: #f3edf7;
-  --md-sys-color-on-surface-variant: color-mix(
-    in oklab,
-    var(--md-sys-color-on-surface) 60%,
-    transparent
-  );
-  --_on-surface-variant-static: #4a4f55; /* Fallback für Browser ohne OKLab/color-mix */
-  --md-sys-color-outline: #79747e; /* Standard-Divider */
-  --md-sys-color-outline-variant: #cac4d0;
-  --md-sys-color-background: #c7d5d8;
-  --md-sys-color-on-background: #000000;
+  --md-sys-color-surface: #EEF2F4;
+  --md-sys-color-on-surface: #061E25;
+  --md-sys-color-surface-variant: #E2EAEB;
+  --md-sys-color-on-surface-variant: #0A313C;
+  --_on-surface-variant-static: #0A313C; /* Fallback für Browser ohne OKLab/color-mix */
+  --md-sys-color-outline: #072229; /* Standard-Divider */
+  --md-sys-color-outline-variant: #B7C9CE;
+  --md-sys-color-background: #F3F6F7;
+  --md-sys-color-on-background: #061E25;
   
   /* NOTE: --app-background is defined in app-tokens.css, not here.
      This allows app-level customization without modifying core tokens. */
 
-  /* Surface containers for tonal cards (light theme) — derived from preview */
-  --md-sys-color-surface-container-lowest: color-mix(
-    in oklab,
-    var(--md-sys-color-surface) 98%,
-    var(--md-sys-color-primary) 2%
-  );
-  --md-sys-color-surface-container-low: color-mix(
-    in oklab,
-    var(--md-sys-color-surface) 96%,
-    var(--md-sys-color-primary) 4%
-  );
-  --md-sys-color-surface-container-mid: color-mix(
-    in oklab,
-    var(--md-sys-color-surface) 94%,
-    var(--md-sys-color-primary) 6%
-  );
-  --md-sys-color-surface-container: color-mix(
-    in oklab,
-    var(--md-sys-color-surface) 88%,
-    var(--md-sys-color-primary) 12%
-  );
-  --md-sys-color-surface-container-high: color-mix(
-    in oklab,
-    var(--md-sys-color-surface) 80%,
-    var(--md-sys-color-primary) 20%
-  );
-  --md-sys-color-surface-container-highest: color-mix(
-    in oklab,
-    var(--md-sys-color-surface) 72%,
-    var(--md-sys-color-primary) 28%
-  );
+  /* Surface containers (games.hispanistica MD3 tokens) */
+  --md-sys-color-surface-container-lowest: #FFFFFF;
+  --md-sys-color-surface-container-low: #F7FAFB;
+  --md-sys-color-surface-container-mid: #F0F5F6;
+  --md-sys-color-surface-container: #F0F5F6;
+  --md-sys-color-surface-container-high: #E8EFF1;
+  --md-sys-color-surface-container-highest: #E1EAEC;
 
   /* Error */
   --md-sys-color-error: #b3261e;
   --md-sys-color-on-error: #ffffff;
 
   /* Inverse surface (für Tooltips) */
-  --md-sys-color-inverse-surface: #313033;
-  --md-sys-color-inverse-on-surface: #f4eff4;
+  --md-sys-color-inverse-surface: #041317;
+  --md-sys-color-inverse-on-surface: #FFFFFF;
 
   /* Spacing tokens (from preview) */
   --space-1: 4px;
@@ -247,21 +219,21 @@
   /* Typography helpers */
   --md-typography-heading-accent: var(--md-sys-color-primary);
 
-  /* Extended Colors (Light Mode) */
-  --md-sys-color-success: #006e1c;
-  --md-sys-color-on-success: #ffffff;
-  --md-sys-color-success-container: #94f990;
-  --md-sys-color-on-success-container: #002204;
+  /* Extended Colors (Light Mode - games.hispanistica) */
+  --md-sys-color-success: #146C2E;
+  --md-sys-color-on-success: #FFFFFF;
+  --md-sys-color-success-container: #D7E8DD;
+  --md-sys-color-on-success-container: #0D3F1C;
 
-  --md-sys-color-warning: #7a5900;
-  --md-sys-color-on-warning: #ffffff;
-  --md-sys-color-warning-container: #ffdea3;
-  --md-sys-color-on-warning-container: #261900;
+  --md-sys-color-warning: #7A4D00;
+  --md-sys-color-on-warning: #FFFFFF;
+  --md-sys-color-warning-container: #F2E0C2;
+  --md-sys-color-on-warning-container: #4A2F00;
 
-  --md-sys-color-info: #006874;
-  --md-sys-color-on-info: #ffffff;
-  --md-sys-color-info-container: #97f0ff;
-  --md-sys-color-on-info-container: #001f24;
+  --md-sys-color-info: #1A5A8A;
+  --md-sys-color-on-info: #FFFFFF;
+  --md-sys-color-info-container: #D7E7F3;
+  --md-sys-color-on-info-container: #103856;
 
   --md-sys-color-neutral: #5e5e5e;
   --md-sys-color-on-neutral: #ffffff;
@@ -364,74 +336,66 @@
 
 :root[data-theme="dark"],
 :root[data-theme="auto"][data-system-dark="true"] {
-  /* Core color roles (dark theme) */
-  --md-sys-color-primary: #9bb9ff;
-  --md-sys-color-on-primary: #0b1220;
-  --md-sys-color-primary-container: color-mix(
-    in oklab,
-    #9bb9ff 24%,
-    #14141a 76%
-  );
-  --md-sys-color-on-primary-container: #dde6ff;
+  /* Core color roles (dark theme - games.hispanistica) */
+  --md-sys-color-primary: #7FA7B2;
+  --md-sys-color-on-primary: #041D23;
+  --md-sys-color-primary-container: #0B3A46;
+  --md-sys-color-on-primary-container: #CFE0E4;
 
-  --md-sys-color-secondary: #97b3cb;
-  --md-sys-color-on-secondary: #0e141a;
-  --md-sys-color-secondary-container: color-mix(
-    in oklab,
-    #97b3cb 24%,
-    #14141a 76%
-  );
-  --md-sys-color-on-secondary-container: #d8e3f0;
+  --md-sys-color-secondary: #8DB4BE;
+  --md-sys-color-on-secondary: #072129;
+  --md-sys-color-secondary-container: #1E5661;
+  --md-sys-color-on-secondary-container: #D4E2E5;
 
   /* Tertiary role (dark) */
-  --md-sys-color-tertiary: #efb8c8;
-  --md-sys-color-on-tertiary: #4a2532;
-  --md-sys-color-tertiary-container: #633b48;
-  --md-sys-color-on-tertiary-container: #ffd9e3;
+  --md-sys-color-tertiary: #93B0B8;
+  --md-sys-color-on-tertiary: #071B20;
+  --md-sys-color-tertiary-container: #23434C;
+  --md-sys-color-on-tertiary-container: #D7E2E6;
 
   /* Background & Surface */
-  --md-sys-color-background: #0b0b0e;
-  --md-sys-color-on-background: #e7e7ea;
-  --md-sys-color-surface: #14141a;
-  --md-sys-color-on-surface: #e6e1e5;
+  --md-sys-color-background: #041317;
+  --md-sys-color-on-background: #E6F0F2;
+  --md-sys-color-surface: #041317;
+  --md-sys-color-on-surface: #E6F0F2;
   
   /* NOTE: --app-background is defined in app-tokens.css, not here. */
-  --md-sys-color-surface-variant: #2a2a30;
-  --md-sys-color-on-surface-variant: #c6c6ca;
-  --_on-surface-variant-static: #c6c6ca;
-  --md-sys-color-outline: #79747e;
-  --md-sys-color-outline-variant: #3a3a40;
+  --md-sys-color-surface-variant: #0A313C;
+  --md-sys-color-on-surface-variant: #C6D7DB;
+  --_on-surface-variant-static: #C6D7DB;
+  --md-sys-color-outline: #8AA4AA;
+  --md-sys-color-outline-variant: #2A444C;
 
-  /* Surface container hierarchy (dark) */
-  --md-sys-color-surface-container-lowest: #0e0e13;
-  --md-sys-color-surface-container-low: #17171d;
-  --md-sys-color-surface-container: #1b1b22;
-  --md-sys-color-surface-container-high: #1f1f27;
-  --md-sys-color-surface-container-highest: #23232c;
+  /* Surface container hierarchy (dark - games.hispanistica) */
+  --md-sys-color-surface-container-lowest: #020B0D;
+  --md-sys-color-surface-container-low: #061A1F;
+  --md-sys-color-surface-container: #081F26;
+  --md-sys-color-surface-container-high: #0A252D;
+  --md-sys-color-surface-container-highest: #0C2B34;
 
   /* Error (dark) */
-  --md-sys-color-error: #f2b8b5;
-  --md-sys-color-on-error: #601410;
+  --md-sys-color-error: #F2B8B5;
+  --md-sys-color-on-error: #3A0A06;
 
   /* Inverse surface (dark → light) */
-  --md-sys-color-inverse-surface: #f4eff4;
-  --md-sys-color-inverse-on-surface: #313033;
+  --md-sys-color-inverse-surface: #E6F0F2;
+  --md-sys-color-inverse-on-surface: #041317;
 
-  /* Extended Colors (Dark Mode) */
-  --md-sys-color-success: #78dc77;
-  --md-sys-color-on-success: #00390a;
-  --md-sys-color-success-container: #005313;
-  --md-sys-color-on-success-container: #94f990;
+  /* Extended Colors (Dark Mode - games.hispanistica) */
+  --md-sys-color-success: #7FD59A;
+  --md-sys-color-on-success: #05210E;
+  --md-sys-color-success-container: #0F4C22;
+  --md-sys-color-on-success-container: #7FD59A;
 
-  --md-sys-color-warning: #fbc02d;
-  --md-sys-color-on-warning: #412d00;
-  --md-sys-color-warning-container: #5d4200;
-  --md-sys-color-on-warning-container: #ffdea3;
+  --md-sys-color-warning: #F2C26B;
+  --md-sys-color-on-warning: #2A1A00;
+  --md-sys-color-warning-container: #5A3A00;
+  --md-sys-color-on-warning-container: #F2C26B;
 
-  --md-sys-color-info: #4fd8eb;
-  --md-sys-color-on-info: #00363d;
-  --md-sys-color-info-container: #004f58;
-  --md-sys-color-on-info-container: #97f0ff;
+  --md-sys-color-info: #9BCBEE;
+  --md-sys-color-on-info: #062033;
+  --md-sys-color-info-container: #0F3E5E;
+  --md-sys-color-on-info-container: #9BCBEE;
 
   --md-sys-color-neutral: #c6c6c6;
   --md-sys-color-on-neutral: #303030;

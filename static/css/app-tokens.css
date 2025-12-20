@@ -21,8 +21,9 @@
   /* -----------------------------------------------------------------
      APP: Page Backgrounds
      ----------------------------------------------------------------- */
-  --app-color-login-bg: #f0f2f5;
-  --app-background: var(--md-sys-color-surface-container);
+  --app-color-login-bg: #F3F6F7;
+  /* Note: --app-background is overridden in branding.css to use --brand-background */
+  --app-background: var(--md-sys-color-background);
   
   /* -----------------------------------------------------------------
      APP: Animation Timings
@@ -41,7 +42,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --app-color-login-bg: #14141A;
+    --app-color-login-bg: #041317;
   }
 }
 
+/* MD3 Theme Attribute Support (data-theme="dark" / "auto") */
+:root[data-theme="dark"],
+:root[data-theme="auto"][data-system-dark="true"] {
+  --app-color-login-bg: #041317;
+}

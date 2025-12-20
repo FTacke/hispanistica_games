@@ -149,7 +149,8 @@ main.site-main,
   padding: 0; /* No padding on main, containers define their own */
   font-size: 1rem;
   display: block;
-  background: transparent; /* Prevent color flash on first paint */
+  /* MD3 Best Practice: Main content uses canonical background token */
+  background: var(--md-sys-color-background);
 }
 
 /* Remove focus outline on main container */

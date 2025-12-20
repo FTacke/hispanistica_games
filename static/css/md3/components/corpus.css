@@ -87,7 +87,7 @@
 
 .md3-corpus-content {
   /* Corpus content sits on app background */
-  --_corpus-content-bg: var(--md-sys-color-background, #c7d5d8);
+  --_corpus-content-bg: var(--md-sys-color-background, #F3F6F7);
   
   max-width: 1400px;
   margin: 0 auto;
