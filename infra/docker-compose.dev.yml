@@ -33,7 +33,7 @@ services:
 
   web:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: corapan-web-dev
     depends_on:

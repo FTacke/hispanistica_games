@@ -1,0 +1,39 @@
+{
+  "id": "quiz",
+  "name": "Quiz",
+  "version": "1.0.0",
+  "description": "Interactive quiz module with topics, timed questions, and leaderboards",
+  "author": "hispanistica_games",
+  "entry": "routes.py",
+  "routes_prefix": "/games/quiz",
+  "api_prefix": "/api/quiz",
+  "requires_webapp_auth": false,
+  "features": {
+    "topics": true,
+    "timer": true,
+    "joker": true,
+    "leaderboard": true,
+    "resume": true,
+    "anonymous_play": true
+  },
+  "config": {
+    "questions_per_run": 10,
+    "difficulty_levels": 5,
+    "questions_per_difficulty": 2,
+    "timer_seconds": 30,
+    "jokers_per_run": 2,
+    "leaderboard_limit": 15,
+    "session_expiry_days": 30,
+    "history_runs_count": 3,
+    "max_history_questions_per_run": 2
+  },
+  "styling": {
+    "container_class": "game-shell",
+    "data_attributes": {
+      "game": "quiz"
+    },
+    "css_modules": [
+      "styles/quiz.css"
+    ]
+  }
+}

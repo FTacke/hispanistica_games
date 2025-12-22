@@ -1,0 +1,302 @@
+{
+  "schema_version": "quiz_seed_v1",
+  "defaults": {
+    "language": "de",
+    "missing_explanation_text": "Erklärung folgt."
+  },
+  "quizzes": [
+    {
+      "title": "Variation in der Aussprache",
+      "slug": "variation-in-der-aussprache",
+      "description": "",
+      "is_active": true,
+      "questions": [
+        {
+          "author_initials": "Mika",
+          "prompt": "Der seseo ist in __________ die gängige Aussprache.",
+          "explanation": "Der seseo bezeichnet die phonologische Übereinstimmung der Laute /s/ und /θ/ und ist im Großteil der spanischsprachigen Welt verbreitet, insbesondere in Hispanoamerika, auf den Kanarischen Inseln und in Teilen Andalusiens.",
+          "commentary": "Basisfrage zur globalen Verteilung des seseo; gut geeignet als Einstieg in die Aussprachevariation.",
+          "difficulty": 2,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "Spanien", "correct": false },
+            { "text": "einem Großteil der spanischsprachigen Länder", "correct": true },
+            { "text": "großen Teilen Spaniens", "correct": false },
+            { "text": "einigen Regionen Europas", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "Mika",
+          "prompt": "Der yeísmo bezeichnet ___________.",
+          "explanation": "Der yeísmo bezeichnet die Neutralisierung der beiden palatalen Phoneme /ʎ/ und /ʝ/ zugunsten eines einzigen Phonems, meist /ʝ/.",
+          "commentary": "Zielt auf den Phonembegriff und das Konzept der Neutralisierung; nicht nur Grapheme, sondern Lautsystem.",
+          "difficulty": 3,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "die Unterscheidung der Phoneme /ʎ/ und /ʝ/", "correct": false },
+            { "text": "die Neutralisierung der Phoneme /ʎ/ und /ʝ/ zugunsten von /ʎ/", "correct": false },
+            { "text": "die Neutralisierung der Phoneme /ʎ/ und /ʝ/ zugunsten von /ʝ/", "correct": true },
+            { "text": "die Neutralisierung der Phoneme /s/ und /θ/", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "Mika",
+          "prompt": "Die Abschwächung oder der Wegfall des Phonems /s/ am Silben- und Wortende findet regional vor allem __________ statt.",
+          "explanation": "Die Abschwächung von /s/ ist besonders typisch für amerikanische Tieflandregionen, etwa in Küstengebieten und auf Inseln, während Hochlandregionen das /s/ meist erhalten.",
+          "commentary": "Typische Arealfrage zur /s/-Aspiration; verbindet Phonologie mit geographischer Variation.",
+          "difficulty": 2,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "in amerikanischen Hochlandregionen", "correct": false },
+            { "text": "hauptsächlich in ganz Spanien", "correct": false },
+            { "text": "in amerikanischen Tieflandregionen", "correct": true },
+            { "text": "überall im spanischsprachigen Raum gleichermaßen", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "FT",
+          "prompt": "In welchen Regionen Hispanoamerikas bleibt das Phonem /s/ am Silbenende typischerweise erhalten?",
+          "explanation": "In vielen amerikanischen Hochlandregionen wie Mexiko-Stadt, Bogotá oder La Paz wird /s/ am Silbenende klar artikuliert.",
+          "commentary": "Kontrastfrage zur vorherigen /s/-Abschwächung; fördert systematisches Vergleichen.",
+          "difficulty": 3,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "in karibischen Küstenregionen", "correct": false },
+            { "text": "in amerikanischen Hochlandregionen", "correct": true },
+            { "text": "in tiefliegenden Küstengebieten Südamerikas", "correct": false },
+            { "text": "auf Inseln der Karibik", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "Mika",
+          "prompt": "In welchen Sprachen wird der Interdentallaut [θ] ebenfalls regelmäßig verwendet?",
+          "explanation": "Der Interdentallaut [θ] kommt regelmäßig im Englischen vor, etwa im Wort „think“, und entspricht artikulatorisch dem Laut der spanischen distinción.",
+          "commentary": "Kontrastive Frage mit Blick über das Spanische hinaus; gut zur Einordnung der distinción.",
+          "difficulty": 2,
+          "tags": ["phonologie", "kontrastiv"],
+          "is_active": true,
+          "answers": [
+            { "text": "im Französischen", "correct": false },
+            { "text": "im Deutschen", "correct": false },
+            { "text": "im Englischen", "correct": true },
+            { "text": "im Italienischen", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "KSQ",
+          "prompt": "Worum geht es bei der sogenannten distinción im Spanischen?",
+          "explanation": "Die distinción bezeichnet die phonologische Unterscheidung zwischen /s/ und dem Interdentallaut /θ/, wie sie typisch für weite Teile Spaniens ist (z. B. casa [ˈka.sa] vs. caza [ˈka.θa]).",
+          "commentary": "Zentrale Grundfrage zur Aussprachevariation; ideal als definitorische Wiederholungsfrage.",
+          "difficulty": 2,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "Abschwächung von /s/ am Silbenende", "correct": false },
+            { "text": "Unterscheidung der Phoneme /s/ und /θ/", "correct": true },
+            { "text": "Unterscheidung der Grapheme <ll> und <y>", "correct": false },
+            { "text": "Velarisierung des Phonems /n/", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "KSQ",
+          "prompt": "Wo begegnet man typischerweise dem sogenannten šeísmo?",
+          "explanation": "Der šeísmo ist eine besondere Realisierung des yeísmo, bei der der Laut als stimmloser postalveolarer Frikativ [ʃ] ausgesprochen wird (z. B. yo → [ʃo]).",
+          "commentary": "Vertiefungsfrage zu regionalen Realisierungen des yeísmo, speziell Río-de-la-Plata.",
+          "difficulty": 3,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "in der Karibik", "correct": false },
+            { "text": "im Río-de-la-Plata-Gebiet", "correct": true },
+            { "text": "im bolivianischen Hochland", "correct": false },
+            { "text": "in Andalusien", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "KSQ",
+          "prompt": "Aus den Nachrichten welches Landes stammt der folgende Hörbeispiel-Ausschnitt?",
+          "explanation": "Regionale Aussprachemerkmale wie seseo, distinción, Abschwächung von /s/ oder spezielle yeísmo-Realisierungen erlauben oft eine geographische Zuordnung von Hörbeispielen.",
+          "commentary": "Offene Hörverstehensfrage; Antwort abhängig vom konkret eingesetzten CORAPAN-Ausschnitt.",
+          "difficulty": 4,
+          "tags": ["phonologie", "hörverstehen", "variation"],
+          "is_active": false,
+          "answers": [
+            { "text": "Mexiko", "correct": false },
+            { "text": "Spanien", "correct": true },
+            { "text": "Argentinien", "correct": false },
+            { "text": "Kolumbien", "correct": false }
+          ]
+        },
+        {
+          "author_initials": "KSQ",
+          "prompt": "Was ist ein typisches phonologisches Merkmal des Spanisch der Karibik?",
+          "explanation": "Im karibischen Spanisch kommt es häufig zur Angleichung oder Neutralisierung von /l/ und /r/ in Silbenendposition, z. B. puerta → [ˈpwel.ta] oder [ˈpwer.ta].",
+          "commentary": "Regionale Charakteristik der Karibik; gut geeignet für arealtypische Merkmalsbündel.",
+          "difficulty": 3,
+          "tags": ["phonologie", "variation"],
+          "is_active": true,
+          "answers": [
+            { "text": "Angleichung von /l/ und /r/ am Silbenende", "correct": true },
+            { "text": "distinción", "correct": false },
+            { "text": "besonders starke Artikulation von /s/ am Silbenende", "correct": false },
+            { "text": "voseo", "correct": false }
+          ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Wie nennt man die Aussprache, bei der die spanischen Laute /s/ und /θ/ nicht unterschieden werden?",
+            "explanation": "Beim seseo werden die Laute /s/ und /θ/ gleich ausgesprochen, etwa casa und caza beide mit [s].",
+            "commentary": "Sehr niedrigschwellige Einstiegsfrage zur grundlegenden Aussprachevariation.",
+            "difficulty": 1,
+            "tags": ["phonologie", "variation"],
+            "is_active": true,
+            "answers": [
+            { "text": "distinción", "correct": false },
+            { "text": "yeísmo", "correct": false },
+            { "text": "seseo", "correct": true },
+            { "text": "Velarisierung", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Welcher Laut wird in Varietäten mit distinción zusätzlich unterschieden?",
+            "explanation": "Die distinción zeichnet sich durch den Interdentallaut [θ] aus, z. B. in cena oder zapato.",
+            "commentary": "Reine Wiedererkennungsfrage zum zentralen Laut der distinción.",
+            "difficulty": 1,
+            "tags": ["phonologie", "variation"],
+            "is_active": true,
+            "answers": [
+            { "text": "[ʃ]", "correct": false },
+            { "text": "[θ]", "correct": true },
+            { "text": "[ʒ]", "correct": false },
+            { "text": "[ŋ]", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Wo wird der Laut [θ] im Spanischen nicht verwendet?",
+            "explanation": "In Hispanoamerika wird in der Regel seseo gesprochen; der Laut [θ] kommt dort nicht vor.",
+            "commentary": "Sehr einfache geographische Zuordnungsfrage zur distinción.",
+            "difficulty": 1,
+            "tags": ["phonologie", "variation"],
+            "is_active": true,
+            "answers": [
+            { "text": "in weiten Teilen Spaniens", "correct": false },
+            { "text": "in Hispanoamerika", "correct": true },
+            { "text": "in Zentralspanien", "correct": false },
+            { "text": "in Nordspanien", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Welcher Buchstabe steht im Spanischen vor <e> und <i>, um den Laut /θ/ (oder /s/) zu schreiben?",
+            "explanation": "Vor <e> und <i> wird der Laut /θ/ (in Varietäten mit distinción) bzw. /s/ durch den Buchstaben <c> geschrieben, z. B. cena, cine.",
+            "commentary": "Sehr einfache Graphem-Phonem-Zuordnung, bewusst alltagsnah formuliert.",
+            "difficulty": 1,
+            "tags": ["phonologie", "orthographie"],
+            "is_active": true,
+            "answers": [
+            { "text": "<z>", "correct": false },
+            { "text": "<s>", "correct": false },
+            { "text": "<c>", "correct": true },
+            { "text": "<h>", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Welche Kombination von Merkmalen weist am ehesten auf eine karibische Varietät des Spanischen hin?",
+            "explanation": "Karibische Varietäten sind typisch durch seseo, Abschwächung von /s/ und die Angleichung von /l/ und /r/ in Silbenendposition.",
+            "commentary": "Komplexere Merkmalsbündel-Frage zur regionalen Aussprache.",
+            "difficulty": 4,
+            "tags": ["phonologie", "variation"],
+            "is_active": true,
+            "answers": [
+            { "text": "distinción + starker /s/-Erhalt", "correct": false },
+            { "text": "seseo + /s/-Abschwächung + /l/-/r/-Neutralisierung", "correct": true },
+            { "text": "yeísmo + [ʝ] + starker /r/-Erhalt", "correct": false },
+            { "text": "voseo + distinción", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Welche IPA-Transkription ist für das Wort *pan* am wahrscheinlichsten in Varietäten mit /n/-Velarisierung?",
+            "explanation": "In vielen Varietäten wird /n/ am Wortende velar realisiert, also als [ŋ].",
+            "commentary": "Setzt IPA-Kenntnisse und phonologische Transferleistung voraus.",
+            "difficulty": 4,
+            "tags": ["phonologie"],
+            "is_active": true,
+            "answers": [
+            { "text": "[pan]", "correct": false },
+            { "text": "[pam]", "correct": false },
+            { "text": "[paŋ]", "correct": true },
+            { "text": "[pal]", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Welche yeísmo-Realisierung ist typisch für das Río-de-la-Plata-Gebiet?",
+            "explanation": "Im Río-de-la-Plata-Gebiet ist der sogenannte šeísmo verbreitet, bei dem der Laut als [ʃ] realisiert wird.",
+            "commentary": "Regionalspezifische Vertiefungsfrage zur yeísmo-Variation.",
+            "difficulty": 4,
+            "tags": ["phonologie", "variation"],
+            "is_active": true,
+            "answers": [
+            { "text": "[j]", "correct": false },
+            { "text": "[ʝ]", "correct": false },
+            { "text": "[ʒ]", "correct": false },
+            { "text": "[ʃ]", "correct": true }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Warum gilt der yeísmo aus phonologischer Sicht als Neutralisierung?",
+            "explanation": "Beim yeísmo verlieren die Phoneme /ʎ/ und /ʝ/ ihre funktionale Opposition und fallen zu einem Phonem zusammen.",
+            "commentary": "Abstrakte Frage zum Phonembegriff und zur Systemebene.",
+            "difficulty": 5,
+            "tags": ["phonologie", "theorie"],
+            "is_active": true,
+            "answers": [
+            { "text": "Weil zwei Grapheme gleich geschrieben werden", "correct": false },
+            { "text": "Weil zwei Allophone verschmelzen", "correct": false },
+            { "text": "Weil zwei Phoneme ihre Opposition verlieren", "correct": true },
+            { "text": "Weil ein Laut verschwindet", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Warum ist die Abschwächung von /s/ im Spanischen primär ein diatopisches Phänomen?",
+            "explanation": "Die Abschwächung von /s/ ist regional unterschiedlich systematisch verteilt, etwa zwischen Hochland- und Tieflandregionen.",
+            "commentary": "Verbindet phonologische Variation mit den Dimensionen der Variationslinguistik.",
+            "difficulty": 5,
+            "tags": ["phonologie", "variation", "theorie"],
+            "is_active": true,
+            "answers": [
+            { "text": "Weil sie nur in informeller Sprache vorkommt", "correct": false },
+            { "text": "Weil sie vom Bildungsgrad abhängt", "correct": false },
+            { "text": "Weil sie regional unterschiedlich systematisch verteilt ist", "correct": true },
+            { "text": "Weil sie orthographisch markiert ist", "correct": false }
+            ]
+        },
+        {
+            "author_initials": "FT",
+            "prompt": "Warum ist die distinción keine universelle Eigenschaft des Spanischen?",
+            "explanation": "Die distinción ist historisch entstanden und regional begrenzt, vor allem auf Teile Spaniens.",
+            "commentary": "Hohes Abstraktionsniveau: historische und areale Perspektive auf phonologische Systeme.",
+            "difficulty": 5,
+            "tags": ["phonologie", "variation", "theorie"],
+            "is_active": true,
+            "answers": [
+            { "text": "Weil sie nur schriftlich existiert", "correct": false },
+            { "text": "Weil sie historisch sekundär und regional begrenzt ist", "correct": true },
+            { "text": "Weil sie nur in formellen Registern vorkommt", "correct": false },
+            { "text": "Weil sie phonologisch instabil ist", "correct": false }
+          ]
+        }
+      ]
+    }
+  ]
+}

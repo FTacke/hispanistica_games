@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% set page_name = 'quiz' %}
+{% block page_title %}Quiz: {{ topic_title_key }} – Games.Hispanistica{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/games/quiz.css') }}">
+  <script src="{{ url_for('static', filename='js/games/quiz-i18n.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/games/quiz-entry.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="game-shell" data-game="quiz" data-topic="{{ topic_id }}">
+  <div class="md3-page quiz-page-stack" role="main" aria-label="Quiz Entry">
+    
+    <!-- Back link -->
+    <div class="quiz-back-link">
+      <a href="{{ url_for('quiz.quiz_index') }}" class="quiz-btn quiz-btn--ghost">
+        <span class="material-symbols-rounded">arrow_back</span>
+        <span data-i18n="ui.quiz.back_to_topics">Zurück zur Übersicht</span>
+      </a>
+    </div>
+
+    <header class="md3-page__header">
+      <div class="md3-hero md3-hero--card md3-hero__container">
+        <div class="md3-hero__icon" aria-hidden="true">
+          <span class="material-symbols-rounded">quiz</span>
+        </div>
+        <div class="md3-hero__content">
+          <p class="md3-body-small md3-hero__eyebrow" data-i18n="ui.quiz.title">Quiz</p>
+          <h1 class="md3-headline-medium md3-hero__title" data-i18n="{{ topic_title_key }}">Quiz</h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- Status Card (only when authenticated) -->
+    {% include 'games/quiz/_status_card.html' %}
+
+    <main class="quiz-main quiz-entry">
+      <div class="quiz-entry__layout">
+        
+        <!-- Left column: Auth & Controls -->
+        <div class="quiz-entry__auth">
+          {% if player_authenticated %}
+            <!-- Authenticated view -->
+            <div class="quiz-login quiz-login--authenticated"
+
+              
+              {% if has_existing_run %}
+                <div class="quiz-login__actions">
+                  <a href="{{ url_for('quiz.quiz_play', topic_id=topic_id) }}" class="quiz-btn quiz-btn--primary quiz-btn--full">
+                    <span class="material-symbols-rounded">play_arrow</span>
+                    <span data-i18n="ui.quiz.resume">Fortsetzen</span>
+                  </a>
+                  <button type="button" class="quiz-btn quiz-btn--secondary quiz-btn--full" id="quiz-restart-btn">
+                    <span class="material-symbols-rounded">restart_alt</span>
+                    <span data-i18n="ui.quiz.restart">Neu starten</span>
+                  </button>
+                </div>
+              {% else %}
+                <div class="quiz-login__actions">
+                  <button type="button" class="quiz-btn quiz-btn--primary quiz-btn--full" id="quiz-start-btn">
+                    <span class="material-symbols-rounded">play_arrow</span>
+                    <span data-i18n="ui.quiz.start">Start</span>
+                  </button>
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <!-- Simplified Login/Register form (single form) -->
+            <div class="quiz-login" id="quiz-login-container">
+              <h2 class="quiz-login__title" data-i18n="ui.quiz.login_title">Anmeldung</h2>
+              
+              <p class="quiz-login__hint">
+                Gib deinen Namen und einen 4-stelligen PIN ein.
+                Bei einem neuen Namen wird automatisch ein Profil erstellt.
+              </p>
+              
+              <form class="quiz-login__form" id="quiz-auth-form">
+                <div class="quiz-input-group">
+                  <label class="quiz-input-group__label" for="quiz-name" data-i18n="ui.quiz.name_label">Spielername</label>
+                  <input 
+                    type="text" 
+                    id="quiz-name" 
+                    name="name" 
+                    class="quiz-input-group__input" 
+                    placeholder="Dein Name"
+                    data-placeholder-i18n="ui.quiz.name_placeholder"
+                    maxlength="50"
+                    autocomplete="username"
+                    required
+                  >
+                </div>
+                
+                <div class="quiz-input-group">
+                  <label class="quiz-input-group__label" for="quiz-pin" data-i18n="ui.quiz.pin_label">PIN</label>
+                  <input 
+                    type="text" 
+                    id="quiz-pin" 
+                    name="pin" 
+                    class="quiz-input-group__input quiz-input-group__input--pin" 
+                    placeholder="4 Zeichen (A-Z, 0-9)"
+                    data-placeholder-i18n="ui.quiz.pin_placeholder"
+                    maxlength="4"
+                    pattern="[A-Za-z0-9]{4}"
+                    autocomplete="current-password"
+                    required
+                  >
+                </div>
+                
+                <div class="quiz-input-group__error" id="quiz-auth-error" hidden></div>
+                
+                <button type="submit" class="quiz-btn quiz-btn--primary quiz-btn--full" id="quiz-auth-submit">
+                  <span class="material-symbols-rounded">play_arrow</span>
+                  <span data-i18n="ui.quiz.start">Starten</span>
+                </button>
+              </form>
+              
+              <div class="quiz-login__divider">
+                <span>oder</span>
+              </div>
+              
+              <button type="button" class="quiz-btn quiz-btn--secondary quiz-btn--full" id="quiz-anonymous-btn">
+                <span class="material-symbols-rounded">person_off</span>
+                <span data-i18n="ui.quiz.play_anonymous">Als Anónimo spielen</span>
+              </button>
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- Right column: Leaderboard -->
+        <div class="quiz-entry__leaderboard">
+          <div class="quiz-leaderboard">
+            <h2 class="quiz-leaderboard__header">
+              <span class="material-symbols-rounded">leaderboard</span>
+              <span data-i18n="ui.quiz.leaderboard_title">Rangliste</span>
+            </h2>
+            <div id="quiz-leaderboard-content">
+              <div class="quiz-loading">
+                <span class="material-symbols-rounded quiz-loading__icon">hourglass_empty</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Restart Confirmation Dialog -->
+<dialog id="quiz-restart-dialog" class="quiz-dialog">
+  <div class="quiz-dialog__content">
+    <h3 class="quiz-dialog__title" data-i18n="ui.quiz.restart">Neu starten</h3>
+    <p class="quiz-dialog__message" data-i18n="ui.quiz.restart_confirm">Aktuelles Spiel wirklich abbrechen und neu starten?</p>
+    <div class="quiz-dialog__actions">
+      <button type="button" class="quiz-btn quiz-btn--ghost" id="quiz-restart-cancel" data-i18n="ui.quiz.restart_no">Abbrechen</button>
+      <button type="button" class="quiz-btn quiz-btn--primary" id="quiz-restart-confirm" data-i18n="ui.quiz.restart_yes">Ja, neu starten</button>
+    </div>
+  </div>
+</dialog>
+{% endblock %}

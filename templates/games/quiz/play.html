@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% set page_name = 'quiz' %}
+{% block page_title %}Quiz: {{ topic_title_key }} – Games.Hispanistica{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/games/quiz.css') }}">
+  <script src="{{ url_for('static', filename='js/games/quiz-i18n.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/games/quiz-play.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="game-shell" data-game="quiz" data-topic="{{ topic_id }}">
+  <div class="md3-page quiz-play-page quiz-page-stack" role="main" aria-label="Quiz Gameplay">
+    
+    <!-- Quiz Header with Progress and Timer -->
+    <header class="quiz-header" id="quiz-header">
+      <div class="quiz-header__info">
+        <div class="quiz-header__level-chip" id="quiz-level-chip">
+          <span class="material-symbols-rounded">stairs</span>
+          <span data-i18n="ui.quiz.level_label">Stufe</span>
+          <span id="quiz-level-num">1</span>
+        </div>
+        <span class="quiz-header__progress" id="quiz-progress">
+          <span data-i18n="ui.quiz.question_label">Frage</span> <span id="quiz-question-current">1</span> <span data-i18n="ui.quiz.of">von</span> <span id="quiz-question-total">10</span>
+        </span>
+      </div>
+      
+      <div class="quiz-header__controls">
+        <div class="quiz-timer" id="quiz-timer">
+          <span class="material-symbols-rounded quiz-timer__icon">timer</span>
+          <span class="quiz-timer__time" id="quiz-timer-display">30</span>
+        </div>
+        
+        <button type="button" class="quiz-joker" id="quiz-joker-btn">
+          <span class="material-symbols-rounded">casino</span>
+          <span>50:50</span>
+          <span class="quiz-joker__count" id="quiz-joker-count">2</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Question Container -->
+    <main class="quiz-question-container" id="quiz-question-container">
+      <div class="quiz-question" id="quiz-question">
+        <p class="quiz-question__prompt" id="quiz-question-prompt">
+          <!-- Question text loaded dynamically -->
+        </p>
+        
+        <div class="quiz-question__media" id="quiz-question-media" hidden>
+          <!-- Audio player if present -->
+        </div>
+        
+        <div class="quiz-answers" id="quiz-answers">
+          <!-- Answers loaded dynamically -->
+        </div>
+      </div>
+      
+      <!-- Feedback Panel (visible after answer selection) -->
+      <div class="quiz-feedback" id="quiz-feedback-panel" hidden>
+        <p class="quiz-feedback__status" id="quiz-feedback-status"></p>
+        <p class="quiz-feedback__explanation" id="quiz-feedback-explanation"></p>
+      </div>
+      
+      <!-- Weiter Button (visible after answer selection) -->
+      <button type="button" class="quiz-btn quiz-btn--primary quiz-btn--full quiz-weiter-btn" id="quiz-weiter-btn" hidden>
+        <span class="material-symbols-rounded">arrow_forward</span>
+        <span data-i18n="ui.quiz.weiter">Weiter</span>
+      </button>
+    </main>
+
+    <!-- Finish Screen (hidden until game ends) -->
+    <div class="quiz-finish" id="quiz-finish" hidden>
+      <h1 class="quiz-finish__title" data-i18n="ui.quiz.finished_title">Quiz beendet!</h1>
+      
+      <!-- Primary Result Block -->
+      <div class="quiz-finish__primary-result">
+        <h2 class="quiz-finish__result-header" data-i18n="ui.quiz.your_result">Dein Ergebnis</h2>
+        <div class="quiz-finish__score">
+          <div class="quiz-finish__score-item">
+            <span class="quiz-finish__score-value" id="quiz-final-score">0</span>
+            <span class="quiz-finish__score-label" data-i18n="ui.quiz.total_points">Gesamtpunkte</span>
+          </div>
+          <div class="quiz-finish__score-item">
+            <span class="quiz-finish__score-value" id="quiz-final-tokens">0</span>
+            <span class="quiz-finish__score-label" data-i18n="ui.quiz.tokens_earned">Erhaltene Tokens</span>
+          </div>
+        </div>
+        <p class="quiz-finish__result-note" data-i18n="ui.quiz.result_note">Basierend auf Schwierigkeit & Zeit</p>
+      </div>
+      
+      <!-- Per-Level Breakdown -->
+      <div class="quiz-finish__breakdown" id="quiz-breakdown">
+        <h3 class="quiz-finish__breakdown-title" data-i18n="ui.quiz.breakdown_title">Ergebnis pro Stufe</h3>
+        <div id="quiz-breakdown-content">
+          <!-- Breakdown rows loaded dynamically -->
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="quiz-finish__actions">
+        <button type="button" class="quiz-btn quiz-btn--primary" id="quiz-play-again">
+          <span class="material-symbols-rounded">replay</span>
+          <span data-i18n="ui.quiz.play_again">Nochmal spielen</span>
+        </button>
+        <a href="{{ url_for('quiz.quiz_topic_entry', topic_id=topic_id) }}" class="quiz-btn quiz-btn--secondary">
+          <span class="material-symbols-rounded">arrow_back</span>
+          <span data-i18n="ui.quiz.back_to_overview">Zurück zur Übersicht</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -66,12 +66,6 @@ def gamification_page():
     return render_template("pages/gamification.html", page_name="gamification")
 
 
-@blueprint.get("/quiz")
-def quiz_page():
-    """Render the quiz page."""
-    return render_template("pages/quiz.html", page_name="quiz")
-
-
 @blueprint.get("/impressum")
 def impressum_page():
     """Render the legal notice (Impressum) page."""

@@ -1,0 +1,921 @@
+"""Flask routes for the Quiz game module.
+
+Public routes (no webapp auth required):
+- /games/quiz - Topic selection
+- /games/quiz/<topic_id> - Topic entry (login/resume)
+- /games/quiz/<topic_id>/play - Quiz gameplay
+
+API routes:
+- /api/quiz/topics - List active topics
+- /api/quiz/topics/<topic_id>/leaderboard - Get leaderboard
+- /api/quiz/auth/register - Register player
+- /api/quiz/auth/login - Login player
+- /api/quiz/auth/logout - Logout player
+- /api/quiz/<topic_id>/run/start - Start or resume run
+- /api/quiz/<topic_id>/run/restart - Restart run
+- /api/quiz/run/current - Get current run state
+- /api/quiz/run/<run_id>/question/start - Start question timer
+- /api/quiz/run/<run_id>/answer - Submit answer
+- /api/quiz/run/<run_id>/joker - Use joker
+- /api/quiz/run/<run_id>/finish - Finish run
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from functools import wraps
+from typing import Optional, Callable, Any
+
+from flask import (
+    Blueprint,
+    Response,
+    jsonify,
+    make_response,
+    render_template,
+    request,
+    g,
+)
+
+from src.app.extensions.sqlalchemy_ext import get_session
+from . import services
+from .models import QuizPlayer
+
+logger = logging.getLogger(__name__)
+
+# Blueprint with dual prefix for pages and API
+blueprint = Blueprint("quiz", __name__)
+
+# Cookie name for game session token
+QUIZ_SESSION_COOKIE = "quiz_session"
+
+
+# ============================================================================
+# Authentication Decorator
+# ============================================================================
+
+def quiz_auth_required(f: Callable) -> Callable:
+    """Decorator to require quiz player authentication."""
+    @wraps(f)
+    def decorated(*args: Any, **kwargs: Any) -> Any:
+        token = request.cookies.get(QUIZ_SESSION_COOKIE)
+        if not token:
+            return jsonify({"error": "Authentication required", "code": "AUTH_REQUIRED"}), 401
+        
+        with get_session() as session:
+            player = services.verify_session(session, token)
+            if not player:
+                return jsonify({"error": "Invalid or expired session", "code": "SESSION_INVALID"}), 401
+            
+            # Store player info in g for use in route
+            g.quiz_player_id = player.id
+            g.quiz_player_name = player.name
+            g.quiz_player_anonymous = player.is_anonymous
+        
+        return f(*args, **kwargs)
+    return decorated
+
+
+def quiz_auth_optional(f: Callable) -> Callable:
+    """Decorator to optionally load quiz player if authenticated."""
+    @wraps(f)
+    def decorated(*args: Any, **kwargs: Any) -> Any:
+        token = request.cookies.get(QUIZ_SESSION_COOKIE)
+        g.quiz_player_id = None
+        g.quiz_player_name = None
+        g.quiz_player_anonymous = None
+        
+        if token:
+            with get_session() as session:
+                player = services.verify_session(session, token)
+                if player:
+                    g.quiz_player_id = player.id
+                    g.quiz_player_name = player.name
+                    g.quiz_player_anonymous = player.is_anonymous
+        
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ============================================================================
+# Page Routes (HTML)
+# ============================================================================
+
+# CANONICAL ROUTES: /quiz
+@blueprint.route("/quiz")
+@quiz_auth_optional
+def quiz_index():
+    """Quiz start page with topic selection (canonical: /quiz)."""
+    return render_template(
+        "games/quiz/index.html",
+        page_name="quiz",
+        player_name=g.quiz_player_name,
+        player_authenticated=g.quiz_player_id is not None,
+    )
+
+
+@blueprint.route("/quiz/<topic_id>")
+@quiz_auth_optional
+def quiz_topic_entry(topic_id: str):
+    """Topic entry page (canonical: /quiz/<topic_id>)."""
+    with get_session() as session:
+        topic = services.get_topic(session, topic_id)
+        if not topic or not topic.is_active:
+            return render_template("errors/404.html"), 404
+        
+        # Check for existing run if authenticated
+        has_run = False
+        if g.quiz_player_id:
+            run = services.get_current_run(session, g.quiz_player_id, topic_id)
+            has_run = run is not None
+        
+        return render_template(
+            "games/quiz/topic_entry.html",
+            page_name="quiz",
+            topic_id=topic_id,
+            topic_title_key=topic.title_key,
+            player_name=g.quiz_player_name,
+            player_authenticated=g.quiz_player_id is not None,
+            has_existing_run=has_run,
+        )
+
+
+@blueprint.route("/quiz/<topic_id>/play")
+@quiz_auth_required
+def quiz_play(topic_id: str):
+    """Quiz gameplay page (canonical: /quiz/<topic_id>/play)."""
+    with get_session() as session:
+        topic = services.get_topic(session, topic_id)
+        if not topic or not topic.is_active:
+            return render_template("errors/404.html"), 404
+        
+        return render_template(
+            "games/quiz/play.html",
+            page_name="quiz",
+            topic_id=topic_id,
+            topic_title_key=topic.title_key,
+            player_name=g.quiz_player_name,
+        )
+
+
+# LEGACY REDIRECTS: /games/quiz/* → /quiz/*
+@blueprint.route("/games/quiz")
+def quiz_index_redirect():
+    """Redirect /games/quiz to canonical /quiz."""
+    from flask import redirect, url_for
+    return redirect(url_for('quiz.quiz_index'), code=301)
+
+
+@blueprint.route("/games/quiz/<topic_id>")
+def quiz_topic_redirect(topic_id: str):
+    """Redirect /games/quiz/<topic_id> to canonical /quiz/<topic_id>."""
+    from flask import redirect, url_for
+    return redirect(url_for('quiz.quiz_topic_entry', topic_id=topic_id), code=301)
+
+
+@blueprint.route("/games/quiz/<topic_id>/play")
+def quiz_play_redirect(topic_id: str):
+    """Redirect /games/quiz/<topic_id>/play to canonical /quiz/<topic_id>/play."""
+    from flask import redirect, url_for
+    return redirect(url_for('quiz.quiz_play', topic_id=topic_id), code=301)
+
+
+# ============================================================================
+# API Routes - Public
+# ============================================================================
+
+@blueprint.route("/api/quiz/topics")
+def api_get_topics():
+    """Get list of active quiz topics."""
+    with get_session() as session:
+        topics = services.get_active_topics(session)
+        return jsonify({
+            "topics": [
+                {
+                    "topic_id": t.id,
+                    "title_key": t.title_key,
+                    "description_key": t.description_key,
+                    "href": f"/games/quiz/{t.id}",
+                }
+                for t in topics
+            ]
+        })
+
+
+@blueprint.route("/api/quiz/topics/<topic_id>/leaderboard")
+def api_get_leaderboard(topic_id: str):
+    """Get leaderboard for a topic."""
+    limit = request.args.get("limit", 15, type=int)
+    limit = min(max(limit, 1), 50)  # Clamp to 1-50
+    
+    with get_session() as session:
+        topic = services.get_topic(session, topic_id)
+        if not topic:
+            return jsonify({"error": "Topic not found"}), 404
+        
+        leaderboard = services.get_leaderboard(session, topic_id, limit)
+        return jsonify({
+            "topic_id": topic_id,
+            "leaderboard": leaderboard,
+        })
+
+
+# ============================================================================
+# API Routes - Authentication
+# ============================================================================
+
+@blueprint.route("/api/quiz/auth/register", methods=["POST"])
+def api_register():
+    """Register a new player or play anonymously."""
+    data = request.get_json() or {}
+    
+    anonymous = data.get("anonymous", False)
+    name = data.get("name", "").strip()
+    pin = data.get("pin", "").strip()
+    
+    with get_session() as session:
+        result = services.register_player(session, name, pin, anonymous)
+        
+        if not result.success:
+            return jsonify({
+                "error": result.error_message,
+                "code": result.error_code,
+            }), 400
+        
+        # Set session cookie
+        response = make_response(jsonify({
+            "success": True,
+            "player_id": result.player_id,
+            "player_name": result.player_name,
+        }))
+        
+        response.set_cookie(
+            QUIZ_SESSION_COOKIE,
+            result.session_token,
+            httponly=True,
+            secure=request.is_secure,
+            samesite="Lax",
+            max_age=30 * 24 * 60 * 60,  # 30 days
+        )
+        
+        return response
+
+
+@blueprint.route("/api/quiz/auth/login", methods=["POST"])
+def api_login():
+    """Login existing player."""
+    data = request.get_json() or {}
+    
+    name = data.get("name", "").strip()
+    pin = data.get("pin", "").strip()
+    
+    if not name or not pin:
+        return jsonify({
+            "error": "Name and PIN required",
+            "code": "MISSING_CREDENTIALS",
+        }), 400
+    
+    with get_session() as session:
+        result = services.login_player(session, name, pin)
+        
+        if not result.success:
+            return jsonify({
+                "error": result.error_message,
+                "code": result.error_code,
+            }), 401
+        
+        # Set session cookie
+        response = make_response(jsonify({
+            "success": True,
+            "player_id": result.player_id,
+            "player_name": result.player_name,
+        }))
+        
+        response.set_cookie(
+            QUIZ_SESSION_COOKIE,
+            result.session_token,
+            httponly=True,
+            secure=request.is_secure,
+            samesite="Lax",
+            max_age=30 * 24 * 60 * 60,
+        )
+        
+        return response
+
+
+@blueprint.route("/api/quiz/auth/name-pin", methods=["POST"])
+def api_auth_name_pin():
+    """Unified auth: auto-create if new, login if existing, error if PIN mismatch.
+    
+    Request: {name, pin}
+    
+    Response:
+    - 200: {status:"ok", user_id, player_name, is_new_user}
+    - 400: Invalid input
+    - 403: {status:"error", code:"PIN_MISMATCH", message:"..."}
+    """
+    data = request.get_json() or {}
+    
+    name = data.get("name", "").strip()
+    pin = data.get("pin", "").strip()
+    
+    if not name or not pin:
+        return jsonify({
+            "status": "error",
+            "code": "MISSING_CREDENTIALS",
+            "message": "Name and PIN required",
+        }), 400
+    
+    with get_session() as session:
+        result = services.auth_name_pin(session, name, pin)
+        
+        if not result.success:
+            status_code = 403 if result.error_code == "PIN_MISMATCH" else 400
+            return jsonify({
+                "status": "error",
+                "code": result.error_code,
+                "message": result.error_message,
+            }), status_code
+        
+        # Set session cookie
+        response = make_response(jsonify({
+            "status": "ok",
+            "user_id": result.player_id,
+            "player_name": result.player_name,
+            "is_new_user": result.is_new_user,
+        }))
+        
+        response.set_cookie(
+            QUIZ_SESSION_COOKIE,
+            result.session_token,
+            httponly=True,
+            secure=request.is_secure,
+            samesite="Lax",
+            max_age=30 * 24 * 60 * 60,
+        )
+        
+        return response
+
+
+@blueprint.route("/api/quiz/auth/logout", methods=["POST"])
+def api_logout():
+    """Logout player (invalidate session)."""
+    token = request.cookies.get(QUIZ_SESSION_COOKIE)
+    
+    if token:
+        with get_session() as session:
+            services.logout_player(session, token)
+    
+    response = make_response(jsonify({"success": True}))
+    response.delete_cookie(QUIZ_SESSION_COOKIE)
+    return response
+
+
+@blueprint.route("/api/quiz/auth/session")
+@quiz_auth_optional
+def api_check_session():
+    """Check current session status."""
+    return jsonify({
+        "authenticated": g.quiz_player_id is not None,
+        "player_id": g.quiz_player_id,
+        "player_name": g.quiz_player_name,
+        "is_anonymous": g.quiz_player_anonymous,
+    })
+
+
+# ============================================================================
+# API Routes - Run Lifecycle
+# ============================================================================
+
+@blueprint.route("/api/quiz/<topic_id>/run/start", methods=["POST"])
+@quiz_auth_required
+def api_start_run(topic_id: str):
+    """Start a new run or resume existing one."""
+    data = request.get_json() or {}
+    force_new = data.get("force_new", False)
+    
+    with get_session() as session:
+        topic = services.get_topic(session, topic_id)
+        if not topic or not topic.is_active:
+            return jsonify({"error": "Topic not found", "code": "TOPIC_NOT_FOUND"}), 404
+        
+        run, is_new = services.start_run(session, g.quiz_player_id, topic_id, force_new)
+        state = services.get_run_state(session, run)
+        
+        return jsonify({
+            "success": True,
+            "is_new": is_new,
+            "run": {
+                "run_id": state.run_id,
+                "topic_id": state.topic_id,
+                "status": state.status,
+                "current_index": state.current_index,
+                "run_questions": state.run_questions,
+                "joker_remaining": state.joker_remaining,
+                "joker_used_on": state.joker_used_on,
+                "question_started_at_ms": state.question_started_at_ms,
+                "deadline_at_ms": state.deadline_at_ms,
+                "answers": state.answers,
+            }
+        })
+
+
+@blueprint.route("/api/quiz/<topic_id>/run/restart", methods=["POST"])
+@quiz_auth_required
+def api_restart_run(topic_id: str):
+    """Abandon current run and start new one."""
+    with get_session() as session:
+        topic = services.get_topic(session, topic_id)
+        if not topic or not topic.is_active:
+            return jsonify({"error": "Topic not found", "code": "TOPIC_NOT_FOUND"}), 404
+        
+        run = services.restart_run(session, g.quiz_player_id, topic_id)
+        state = services.get_run_state(session, run)
+        
+        return jsonify({
+            "success": True,
+            "run": {
+                "run_id": state.run_id,
+                "topic_id": state.topic_id,
+                "status": state.status,
+                "current_index": state.current_index,
+                "run_questions": state.run_questions,
+                "joker_remaining": state.joker_remaining,
+                "joker_used_on": state.joker_used_on,
+                "question_started_at_ms": state.question_started_at_ms,
+                "deadline_at_ms": state.deadline_at_ms,
+                "answers": state.answers,
+            }
+        })
+
+
+@blueprint.route("/api/quiz/run/current")
+@quiz_auth_required
+def api_get_current_run():
+    """Get current run state for resume."""
+    topic_id = request.args.get("topic_id")
+    if not topic_id:
+        return jsonify({"error": "topic_id required", "code": "MISSING_TOPIC"}), 400
+    
+    with get_session() as session:
+        run = services.get_current_run(session, g.quiz_player_id, topic_id)
+        
+        if not run:
+            return jsonify({
+                "has_run": False,
+                "run": None,
+            })
+        
+        state = services.get_run_state(session, run)
+        
+        return jsonify({
+            "has_run": True,
+            "run": {
+                "run_id": state.run_id,
+                "topic_id": state.topic_id,
+                "status": state.status,
+                "current_index": state.current_index,
+                "run_questions": state.run_questions,
+                "joker_remaining": state.joker_remaining,
+                "joker_used_on": state.joker_used_on,
+                "question_started_at_ms": state.question_started_at_ms,
+                "deadline_at_ms": state.deadline_at_ms,
+                "answers": state.answers,
+            }
+        })
+
+
+# ============================================================================
+# API Routes - Question Interaction
+# ============================================================================
+
+@blueprint.route("/api/quiz/run/<run_id>/question/start", methods=["POST"])
+@quiz_auth_required
+def api_start_question(run_id: str):
+    """Start timer for a question."""
+    data = request.get_json() or {}
+    question_index = data.get("question_index")
+    started_at_ms = data.get("started_at_ms")
+    
+    if question_index is None or started_at_ms is None:
+        return jsonify({"error": "question_index and started_at_ms required"}), 400
+    
+    with get_session() as session:
+        from .models import QuizRun
+        from sqlalchemy import select, and_
+        
+        stmt = select(QuizRun).where(
+            and_(
+                QuizRun.id == run_id,
+                QuizRun.player_id == g.quiz_player_id
+            )
+        )
+        run = session.execute(stmt).scalar_one_or_none()
+        
+        if not run:
+            return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
+        
+        success = services.start_question(session, run, question_index, started_at_ms)
+        
+        return jsonify({
+            "success": success,
+            "question_started_at_ms": run.question_started_at_ms,
+            "deadline_at_ms": run.deadline_at_ms,
+        })
+
+
+@blueprint.route("/api/quiz/run/<run_id>/answer", methods=["POST"])
+@quiz_auth_required
+def api_submit_answer(run_id: str):
+    """Submit answer for current question."""
+    data = request.get_json() or {}
+    question_index = data.get("question_index")
+    selected_answer_id = data.get("selected_answer_id")  # Can be None for timeout
+    answered_at_ms = data.get("answered_at_ms")
+    used_joker = data.get("used_joker", False)
+    
+    if question_index is None or answered_at_ms is None:
+        return jsonify({"error": "question_index and answered_at_ms required"}), 400
+    
+    with get_session() as session:
+        from .models import QuizRun
+        from sqlalchemy import select, and_
+        
+        stmt = select(QuizRun).where(
+            and_(
+                QuizRun.id == run_id,
+                QuizRun.player_id == g.quiz_player_id
+            )
+        )
+        run = session.execute(stmt).scalar_one_or_none()
+        
+        if not run:
+            return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
+        
+        result = services.submit_answer(
+            session, run, question_index, selected_answer_id, answered_at_ms, used_joker
+        )
+        
+        if not result.success:
+            return jsonify({
+                "error": result.error_message,
+                "code": result.error_code,
+            }), 400
+        
+        return jsonify({
+            "success": True,
+            "result": result.result,
+            "is_correct": result.result == "correct",
+            "correct_option_id": result.correct_option_id,
+            "explanation_key": result.explanation_key,
+            "next_question_index": result.next_question_index,
+            "finished": result.finished,
+            "joker_remaining": result.joker_remaining,
+        })
+
+
+@blueprint.route("/api/quiz/run/<run_id>/joker", methods=["POST"])
+@quiz_auth_required
+def api_use_joker(run_id: str):
+    """Use 50:50 joker on current question."""
+    data = request.get_json() or {}
+    question_index = data.get("question_index")
+    
+    if question_index is None:
+        return jsonify({"error": "question_index required"}), 400
+    
+    with get_session() as session:
+        from .models import QuizRun
+        from sqlalchemy import select, and_
+        
+        stmt = select(QuizRun).where(
+            and_(
+                QuizRun.id == run_id,
+                QuizRun.player_id == g.quiz_player_id
+            )
+        )
+        run = session.execute(stmt).scalar_one_or_none()
+        
+        if not run:
+            return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
+        
+        success, disabled_ids, error_code = services.use_joker(session, run, question_index)
+        
+        if not success:
+            error_messages = {
+                "LIMIT_REACHED": "50/50 limit reached (max 2 per run)",
+                "INVALID_INDEX": "Cannot use joker on this question",
+                "QUESTION_NOT_FOUND": "Question not found",
+                "NOT_ENOUGH_OPTIONS": "Question has too few options for 50/50",
+            }
+            return jsonify({
+                "success": False,
+                "error": error_messages.get(error_code, "Cannot use joker"),
+                "code": error_code or "JOKER_UNAVAILABLE",
+            }), 400
+        
+        return jsonify({
+            "success": True,
+            "disabled_answer_ids": disabled_ids,
+            "hidden_option_ids": disabled_ids,  # Alias for spec compliance
+            "fifty_fifty_used_count": 2 - run.joker_remaining,
+            "fifty_fifty_remaining": run.joker_remaining,
+            "joker_remaining": run.joker_remaining,
+        })
+
+
+@blueprint.route("/api/quiz/run/<run_id>/finish", methods=["POST"])
+@quiz_auth_required
+def api_finish_run(run_id: str):
+    """Finish run and get final score."""
+    with get_session() as session:
+        from .models import QuizRun
+        from sqlalchemy import select, and_
+        
+        stmt = select(QuizRun).where(
+            and_(
+                QuizRun.id == run_id,
+                QuizRun.player_id == g.quiz_player_id
+            )
+        )
+        run = session.execute(stmt).scalar_one_or_none()
+        
+        if not run:
+            return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
+        
+        if run.status != "in_progress":
+            return jsonify({"error": "Run already finished", "code": "RUN_FINISHED"}), 400
+        
+        result = services.finish_run(session, run)
+        
+        return jsonify({
+            "success": True,
+            "total_score": result.total_score,
+            "tokens_count": result.tokens_count,
+            "breakdown": result.breakdown,
+        })
+
+
+# ============================================================================
+# API Routes - Questions (for gameplay)
+# ============================================================================
+
+@blueprint.route("/api/quiz/questions/<question_id>")
+@quiz_auth_required
+def api_get_question(question_id: str):
+    """Get question details (for displaying during gameplay)."""
+    with get_session() as session:
+        from .models import QuizQuestion
+        from sqlalchemy import select
+        
+        stmt = select(QuizQuestion).where(QuizQuestion.id == question_id)
+        question = session.execute(stmt).scalar_one_or_none()
+        
+        if not question:
+            return jsonify({"error": "Question not found"}), 404
+        
+        return jsonify({
+            "id": question.id,
+            "difficulty": question.difficulty,
+            "type": question.type,
+            "prompt_key": question.prompt_key,
+            "explanation_key": question.explanation_key,
+            "answers": question.answers,
+            "media": question.media,
+        })
+
+
+# ============================================================================
+# Admin API Routes - Content Import
+# ============================================================================
+
+def webapp_admin_required(f: Callable) -> Callable:
+    """Decorator to require webapp admin authentication.
+    
+    This checks for the webapp's JWT-based admin authentication.
+    Falls back to a simple check if the auth system is not available.
+    """
+    @wraps(f)
+    def decorated(*args: Any, **kwargs: Any) -> Any:
+        # Try to use webapp's role-based auth if available
+        try:
+            from src.app.auth.decorators import require_role
+            from src.app.auth import Role
+            
+            # Check if user has admin role via webapp auth
+            role = getattr(g, "role", None)
+            if role is None:
+                return jsonify({
+                    "error": "Admin authentication required",
+                    "code": "ADMIN_AUTH_REQUIRED"
+                }), 401
+            
+            # ROLE_ORDER is ["admin", "editor", "user", "guest"]
+            # Admin is index 0, so we need role to be "admin"
+            if role != "admin":
+                return jsonify({
+                    "error": "Admin role required",
+                    "code": "ADMIN_ROLE_REQUIRED"
+                }), 403
+                
+        except ImportError:
+            # Auth module not available, fall back to header-based auth
+            # This is a placeholder for development/testing
+            admin_key = request.headers.get("X-Admin-Key")
+            import os
+            expected_key = os.environ.get("QUIZ_ADMIN_KEY")
+            
+            if not expected_key:
+                return jsonify({
+                    "error": "Admin import not configured",
+                    "code": "ADMIN_NOT_CONFIGURED"
+                }), 503
+            
+            if admin_key != expected_key:
+                return jsonify({
+                    "error": "Invalid admin key",
+                    "code": "ADMIN_KEY_INVALID"
+                }), 401
+        
+        return f(*args, **kwargs)
+    return decorated
+
+
+@blueprint.route("/api/admin/quiz/import", methods=["POST"])
+@webapp_admin_required
+def api_admin_import_content():
+    """Import quiz content from YAML/JSON file.
+    
+    Accepts multipart form data with:
+    - file: YAML or JSON file containing topic/questions
+    - mode: "upsert" (default) or "replace"
+    
+    File format should match content/topics/*.yml structure:
+    ```yaml
+    topic_id: my_topic
+    title_key: topics.my_topic.title
+    description_key: topics.my_topic.description
+    questions:
+      - id: q1
+        difficulty: 1
+        type: single_choice
+        prompt_key: questions.q1.prompt
+        answers:
+          - text_key: questions.q1.a1
+            is_correct: true
+          - text_key: questions.q1.a2
+            is_correct: false
+    ```
+    """
+    import yaml
+    from .validation import validate_topic_content
+    from .models import QuizTopic, QuizQuestion
+    from sqlalchemy import select
+    
+    # Check for file upload
+    if "file" not in request.files:
+        return jsonify({
+            "error": "No file provided",
+            "code": "NO_FILE"
+        }), 400
+    
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({
+            "error": "Empty filename",
+            "code": "EMPTY_FILENAME"
+        }), 400
+    
+    # Determine format from extension
+    filename = file.filename.lower()
+    if filename.endswith(".yml") or filename.endswith(".yaml"):
+        try:
+            content = yaml.safe_load(file.read().decode("utf-8"))
+        except yaml.YAMLError as e:
+            return jsonify({
+                "error": f"Invalid YAML: {e}",
+                "code": "INVALID_YAML"
+            }), 400
+    elif filename.endswith(".json"):
+        try:
+            content = json.loads(file.read().decode("utf-8"))
+        except json.JSONDecodeError as e:
+            return jsonify({
+                "error": f"Invalid JSON: {e}",
+                "code": "INVALID_JSON"
+            }), 400
+    else:
+        return jsonify({
+            "error": "Unsupported file format. Use .yml, .yaml, or .json",
+            "code": "UNSUPPORTED_FORMAT"
+        }), 400
+    
+    # Validate content structure
+    errors = validate_topic_content(content)
+    if errors:
+        return jsonify({
+            "error": "Validation failed",
+            "code": "VALIDATION_FAILED",
+            "details": errors
+        }), 400
+    
+    # Get import mode
+    mode = request.form.get("mode", "upsert")
+    if mode not in ("upsert", "replace"):
+        return jsonify({
+            "error": "Invalid mode. Use 'upsert' or 'replace'",
+            "code": "INVALID_MODE"
+        }), 400
+    
+    # Import content
+    topic_id = content["topic_id"]
+    
+    with get_session() as session:
+        # Check if topic exists
+        stmt = select(QuizTopic).where(QuizTopic.id == topic_id)
+        existing_topic = session.execute(stmt).scalar_one_or_none()
+        
+        stats = {
+            "topic_created": False,
+            "topic_updated": False,
+            "questions_created": 0,
+            "questions_updated": 0,
+            "questions_deleted": 0,
+        }
+        
+        if existing_topic:
+            # Update existing topic
+            existing_topic.title_key = content.get("title_key", f"topics.{topic_id}.title")
+            existing_topic.description_key = content.get("description_key", f"topics.{topic_id}.description")
+            existing_topic.is_active = content.get("is_active", True)
+            stats["topic_updated"] = True
+            topic = existing_topic
+        else:
+            # Create new topic
+            topic = QuizTopic(
+                id=topic_id,
+                title_key=content.get("title_key", f"topics.{topic_id}.title"),
+                description_key=content.get("description_key", f"topics.{topic_id}.description"),
+                is_active=content.get("is_active", True),
+            )
+            session.add(topic)
+            stats["topic_created"] = True
+        
+        # Handle questions
+        if mode == "replace":
+            # Delete all existing questions for this topic
+            from sqlalchemy import delete
+            del_stmt = delete(QuizQuestion).where(QuizQuestion.topic_id == topic_id)
+            result = session.execute(del_stmt)
+            stats["questions_deleted"] = result.rowcount
+        
+        # Process questions
+        for q_data in content.get("questions", []):
+            q_id = q_data["id"]
+            
+            # Check if question exists (only relevant for upsert mode)
+            if mode == "upsert":
+                q_stmt = select(QuizQuestion).where(QuizQuestion.id == q_id)
+                existing_q = session.execute(q_stmt).scalar_one_or_none()
+            else:
+                existing_q = None
+            
+            if existing_q:
+                # Update existing question
+                existing_q.difficulty = q_data["difficulty"]
+                existing_q.type = q_data.get("type", "single_choice")
+                existing_q.prompt_key = q_data["prompt_key"]
+                existing_q.explanation_key = q_data.get("explanation_key")
+                existing_q.answers = q_data["answers"]
+                existing_q.media = q_data.get("media")
+                stats["questions_updated"] += 1
+            else:
+                # Create new question
+                question = QuizQuestion(
+                    id=q_id,
+                    topic_id=topic_id,
+                    difficulty=q_data["difficulty"],
+                    type=q_data.get("type", "single_choice"),
+                    prompt_key=q_data["prompt_key"],
+                    explanation_key=q_data.get("explanation_key"),
+                    answers=q_data["answers"],
+                    media=q_data.get("media"),
+                )
+                session.add(question)
+                stats["questions_created"] += 1
+        
+        session.commit()
+        
+        logger.info(
+            "Quiz content imported: topic=%s, created=%d, updated=%d, deleted=%d",
+            topic_id,
+            stats["questions_created"],
+            stats["questions_updated"],
+            stats["questions_deleted"],
+        )
+        
+        return jsonify({
+            "success": True,
+            "topic_id": topic_id,
+            "stats": stats,
+        })

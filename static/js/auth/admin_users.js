@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
       params.set('q', q);
     }
     
-    const url = '/admin/users' + (params.toString() ? '?' + params.toString() : '');
+    const url = '/api/admin/users' + (params.toString() ? '?' + params.toString() : '');
     
     fetch(url, { credentials: 'same-origin' })
       .then((r) => {
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editEmail) editEmail.classList.remove('md3-outlined-textfield__input--error');
     
     // Fetch user data
-    fetch(`/admin/users/${encodeURIComponent(userId)}`, { credentials: 'same-origin' })
+    fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => {
         if (data.error) {
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
       saveEditBtn.innerHTML = '<span class="material-symbols-rounded md3-button__icon md3-button__icon--loading" aria-hidden="true">progress_activity</span>Speichern...';
     }
     
-    fetch(`/admin/users/${encodeURIComponent(userId)}`, {
+    fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json', 
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', function () {
       editResetPasswordBtn.innerHTML = '<span class="material-symbols-rounded md3-button__icon md3-button__icon--loading" aria-hidden="true">progress_activity</span>Wird gesendet...';
     }
     
-    fetch(`/admin/users/${encodeURIComponent(userId)}/reset-password`, {
+    fetch(`/api/admin/users/${encodeURIComponent(userId)}/reset-password`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json', 
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const formData = new FormData(createForm);
       const data = Object.fromEntries(formData.entries());
 
-      fetch('/admin/users', {
+      fetch('/api/admin/users', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 

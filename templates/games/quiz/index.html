@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% set page_name = 'quiz' %}
+{% block page_title %}Quiz – Games.Hispanistica{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/games/quiz.css') }}">
+  <script src="{{ url_for('static', filename='js/games/quiz-i18n.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/games/quiz-topics.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="game-shell" data-game="quiz">
+  <div class="md3-page quiz-page-stack" role="main" aria-label="Quiz">
+    <header class="md3-page__header">
+      <div class="md3-hero md3-hero--card md3-hero__container">
+        <div class="md3-hero__icon" aria-hidden="true">
+          <span class="material-symbols-rounded">quiz</span>
+        </div>
+        <div class="md3-hero__content">
+          <p class="md3-body-small md3-hero__eyebrow" data-i18n="ui.quiz.title">Quiz</p>
+          <h1 class="md3-headline-medium md3-hero__title" data-i18n="ui.quiz.select_topic">Wähle ein Thema</h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- Status Card (only when authenticated) -->
+    {% include 'games/quiz/_status_card.html' %}
+
+    <main class="quiz-main">
+      <!-- Topic cards will be loaded here -->
+      <div class="quiz-topics" id="quiz-topics-container">
+        <div class="quiz-loading">
+          <span class="material-symbols-rounded quiz-loading__icon">hourglass_empty</span>
+          <span>Lade Themen...</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

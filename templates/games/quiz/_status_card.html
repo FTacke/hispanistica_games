@@ -1,0 +1,16 @@
+{# Quiz Status Card - Reusable component for logged-in player status #}
+{# Shows player name and logout button #}
+{# Only display when player is authenticated #}
+
+{% if player_authenticated %}
+<div class="quiz-status-card">
+  <div class="quiz-status-card__player">
+    <span class="material-symbols-rounded">person</span>
+    <span>{{ player_name }}</span>
+  </div>
+  <button type="button" class="quiz-status-card__logout" id="quiz-logout-btn" data-i18n-aria="ui.quiz.logout_aria">
+    <span class="material-symbols-rounded">logout</span>
+    <span data-i18n="ui.quiz.logout">Abmelden</span>
+  </button>
+</div>
+{% endif %}

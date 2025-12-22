@@ -5,14 +5,20 @@ from __future__ import annotations
 from flask import Flask
 
 from . import (
+    admin,
     auth,
     public,
 )
+
+# Import game modules
+from game_modules.quiz import quiz_blueprint
 
 
 BLUEPRINTS = [
     public.blueprint,
     auth.blueprint,
+    admin.blueprint,
+    quiz_blueprint,  # Quiz game module
 ]
 
 

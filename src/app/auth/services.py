@@ -493,3 +493,154 @@ def on_failed_login(user: Optional[User]) -> None:
             # Lockout policy: 5 failed attempts -> lock for 10 minutes
             if dbu.login_failed_count >= 5:
                 dbu.locked_until = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+
+# Admin user management functions
+def list_users(
+    include_inactive: bool = False, search_query: Optional[str] = None
+) -> list[User]:
+    """List all users with optional filtering.
+
+    Args:
+        include_inactive: Include inactive users in results
+        search_query: Search by username or email (case-insensitive)
+
+    Returns:
+        List of User objects matching criteria
+    """
+    with get_session() as session:
+        stmt = select(User)
+
+        # Filter by active status
+        if not include_inactive:
+            stmt = stmt.where(User.is_active == True)
+
+        # Search filter
+        if search_query:
+            q = f"%{search_query.lower()}%"
+            stmt = stmt.where(
+                (User.username.ilike(q)) | (User.email.ilike(q))
+            )
+
+        # Order by created_at descending (newest first)
+        stmt = stmt.order_by(User.created_at.desc())
+
+        return session.execute(stmt).scalars().all()
+
+
+def create_user(
+    username: str,
+    email: Optional[str] = None,
+    role: str = "user",
+    generate_reset_token: bool = True,
+) -> Tuple[User, Optional[str]]:
+    """Create a new user (admin function).
+
+    Args:
+        username: Username (will be lowercased and checked for uniqueness)
+        email: Optional email address
+        role: User role (admin/editor/user)
+        generate_reset_token: If True, generate reset token for initial password setup
+
+    Returns:
+        Tuple of (User object, reset_token_string or None)
+
+    Raises:
+        ValueError: If username exists or role is invalid
+    """
+    username = username.strip().lower()
+    if email:
+        email = email.strip().lower()
+
+    # Validate role
+    valid_roles = {"admin", "editor", "user"}
+    if role not in valid_roles:
+        raise ValueError("invalid_role")
+
+    with get_session() as session:
+        # Check uniqueness
+        existing = (
+            session.query(User)
+            .filter((User.username == username) | (User.email == email))
+            .first()
+        )
+        if existing:
+            if existing.username == username:
+                raise ValueError("username_exists")
+            if email and existing.email == email:
+                raise ValueError("email_exists")
+
+        # Create user with placeholder password (will be set via reset token)
+        user_id = str(uuid.uuid4())
+        placeholder_hash = hash_password(secrets.token_urlsafe(32))
+
+        user = User(
+            id=user_id,
+            username=username,
+            email=email,
+            password_hash=placeholder_hash,
+            role=role,
+            is_active=True,
+            must_reset_password=True,  # Force password reset on first login
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+
+        session.add(user)
+        session.flush()  # Ensure user.id is populated
+
+    # Generate reset token outside the session context (creates new session)
+    reset_token = None
+    if generate_reset_token:
+        raw_token, _ = create_reset_token_for_user(user)
+        reset_token = raw_token
+
+    return user, reset_token
+
+
+def admin_update_user(
+    user_id: str,
+    email: Optional[str] = None,
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
+) -> None:
+    """Update user fields (admin function).
+
+    Args:
+        user_id: User ID to update
+        email: New email (optional)
+        role: New role (admin/editor/user) (optional)
+        is_active: New active status (optional)
+
+    Raises:
+        KeyError: If user not found
+        ValueError: If email exists or role is invalid
+    """
+    with get_session() as session:
+        stmt = select(User).where(User.id == user_id)
+        user = session.execute(stmt).scalars().first()
+        if not user:
+            raise KeyError("user_not_found")
+
+        # Update email if provided
+        if email is not None:
+            email = email.strip().lower() if email else None
+            if email and email != user.email:
+                # Check uniqueness
+                existing = session.query(User).filter(User.email == email).first()
+                if existing and existing.id != user_id:
+                    raise ValueError("email_exists")
+                user.email = email
+
+        # Update role if provided
+        if role is not None:
+            valid_roles = {"admin", "editor", "user"}
+            if role not in valid_roles:
+                raise ValueError("invalid_role")
+            user.role = role
+
+        # Update active status if provided
+        if is_active is not None:
+            user.is_active = is_active
+
+        user.updated_at = datetime.now(timezone.utc)
