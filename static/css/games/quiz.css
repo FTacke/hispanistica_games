@@ -1,4 +1,4 @@
-Ôªø/**
+/**
  * Quiz Module Styles
  * 
  * All styles are scoped to .game-shell[data-game="quiz"] to prevent
@@ -445,7 +445,7 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-question__prompt {
-  font-size: 1.375rem;  /* Gr√∂√üer f√ºr mehr Hierarchie */
+  font-size: 1.375rem;  /* Grˆﬂer f¸r mehr Hierarchie */
   font-weight: 600;  /* Fetter */
   line-height: 1.5;
   color: var(--quiz-on-surface);
@@ -478,7 +478,7 @@
   gap: var(--quiz-space-md);
   padding: var(--quiz-space-md) var(--quiz-space-lg);
   background: var(--quiz-surface-container-lowest);  /* Heller als surface */
-  border: 2px solid var(--quiz-outline);  /* St√§rker sichtbar */
+  border: 2px solid var(--quiz-outline);  /* St‰rker sichtbar */
   border-radius: var(--quiz-radius-md);
   cursor: pointer;
   transition: 
@@ -512,10 +512,10 @@
 
 /* STATE: selected_correct - User chose correctly */
 .game-shell[data-game="quiz"] .quiz-answer--selected-correct {
-  background: var(--quiz-success-container);  /* Kr√§ftiger gr√ºn */
+  background: var(--quiz-success-container);  /* Kr‰ftiger gr¸n */
   border-color: var(--quiz-success);
   color: var(--quiz-on-success-container);
-  box-shadow: 0 0 0 3px rgba(15, 90, 36, 0.15);  /* Gr√ºner Glow */
+  box-shadow: 0 0 0 3px rgba(15, 90, 36, 0.15);  /* Gr¸ner Glow */
   font-weight: 600;  /* Mehr Gewicht */
 }
 
@@ -721,7 +721,7 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-topic-card {
-  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene: Wei√ü */
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene: Weiﬂ */
   border-radius: var(--quiz-radius-lg);
   padding: var(--quiz-space-lg);
   box-shadow: var(--quiz-shadow-sm);
@@ -735,7 +735,7 @@
 .game-shell[data-game="quiz"] .quiz-topic-card:hover {
   box-shadow: var(--quiz-shadow-lg);
   transform: translateY(-2px);  /* Lift-Effekt */
-  border-color: var(--quiz-outline);  /* St√§rkere Border */
+  border-color: var(--quiz-outline);  /* St‰rkere Border */
 }
 
 .game-shell[data-game="quiz"] .quiz-topic-card__icon {
@@ -833,7 +833,7 @@
 .game-shell[data-game="quiz"] .quiz-login {
   max-width: 520px;
   margin: 0 auto;
-  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene: Wei√ü */
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene: Weiﬂ */
   border-radius: var(--quiz-radius-lg);
   padding: var(--quiz-space-xl);
   box-shadow: var(--quiz-shadow-md);
@@ -964,7 +964,7 @@
 
 .game-shell[data-game="quiz"] .quiz-btn--primary:hover {
   filter: brightness(1.15);  /* Etwas heller */
-  box-shadow: var(--quiz-shadow-lg);  /* St√§rkerer Shadow */
+  box-shadow: var(--quiz-shadow-lg);  /* St‰rkerer Shadow */
   transform: translateY(-1px);  /* Leicht anheben */
 }
 
@@ -1448,7 +1448,7 @@
 
 /* Weiter Button */
 .game-shell[data-game="quiz"] .quiz-weiter-btn {
-  margin-top: var(--quiz-space-xl);  /* Mehr Abstand f√ºr klare Trennung */
+  margin-top: var(--quiz-space-xl);  /* Mehr Abstand f¸r klare Trennung */
 }
 
 /* Weiter Button disabled during transition */
@@ -2460,4 +2460,86 @@
   margin: 0;
 }
 
+
+
+
+/* ============================================================================
+   Topic Selection Cards
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--quiz-space-lg);
+  padding: var(--quiz-space-md) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-md);
+  padding: var(--quiz-space-lg);
+  background: var(--quiz-surface-container-lowest);
+  border-radius: var(--quiz-radius-lg);
+  border: 1px solid var(--quiz-outline-variant);
+  box-shadow: var(--quiz-shadow-sm);
+  transition: all var(--quiz-transition-normal);
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card:hover {
+  box-shadow: var(--quiz-shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--quiz-primary);
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--quiz-primary-container);
+  color: var(--quiz-on-primary-container);
+  border-radius: var(--quiz-radius-md);
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--quiz-on-surface);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card__description {
+  color: var(--quiz-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card__authors {
+  color: var(--quiz-on-surface-variant);
+  font-size: 0.75rem;
+  font-style: italic;
+  margin: 0;
+  padding-top: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-topic-card__play-btn {
+  margin-top: auto;
+}
+
+@media (max-width: 600px) {
+  .game-shell[data-game="quiz"] .quiz-topics {
+    grid-template-columns: 1fr;
+  }
+}
 

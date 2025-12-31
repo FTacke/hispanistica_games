@@ -56,10 +56,10 @@
     }
 
     const html = topics.map(topic => {
-      // API returns title_key which contains the actual title (not an i18n key)
-      // Try i18n first if available, but fall back to API data
+      // API returns title_key which may contain plaintext or i18n key
       let title = topic.title_key || topic.topic_id || 'Quiz';
-      let description = topic.description_key || '';
+      let description = topic.description || topic.description_key || '';
+      let authors = topic.authors || [];
       
       // Try to get i18n translations if QuizI18n is available
       if (window.QuizI18n && typeof window.QuizI18n.getTopicTitle === 'function') {
@@ -74,6 +74,12 @@
         }
       }
       
+      // Build authors line
+      let authorsLine = '';
+      if (authors.length > 0) {
+        authorsLine = `<p class="quiz-topic-card__authors">Von: ${escapeHtml(authors.join(', '))}</p>`;
+      }
+      
       return `
         <div class="quiz-topic-card">
           <div class="quiz-topic-card__icon">
@@ -81,6 +87,7 @@
           </div>
           <h2 class="quiz-topic-card__title">${escapeHtml(title)}</h2>
           ${description ? `<p class="quiz-topic-card__description">${escapeHtml(description)}</p>` : ''}
+          ${authorsLine}
           <a href="${escapeHtml(topic.href)}" class="quiz-btn quiz-btn--primary quiz-btn--full quiz-topic-card__play-btn">
             <span class="material-symbols-rounded">play_arrow</span>
             <span>Spielen</span>

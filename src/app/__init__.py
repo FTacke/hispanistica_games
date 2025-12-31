@@ -137,6 +137,32 @@ def create_app(env_name: str | None = None) -> Flask:
     register_maintenance_commands(app)
     register_error_handlers(app)
     setup_logging(app)
+    
+    # Auto-seed quiz units in development
+    if app.debug or env_name == "development":
+        try:
+            from game_modules.quiz.seed import seed_quiz_units
+            from src.app.extensions.sqlalchemy_ext import get_session
+            
+            app.logger.info("Auto-seeding quiz units (DEV mode)...")
+            
+            with get_session() as session:
+                result = seed_quiz_units(session)
+                
+                if result.get("skipped") == "locked":
+                    app.logger.info("Quiz seed skipped (already in progress)")
+                elif result["success"]:
+                    app.logger.info(
+                        f"Quiz units seeded: {result['units_imported']} units, "
+                        f"{result['questions_imported']} questions"
+                    )
+                else:
+                    app.logger.warning(
+                        f"Quiz seeding completed with errors: {result['errors']}"
+                    )
+                    
+        except Exception as e:
+            app.logger.error(f"Failed to auto-seed quiz units: {e}", exc_info=True)
 
     return app
 

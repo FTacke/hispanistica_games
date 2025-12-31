@@ -28,6 +28,7 @@ from sqlalchemy import (
     BigInteger,
     UniqueConstraint,
     Index,
+    ARRAY,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -83,8 +84,9 @@ class QuizTopic(QuizBase):
     __tablename__ = "quiz_topics"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # topic_id e.g. "demo_topic"
-    title_key: Mapped[str] = mapped_column(String(100), nullable=False)  # i18n key for title
-    description_key: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    title_key: Mapped[str] = mapped_column(String(100), nullable=False)  # i18n key for title (or plaintext)
+    description_key: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # i18n key for description (or plaintext)
+    authors: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True, server_default='{}')  # List of author names
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)

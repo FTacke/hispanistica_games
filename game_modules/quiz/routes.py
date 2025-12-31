@@ -217,6 +217,8 @@ def api_get_topics():
                     "topic_id": t.id,
                     "title_key": t.title_key,
                     "description_key": t.description_key,
+                    "description": t.description_key or "",  # Expose description (may be plaintext or i18n key)
+                    "authors": t.authors or [],  # New: expose authors list
                     "href": f"/games/quiz/{t.id}",
                 }
                 for t in topics
