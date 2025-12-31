@@ -1,0 +1,162 @@
+{
+  "schema_version": "quiz_unit_v1",
+  "slug": "replace_me_slug",
+  "title": "Replace Me: Quiz Title",
+  "description": "Replace this description with a brief overview of the quiz content (3-6 sentences). Explain what topics are covered and what learners can expect.",
+  "authors": ["Replace Me Author"],
+  "is_active": true,
+  "order_index": 0,
+  "questions_statistics": {},
+  "questions": [
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Replace me: What is the question for difficulty level 1?",
+      "explanation": "Replace me: Explain why this is the correct answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Replace me: Another question for difficulty level 1?",
+      "explanation": "Replace me: Explain the answer here.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Replace me: Question for difficulty level 2?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Replace me: Another question for difficulty level 2?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Replace me: Question for difficulty level 3?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Replace me: Another question for difficulty level 3?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 4,
+      "type": "single_choice",
+      "prompt": "Replace me: Question for difficulty level 4?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 4,
+      "type": "single_choice",
+      "prompt": "Replace me: Another question for difficulty level 4?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 5,
+      "type": "single_choice",
+      "prompt": "Replace me: Question for difficulty level 5?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "difficulty": 5,
+      "type": "single_choice",
+      "prompt": "Replace me: Another question for difficulty level 5?",
+      "explanation": "Replace me: Explain the answer.",
+      "answers": [
+        {"text": "Replace me: Correct answer", "correct": true},
+        {"text": "Replace me: Wrong answer 1", "correct": false},
+        {"text": "Replace me: Wrong answer 2", "correct": false},
+        {"text": "Replace me: Wrong answer 3", "correct": false}
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    }
+  ]
+}

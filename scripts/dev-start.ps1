@@ -68,22 +68,37 @@ if ($dbMode -eq "postgres" -and $dockerAvailable) {
     Write-Host "WARN: Docker not available but Postgres mode selected. Use default SQLite mode." -ForegroundColor Yellow
 }
 
+# Activate venv if available
+$venvActivate = Join-Path $repoRoot ".venv\Scripts\Activate.ps1"
+if (Test-Path $venvActivate) {
+    Write-Host "Activating Python virtual environment..." -ForegroundColor Gray
+    & $venvActivate
+    $venvPython = Join-Path $repoRoot ".venv\Scripts\python.exe"
+} else {
+    $venvPython = "python"
+}
+
+# Quiz content pipeline (DEV only, PostgreSQL only)
+if ($dbMode -eq "postgres") {
+    Write-Host "`nRunning quiz content pipeline..." -ForegroundColor Cyan
+    Write-Host "  1) Normalize JSON units (IDs + statistics)" -ForegroundColor Gray
+    Write-Host "  2) Seed database (upsert)" -ForegroundColor Gray
+    Write-Host "  3) Soft prune removed topics" -ForegroundColor Gray
+    
+    $quizSeedScript = Join-Path $repoRoot "scripts\quiz_seed.py"
+    & $venvPython $quizSeedScript --prune-soft
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "`nERROR: Quiz seed pipeline failed!" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "[OK] Quiz content ready`n" -ForegroundColor Green
+}
+
 # Run the dev server
-Write-Host "`nStarting Flask dev server at http://localhost:8000" -ForegroundColor Cyan
+Write-Host "Starting Flask dev server at http://localhost:8000" -ForegroundColor Cyan
 Write-Host "Login: admin / change-me`n" -ForegroundColor Cyan
 
-# Use venv Python if available
-$venvPython = Join-Path $repoRoot ".venv\Scripts\python.exe"
-if (Test-Path $venvPython) {
-    & $venvPython -m src.app.main
-} else {
-    python -m src.app.main
-}
+& $venvPython -m src.app.main
 
-# Use venv Python if available, otherwise fall back to system Python
-$venvPython = Join-Path $repoRoot ".venv\Scripts\python.exe"
-if (Test-Path $venvPython) {
-    & $venvPython -m src.app.main
-} else {
-    python -m src.app.main
-}

@@ -228,27 +228,49 @@ def import_all_topics(session: Session, i18n_locale: str = "de") -> Dict[str, in
 # ============================================================================
 
 def acquire_seed_lock(session: Session) -> bool:
-    """Try to acquire PostgreSQL advisory lock for seeding.
+    """Try to acquire advisory lock for seeding (PostgreSQL-compatible).
+    
+    For SQLite, always returns True (no locking mechanism available).
     
     Returns:
-        True if lock acquired, False if already locked
+        True if lock acquired or not needed, False if already locked
     """
     try:
-        # Use pg_try_advisory_lock with integer ID
-        lock_id = int(QUIZ_SEED_LOCK_ID, 16)  # Convert hex to int
-        result = session.execute(text("SELECT pg_try_advisory_lock(:lock_id)"), {"lock_id": lock_id})
-        acquired = result.scalar()
-        return bool(acquired)
+        # Detect database type from dialect name
+        dialect_name = session.bind.dialect.name
+        
+        if dialect_name == "postgresql":
+            # Use pg_try_advisory_lock with integer ID
+            lock_id = int(QUIZ_SEED_LOCK_ID, 16)  # Convert hex to int
+            result = session.execute(text("SELECT pg_try_advisory_lock(:lock_id)"), {"lock_id": lock_id})
+            acquired = result.scalar()
+            return bool(acquired)
+        else:
+            # SQLite or other dialects: no advisory lock support, allow execution
+            logger.debug(f"Database dialect {dialect_name} does not support advisory locks, skipping")
+            return True
+            
     except Exception as e:
         logger.warning(f"Failed to acquire advisory lock: {e}")
         return False
 
 
 def release_seed_lock(session: Session) -> None:
-    """Release PostgreSQL advisory lock for seeding."""
+    """Release advisory lock for seeding (PostgreSQL-compatible).
+    
+    For SQLite, this is a no-op.
+    """
     try:
-        lock_id = int(QUIZ_SEED_LOCK_ID, 16)
-        session.execute(text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": lock_id})
+        # Detect database type from dialect name
+        dialect_name = session.bind.dialect.name
+        
+        if dialect_name == "postgresql":
+            lock_id = int(QUIZ_SEED_LOCK_ID, 16)
+            session.execute(text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": lock_id})
+        else:
+            # SQLite or other dialects: no-op
+            pass
+            
     except Exception as e:
         logger.warning(f"Failed to release advisory lock: {e}")
 
@@ -310,6 +332,7 @@ def import_quiz_unit(session: Session, unit: QuizUnitSchema) -> tuple[QuizTopic,
     
     # Upsert questions
     questions_count = 0
+    difficulty_counts = {}  # Track difficulty distribution
     
     for q in unit.questions:
         # Build answers as JSONB (store plaintext as text_key)
@@ -321,6 +344,9 @@ def import_quiz_unit(session: Session, unit: QuizUnitSchema) -> tuple[QuizTopic,
             }
             for ans in q.answers
         ]
+        
+        # Track difficulty distribution
+        difficulty_counts[q.difficulty] = difficulty_counts.get(q.difficulty, 0) + 1
         
         # Check if question exists
         existing = session.query(QuizQuestion).filter(QuizQuestion.id == q.id).first()
@@ -359,7 +385,10 @@ def import_quiz_unit(session: Session, unit: QuizUnitSchema) -> tuple[QuizTopic,
         questions_count += 1
     
     session.flush()
-    logger.info(f"Imported {questions_count} questions for unit {unit.slug}")
+    
+    # Log difficulty distribution
+    diff_str = " | ".join([f"d{d}={count}" for d, count in sorted(difficulty_counts.items())])
+    logger.info(f"Seeding topic {unit.slug} | questions: {questions_count} | {diff_str}")
     
     return topic, questions_count
 

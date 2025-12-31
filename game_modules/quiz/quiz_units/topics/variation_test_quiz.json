@@ -1,0 +1,384 @@
+{
+  "schema_version": "quiz_unit_v1",
+  "slug": "variation_test_quiz",
+  "title": "Test Quiz - Aussprache",
+  "description": "Dies ist ein Test-Quiz mit Beispiel-Fragen zur Aussprachevariation. Dient nur zu Testzwecken für die Quiz-Engine.",
+  "authors": [
+    "Test Author"
+  ],
+  "is_active": true,
+  "order_index": 1,
+  "questions_statistics": {
+    "1": 1,
+    "2": 2,
+    "3": 2,
+    "4": 2,
+    "5": 3
+  },
+  "questions": [
+    {
+      "id": "variation_q01",
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Was ist 'Seseo'?",
+      "explanation": "Seseo bezeichnet die Aussprache von 'c' (vor e/i) und 'z' als [s], wie in weiten Teilen Lateinamerikas und Teilen Südspaniens üblich.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Die Aussprache von 'c' und 'z' als [s]",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Die Aussprache von 'll' und 'y' gleich",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Die Aussprache von 'c' und 'z' als [θ]",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Das Weglassen von 's' am Wortende",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [
+        {
+          "type": "book",
+          "title": "Fonética y fonología españolas",
+          "author": "Quilis, A."
+        }
+      ],
+      "meta": {}
+    },
+    {
+      "id": "variation_q02",
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "In welcher Region wird typischerweise 'Ceceo' gesprochen?",
+      "explanation": "Ceceo ist hauptsächlich in einigen Teilen Andalusiens verbreitet, wo sowohl 'c/z' als auch 's' als [θ] (wie englisches 'th') ausgesprochen werden.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "In Teilen Andalusiens",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "In ganz Mexiko",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "In Argentinien",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "In Katalonien",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "id": "variation_q03",
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Was versteht man unter 'Yeísmo'?",
+      "explanation": "Yeísmo bedeutet, dass 'll' und 'y' identisch ausgesprochen werden (meist als [ʝ] oder [j]). Dies ist in den meisten spanischsprachigen Gebieten die Norm.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Die gleiche Aussprache von 'll' und 'y'",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Die Betonung der letzten Silbe",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Das Verschlucken von Konsonanten",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Die Aussprache von 'j' als [h]",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [
+        {
+          "type": "article",
+          "title": "El yeísmo en el mundo hispánico",
+          "author": "Lipski, J."
+        }
+      ],
+      "meta": {}
+    },
+    {
+      "id": "variation_q04",
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Welches Phänomen beschreibt das Weglassen oder Aspirieren des 's' am Silbenende?",
+      "explanation": "Die Aspiration oder Elision von 's' am Silbenende ist charakteristisch für karibisches Spanisch und Teile Andalusiens. 'Estados' wird z.B. als ['ehtao] oder ['etao] ausgesprochen.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Aspiración/elisión de 's'",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Seseo",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Voseo",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Leísmo",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {
+        "region": "Caribbean, Andalusia"
+      }
+    },
+    {
+      "id": "variation_q05",
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "In welchem Land wird 'vos' statt 'tú' verwendet?",
+      "explanation": "Voseo ist die Verwendung von 'vos' anstelle von 'tú'. Dies ist besonders in Argentinien, Uruguay und Teilen Mittelamerikas verbreitet.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Argentinien",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Spanien",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Mexiko",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Peru",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [
+        {
+          "type": "book",
+          "title": "El español de América",
+          "author": "Moreno de Alba, J."
+        }
+      ],
+      "meta": {}
+    },
+    {
+      "id": "variation_q06",
+      "difficulty": 4,
+      "type": "single_choice",
+      "prompt": "Wie wird der Laut 'll' in Rioplatense-Spanisch (Argentinien/Uruguay) typischerweise ausgesprochen?",
+      "explanation": "Im Rioplatense-Spanisch wird 'll' und 'y' oft als [ʃ] (wie 'sch' im Deutschen) oder [ʒ] (stimmhaft) ausgesprochen. 'Calle' klingt wie 'casche'.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Als [ʃ] oder [ʒ] (wie 'sch')",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Als [l] (wie reguläres 'l')",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Als [θ] (wie englisches 'th')",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Wird nicht ausgesprochen",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {
+        "region": "Rioplatense"
+      }
+    },
+    {
+      "id": "variation_q07",
+      "difficulty": 4,
+      "type": "single_choice",
+      "prompt": "Was ist charakteristisch für die Aussprache in Kastilien (España castellana)?",
+      "explanation": "In Kastilien wird zwischen 'c/z' [θ] und 's' [s] unterschieden (distinción), und 'll' wird oft noch als [ʎ] (palatales 'l') ausgesprochen, besonders bei älteren Sprechern.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Unterscheidung zwischen 'c/z' [θ] und 's' [s]",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Seseo (alle als [s])",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Voseo",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Aspiration von 's'",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [
+        {
+          "type": "book",
+          "title": "Manual de dialectología hispánica",
+          "author": "Alvar, M."
+        }
+      ],
+      "meta": {}
+    },
+    {
+      "id": "variation_q08",
+      "difficulty": 5,
+      "type": "single_choice",
+      "prompt": "Welches phonetische Phänomen beschreibt die Velarisierung oder Elision von 'r' am Silbenende in karibischem Spanisch?",
+      "explanation": "In karibischem Spanisch wird 'r' am Silbenende oft velarisiert (als [x] oder ähnlich) oder ganz elidiert. 'Puerto' kann wie 'Puelto' klingen.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Velarización/elisión de 'r'",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Rotacismo",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Lambdacismo",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Ensordecimiento",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [
+        {
+          "type": "article",
+          "title": "Fonética del español caribeño",
+          "author": "López Morales, H."
+        }
+      ],
+      "meta": {
+        "difficulty_note": "Advanced phonetics"
+      }
+    },
+    {
+      "id": "variation_q09",
+      "difficulty": 5,
+      "type": "single_choice",
+      "prompt": "Was ist 'Lambdacismo'?",
+      "explanation": "Lambdacismo ist die Substitution von 'r' durch 'l' (z.B. 'puerto' → 'puelto'). Das Gegenteil, 'l' → 'r', heißt Rotacismo.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Die Substitution von 'r' durch 'l'",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Die Substitution von 'l' durch 'r'",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Die Aussprache von 'll' als [ʎ]",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Das Weglassen von Vokalen",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [],
+      "meta": {}
+    },
+    {
+      "id": "variation_q10",
+      "difficulty": 5,
+      "type": "single_choice",
+      "prompt": "In welcher Region Spaniens ist die Erhaltung der Unterscheidung zwischen 'll' [ʎ] und 'y' [ʝ] noch am stärksten verbreitet?",
+      "explanation": "Die Unterscheidung zwischen 'll' und 'y' (lleísmo) ist in ländlichen Gebieten Nordspaniens (Kastilien-León, Teile Asturiens) sowie in Teilen der Anden noch zu finden, verschwindet aber generell.",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "Ländliches Kastilien-León",
+          "correct": true
+        },
+        {
+          "id": "a2",
+          "text": "Madrid",
+          "correct": false
+        },
+        {
+          "id": "a3",
+          "text": "Sevilla",
+          "correct": false
+        },
+        {
+          "id": "a4",
+          "text": "Barcelona",
+          "correct": false
+        }
+      ],
+      "media": null,
+      "sources": [
+        {
+          "type": "book",
+          "title": "Atlas lingüístico de la Península Ibérica",
+          "author": "Navarro Tomás, T."
+        }
+      ],
+      "meta": {
+        "difficulty_note": "Dialectology"
+      }
+    }
+  ]
+}

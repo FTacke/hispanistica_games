@@ -107,7 +107,7 @@ class QuizQuestion(QuizBase):
     """
     __tablename__ = "quiz_questions"
 
-    id: Mapped[str] = mapped_column(String(50), primary_key=True)  # stable question id e.g. "demo-0001"
+    id: Mapped[str] = mapped_column(String(100), primary_key=True)  # stable question id e.g. "topic_slug_q_<ULID>"
     topic_id: Mapped[str] = mapped_column(String(50), ForeignKey("quiz_topics.id", ondelete="CASCADE"), nullable=False)
     difficulty: Mapped[int] = mapped_column(Integer, nullable=False)  # 1-5
     type: Mapped[str] = mapped_column(String(20), nullable=False, default="single_choice")
@@ -175,7 +175,7 @@ class QuizRunAnswer(QuizBase):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     run_id: Mapped[str] = mapped_column(String(36), ForeignKey("quiz_runs.id", ondelete="CASCADE"), nullable=False)
-    question_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    question_id: Mapped[str] = mapped_column(String(100), nullable=False)
     question_index: Mapped[int] = mapped_column(Integer, nullable=False)
     selected_answer_id: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)  # NULL for timeout, string hash ID
     result: Mapped[str] = mapped_column(String(20), nullable=False)  # correct, wrong, timeout
@@ -216,7 +216,7 @@ class QuizQuestionStats(QuizBase):
     """Optional statistics per question (for future analytics)."""
     __tablename__ = "quiz_question_stats"
 
-    question_id: Mapped[str] = mapped_column(String(50), ForeignKey("quiz_questions.id", ondelete="CASCADE"), primary_key=True)
+    question_id: Mapped[str] = mapped_column(String(100), ForeignKey("quiz_questions.id", ondelete="CASCADE"), primary_key=True)
     played_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     correct_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     wrong_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
