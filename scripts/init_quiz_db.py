@@ -38,10 +38,12 @@ def main():
         print("       Example: postgresql://user:pass@localhost:5432/hispanistica")
         sys.exit(1)
     
-    if not db_url.startswith(('postgresql://', 'postgres://')):
-        print(f"ERROR: Quiz module requires PostgreSQL.")
-        print(f"       Current URL scheme: {db_url.split('://')[0]}")
-        print(f"       Expected: postgresql:// or postgres://")
+    scheme = db_url.split('://')[0] if '://' in db_url else ''
+    # Accept SQLAlchemy driver-style schemes, e.g. postgresql+psycopg2://...
+    if not (scheme.startswith('postgresql') or scheme.startswith('postgres')):
+        print("ERROR: Quiz module requires PostgreSQL.")
+        print(f"       Current URL scheme: {scheme or '(missing)'}")
+        print("       Expected: postgresql://, postgres://, or postgresql+<driver>://")
         sys.exit(1)
 
     from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
@@ -66,23 +68,23 @@ def main():
 
     # Create all Quiz tables
     QuizBase.metadata.create_all(bind=engine)
-    print('✓ Quiz database tables initialized.')
+    print('[OK] Quiz database tables initialized.')
 
     if args.seed:
-        print("\nSeeding demo content...")
-        from game_modules.quiz.seed import seed_demo_topic
+        print("\nSeeding demo content... SKIPPED (Demo removed)")
+        # from game_modules.quiz.seed import seed_demo_topic
         
-        with get_session() as session:
-            try:
-                if seed_demo_topic(session):
-                    print('✓ Demo topic seeded successfully.')
-                else:
-                    print('ℹ Demo topic already exists.')
-            except Exception as e:
-                print(f'✗ Failed to seed demo topic: {e}')
-                raise
+        # with get_session() as session:
+        #     try:
+        #         if seed_demo_topic(session):
+        #             print('[OK] Demo topic seeded successfully.')
+        #         else:
+        #             print('[INFO] Demo topic already exists.')
+        #     except Exception as e:
+        #         print(f'[ERROR] Failed to seed demo topic: {e}')
+        #         raise
 
-    print("\n✓ Quiz module initialization complete.")
+    print("\n[OK] Quiz module initialization complete.")
 
 
 if __name__ == "__main__":

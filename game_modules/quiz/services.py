@@ -12,6 +12,8 @@ Includes:
 from __future__ import annotations
 
 import hashlib
+import logging
+import os
 import random
 import secrets
 import uuid
@@ -21,7 +23,7 @@ from typing import Optional, List, Tuple, Dict, Any
 
 from flask import current_app
 from passlib.hash import argon2
-from sqlalchemy import select, and_, or_, desc, func
+from sqlalchemy import select, and_, or_, desc, asc, func
 from sqlalchemy.orm import Session
 
 from .models import (
@@ -35,6 +37,36 @@ from .models import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
+_debug_counter = 0
+
+
+def _quiz_debug_enabled() -> bool:
+    try:
+        if current_app and current_app.config.get("QUIZ_DEBUG"):
+            return True
+    except Exception:
+        # current_app may not be available outside app context
+        pass
+
+    return os.environ.get("QUIZ_DEBUG", "0") in {"1", "true", "TRUE", "yes", "YES"}
+
+
+def _quiz_debug_log(event: str, **fields: Any) -> None:
+    global _debug_counter
+    if not _quiz_debug_enabled():
+        return
+    _debug_counter += 1
+    logger.info(
+        "[quiz-debug:%s] %s %s",
+        _debug_counter,
+        event,
+        {k: v for k, v in fields.items() if v is not None},
+    )
+
+
 # ============================================================================
 # Configuration
 # ============================================================================
@@ -44,7 +76,7 @@ JOKERS_PER_RUN = 2
 QUESTIONS_PER_RUN = 10
 DIFFICULTY_LEVELS = 5
 QUESTIONS_PER_DIFFICULTY = 2
-LEADERBOARD_LIMIT = 15
+LEADERBOARD_LIMIT = 30
 SESSION_EXPIRY_DAYS = 30
 HISTORY_RUNS_COUNT = 3
 MAX_HISTORY_QUESTIONS_PER_RUN = 2
@@ -101,6 +133,15 @@ class AnswerResult:
     error_code: Optional[str] = None
     error_message: Optional[str] = None
     is_new_user: bool = False
+    # Scoring fields - source of truth for live score
+    earned_points: int = 0  # Points earned for this answer
+    running_score: int = 0  # Total score so far in this run
+    level_completed: bool = False  # True if this answer completes a difficulty level
+    level_perfect: bool = False  # True if both questions in level were correct
+    level_bonus: int = 0  # Bonus points for perfect level (if any)
+    difficulty: int = 0  # Difficulty of the answered question
+    level_correct_count: int = 0
+    level_questions_in_level: int = 0
 
 
 @dataclass
@@ -499,12 +540,27 @@ def start_run(session: Session, player_id: str, topic_id: str, force_new: bool =
     existing = get_current_run(session, player_id, topic_id)
     
     if existing and not force_new:
+        _quiz_debug_log(
+            "start_run.resume",
+            player_id=player_id,
+            topic_id=topic_id,
+            run_id=existing.id,
+            current_index=existing.current_index,
+            status=existing.status,
+        )
         return (existing, False)
     
     if existing and force_new:
         # Mark existing as abandoned
         existing.status = "abandoned"
         existing.finished_at = datetime.now(timezone.utc)
+        _quiz_debug_log(
+            "start_run.abandon_existing",
+            player_id=player_id,
+            topic_id=topic_id,
+            run_id=existing.id,
+            current_index=existing.current_index,
+        )
     
     # Build questions for new run
     run_questions = _build_run_questions(session, player_id, topic_id)
@@ -524,6 +580,15 @@ def start_run(session: Session, player_id: str, topic_id: str, force_new: bool =
         deadline_at_ms=None,
     )
     session.add(run)
+
+    _quiz_debug_log(
+        "start_run.new",
+        player_id=player_id,
+        topic_id=topic_id,
+        run_id=run.id,
+        current_index=run.current_index,
+        force_new=force_new,
+    )
     
     return (run, True)
 
@@ -686,6 +751,7 @@ def start_question(session: Session, run: QuizRun, question_index: int, started_
 # Answering
 # ============================================================================
 
+# Force reload trigger
 def submit_answer(
     session: Session,
     run: QuizRun,
@@ -750,7 +816,21 @@ def submit_answer(
     if run.deadline_at_ms and answered_at_ms > run.deadline_at_ms:
         result = "timeout"
     elif selected_answer_id is not None:
-        result = "correct" if selected_answer_id == correct_id else "wrong"
+        # Frontend sends answer IDs via DOM dataset (always strings).
+        # Seeded/demo content may use numeric IDs (int) inside JSONB.
+        # Normalize the selected ID for comparison without changing the public
+        # correct_option_id type (existing tests expect ints for numeric content).
+        selected_id_for_compare = selected_answer_id
+        if isinstance(correct_id, int):
+            if isinstance(selected_answer_id, str):
+                s = selected_answer_id.strip()
+                if s.isdigit():
+                    selected_id_for_compare = int(s)
+        elif isinstance(correct_id, str):
+            if isinstance(selected_answer_id, int):
+                selected_id_for_compare = str(selected_answer_id)
+
+        result = "correct" if selected_id_for_compare == correct_id else "wrong"
     
     # Record answer
     answer = QuizRunAnswer(
@@ -758,7 +838,7 @@ def submit_answer(
         run_id=run.id,
         question_id=question_id,
         question_index=question_index,
-        selected_answer_id=selected_answer_id,
+        selected_answer_id=(str(selected_answer_id) if selected_answer_id is not None else None),
         result=result,
         answered_at_ms=answered_at_ms,
         used_joker=used_joker,
@@ -780,6 +860,35 @@ def submit_answer(
     run.deadline_at_ms = None
     
     finished = next_index >= QUESTIONS_PER_RUN
+
+    # IMPORTANT: flush pending inserts/updates so score calculation sees the just-added answer.
+    # Without this, calculate_running_score may query stale DB state and return lagging running_score.
+    session.flush()
+    
+    # Calculate earned points for this answer
+    difficulty = question_config["difficulty"]
+    is_correct = result == "correct"
+    earned_points = calculate_answer_score(difficulty, is_correct)
+    
+    # Calculate running score and check for level completion
+    running_score, level_completed, level_perfect, level_bonus, level_correct_count, level_questions_in_level = calculate_running_score(
+        session, run, question_index, result
+    )
+
+    _quiz_debug_log(
+        "submit_answer.result",
+        run_id=run.id,
+        player_id=run.player_id,
+        question_index=question_index,
+        result=result,
+        earned_points=earned_points,
+        running_score=running_score,
+        level_completed=level_completed,
+        level_perfect=level_perfect,
+        level_bonus=level_bonus,
+        finished=finished,
+        next_question_index=(next_index if not finished else None),
+    )
     
     return AnswerResult(
         success=True,
@@ -789,6 +898,14 @@ def submit_answer(
         next_question_index=next_index if not finished else None,
         finished=finished,
         joker_remaining=run.joker_remaining,
+        earned_points=earned_points,
+        running_score=running_score,
+        level_completed=level_completed,
+        level_perfect=level_perfect,
+        level_bonus=level_bonus,
+        difficulty=difficulty,
+        level_correct_count=level_correct_count,
+        level_questions_in_level=level_questions_in_level,
     )
 
 
@@ -886,12 +1003,132 @@ def calculate_answer_score(
     return POINTS_PER_DIFFICULTY.get(difficulty, 10)
 
 
+def calculate_running_score(
+    session: Session,
+    run: QuizRun,
+    current_question_index: int,
+    current_result: str,
+) -> Tuple[int, bool, bool, int, int, int]:
+    """Calculate running score after an answer, including level completion check.
+    
+    This function calculates the same score that will be saved in quiz_scores
+    to ensure consistency between live display and final highscore.
+    
+    Args:
+        session: SQLAlchemy session
+        run: Current run
+        current_question_index: Index of the question just answered (0-9)
+        current_result: Result of current answer ('correct', 'wrong', 'timeout')
+    
+    Returns:
+        Tuple of (running_score, level_completed, level_perfect, level_bonus, level_correct_count, level_questions_in_level)
+        - running_score: Total points so far (same formula as highscore)
+        - level_completed: True if this answer completes a difficulty level
+        - level_perfect: True if both questions in the completed level were correct
+        - level_bonus: Bonus points earned for perfect level (0 if not perfect)
+        - level_correct_count: Number of correct answers in this level
+        - level_questions_in_level: Total questions in this level
+    """
+    # Get all answers including the one just submitted
+    stmt = select(QuizRunAnswer).where(QuizRunAnswer.run_id == run.id).order_by(QuizRunAnswer.question_index)
+    answers = list(session.execute(stmt).scalars().all())
+    
+    # Build results by difficulty
+    difficulty_results: Dict[int, List[bool]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+    
+    for i, q_config in enumerate(run.run_questions):
+        if i > current_question_index:
+            break  # Don't count future questions
+        difficulty = q_config["difficulty"]
+        # Find answer for this question
+        answer = next((a for a in answers if a.question_index == i), None)
+        is_correct = answer and answer.result == "correct"
+        difficulty_results[difficulty].append(is_correct)
+    
+    # Calculate running score using exact same logic as finish_run
+    running_score = 0
+    total_level_bonus = 0
+    
+    # Track level completion for current question
+    current_difficulty = run.run_questions[current_question_index]["difficulty"]
+    level_completed = False
+    level_perfect = False
+    level_bonus = 0
+    
+    for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+        results = difficulty_results[difficulty]
+        correct_count = sum(1 for r in results if r)
+        points = correct_count * POINTS_PER_DIFFICULTY[difficulty]
+        
+        # Token bonus: both questions correct (same as highscore calculation)
+        bonus = 0
+        is_perfect = len(results) == 2 and all(results)
+        if is_perfect:
+            bonus = 2 * POINTS_PER_DIFFICULTY[difficulty]
+            total_level_bonus += bonus
+        
+        running_score += points + bonus
+        
+        # Check if current answer completed this level
+        if difficulty == current_difficulty and len(results) == 2:
+            level_completed = True
+            level_perfect = is_perfect
+            level_bonus = bonus if is_perfect else 0
+            level_correct_count = correct_count
+            level_questions_in_level = len(results)
+            
+    # Return extended stats for frontend
+    return (running_score, level_completed, level_perfect, level_bonus, level_correct_count if level_completed else 0, level_questions_in_level if level_completed else 0)
+
+
 def finish_run(session: Session, run: QuizRun) -> ScoreResult:
     """Finish run and calculate final score.
     
     Returns:
         ScoreResult with total score and token count
     """
+    # Idempotency check: if already finished, return existing score
+    if run.status == "finished":
+        # Find existing score
+        stmt = select(QuizScore).where(QuizScore.run_id == run.id)
+        existing_score = session.execute(stmt).scalar_one_or_none()
+        
+        if existing_score:
+            # Re-calculate breakdown (not stored in QuizScore, but needed for result)
+            # This is a bit expensive but ensures consistent return type
+            stmt = select(QuizRunAnswer).where(QuizRunAnswer.run_id == run.id).order_by(QuizRunAnswer.question_index)
+            answers = list(session.execute(stmt).scalars().all())
+            
+            difficulty_results: Dict[int, List[bool]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+            for i, q_config in enumerate(run.run_questions):
+                difficulty = q_config["difficulty"]
+                answer = next((a for a in answers if a.question_index == i), None)
+                is_correct = answer and answer.result == "correct"
+                difficulty_results[difficulty].append(is_correct)
+                
+            breakdown = []
+            for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+                results = difficulty_results[difficulty]
+                correct_count = sum(1 for r in results if r)
+                points = correct_count * POINTS_PER_DIFFICULTY[difficulty]
+                earned_token = len(results) == 2 and all(results)
+                token_bonus = 2 * POINTS_PER_DIFFICULTY[difficulty] if earned_token else 0
+                
+                breakdown.append({
+                    "difficulty": difficulty,
+                    "correct": correct_count,
+                    "total": len(results),
+                    "points": points,
+                    "token_earned": earned_token,
+                    "token_bonus": token_bonus,
+                })
+                
+            return ScoreResult(
+                total_score=existing_score.total_score,
+                tokens_count=existing_score.tokens_count,
+                breakdown=breakdown,
+            )
+
     # Get all answers
     stmt = select(QuizRunAnswer).where(QuizRunAnswer.run_id == run.id).order_by(QuizRunAnswer.question_index)
     answers = list(session.execute(stmt).scalars().all())
@@ -964,39 +1201,23 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
 # Leaderboard
 # ============================================================================
 
-def get_leaderboard(session: Session, topic_id: str, limit: int = LEADERBOARD_LIMIT) -> List[Dict[str, Any]]:
-    """Get leaderboard for topic showing LAST N games, sorted by score.
+def get_leaderboard(session: Session, topic_id: str, limit: int = 30) -> List[Dict[str, Any]]:
+    """Get global leaderboard for topic, sorted by score.
     
-    Per spec section 1.7:
-    "Highscore zeigt letzte 15 Spiele pro Topic"
+    Ranking logic:
+    1. total_score DESC (Highest score first)
+    2. created_at ASC (Earlier finish wins tiebreaker)
     
-    Algorithm:
-    1. Get the last N games by created_at
-    2. Sort those by score/tokens/time
-    
-    Sort order:
-    1. total_score DESC
-    2. tokens_count DESC
-    3. created_at DESC (most recent first as tiebreaker)
+    Returns top N entries (default 30).
     """
-    # First: get the last N games by time (subquery)
-    last_games_subquery = (
-        select(QuizScore.id)
-        .where(QuizScore.topic_id == topic_id)
-        .order_by(desc(QuizScore.created_at))
-        .limit(limit)
-        .subquery()
-    )
-    
-    # Second: select those games and sort by score
     stmt = (
         select(QuizScore)
-        .where(QuizScore.id.in_(select(last_games_subquery.c.id)))
+        .where(QuizScore.topic_id == topic_id)
         .order_by(
             desc(QuizScore.total_score),
-            desc(QuizScore.tokens_count),
-            desc(QuizScore.created_at)
+            asc(QuizScore.created_at)
         )
+        .limit(limit)
     )
     scores = session.execute(stmt).scalars().all()
     

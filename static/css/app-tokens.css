@@ -21,7 +21,7 @@
   /* -----------------------------------------------------------------
      APP: Page Backgrounds
      ----------------------------------------------------------------- */
-  --app-color-login-bg: #F3F6F7;
+  --app-color-login-bg: #D4DFE4;  /* Konsistent mit background */
   /* Note: --app-background is overridden in branding.css to use --brand-background */
   --app-background: var(--md-sys-color-background);
   

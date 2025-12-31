@@ -35,13 +35,13 @@ function pickTitle() {
     return meta.content.trim();
   }
 
-  // 4. document.title (ohne "| CO.RA.PAN" Suffix)
+  // 4. document.title (ohne "| Games.Hispanistica" Suffix)
   const base = (document.title || "")
-    .replace(/\s*\|\s*CO\.RA\.PAN\s*$/i, "")
+    .replace(/\s*\|\s*Games\.Hispanistica\s*$/i, "")
     .trim();
   if (base) return base;
 
-  return "CO.RA.PAN";
+  return "Games.Hispanistica";
 }
 
 /**
@@ -60,7 +60,7 @@ function applyTitle() {
   }
 
   // document.title mit Suffix aktualisieren
-  const suffix = "CO.RA.PAN";
+  const suffix = "Games.Hispanistica";
   if (title && title !== suffix) {
     document.title = `${title} | ${suffix}`;
   } else {

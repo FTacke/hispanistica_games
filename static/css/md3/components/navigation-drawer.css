@@ -24,7 +24,7 @@
 .md3-navigation-drawer {
   display: flex;
   flex-direction: column;
-  background: var(--md-sys-color-surface);
+  background: var(--md-sys-color-surface-container-high);  /* Dunkler als Content */
   color: var(--md-sys-color-on-surface);
   width: 280px; /* MD3 Standard Drawer Width */
   height: 100vh; /* Full viewport height, NOT page height */
@@ -42,7 +42,7 @@
   height: 100vh; /* Full viewport height */
   max-height: 100vh;
   /* Background ZURÜCK auf Container - ist nötig für zusammenhängendes Aussehen */
-  background: var(--md-sys-color-surface);
+  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
   overflow-y: auto;
   overflow-x: hidden;
@@ -161,7 +161,7 @@
 }
 
 .md3-navigation-drawer__item:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-surface-container-highest);  /* Heller als Basis */
 }
 
 .md3-navigation-drawer__item:focus-visible {
@@ -172,14 +172,15 @@
 /* Active State - ARIA-first mit Fallback-Klasse */
 .md3-navigation-drawer__item[aria-current="page"],
 .md3-navigation-drawer__item--active {
-  color: var(--md-sys-color-primary);
-  background: color-mix(in oklab, var(--md-sys-color-primary) 10%, transparent);
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);  /* Kräftig sichtbar */
   font-weight: 600;
 }
 
 .md3-navigation-drawer__item[aria-current="page"]:hover,
 .md3-navigation-drawer__item--active:hover {
-  background: color-mix(in oklab, var(--md-sys-color-primary) 15%, transparent);
+  background: var(--md-sys-color-primary-container);
+  filter: brightness(1.05);  /* Leicht heller beim Hover */
 }
 
 /* Icon */
@@ -222,7 +223,7 @@
 
 /* Wenn Submenu-Item aktiv ist, Trigger im Hover-State anzeigen */
 .md3-navigation-drawer__item--active.md3-navigation-drawer__trigger {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-surface-container-highest);
 }
 
 /* ============================================

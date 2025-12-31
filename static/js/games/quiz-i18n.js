@@ -37,8 +37,8 @@
         restart_no: "Abbrechen",
         question_label: "Frage",
         of: "von",
-        level_label: "Stufe",
-        difficulty_level: "Stufe",
+        level_label: "Level",
+        difficulty_level: "Level",
         time_remaining: "Verbleibende Zeit",
         time_up: "Zeit abgelaufen!",
         joker: "50:50",
@@ -66,24 +66,8 @@
         tokens: "Token"
       }
     },
-    topics: {
-      demo_topic: {
-        title: "Demo Quiz",
-        description: "Ein Demo-Quiz zum Testen der Funktionalität."
-      }
-    },
-    q: {
-      "demo-0001": { prompt: "Demo 1: Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 1 war korrekt.", answer: { 1: "Richtig", 2: "Falsch A", 3: "Falsch B", 4: "Falsch C" } },
-      "demo-0002": { prompt: "Demo 2: Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 2 war korrekt.", answer: { 1: "Falsch A", 2: "Richtig", 3: "Falsch B", 4: "Falsch C" } },
-      "demo-0003": { prompt: "Demo 3 (Stufe 2): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 3 war korrekt.", answer: { 1: "Falsch A", 2: "Falsch B", 3: "Richtig", 4: "Falsch C" } },
-      "demo-0004": { prompt: "Demo 4 (Stufe 2): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 4 war korrekt.", answer: { 1: "Falsch A", 2: "Falsch B", 3: "Falsch C", 4: "Richtig" } },
-      "demo-0005": { prompt: "Demo 5 (Stufe 3): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 1 war korrekt.", answer: { 1: "Richtig", 2: "Falsch A", 3: "Falsch B", 4: "Falsch C" } },
-      "demo-0006": { prompt: "Demo 6 (Stufe 3): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 2 war korrekt.", answer: { 1: "Falsch A", 2: "Richtig", 3: "Falsch B", 4: "Falsch C" } },
-      "demo-0007": { prompt: "Demo 7 (Stufe 4): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 3 war korrekt.", answer: { 1: "Falsch A", 2: "Falsch B", 3: "Richtig", 4: "Falsch C" } },
-      "demo-0008": { prompt: "Demo 8 (Stufe 4): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 4 war korrekt.", answer: { 1: "Falsch A", 2: "Falsch B", 3: "Falsch C", 4: "Richtig" } },
-      "demo-0009": { prompt: "Demo 9 (Stufe 5): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 1 war korrekt.", answer: { 1: "Richtig", 2: "Falsch A", 3: "Falsch B", 4: "Falsch C" } },
-      "demo-0010": { prompt: "Demo 10 (Stufe 5): Welche Option ist korrekt?", explanation: "Demo-Erklärung: Option 2 war korrekt.", answer: { 1: "Falsch A", 2: "Richtig", 3: "Falsch B", 4: "Falsch C" } }
-    }
+    topics: {},
+    q: {}
   };
 
   // Quiz i18n namespace

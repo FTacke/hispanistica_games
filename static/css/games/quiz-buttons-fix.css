@@ -1,0 +1,19 @@
+﻿
+/* ============================================================================
+   Level-Up / Final Buttons - Use canonical MD3 classes
+   ============================================================================
+   Buttons use .md3-button--filled (green primary token) from global MD3 styles.
+   Only adjust spacing/layout here, NOT colors.
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-level-up__actions .md3-button,
+.game-shell[data-game="quiz"] .quiz-finish-actions .md3-button {
+  min-width: 240px;
+}
+
+/* Ensure buttons don't inherit quiz-specific dark overrides */
+.game-shell[data-game="quiz"] .md3-button--filled {
+  /* Use global MD3 tokens - no local overrides */
+  background: var(--md-sys-color-primary) !important;
+  color: var(--md-sys-color-on-primary) !important;
+}

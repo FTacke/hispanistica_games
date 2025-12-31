@@ -21,7 +21,7 @@ export function initPageTitleAndScroll() {
   if (window.__pageTitleInit) return;
   window.__pageTitleInit = true;
 
-  const SUFFIX = 'CO.RA.PAN';
+  const SUFFIX = 'Games.Hispanistica';
 
   function pickTitle() {
     const main = document.querySelector('main');
@@ -29,8 +29,8 @@ export function initPageTitleAndScroll() {
     if (fromAttr) return fromAttr;
     const h1 = main?.querySelector('h1,[data-h1]');
     if (h1 && h1.textContent.trim()) return h1.textContent.trim();
-    const noSuffix = document.title.replace(/\s*\|\s*CO\.RA\.PAN\s*$/i, '');
-    return noSuffix || 'CO.RA.PAN';
+    const noSuffix = document.title.replace(/\s*\|\s*Games\.Hispanistica\s*$/i, '');
+    return noSuffix || 'Games.Hispanistica';
   }
 
   function applyTitle() {

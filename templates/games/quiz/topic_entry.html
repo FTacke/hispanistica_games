@@ -42,9 +42,7 @@
         <div class="quiz-entry__auth">
           {% if player_authenticated %}
             <!-- Authenticated view -->
-            <div class="quiz-login quiz-login--authenticated"
-
-              
+            <div class="quiz-login quiz-login--authenticated">
               {% if has_existing_run %}
                 <div class="quiz-login__actions">
                   <a href="{{ url_for('quiz.quiz_play', topic_id=topic_id) }}" class="quiz-btn quiz-btn--primary quiz-btn--full">

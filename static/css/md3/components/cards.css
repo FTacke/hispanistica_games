@@ -73,17 +73,18 @@
    ============================================================================ */
 .md3-card--landing,
 .md3-card.md3-card--landing {
-  --_card-bg: var(--md-sys-color-surface-container-high);
+  --_card-bg: var(--md-sys-color-surface-container-lowest);  /* CARD-Ebene: Weiß */
   background: var(--_card-bg);
   /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
   --app-textfield-label-bg: var(--_card-bg);
-  border: none;
+  border: 1px solid var(--md-sys-color-outline-variant);  /* Klare Fassung */
   box-shadow: var(--elev-2);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   /* Flex layout for button alignment at bottom */
   display: flex;
   flex-direction: column;
+  transition: all 250ms ease;  /* Smooth transitions */
 }
 
 .md3-card--landing .md3-card__content {
@@ -102,7 +103,9 @@
 }
 
 .md3-card--landing:hover {
-  box-shadow: var(--elev-3);
+  box-shadow: var(--elev-4);  /* Stärker */
+  border-color: var(--md-sys-color-outline);  /* Dunkler */
+  transform: translateY(-4px);  /* Deutlicher Lift-Effekt */
 }
 
 /* MD3 Card Content */

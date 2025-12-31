@@ -3,21 +3,247 @@
  * 
  * Implements a proper state machine with:
  * - idle: Question visible, answers clickable, joker available
- * - answered_locked: Answer selected, UI locked, feedback visible, "Weiter" button shown
- * - transitioning: Loading next question
+ * - answered_locked: Answer selected, UI locked, explanation visible, "Weiter" button shown
+ * - transitioning: Loading next question with slide animation
  * 
  * Auto-advance after 15 seconds of inactivity in answered_locked state.
  * No immediate navigation after answer selection.
+ * 
+ * Features:
+ * - Score chip with points-pop animation on correct answers
+ * - Answer states: neutral, selected_correct, selected_wrong, correct_reveal, locked
+ * - Explanation card (no "Richtig/Falsch" text)
+ * - Question transitions with slide+fade
+ * - Accessibility: aria-live announcements, focus management
+ * - Reduced motion support
  */
 
 (function() {
   'use strict';
+  
+  // ============================================================================
+  // API RESPONSE MAPPERS (inline für non-module Kontext)
+  // ============================================================================
+  
+  /**
+   * Normalisiert /answer API Response (snake_case → camelCase)
+   */
+  function normalizeAnswerResponse(raw) {
+    const required = ['result', 'is_correct', 'correct_option_id', 'explanation_key',
+                      'joker_remaining', 'earned_points', 'running_score', 'difficulty'];
+    
+    const missing = required.filter(field => raw[field] === undefined);
+    if (missing.length > 0) {
+      const error = `❌ normalizeAnswerResponse: Missing required fields: ${missing.join(', ')}`;
+      console.error(error, raw);
+      throw new Error(error);
+    }
+    
+    if (raw.level_completed) {
+      const levelFields = ['level_perfect', 'level_bonus', 'level_correct_count', 'level_questions_in_level'];
+      const missingLevel = levelFields.filter(field => raw[field] === undefined);
+      if (missingLevel.length > 0) {
+        const error = `❌ normalizeAnswerResponse: level_completed=true but missing: ${missingLevel.join(', ')}`;
+        console.error(error, raw);
+        throw new Error(error);
+      }
+    }
+    
+    return {
+      result: raw.result,
+      isCorrect: raw.is_correct,
+      correctOptionId: raw.correct_option_id,
+      explanationKey: raw.explanation_key,
+      nextQuestionIndex: raw.next_question_index !== undefined ? raw.next_question_index : null,
+      finished: !!raw.finished,
+      jokerRemaining: raw.joker_remaining,
+      earnedPoints: raw.earned_points,
+      runningScore: raw.running_score,
+      levelCompleted: !!raw.level_completed,
+      levelPerfect: !!raw.level_perfect,
+      levelBonus: raw.level_bonus || 0,
+      bonusAppliedNow: !!(raw.bonus_applied_now),
+      difficulty: raw.difficulty,
+      levelCorrectCount: raw.level_correct_count !== undefined ? raw.level_correct_count : 0,
+      levelQuestionsInLevel: raw.level_questions_in_level !== undefined ? raw.level_questions_in_level : 2,
+      raw
+    };
+  }
+  
+  /**
+   * Baut LevelResult aus AnswerModel
+   */
+  function buildLevelResult(answer, levelIndex) {
+    if (!answer.levelCompleted) {
+      throw new Error('❌ buildLevelResult: answer.levelCompleted must be true');
+    }
+    
+    const correctCount = answer.levelCorrectCount;
+    const totalCount = answer.levelQuestionsInLevel;
+    
+    if (typeof correctCount !== 'number' || typeof totalCount !== 'number') {
+      const error = `❌ buildLevelResult: correctCount/totalCount must be numbers. Got: ${typeof correctCount}/${typeof totalCount}`;
+      console.error(error, answer);
+      throw new Error(error);
+    }
+    
+    // Scenario NUR aus correctCount/totalCount
+    let scenario, scenarioText;
+    
+    if (correctCount === totalCount) {
+      scenario = 'A';
+      scenarioText = 'Stark! Das war fehlerfrei.';
+    } else if (correctCount > 0) {
+      scenario = 'B';
+      scenarioText = 'Da geht noch mehr!';
+    } else {
+      scenario = 'C';
+      scenarioText = 'Leider war das nichts.';
+    }
+    
+    // Score-Breakdown:
+    // runningScore vom Backend = score nach Fragenpunkten + Bonus (wenn bonusAppliedNow)
+    // Für UI differenzieren:
+    // - scoreAfterQuestions: ohne Bonus (für HUD während Level)
+    // - scoreAfterBonus: mit Bonus (für LevelUp "Neuer Punktestand")
+    
+    const bonus = answer.levelBonus;
+    const scoreAfterBonus = answer.runningScore;
+    const scoreAfterQuestions = answer.bonusAppliedNow ? (scoreAfterBonus - bonus) : scoreAfterBonus;
+    
+    return {
+      levelIndex,
+      difficulty: answer.difficulty,
+      correctCount,
+      totalCount,
+      bonus,
+      scoreAfterQuestions,
+      scoreAfterBonus,
+      scenario,
+      scenarioText
+    };
+  }
+  
+  /**
+   * Normalisiert /finish API Response
+   */
+  function normalizeFinishResponse(raw) {
+    if (typeof raw.total_score !== 'number') {
+      console.error('❌ normalizeFinishResponse: total_score missing or not a number', raw);
+      throw new Error('normalizeFinishResponse: total_score is required');
+    }
+    
+    return {
+      totalScore: raw.total_score,
+      tokensCount: raw.tokens_count || 0,
+      breakdown: raw.breakdown || [],
+      rank: raw.rank !== undefined ? raw.rank : null,
+      raw
+    };
+  }
+  
+  /**
+   * Normalisiert /status API Response
+   */
+  function normalizeStatusResponse(raw) {
+    if (!raw.run_id || typeof raw.running_score !== 'number') {
+      console.error('❌ normalizeStatusResponse: Missing required fields', raw);
+      throw new Error('normalizeStatusResponse: run_id and running_score are required');
+    }
+    
+    return {
+      runId: raw.run_id,
+      topicId: raw.topic_id,
+      status: raw.status,
+      currentIndex: raw.current_index,
+      runningScore: raw.running_score,
+      nextQuestionIndex: raw.next_question_index !== undefined ? raw.next_question_index : null,
+      finished: !!raw.finished,
+      jokerRemaining: raw.joker_remaining,
+      levelCompleted: !!raw.level_completed,
+      levelPerfect: !!raw.level_perfect,
+      levelBonus: raw.level_bonus || 0,
+      levelCorrectCount: raw.level_correct_count || 0,
+      levelQuestionsInLevel: raw.level_questions_in_level || 2,
+      raw
+    };
+  }
 
   const API_BASE = '/api/quiz';
   const TIMER_SECONDS = 30;
   const TIMER_WARNING = 10;
   const TIMER_DANGER = 5;
   const AUTO_ADVANCE_DELAY_MS = 15000; // 15 seconds
+  const TRANSITION_DURATION_MS = 600; // Slower transitions
+  const COUNT_UP_DURATION_MS = 700;   // Score count-up animation
+  // Level-up is a real intermediate stage; do not auto-advance.
+  const LEVEL_UP_AUTO_ADVANCE_MS = null;
+  const POINTS_POP_DURATION_MS = 1000; // Points pop visibility
+
+  // Debug flag (default OFF). Enable with ?quizDebug=1 or localStorage quizDebug=1
+  const DEBUG = new URLSearchParams(window.location.search).has('quizDebug') ||
+    window.localStorage.getItem('quizDebug') === '1';
+  let debugCallCounter = 0;
+
+  function debugLog(fnName, data) {
+    if (!DEBUG) return;
+    debugCallCounter++;
+    console.log(`[${debugCallCounter}] [quiz-play] ${fnName}:`, {
+      timestamp: performance.now().toFixed(2),
+      runId: state.runId,
+      currentIndex: state.currentIndex,
+      currentView: state.currentView,
+      runningScore: state.runningScore,
+      displayedScore: state.displayedScore,
+      lastAnswer: state.lastAnswerResult ? {
+        finished: state.lastAnswerResult.finished,
+        is_run_finished: state.lastAnswerResult.is_run_finished,
+        next_question_index: state.lastAnswerResult.next_question_index,
+        earned_points: state.lastAnswerResult.earned_points,
+        running_score: state.lastAnswerResult.running_score,
+        level_completed: state.lastAnswerResult.level_completed,
+        level_perfect: state.lastAnswerResult.level_perfect,
+        level_bonus: state.lastAnswerResult.level_bonus,
+      } : null,
+      uiState: state.uiState,
+      ...data
+    });
+  }
+
+  const RUN_ID_CACHE_KEY_PREFIX = 'quiz:lastRunId:';     // per topic
+  const SCORE_CACHE_KEY_PREFIX = 'quiz:lastScore:';      // per run
+
+  function getCachedRunIdForTopic(topicId) {
+    if (!topicId) return null;
+    return window.localStorage.getItem(`${RUN_ID_CACHE_KEY_PREFIX}${topicId}`);
+  }
+
+  function setCachedRunIdForTopic(topicId, runId) {
+    if (!topicId || !runId) return;
+    window.localStorage.setItem(`${RUN_ID_CACHE_KEY_PREFIX}${topicId}`, runId);
+  }
+
+  function getCachedScoreForRun(runId) {
+    if (!runId) return null;
+    const raw = window.localStorage.getItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`);
+    if (raw === null) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function setCachedScoreForRun(runId, score) {
+    if (!runId) return;
+    if (!Number.isFinite(score)) return;
+    window.localStorage.setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(Math.round(score)));
+  }
+
+  // View states for single-stage architecture
+  const VIEW = {
+    QUESTION: 'question',
+    LEVEL_UP: 'level_up',
+    FINISH: 'finish',
+    POST_ANSWER: 'post_answer' // ✅ TEIL 2: New state for explanation/feedback
+  };
 
   // State machine states
   const STATE = {
@@ -26,11 +252,18 @@
     TRANSITIONING: 'transitioning'
   };
 
+  // Question phase substates
+  const PHASE = {
+    ANSWERING: 'ANSWERING',        // Question active, timer running, answer buttons enabled
+    POST_ANSWER: 'POST_ANSWER'     // Answer submitted, explanation shown, waiting for "Weiter"
+  };
+
   // Game state
   let state = {
     topicId: null,
     runId: null,
     currentIndex: 0,
+    nextQuestionIndex: null, // ✅ TEIL 3: Track next question from backend
     runQuestions: [],
     jokerRemaining: 2,
     jokerUsedOn: [],
@@ -40,33 +273,84 @@
     questionData: null,
     timerInterval: null,
     autoAdvanceTimer: null,
+    levelUpTimer: null,
     uiState: STATE.IDLE,
+    phase: PHASE.ANSWERING,  // ✅ NEW: Explicit phase tracking
     isAnswered: false,
     selectedAnswerId: null,
     lastAnswerResult: null,
-    advanceCallback: null
+    advanceCallback: null,
+    runningScore: 0,
+    displayedScore: null, // Start with null to indicate "loading"
+    pendingLevelUp: false,
+    pendingLevelUpData: null,
+    pendingTransition: null, // ✅ TEIL 2: What to do after POST_ANSWER "Weiter"
+    currentView: VIEW.QUESTION,
+    isTransitioning: false,
+    stageEls: null,
+    finishData: null,
+    // ✅ NEW: TimerController state
+    activeTimerAttemptId: null,
+    timeoutSubmittedForAttemptId: {}
   };
+
+  // Expose state globally for debugging
+  if (DEBUG) {
+    window.quizState = state;
+  }
 
   /**
    * Initialize the gameplay
    */
   async function init() {
+    debugLog('init', { action: 'start' });
+    
     const container = document.querySelector('.game-shell');
-    if (!container) return;
+    if (!container) {
+      debugLog('init', { error: 'container not found' });
+      return;
+    }
 
     state.topicId = container.dataset.topic;
+
+    // Prevent 0-flash on refresh: use cached score for last run (topic-scoped), then replace with server /status.
+    try {
+      const cachedRunId = getCachedRunIdForTopic(state.topicId);
+      const cachedScore = getCachedScoreForRun(cachedRunId);
+      if (typeof cachedScore === 'number') {
+        state.runningScore = cachedScore;
+        state.displayedScore = cachedScore;
+        updateScoreDisplay();
+        debugLog('init', { action: 'applied cached score', cachedRunId, cachedScore });
+      }
+    } catch (e) {
+      // ignore cache errors
+    }
     
     // Start or resume run
     try {
       const runData = await startOrResumeRun();
       if (!runData) {
+        debugLog('init', { error: 'no run data, redirecting' });
         // Redirect to entry if no run
         window.location.href = `/quiz/${state.topicId}`;
         return;
       }
       
+      debugLog('init', { runData });
+      
       // Initialize state from run data
       state.runId = runData.run_id;
+      setCachedRunIdForTopic(state.topicId, state.runId);
+
+      // Apply cached score for this run ASAP (still server will replace via /status)
+      const cachedScoreForThisRun = getCachedScoreForRun(state.runId);
+      if (typeof cachedScoreForThisRun === 'number') {
+        state.runningScore = cachedScoreForThisRun;
+        state.displayedScore = cachedScoreForThisRun;
+        updateScoreDisplay();
+        debugLog('init', { action: 'applied cached score for run', cachedScoreForThisRun });
+      }
       state.currentIndex = runData.current_index;
       state.runQuestions = runData.run_questions || [];
       state.jokerRemaining = runData.joker_remaining;
@@ -75,8 +359,12 @@
       state.deadlineAtMs = runData.deadline_at_ms;
       state.answers = runData.answers || [];
       
+      // Restore score from server (source of truth)
+      await restoreRunningScore();
+      
       // Check if already finished
       if (state.currentIndex >= 10) {
+        debugLog('init', { action: 'already finished, calling finishRun' });
         await finishRun();
         return;
       }
@@ -86,36 +374,564 @@
       
     } catch (error) {
       console.error('Failed to initialize quiz:', error);
+      debugLog('init', { error: error.message });
       alert('Fehler beim Laden des Quiz.');
       window.location.href = `/quiz/${state.topicId}`;
     }
 
     // Setup event handlers
     setupJokerButton();
-    setupPlayAgainButton();
     setupWeiterButton();
+    
+    // ✅ PHASE 4: Globale Event Delegation für alle data-quiz-action Buttons
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-quiz-action]');
+      if (!btn) return;
+      
+      const action = btn.getAttribute('data-quiz-action');
+      console.error('[QUIZ ACTION]', action);
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      switch (action) {
+        case 'levelup-continue':
+          cancelAutoAdvanceTimer();
+          advanceFromLevelUp();
+          break;
+        case 'final-retry':
+          // Restart run
+          window.location.href = `/quiz/${state.topicId}?restart=1`;
+          break;
+        case 'final-topics':
+          // Go to topic selection
+          window.location.href = '/quiz';
+          break;
+        default:
+          console.warn('[QUIZ ACTION] Unknown action:', action);
+      }
+    });
+    
+    // Note: setupPlayAgainButton is called when finish screen is rendered
+    
+    debugLog('init', { action: 'complete' });
   }
 
   /**
    * Start a new run or get existing run state
    */
   async function startOrResumeRun() {
-    const response = await fetch(`${API_BASE}/${state.topicId}/run/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
+    // Deterministic behavior:
+    // - If a run exists: resume it (explicit "Fortsetzen" comes from entry page)
+    // - If none exists: start a new run (index 0)
+    debugLog('startOrResumeRun', { action: 'checking current run' });
+
+    const currentResp = await fetch(`${API_BASE}/run/current?topic_id=${encodeURIComponent(state.topicId)}`, {
+      credentials: 'same-origin'
     });
-    
-    if (!response.ok) {
-      if (response.status === 401) {
-        // Not authenticated, redirect to entry
+
+    if (!currentResp.ok) {
+      if (currentResp.status === 401 || currentResp.status === 403) {
         return null;
       }
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(`HTTP ${currentResp.status}`);
+    }
+
+    const currentData = await currentResp.json();
+    debugLog('startOrResumeRun', { action: 'current run response', currentData });
+
+    if (currentData && currentData.has_run && currentData.run) {
+      return currentData.run;
+    }
+
+    // No run: start a new one
+    debugLog('startOrResumeRun', { action: 'starting new run (no existing)' });
+
+    const startResp = await fetch(`${API_BASE}/${state.topicId}/run/start`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force_new: true })
+    });
+
+    if (!startResp.ok) {
+      if (startResp.status === 401 || startResp.status === 403) {
+        return null;
+      }
+      throw new Error(`HTTP ${startResp.status}`);
+    }
+
+    const startData = await startResp.json();
+    debugLog('startOrResumeRun', {
+      action: 'start response',
+      is_new: startData.is_new,
+      run_id: startData.run?.run_id,
+      current_index: startData.run?.current_index,
+      status: startData.run?.status
+    });
+
+    return startData.run;
+  }
+
+  /**
+   * Restore running score from server (source of truth)
+   * Called on page load/refresh to ensure score is correct
+   */
+  async function restoreRunningScore() {
+    debugLog('restoreRunningScore', { action: 'start' });
+    
+    try {
+      const response = await fetch(`${API_BASE}/run/${state.runId}/status`, {
+        credentials: 'same-origin'
+      });
+      
+      debugLog('restoreRunningScore', { 
+        responseStatus: response.status, 
+        responseOk: response.ok 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`Failed to restore score: HTTP ${response.status}`, errorData);
+        debugLog('restoreRunningScore', { 
+          error: 'http error', 
+          status: response.status, 
+          statusText: response.statusText,
+          errorCode: errorData.code,
+          errorMessage: errorData.error
+        });
+        
+        // Handle specific error codes - NO SILENT FALLBACK TO 0
+        if (response.status === 401 || response.status === 403) {
+          alert('Bitte melden Sie sich an, um fortzufahren.');
+          window.location.href = `/quiz/${state.topicId}`;
+          return;
+        }
+        
+        if (response.status === 404) {
+          alert('Quiz-Lauf wurde nicht gefunden. Bitte starten Sie neu.');
+          window.location.href = `/quiz/${state.topicId}`;
+          return;
+        }
+        
+        if (response.status === 500) {
+          alert('Serverfehler beim Laden des Spielstands. Bitte versuchen Sie es erneut.');
+          window.location.href = `/quiz/${state.topicId}`;
+          return;
+        }
+        
+        // Unknown error
+        alert(`Fehler beim Laden des Spielstands (${response.status}). Bitte versuchen Sie es erneut.`);
+        window.location.href = `/quiz/${state.topicId}`;
+        return;
+      }
+      
+      const data = await response.json();
+      debugLog('restoreRunningScore', { serverData: data });
+      
+      // Validate response
+      if (typeof data.running_score !== 'number') {
+        console.error('Invalid response: running_score is not a number', data);
+        debugLog('restoreRunningScore', { error: 'invalid response', data });
+        alert('Ungültige Antwort vom Server.');
+        window.location.href = `/quiz/${state.topicId}`;
+        return;
+      }
+      
+      state.runningScore = data.running_score;
+      state.displayedScore = state.runningScore;
+      updateScoreDisplay();
+      
+      debugLog('restoreRunningScore', { 
+        runningScore: state.runningScore,
+        level_completed: data.level_completed,
+        level_perfect: data.level_perfect
+      });
+      updateScoreDisplay();
+
+      // Keep cache in sync to prevent 0-flash on future refresh
+      setCachedScoreForRun(state.runId, state.runningScore);
+
+      if (typeof data.current_index === 'number') {
+        state.currentIndex = data.current_index;
+      }
+      
+      debugLog('restoreRunningScore', { 
+        action: 'complete', 
+        finalScore: state.runningScore,
+        displayedScore: state.displayedScore
+      });
+    } catch (error) {
+      console.error('Failed to restore score:', error);
+      debugLog('restoreRunningScore', { error: error.message, stack: error.stack });
+      alert('Netzwerkfehler beim Laden des Spielstands. Bitte prüfen Sie Ihre Verbindung.');
+      window.location.href = `/quiz/${state.topicId}`;
+    }
+  }
+
+  /**
+   * Fallback: Fetch status and apply running score when answer response is incomplete
+   */
+  async function fetchStatusAndApply() {
+    debugLog('fetchStatusAndApply', { action: 'fetching /status as fallback' });
+    
+    try {
+      const response = await fetch(`${API_BASE}/run/${state.runId}/status`, {
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        console.error('❌ fetchStatusAndApply failed:', response.status);
+        alert('Fehler beim Laden des aktuellen Spielstands');
+        return null;
+      }
+      
+      const data = await response.json();
+      
+      debugLog('fetchStatusAndApply', {
+        running_score: data.running_score,
+        current_index: data.current_index
+      });
+      
+      if (typeof data.running_score === 'number') {
+        state.runningScore = data.running_score;
+        await updateScoreWithAnimation(state.runningScore);
+
+        setCachedScoreForRun(state.runId, state.runningScore);
+
+        if (typeof data.current_index === 'number') {
+          state.currentIndex = data.current_index;
+        }
+        return data;
+      } else {
+        console.error('❌ /status response missing running_score');
+        return null;
+      }
+      
+    } catch (error) {
+      console.error('❌ fetchStatusAndApply error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Render current view (QUESTION, LEVEL_UP, or FINISH)
+   * This is the single source of truth for what's visible on stage
+   */
+  function ensureStageContainers() {
+    if (state.stageEls) return;
+
+    const questionContainer = document.getElementById('quiz-question-container');
+    const questionWrapper = document.getElementById('quiz-question-wrapper');
+    if (!questionContainer || !questionWrapper) return;
+
+    // ✅ FIX: LevelUp/Finish müssen SIBLINGS von questionContainer sein, nicht Children!
+    // Finde parent container (sollte game-shell oder quiz-play-root sein)
+    const parentContainer = questionContainer.parentElement;
+    if (!parentContainer) return;
+
+    let levelUpContainer = document.getElementById('quiz-level-up-container');
+    if (!levelUpContainer) {
+      levelUpContainer = document.createElement('div');
+      levelUpContainer.id = 'quiz-level-up-container';
+      levelUpContainer.className = 'quiz-level-up-container';
+      levelUpContainer.hidden = true;
+      parentContainer.appendChild(levelUpContainer); // Sibling, nicht Child!
+      console.error('[ENSURE CONTAINERS] Created levelUpContainer as SIBLING of questionContainer');
+    }
+
+    let finishContainer = document.getElementById('quiz-finish-container');
+    if (!finishContainer) {
+      finishContainer = document.createElement('div');
+      finishContainer.id = 'quiz-finish-container';
+      finishContainer.className = 'quiz-finish-container';
+      finishContainer.hidden = true;
+      parentContainer.appendChild(finishContainer); // Sibling, nicht Child!
+      console.error('[ENSURE CONTAINERS] Created finishContainer as SIBLING of questionContainer');
+    }
+
+    state.stageEls = {
+      questionWrapper,
+      levelUpContainer,
+      finishContainer
+    };
+  }
+
+  function renderCurrentView() {
+    debugLog('renderCurrentView', { view: state.currentView });
+    
+    ensureStageContainers();
+    
+    const questionContainer = document.getElementById('quiz-question-container');
+    const questionWrapper = document.getElementById('quiz-question-wrapper');
+    const headerEl = document.getElementById('quiz-header');
+    
+    if (!questionContainer) {
+      debugLog('renderCurrentView', { error: 'question container not found' });
+      return;
     }
     
-    const data = await response.json();
-    return data.run;
+    // Keep header always visible so score display is accessible
+    // Only hide timer/joker during non-question views
+    if (headerEl) {
+      const timerEl = document.getElementById('quiz-timer');
+      const jokerEl = document.getElementById('quiz-joker-btn');
+      const isQuestion = state.currentView === VIEW.QUESTION;
+      
+      if (timerEl) timerEl.style.display = isQuestion ? '' : 'none';
+      if (jokerEl) jokerEl.style.display = isQuestion ? '' : 'none';
+    }
+
+    // ✅ FIX: Verwende state.stageEls (konsistente Referenzen)
+    const levelUpContainer = state.stageEls?.levelUpContainer;
+    const finalContainer = state.stageEls?.finishContainer;
+    
+    console.error('[RENDER CURRENT VIEW]', {
+      view: state.currentView,
+      questionWrapperExists: !!questionWrapper,
+      levelUpContainerExists: !!levelUpContainer,
+      finalContainerExists: !!finalContainer,
+      levelUpParent: levelUpContainer?.parentElement?.id,
+      questionContainerSiblings: questionContainer.parentElement?.children.length
+    });
+    
+    // ✅ FIX: Hide individual containers (siblings), NOT parent questionContainer
+    if (questionWrapper) questionWrapper.hidden = true;
+    if (levelUpContainer) levelUpContainer.hidden = true;
+    if (finalContainer) finalContainer.hidden = true;
+    
+    // Test hook: expose current view for E2E diagnostics.
+    window.__quizPlayCurrentView = state.currentView;
+    
+    switch (state.currentView) {
+      case VIEW.QUESTION:
+        if (questionWrapper) questionWrapper.hidden = false;
+        debugLog('renderCurrentView', { action: 'showing QUESTION view' });
+        break;
+        
+      case VIEW.LEVEL_UP:
+        if (levelUpContainer) {
+          levelUpContainer.hidden = false;
+          levelUpContainer.removeAttribute('hidden'); // Force remove attribute
+          console.error('[RENDER CURRENT VIEW] ✅ Setting LevelUp visible (parent:', levelUpContainer.parentElement?.id, ')');
+        } else {
+          console.error('[RENDER CURRENT VIEW] ❌ LevelUp container NOT FOUND!');
+        }
+        renderLevelUpInContainer();
+        debugLog('renderCurrentView', { action: 'showing LEVEL_UP view' });
+        break;
+        
+      case VIEW.FINISH:
+        if (finalContainer) finalContainer.hidden = false;
+        renderFinishInContainer();
+        debugLog('renderCurrentView', { action: 'showing FINISH view' });
+        break;
+    }
+    
+    // Update page title
+    const container = document.querySelector('.game-shell');
+    const topicTitle = container?.dataset.topic || '';
+    setPageTitle(state.currentView, topicTitle);
+    
+    // Scroll to top to ensure view is visible
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+  }
+
+  /**
+   * Transition to a new view with animation
+   */
+  async function transitionToView(newView) {
+    if (state.isTransitioning) return;
+    
+    // ✅ PHASE 1: Stop timer when leaving QUESTION view
+    if (newView !== VIEW.QUESTION) {
+      stopTimer();
+      console.error('[TRANSITION] Stopped timer, transitioning to:', newView);
+    }
+    
+    state.isTransitioning = true;
+    const wrapper = document.getElementById('quiz-question-wrapper');
+    
+    // Start leaving animation
+    if (wrapper) {
+      wrapper.setAttribute('data-transition-state', 'leaving');
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, TRANSITION_DURATION_MS));
+    
+    // Switch view
+    state.currentView = newView;
+    renderCurrentView();
+    
+    // Start entering animation
+    if (wrapper) {
+      wrapper.setAttribute('data-transition-state', 'entering');
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    if (wrapper) {
+      wrapper.setAttribute('data-transition-state', 'idle');
+    }
+    
+    state.isTransitioning = false;
+  }
+
+  /**
+   * Update the score display (instant, no animation)
+   */
+  function updateScoreDisplay() {
+    const scoreEl = document.getElementById('quiz-score-display');
+    if (scoreEl) {
+      if (state.displayedScore === null || !Number.isFinite(state.displayedScore)) {
+        scoreEl.textContent = '—';
+      } else {
+        scoreEl.textContent = Math.round(state.displayedScore);
+      }
+      debugLog('updateScoreDisplay', { 
+        displayedScore: state.displayedScore, 
+        elementText: scoreEl.textContent
+      });
+    } else {
+      debugLog('updateScoreDisplay', { error: 'score element not found!' });
+      console.error('Score element #quiz-score-display not found in DOM');
+    }
+  }
+
+  /**
+   * Animate score count-up from current to target value
+   * @param {HTMLElement} element - Element to animate
+   * @param {number} targetValue - Target value
+   * @param {number} duration - Animation duration in ms (default 700ms)
+   * @param {string} prefix - Optional prefix (e.g., '+')
+   */
+  function animateCountUp(element, targetValue, duration = COUNT_UP_DURATION_MS, prefix = '') {
+    if (!element) return;
+    
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      element.textContent = prefix + Math.round(targetValue);
+      return;
+    }
+    
+    const startValue = parseInt(element.textContent.replace(/[^\d]/g, ''), 10) || 0;
+    const startTime = performance.now();
+    
+    element.classList.add('quiz-score-chip__value--counting');
+    
+    function updateValue(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Ease out cubic for snappy feel
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const currentValue = Math.round(startValue + (targetValue - startValue) * eased);
+      
+      element.textContent = prefix + currentValue;
+      
+      if (progress < 1) {
+        requestAnimationFrame(updateValue);
+      } else {
+        element.classList.remove('quiz-score-chip__value--counting');
+      }
+    }
+    
+    requestAnimationFrame(updateValue);
+  }
+
+  /**
+   * Update score with count-up animation
+   */
+  function updateScoreWithAnimation(targetScore) {
+    debugLog('updateScoreWithAnimation', { 
+      startValue: state.displayedScore, 
+      targetScore 
+    });
+    
+    const scoreEl = document.getElementById('quiz-score-display');
+    if (!scoreEl) {
+      debugLog('updateScoreWithAnimation', { error: 'score element not found' });
+      console.error('Score element not found for animation');
+      return;
+    }
+    
+    // Animate from displayed to target
+    const startValue = state.displayedScore;
+    const startTime = performance.now();
+    
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      state.displayedScore = targetScore;
+      updateScoreDisplay();
+      return;
+    }
+    
+    function animateScore(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / COUNT_UP_DURATION_MS, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      
+      state.displayedScore = startValue + (targetScore - startValue) * eased;
+      updateScoreDisplay();
+      
+      if (progress < 1) {
+        requestAnimationFrame(animateScore);
+      } else {
+        state.displayedScore = targetScore;
+        updateScoreDisplay();
+        debugLog('updateScoreWithAnimation', { action: 'complete', finalScore: targetScore });
+      }
+    }
+    
+    requestAnimationFrame(animateScore);
+  }
+
+  /**
+   * Show points pop animation on score chip (longer duration, more visible)
+   */
+  function showPointsPop(points) {
+    if (points <= 0) return;
+    
+    const popEl = document.getElementById('quiz-score-pop');
+    if (!popEl) return;
+    
+    // Set text and trigger animation
+    popEl.textContent = `+${points}`;
+    popEl.classList.remove('quiz-score-chip__pop--animate');
+    
+    // Force reflow to restart animation
+    void popEl.offsetWidth;
+    
+    popEl.classList.add('quiz-score-chip__pop--animate');
+    
+    // Remove class after animation completes (longer duration)
+    setTimeout(() => {
+      popEl.classList.remove('quiz-score-chip__pop--animate');
+    }, POINTS_POP_DURATION_MS);
+  }
+
+  /**
+   * Announce to screen readers
+   */
+  function announceA11y(message) {
+    const announceEl = document.getElementById('quiz-a11y-announce');
+    if (announceEl) {
+      announceEl.textContent = message;
+    }
+  }
+
+  /**
+   * Set page title dynamically based on current view
+   * @param {string} view - Current view (QUESTION, LEVEL_UP, or FINISH)
+   * @param {string} quizTitle - Quiz topic title
+   */
+  function setPageTitle(view, quizTitle = '') {
+    const base = 'Games.Hispanistica';
+    const title = quizTitle ? `Quiz: ${quizTitle}` : 'Quiz';
+    document.title = `${title} – ${base}`;
   }
 
   /**
@@ -124,7 +940,7 @@
   function setUIState(newState) {
     state.uiState = newState;
     
-    const feedbackPanel = document.getElementById('quiz-feedback-panel');
+    const explanationCard = document.getElementById('quiz-explanation-card');
     const weiterBtn = document.getElementById('quiz-weiter-btn');
     const jokerBtn = document.getElementById('quiz-joker-btn');
     const answerBtns = document.querySelectorAll('.quiz-answer');
@@ -142,28 +958,31 @@
           const alreadyUsed = state.jokerUsedOn.includes(state.currentIndex);
           jokerBtn.disabled = state.jokerRemaining <= 0 || alreadyUsed;
         }
-        // Hide feedback
-        if (feedbackPanel) feedbackPanel.hidden = true;
+        // Hide explanation and weiter
+        if (explanationCard) explanationCard.hidden = true;
         if (weiterBtn) weiterBtn.hidden = true;
         break;
         
       case STATE.ANSWERED_LOCKED:
-        // Disable ALL answers
+        // Disable ALL answers and add locked class
         answerBtns.forEach(btn => {
           btn.disabled = true;
+          // Only add locked class to non-selected, non-correct-reveal answers
+          if (!btn.classList.contains('quiz-answer--selected-correct') &&
+              !btn.classList.contains('quiz-answer--selected-wrong') &&
+              !btn.classList.contains('quiz-answer--correct-reveal')) {
+            btn.classList.add('quiz-answer--locked');
+          }
         });
         // Disable joker
         if (jokerBtn) jokerBtn.disabled = true;
-        // Show feedback panel and Weiter button
-        if (feedbackPanel) feedbackPanel.hidden = false;
+        // Show Weiter button
         if (weiterBtn) {
           weiterBtn.hidden = false;
           weiterBtn.disabled = false;
         }
         // Start 15s auto-advance timer
         startAutoAdvanceTimer();
-        // Smooth scroll to feedback if not in viewport
-        scrollToFeedbackIfNeeded();
         break;
         
       case STATE.TRANSITIONING:
@@ -184,7 +1003,7 @@
     cancelAutoAdvanceTimer();
     state.autoAdvanceTimer = setTimeout(() => {
       if (state.uiState === STATE.ANSWERED_LOCKED) {
-        advanceToNextQuestion();
+        advanceToNextQuestion('auto');
       }
     }, AUTO_ADVANCE_DELAY_MS);
   }
@@ -200,17 +1019,17 @@
   }
 
   /**
-   * Scroll to feedback panel if not in viewport
+   * Scroll to explanation card if not in viewport
    */
-  function scrollToFeedbackIfNeeded() {
-    const feedbackPanel = document.getElementById('quiz-feedback-panel');
-    if (!feedbackPanel) return;
+  function scrollToExplanationIfNeeded() {
+    const explanationCard = document.getElementById('quiz-explanation-card');
+    if (!explanationCard || explanationCard.hidden) return;
     
-    const rect = feedbackPanel.getBoundingClientRect();
+    const rect = explanationCard.getBoundingClientRect();
     const isInViewport = rect.top >= 0 && rect.bottom <= window.innerHeight;
     
     if (!isInViewport) {
-      feedbackPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      explanationCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
@@ -218,7 +1037,18 @@
    * Load current question data and display
    */
   async function loadCurrentQuestion() {
+    // ✅ PHASE 3: Render-Lock - Blockiere während LevelUp/Finish
+    if (state.currentView === VIEW.LEVEL_UP || state.currentView === VIEW.FINISH) {
+      const stack = new Error().stack;
+      console.error('[RENDER GUARD] ❌ BLOCKED loadCurrentQuestion() - currentView:', state.currentView);
+      console.error('[RENDER GUARD] Call stack:', stack);
+      return;
+    }
+    
+    debugLog('loadCurrentQuestion', { index: state.currentIndex });
+    
     if (state.currentIndex >= state.runQuestions.length) {
+      debugLog('loadCurrentQuestion', { action: 'finished, calling finishRun' });
       await finishRun();
       return;
     }
@@ -226,8 +1056,12 @@
     const questionConfig = state.runQuestions[state.currentIndex];
     const questionId = questionConfig.question_id;
     
+    debugLog('loadCurrentQuestion', { questionId, difficulty: questionConfig.difficulty });
+    
     // Fetch question details
-    const response = await fetch(`${API_BASE}/questions/${questionId}`);
+    const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+      credentials: 'same-origin'
+    });
     if (!response.ok) {
       throw new Error('Failed to load question');
     }
@@ -236,6 +1070,15 @@
     state.isAnswered = false;
     state.selectedAnswerId = null;
     state.lastAnswerResult = null;
+    state.pendingLevelUp = false;
+    state.pendingLevelUpData = null;
+    state.pendingTransition = null; // ✅ Clear pending transition
+    
+    // ✅ PHASE: Set to ANSWERING when loading new question
+    state.phase = PHASE.ANSWERING;
+    console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
+    
+    debugLog('loadCurrentQuestion', { action: 'data loaded, rendering question' });
     
     // Start timer if not already started
     if (!state.questionStartedAtMs) {
@@ -245,11 +1088,30 @@
     // Render question
     renderQuestion();
     
+    // Switch to QUESTION view
+    state.currentView = VIEW.QUESTION;
+    renderCurrentView();
+    
     // Set UI to idle
     setUIState(STATE.IDLE);
     
-    // Start countdown
+    // Set transition wrapper to idle
+    const wrapper = document.getElementById('quiz-question-wrapper');
+    if (wrapper) {
+      wrapper.setAttribute('data-transition-state', 'idle');
+    }
+    
+    // Focus on question prompt for accessibility
+    const promptEl = document.getElementById('quiz-question-prompt');
+    if (promptEl) {
+      promptEl.setAttribute('tabindex', '-1');
+      promptEl.focus();
+    }
+    
+    // ✅ TIMER: Start countdown nur wenn phase = ANSWERING
     startTimerCountdown();
+    
+    debugLog('loadCurrentQuestion', { action: 'complete' });
   }
 
   /**
@@ -261,6 +1123,7 @@
     try {
       const response = await fetch(`${API_BASE}/run/${state.runId}/question/start`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question_index: state.currentIndex,
@@ -285,12 +1148,40 @@
   }
 
   /**
-   * Start the timer countdown display
+   * Stop timer completely (cleanup)
    */
-  function startTimerCountdown() {
+  function stopTimer() {
     if (state.timerInterval) {
       clearInterval(state.timerInterval);
+      state.timerInterval = null;
+      console.error('[TIMER] ✅ Stopped for attemptId:', state.activeTimerAttemptId);
     }
+    state.activeTimerAttemptId = null; // ✅ Clear attemptId
+  }
+
+  /**
+   * Start the timer countdown display with attemptId guards
+   */
+  function startTimerCountdown() {
+    // ✅ GUARD: Timer darf NUR laufen bei view=QUESTION und phase=ANSWERING
+    if (state.currentView !== VIEW.QUESTION || state.phase !== PHASE.ANSWERING) {
+      console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - view:', state.currentView, 'phase:', state.phase);
+      return;
+    }
+    
+    // ✅ BUILD attemptId: eindeutige ID für diese Frage-Versuch
+    const attemptId = `${state.runId}:${state.currentIndex}:${state.questionData?.id || 'unknown'}`;
+    
+    // ✅ GUARD: Verhindere Duplikat-Timer für dieselbe AttemptId
+    if (state.activeTimerAttemptId === attemptId) {
+      console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - already running for attemptId:', attemptId);
+      return;
+    }
+    
+    stopTimer(); // Stop any stale timer
+    
+    state.activeTimerAttemptId = attemptId;
+    console.error('[TIMER] ✅ Started for attemptId:', attemptId, 'index:', state.currentIndex);
     
     const updateTimer = () => {
       const now = Date.now();
@@ -313,8 +1204,8 @@
         }
       }
       
-      // Check for timeout (only in idle state)
-      if (remaining <= 0 && state.uiState === STATE.IDLE && !state.isAnswered) {
+      // ✅ TIMEOUT GUARD: Prüfe phase statt nur uiState
+      if (remaining <= 0 && state.phase === PHASE.ANSWERING && !state.isAnswered) {
         handleTimeout();
       }
     };
@@ -339,6 +1230,14 @@
    * Render the current question
    */
   function renderQuestion() {
+    // ✅ PHASE 3: Render-Lock - Blockiere während LevelUp/Finish
+    if (state.currentView === VIEW.LEVEL_UP || state.currentView === VIEW.FINISH) {
+      const stack = new Error().stack;
+      console.error('[RENDER GUARD] ❌ BLOCKED renderQuestion() - currentView:', state.currentView);
+      console.error('[RENDER GUARD] Call stack:', stack);
+      return;
+    }
+    
     const config = state.runQuestions[state.currentIndex];
     const q = state.questionData;
     
@@ -397,6 +1296,7 @@
           >
             <span class="quiz-answer__marker">${marker}</span>
             <span class="quiz-answer__text">${escapeHtml(answerText)}</span>
+            <span class="quiz-answer__icon material-symbols-rounded" aria-hidden="true">check</span>
           </button>
         `;
       }
@@ -406,9 +1306,11 @@
           type="button" 
           class="quiz-answer"
           data-answer-id="${answerId}"
+          aria-label="Antwort ${marker}: ${escapeHtml(answerText)}"
         >
           <span class="quiz-answer__marker">${marker}</span>
           <span class="quiz-answer__text">${escapeHtml(answerText)}</span>
+          <span class="quiz-answer__icon material-symbols-rounded" aria-hidden="true">check</span>
         </button>
       `;
     }).join('');
@@ -420,34 +1322,37 @@
       btn.addEventListener('click', () => handleAnswerClick(btn.dataset.answerId));
     });
     
-    // Hide feedback panel initially
-    const feedbackPanel = document.getElementById('quiz-feedback-panel');
-    if (feedbackPanel) feedbackPanel.hidden = true;
+    // Hide explanation card initially
+    const explanationCard = document.getElementById('quiz-explanation-card');
+    if (explanationCard) explanationCard.hidden = true;
     
     const weiterBtn = document.getElementById('quiz-weiter-btn');
     if (weiterBtn) weiterBtn.hidden = true;
-    
-    showQuestionContainer();
   }
 
   /**
    * Handle answer click - ONLY locks UI, does NOT advance automatically
    */
   async function handleAnswerClick(answerId) {
-    if (state.uiState !== STATE.IDLE || state.isAnswered) return;
+    debugLog('handleAnswerClick', { answerId, uiState: state.uiState, isAnswered: state.isAnswered });
+    
+    if (state.uiState !== STATE.IDLE || state.isAnswered) {
+      debugLog('handleAnswerClick', { action: 'blocked', reason: 'already answered or wrong state' });
+      return;
+    }
     
     state.isAnswered = true;
     state.selectedAnswerId = answerId;
     
-    // Stop timer
-    if (state.timerInterval) {
-      clearInterval(state.timerInterval);
-      state.timerInterval = null;
-    }
+    // ✅ PHASE: Transition to POST_ANSWER SOFORT
+    state.phase = PHASE.POST_ANSWER;
+    console.error('[PHASE] ✅ Set to POST_ANSWER after answer submit');
     
-    // Immediately lock UI and show "checking" feedback
+    // ✅ Stop timer SOFORT
+    stopTimer();
+    
+    // Immediately lock UI
     setUIState(STATE.ANSWERED_LOCKED);
-    showCheckingFeedback();
     
     // Highlight selected answer
     const answerBtns = document.querySelectorAll('.quiz-answer');
@@ -457,16 +1362,24 @@
       }
     });
     
+    const answeredIndex = state.currentIndex;
+
     // Submit answer
     const usedJoker = state.jokerUsedOn.includes(state.currentIndex);
+    const selectedAnswerIdPayload = (/^\d+$/.test(String(answerId))
+      ? Number(answerId)
+      : answerId);
+    
+    debugLog('handleAnswerClick', { action: 'submitting answer' });
     
     try {
       const response = await fetch(`${API_BASE}/run/${state.runId}/answer`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question_index: state.currentIndex,
-          selected_answer_id: answerId,
+          selected_answer_id: selectedAnswerIdPayload,
           answered_at_ms: Date.now(),
           used_joker: usedJoker
         })
@@ -477,28 +1390,185 @@
       }
       
       const data = await response.json();
-      state.lastAnswerResult = data;
       
-      // Show result styling on answers
-      showAnswerResult(answerId, data.result, data.correct_option_id);
+      // ✅ INSTRUMENTATION: Log raw API response
+      console.error('[ANSWER RAW]', {
+        result: data.result,
+        running_score: data.running_score,
+        level_completed: data.level_completed,
+        level_perfect: data.level_perfect,
+        level_bonus: data.level_bonus,
+        level_correct_count: data.level_correct_count,
+        level_questions_in_level: data.level_questions_in_level,
+        difficulty: data.difficulty,
+        fullData: data
+      });
       
-      // Show feedback panel with result and explanation
-      showFeedbackPanel(data.result, data.explanation_key);
-      
-      // Update state for next question
-      state.jokerRemaining = data.joker_remaining;
-      
-      // Store callback for advancing
-      if (data.finished) {
-        state.advanceCallback = () => finishRun();
-      } else {
-        state.currentIndex = data.next_question_index;
-        state.questionStartedAtMs = null;
-        state.deadlineAtMs = null;
-        state.advanceCallback = () => loadCurrentQuestion();
+      // ✅ MAPPER: Normalisiere Response zu AnswerModel
+      let answer;
+      try {
+        answer = normalizeAnswerResponse(data);
+        console.error('[ANSWER MODEL]', answer);
+      } catch (e) {
+        console.error('❌ Failed to normalize answer response:', e);
+        alert('Fehler beim Verarbeiten der Antwort. Bitte Seite neu laden.');
+        return;
       }
       
-      // Note: We stay in ANSWERED_LOCKED state until user clicks "Weiter" or 15s passes
+      state.lastAnswerResult = answer;
+      // Test hook: expose the normalized answer model
+      window.__quizPlayLastAnswer = answer;
+      
+      // Log FULL answer model for debugging
+      debugLog('handleAnswerClick', {
+        action: 'got normalized answer model',
+        result: answer.result,
+        runningScore: answer.runningScore,
+        earnedPoints: answer.earnedPoints,
+        levelCompleted: answer.levelCompleted,
+        levelPerfect: answer.levelPerfect,
+        levelBonus: answer.levelBonus,
+        bonusAppliedNow: answer.bonusAppliedNow,
+        finished: answer.finished
+      });
+      
+      // Show result styling on answers (new state system)
+      showAnswerResult(answerId, answer.result, answer.correctOptionId);
+      
+      // CRITICAL: Validate and update score from backend (source of truth)
+      const oldScore = state.runningScore;
+      const hasNumericRunningScore = typeof answer.runningScore === 'number';
+      const earnedPoints = answer.earnedPoints;
+
+      const runningScoreLooksInconsistent = (
+        hasNumericRunningScore && (
+          answer.runningScore < oldScore ||
+          (earnedPoints > 0 && answer.runningScore <= oldScore)
+        )
+      );
+
+      if (!hasNumericRunningScore || runningScoreLooksInconsistent) {
+        console.error('❌ running_score missing/inconsistent; falling back to /status', {
+          runningScore: answer.runningScore,
+          oldScore,
+          earnedPoints,
+          answer
+        });
+
+        const statusData = await fetchStatusAndApply();
+        if (!statusData) {
+          alert('Kritischer Fehler beim Score-Update. Bitte Seite neu laden.');
+          return;
+        }
+
+        // Keep the Weiter-decision inputs consistent with the server source of truth.
+        try {
+          state.lastAnswerResult.runningScore = statusData.runningScore;
+          state.lastAnswerResult.levelCompleted = statusData.levelCompleted;
+          state.lastAnswerResult.levelPerfect = statusData.levelPerfect;
+          state.lastAnswerResult.levelBonus = statusData.levelBonus;
+          window.__quizPlayLastAnswer = state.lastAnswerResult;
+        } catch (e) {
+          // Best-effort; scoring display is already corrected.
+        }
+      } else {
+        state.runningScore = answer.runningScore;
+        debugLog('handleAnswerClick', {
+          action: 'updating score from /answer',
+          oldScore,
+          newScore: state.runningScore,
+          difference: state.runningScore - oldScore,
+          bonusAppliedNow: answer.bonusAppliedNow
+        });
+
+        if (answer.result === 'correct' && earnedPoints > 0) {
+          showPointsPop(earnedPoints);
+          announceA11y('Antwort korrekt');
+        } else {
+          announceA11y(answer.result === 'timeout' ? 'Zeit abgelaufen' : 'Antwort falsch');
+        }
+
+        // Update score display: HUD zeigt scoreAfterQuestions (ohne Bonus)
+        // Bonus wird erst auf LevelUp visuell "applied"
+        if (answer.levelCompleted && answer.levelBonus > 0 && answer.bonusAppliedNow) {
+            // Backend hat Bonus schon in runningScore eingerechnet
+            // HUD zeigt Score OHNE Bonus (für jetzt)
+            state.displayedScore = answer.runningScore - answer.levelBonus;
+            updateScoreDisplay();
+        } else {
+            // Kein Bonus oder Bonus nicht applied: direkt anzeigen
+            updateScoreWithAnimation(answer.runningScore);
+        }
+        setCachedScoreForRun(state.runId, state.runningScore);
+      }
+      
+      // Show explanation card (no "Richtig/Falsch" text)
+      showExplanationCard(answer.explanationKey);
+      
+      // Update state for next question
+      state.jokerRemaining = answer.jokerRemaining;
+      
+      // Store correctness in runQuestions for Level-Up stats
+      if (state.runQuestions[state.currentIndex]) {
+        state.runQuestions[state.currentIndex].correct = (answer.result === 'correct');
+      }
+
+      // Prepare Level-Up Data if completed
+      if (answer.levelCompleted) {
+          state.pendingLevelUp = true;
+          
+          // ✅ MAPPER: Baue LevelResult aus AnswerModel
+          try {
+            const levelIndex = Math.floor(state.currentIndex / 2); // 0,1 -> 0; 2,3 -> 1; etc.
+            const levelResult = buildLevelResult(answer, levelIndex);
+            
+            state.pendingLevelUpData = {
+              ...levelResult,
+              nextQuestionIndex: answer.nextQuestionIndex,
+              finished: answer.finished
+            };
+            
+            // ✅ INSTRUMENTATION: Log LevelResult
+            console.error('[LEVELRESULT BUILT]', levelResult);
+            
+            // ✅ TEIL 2: Set pending transition (will be executed on "Weiter" click)
+            state.pendingTransition = answer.finished ? 'LEVEL_UP_THEN_FINAL' : 'LEVEL_UP';
+            console.error('[POST_ANSWER] Pending transition:', state.pendingTransition);
+            
+          } catch (e) {
+            console.error('❌ CRITICAL: Failed to build LevelResult:', e);
+            alert('Fehler: Level-Daten unvollständig. Bitte Seite neu laden.');
+            return;
+          }
+      } else if (answer.finished) {
+          // Finished without level completed (shouldn't happen but handle it)
+          state.pendingTransition = 'FINAL';
+      } else {
+          // Normal next question
+          state.pendingTransition = 'NEXT_QUESTION';
+      }
+
+      // ✅ TEIL 3: Store nextQuestionIndex from backend
+      state.nextQuestionIndex = answer.nextQuestionIndex;
+      console.error('[INDEX] after answer', {
+        current: state.currentIndex,
+        next: state.nextQuestionIndex,
+        levelCompleted: answer.levelCompleted,
+        pendingTransition: state.pendingTransition
+      });
+
+      // DO NOT update currentIndex here anymore - will be done on "Weiter" click
+      state.questionStartedAtMs = null;
+      state.deadlineAtMs = null;
+      debugLog('handleAnswerClick', {
+        action: 'stored lastAnswerResult; waiting for Weiter decision',
+        answeredIndex,
+        nextIndex: state.nextQuestionIndex,
+        pendingTransition: state.pendingTransition
+      });
+      
+      // ✅ TEIL 2: Stay in POST_ANSWER state - show explanation, wait for "Weiter"
+      // Note: Weiter button is already visible from setupWeiterButton()
       
     } catch (error) {
       console.error('Failed to submit answer:', error);
@@ -515,9 +1585,49 @@
    * Handle timeout (no answer given)
    */
   async function handleTimeout() {
-    if (state.uiState !== STATE.IDLE || state.isAnswered) return;
+    // ✅ BUILD attemptId für diese Timeout
+    const attemptId = state.activeTimerAttemptId;
     
+    // ✅ GUARD: Prevent stale/duplicate timeout submits
+    if (!attemptId) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - no active attemptId');
+      return;
+    }
+    
+    if (state.phase !== PHASE.ANSWERING) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - phase is not ANSWERING, phase:', state.phase);
+      stopTimer();
+      return;
+    }
+    
+    if (state.isAnswered) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - already answered');
+      stopTimer();
+      return;
+    }
+    
+    if (state.currentView !== VIEW.QUESTION) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - not in QUESTION view, currentView:', state.currentView);
+      stopTimer();
+      return;
+    }
+    
+    // ✅ GUARD: Check if timeout already submitted for this attemptId
+    if (state.timeoutSubmittedForAttemptId[attemptId]) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - already submitted for attemptId:', attemptId);
+      stopTimer();
+      return;
+    }
+    
+    console.error('[TIMER] ✅ Timeout triggered for attemptId:', attemptId, 'index:', state.currentIndex);
+    
+    // ✅ MARK: Prevent duplicate timeout submissions
+    state.timeoutSubmittedForAttemptId[attemptId] = true;
     state.isAnswered = true;
+    
+    // ✅ PHASE: Transition to POST_ANSWER
+    state.phase = PHASE.POST_ANSWER;
+    console.error('[PHASE] ✅ Set to POST_ANSWER after timeout');
     
     // Stop timer
     if (state.timerInterval) {
@@ -527,14 +1637,16 @@
     
     // Lock UI
     setUIState(STATE.ANSWERED_LOCKED);
-    showCheckingFeedback();
     
+    const answeredIndex = state.currentIndex;
+
     // Submit timeout
     const usedJoker = state.jokerUsedOn.includes(state.currentIndex);
     
     try {
       const response = await fetch(`${API_BASE}/run/${state.runId}/answer`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question_index: state.currentIndex,
@@ -545,29 +1657,149 @@
       });
       
       if (!response.ok) {
-        throw new Error('Failed to submit timeout');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[TIMER] ❌ Timeout submit failed:', response.status, errorData);
+        
+        // ✅ INVALID_INDEX: Sync mit Server statt Loop
+        if (response.status === 400 && errorData.code === 'INVALID_INDEX') {
+          console.error('[TIMER] ❌ INVALID_INDEX - Client/Server out of sync!');
+          stopTimer(); // Stop timer komplett
+          announceA11y('Synchronisiere mit Server...');
+          
+          // Sync mit Server
+          try {
+            const syncData = await fetchStatusAndApply();
+            if (syncData) {
+              console.error('[TIMER] ✅ Synced with server, currentIndex now:', state.currentIndex);
+              // Lade aktuelle Frage vom Server
+              await loadCurrentQuestion();
+              return;
+            }
+          } catch (syncError) {
+            console.error('[TIMER] ❌ Sync failed:', syncError);
+          }
+          
+          alert('Fehler: Client/Server nicht synchron. Bitte Seite neu laden.');
+          return;
+        }
+        
+        // ✅ Andere Fehler: Don't freeze UI
+        announceA11y('Timeout konnte nicht gespeichert werden');
+        
+        // Allow proceeding to next question anyway
+        state.lastAnswerResult = {
+          result: 'timeout',
+          correct_option_id: null,
+          running_score: state.runningScore,
+          level_completed: false
+        };
+        
+        setUIState(STATE.ANSWERED_LOCKED);
+        return; // Don't throw, just log and continue
       }
       
       const data = await response.json();
-      state.lastAnswerResult = data;
       
-      // Show correct answer
-      showCorrectAnswer(data.correct_option_id);
+      // ✅ MAPPER: Normalisiere Response zu AnswerModel (gleich wie bei handleAnswerClick)
+      let answer;
+      try {
+        answer = normalizeAnswerResponse(data);
+        console.error('[TIMEOUT ANSWER MODEL]', answer);
+      } catch (e) {
+        console.error('❌ Failed to normalize timeout response:', e);
+        // Fallback ohne normalization
+        answer = data;
+      }
       
-      // Show feedback panel
-      showFeedbackPanel('timeout', data.explanation_key);
+      state.lastAnswerResult = answer;
+      window.__quizPlayLastAnswer = answer;
+      
+      debugLog('handleTimeout', {
+        action: 'got response',
+        result: answer.result,
+        runningScore: answer.runningScore,
+        nextQuestionIndex: answer.nextQuestionIndex
+      });
+      
+      // Show correct answer with reveal state
+      showCorrectAnswer(answer.correctOptionId || data.correct_option_id);
+      
+      // Announce timeout
+      announceA11y('Zeit abgelaufen');
+      
+      // Update score (timeout earns 0, but running total must still be correct)
+      if (typeof answer.runningScore === 'number') {
+        const oldScore = state.runningScore;
+        state.runningScore = answer.runningScore;
+        state.displayedScore = state.runningScore;
+        updateScoreDisplay();
+        setCachedScoreForRun(state.runId, state.runningScore);
+        debugLog('handleTimeout', { action: 'updated score from /answer', oldScore, newScore: state.runningScore });
+      } else {
+        console.error('❌ running_score missing in timeout response; falling back to /status', data);
+        const statusData = await fetchStatusAndApply();
+        if (statusData) {
+          try {
+            state.lastAnswerResult.runningScore = statusData.runningScore;
+            if (typeof statusData.levelCompleted === 'boolean') state.lastAnswerResult.levelCompleted = statusData.levelCompleted;
+            if (typeof statusData.levelPerfect === 'boolean') state.lastAnswerResult.levelPerfect = statusData.levelPerfect;
+            if (typeof statusData.levelBonus === 'number') state.lastAnswerResult.levelBonus = statusData.levelBonus;
+            window.__quizPlayLastAnswer = state.lastAnswerResult;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+      
+      // Show explanation card
+      showExplanationCard(answer.explanationKey || data.explanation_key);
       
       // Update state
-      state.jokerRemaining = data.joker_remaining;
+      state.jokerRemaining = answer.jokerRemaining;
       
-      if (data.finished) {
-        state.advanceCallback = () => finishRun();
-      } else {
-        state.currentIndex = data.next_question_index;
-        state.questionStartedAtMs = null;
-        state.deadlineAtMs = null;
-        state.advanceCallback = () => loadCurrentQuestion();
+      // Store correctness in runQuestions
+      if (state.runQuestions[state.currentIndex]) {
+        state.runQuestions[state.currentIndex].correct = false; // timeout = wrong
       }
+      
+      // ✅ Set pending transition like handleAnswerClick
+      if (answer.levelCompleted) {
+          state.pendingLevelUp = true;
+          
+          try {
+            const levelIndex = Math.floor(state.currentIndex / 2);
+            const levelResult = buildLevelResult(answer, levelIndex);
+            
+            state.pendingLevelUpData = {
+              ...levelResult,
+              nextQuestionIndex: answer.nextQuestionIndex,
+              finished: answer.finished
+            };
+            
+            state.pendingTransition = answer.finished ? 'LEVEL_UP_THEN_FINAL' : 'LEVEL_UP';
+            console.error('[TIMEOUT POST_ANSWER] Pending transition:', state.pendingTransition);
+            
+          } catch (e) {
+            console.error('❌ CRITICAL: Failed to build LevelResult from timeout:', e);
+            state.pendingTransition = answer.finished ? 'FINAL' : 'NEXT_QUESTION';
+          }
+      } else if (answer.finished) {
+          state.pendingTransition = 'FINAL';
+      } else {
+          state.pendingTransition = 'NEXT_QUESTION';
+      }
+      
+      // ✅ TEIL 3: Store nextQuestionIndex from backend
+      state.nextQuestionIndex = answer.nextQuestionIndex;
+      console.error('[TIMEOUT INDEX]', {
+        current: state.currentIndex,
+        next: state.nextQuestionIndex,
+        pendingTransition: state.pendingTransition
+      });
+      
+      state.questionStartedAtMs = null;
+      state.deadlineAtMs = null;
+      debugLog('handleTimeout', { action: 'stored lastAnswerResult; waiting for Weiter decision', nextIndex: state.nextQuestionIndex });
       
     } catch (error) {
       console.error('Failed to submit timeout:', error);
@@ -575,63 +1807,20 @@
   }
 
   /**
-   * Show checking feedback while waiting for server
+   * Show explanation card (no "Richtig/Falsch" text)
    */
-  function showCheckingFeedback() {
-    const feedbackPanel = document.getElementById('quiz-feedback-panel');
-    const feedbackStatus = document.getElementById('quiz-feedback-status');
-    const feedbackExplanation = document.getElementById('quiz-feedback-explanation');
+  function showExplanationCard(explanationKey) {
+    const explanationCard = document.getElementById('quiz-explanation-card');
+    const explanationText = document.getElementById('quiz-explanation-text');
     
-    if (feedbackStatus) {
-      feedbackStatus.textContent = 'Prüfe…';
-      feedbackStatus.className = 'quiz-feedback__status';
-    }
-    if (feedbackExplanation) {
-      feedbackExplanation.textContent = '';
-    }
-    if (feedbackPanel) {
-      feedbackPanel.hidden = false;
-    }
-  }
-
-  /**
-   * Show feedback panel with result
-   */
-  function showFeedbackPanel(result, explanationKey) {
-    const feedbackPanel = document.getElementById('quiz-feedback-panel');
-    const feedbackStatus = document.getElementById('quiz-feedback-status');
-    const feedbackExplanation = document.getElementById('quiz-feedback-explanation');
+    if (!explanationCard || !explanationText) return;
     
-    if (feedbackStatus) {
-      let statusText = '';
-      let statusClass = 'quiz-feedback__status';
-      
-      if (result === 'correct') {
-        statusText = QuizI18n.t('ui.quiz.correct') || 'Richtig!';
-        statusClass += ' quiz-feedback__status--correct';
-      } else if (result === 'timeout') {
-        statusText = QuizI18n.t('ui.quiz.timeout') || 'Zeit abgelaufen!';
-        statusClass += ' quiz-feedback__status--wrong';
-      } else {
-        statusText = QuizI18n.t('ui.quiz.wrong') || 'Falsch.';
-        statusClass += ' quiz-feedback__status--wrong';
-      }
-      
-      feedbackStatus.textContent = statusText;
-      feedbackStatus.className = statusClass;
-    }
+    // Use explanation text directly from backend
+    const explanation = explanationKey || 'Keine Erklärung verfügbar.';
+    explanationText.textContent = explanation;
     
-    if (feedbackExplanation) {
-      // Use explanation text directly from backend (never null/empty - backend provides default)
-      const explanation = explanationKey || 'Erklärung folgt.';
-      feedbackExplanation.textContent = explanation;
-    }
-    
-    if (feedbackPanel) {
-      feedbackPanel.hidden = false;
-      feedbackPanel.classList.remove('quiz-feedback--correct', 'quiz-feedback--wrong');
-      feedbackPanel.classList.add(result === 'correct' ? 'quiz-feedback--correct' : 'quiz-feedback--wrong');
-    }
+    // Show card with animation
+    explanationCard.hidden = false;
     
     // Show Weiter button
     const weiterBtn = document.getElementById('quiz-weiter-btn');
@@ -639,18 +1828,34 @@
       weiterBtn.hidden = false;
       weiterBtn.disabled = false;
     }
+    
+    // Scroll to explanation if needed
+    setTimeout(() => {
+      scrollToExplanationIfNeeded();
+    }, 50);
   }
 
   /**
-   * Show result styling on answer buttons
+   * Show result styling on answer buttons (new state system)
    */
   function showAnswerResult(selectedId, result, correctId) {
     document.querySelectorAll('.quiz-answer').forEach(btn => {
       const id = btn.dataset.answerId;
-      if (id === correctId) {
-        btn.classList.add('quiz-answer--correct');
-      } else if (id === selectedId && result !== 'correct') {
-        btn.classList.add('quiz-answer--wrong');
+      
+      // Remove old classes
+      btn.classList.remove('quiz-answer--selected', 'quiz-answer--correct', 'quiz-answer--wrong');
+      
+      if (id === selectedId) {
+        if (result === 'correct') {
+          // User selected correctly
+          btn.classList.add('quiz-answer--selected-correct');
+        } else {
+          // User selected incorrectly
+          btn.classList.add('quiz-answer--selected-wrong');
+        }
+      } else if (id === correctId && result !== 'correct') {
+        // Show correct answer subtly when user was wrong
+        btn.classList.add('quiz-answer--correct-reveal');
       }
     });
   }
@@ -662,7 +1867,7 @@
     document.querySelectorAll('.quiz-answer').forEach(btn => {
       const id = btn.dataset.answerId;
       if (id === correctId) {
-        btn.classList.add('quiz-answer--correct');
+        btn.classList.add('quiz-answer--correct-reveal');
       }
     });
   }
@@ -674,34 +1879,147 @@
     const btn = document.getElementById('quiz-weiter-btn');
     if (!btn) return;
     
-    btn.addEventListener('click', () => {
-      advanceToNextQuestion();
+    // ✅ TEIL 2: Handle POST_ANSWER transitions based on pendingTransition
+    btn.addEventListener('click', async () => {
+      if (state.uiState !== STATE.ANSWERED_LOCKED) return;
+      
+      // Disable button to prevent double-clicks
+      btn.disabled = true;
+      
+      console.error('[INDEX] on continue (Weiter)', {
+        pending: state.pendingTransition,
+        current: state.currentIndex,
+        next: state.nextQuestionIndex
+      });
+      
+      cancelAutoAdvanceTimer();
+      setUIState(STATE.TRANSITIONING);
+      
+      switch (state.pendingTransition) {
+        case 'LEVEL_UP':
+          // Show LevelUp screen
+          console.error('[TRANSITION] -> LEVEL_UP after Weiter');
+          await transitionToView(VIEW.LEVEL_UP);
+          break;
+          
+        case 'LEVEL_UP_THEN_FINAL':
+          // Show LevelUp first, then Final after continue
+          console.error('[TRANSITION] -> LEVEL_UP (then FINAL) after Weiter');
+          await transitionToView(VIEW.LEVEL_UP);
+          break;
+          
+        case 'FINAL':
+          // Go directly to Final (no LevelUp)
+          console.error('[TRANSITION] -> FINAL after Weiter');
+          await finishRun();
+          break;
+          
+        case 'NEXT_QUESTION':
+        default:
+          // ✅ TEIL 3: Use nextQuestionIndex from backend, NOT currentIndex + 1
+          if (state.nextQuestionIndex === null || state.nextQuestionIndex === undefined) {
+            console.error('❌ CRITICAL: nextQuestionIndex is null! Cannot proceed.');
+            alert('Fehler: Nächste Frage nicht gefunden. Bitte Seite neu laden.');
+            return;
+          }
+          
+          state.currentIndex = state.nextQuestionIndex;
+          state.nextQuestionIndex = null;
+          
+          console.error('[INDEX] loading next question:', state.currentIndex);
+          // ✅ loadCurrentQuestion setzt phase=ANSWERING und startet Timer
+          await loadCurrentQuestion();
+          break;
+      }
+      
+      btn.disabled = false;
     });
   }
 
   /**
-   * Advance to the next question
+   * Advance to the next question with transition animation
    */
-  function advanceToNextQuestion() {
-    if (state.uiState !== STATE.ANSWERED_LOCKED) return;
+  async function advanceToNextQuestion(trigger = 'button') {
+    debugLog('advanceToNextQuestion', { 
+      uiState: state.uiState,
+      trigger
+    });
+    
+    if (state.uiState !== STATE.ANSWERED_LOCKED) {
+      debugLog('advanceToNextQuestion', { action: 'blocked', reason: 'wrong uiState' });
+      return;
+    }
+
+    if (!state.lastAnswerResult) {
+      debugLog('advanceToNextQuestion', { action: 'blocked', reason: 'missing lastAnswerResult' });
+      return;
+    }
     
     cancelAutoAdvanceTimer();
     setUIState(STATE.TRANSITIONING);
-    
-    if (state.advanceCallback) {
-      const callback = state.advanceCallback;
-      state.advanceCallback = null;
-      callback();
-    }
-  }
 
-  /**
-   * Show question container
-   */
-  function showQuestionContainer() {
-    document.getElementById('quiz-header').hidden = false;
-    document.getElementById('quiz-question-container').hidden = false;
-    document.getElementById('quiz-finish').hidden = true;
+    const data = state.lastAnswerResult;
+    const isFinished = !!(data.is_run_finished || data.finished);
+    
+    // LevelUp Trigger: ALWAYS show when level_completed is true.
+    // Decoupled from bonus.
+    const shouldLevelUp = !!data.level_completed;
+
+    // Test hook: expose decision inputs for E2E diagnostics.
+    window.__quizPlayAdvanceDecision = {
+      trigger,
+      isFinished,
+      shouldLevelUp,
+      level_completed: data.level_completed,
+      level_perfect: data.level_perfect,
+      level_bonus: data.level_bonus,
+      bonus_applied_now: data.bonus_applied_now,
+      next_question_index: data.next_question_index,
+    };
+
+    debugLog('advanceToNextQuestion', {
+      action: 'decision',
+      isFinished,
+      shouldLevelUp,
+      next_question_index: data.next_question_index,
+      level_completed: data.level_completed,
+      level_perfect: data.level_perfect,
+      level_bonus: data.level_bonus,
+      difficulty: data.difficulty,
+    });
+    
+    const wrapper = document.getElementById('quiz-question-wrapper');
+    
+    if (wrapper) {
+      wrapper.setAttribute('data-transition-state', 'leaving');
+      debugLog('advanceToNextQuestion', { action: 'starting transition animation' });
+      await new Promise(resolve => setTimeout(resolve, TRANSITION_DURATION_MS));
+    }
+
+    // Weiter is the ONLY decision point
+    if (shouldLevelUp) {
+      state.pendingLevelUpData = {
+        difficulty: data.difficulty,
+        level_bonus: data.level_bonus || 0,
+        level_perfect: !!data.level_perfect,
+        level_completed: !!data.level_completed,
+        running_score: data.running_score, // Pass final score for visualization
+        next_question_index: data.next_question_index,
+        finished: isFinished
+      };
+
+      debugLog('advanceToNextQuestion', { action: 'transitionToView(LEVEL_UP)' });
+      transitionToView(VIEW.LEVEL_UP);
+      return;
+    }
+
+    if (isFinished) {
+      await finishRun();
+      return;
+    }
+
+    // Normal next question
+    await loadCurrentQuestion();
   }
 
   /**
@@ -721,6 +2039,7 @@
       try {
         const response = await fetch(`${API_BASE}/run/${state.runId}/joker`, {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             question_index: state.currentIndex
@@ -779,9 +2098,304 @@
   }
 
   /**
+   * Start auto-forward timer for Level-Up screen
+   */
+  function startAutoForwardTimer() {
+    cancelAutoAdvanceTimer();
+    
+    const duration = 10000; // 10s
+    const start = Date.now();
+    const timerEl = document.getElementById('quiz-level-up-timer');
+    
+    if (timerEl) {
+      state.autoForwardInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((duration - (Date.now() - start)) / 1000));
+        timerEl.textContent = `Automatisch weiter in ${remaining}s`;
+        if (remaining <= 0) {
+          cancelAutoAdvanceTimer();
+          advanceFromLevelUp();
+        }
+      }, 1000);
+    }
+    
+    state.autoForwardTimeout = setTimeout(() => {
+      advanceFromLevelUp();
+    }, duration);
+  }
+  
+  function cancelAutoAdvanceTimer() {
+    if (state.autoForwardTimeout) {
+      clearTimeout(state.autoForwardTimeout);
+      state.autoForwardTimeout = null;
+    }
+    if (state.autoForwardInterval) {
+      clearInterval(state.autoForwardInterval);
+      state.autoForwardInterval = null;
+    }
+  }
+
+  /**
+   * Render level-up screen dynamically in the main container
+   */
+  function renderLevelUpInContainer() {
+    debugLog('renderLevelUpInContainer', { data: state.pendingLevelUpData });
+
+    ensureStageContainers();
+    const container = state.stageEls?.levelUpContainer;
+    if (!container || !state.pendingLevelUpData) return;
+    
+    // ✅ MAPPER: pendingLevelUpData ist bereits ein LevelResult (aus buildLevelResult)
+    const levelResult = state.pendingLevelUpData;
+    
+    // ✅ INSTRUMENTATION: Log render input
+    console.error('[LEVELUP RENDER INPUT]', {
+        difficulty: levelResult.difficulty,
+        correctCount: levelResult.correctCount,
+        totalCount: levelResult.totalCount,
+        bonus: levelResult.bonus,
+        scoreAfterBonus: levelResult.scoreAfterBonus,
+        scenario: levelResult.scenario,
+        correctCountType: typeof levelResult.correctCount,
+        totalCountType: typeof levelResult.totalCount
+    });
+    
+    const { difficulty, correctCount, totalCount, bonus, scoreAfterBonus, scenario, scenarioText } = levelResult;
+
+    // ✅ FINAL CHECK vor Render
+    console.error('[LEVELUP FINAL VALUES]', { correctCount, totalCount, bonus, scoreAfterBonus, scenario });
+
+    debugLog('renderLevelUpInContainer', { 
+        action: 'rendering', 
+        scenario, 
+        correctCount, 
+        totalCount, 
+        bonus, 
+        scoreAfterBonus,
+        levelResult
+    });
+
+    container.innerHTML = `
+      <div class="quiz-level-up" id="quiz-level-up-stage">
+        <div class="quiz-level-up__card">
+          <h2 class="quiz-level-up__title">Level ${difficulty} abgeschlossen</h2>
+          <p class="quiz-level-up__subline">${scenarioText}</p>
+          
+          <div class="quiz-level-up__result-row">
+            <span class="material-symbols-rounded">check_circle</span>
+            <span>Richtig: ${correctCount}/${totalCount}</span>
+          </div>
+          
+          <div class="quiz-level-up__points-grid">
+            <div class="quiz-level-up__bonus-block ${bonus > 0 ? 'quiz-level-up__bonus-block--active' : ''}">
+              <span class="quiz-level-up__label">BONUS</span>
+              <span class="quiz-level-up__value">+${bonus}</span>
+            </div>
+            <div class="quiz-level-up__total-block">
+              <span class="quiz-level-up__label">Neuer Punktestand</span>
+              <span class="quiz-level-up__value">${scoreAfterBonus}</span>
+            </div>
+          </div>
+
+          ${scenario === 'C' ? `
+          <p class="quiz-level-up__tip">
+            <span class="material-symbols-rounded">lightbulb</span>
+            Tipp: Lies die Erklärung nach jeder Frage genau.
+          </p>
+          ` : ''}
+
+          <div class="quiz-level-up__actions">
+            <p class="quiz-level-up__timer" id="quiz-level-up-timer">Automatisch weiter in 10s</p>
+            <button type="button" class="md3-button md3-button--filled" data-quiz-action="levelup-continue">
+              Weiter
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // ✅ PHASE 2: DOM-Verifikation - Stelle sicher, dass nur EIN Bonus-Element existiert
+    setTimeout(() => {
+      const bonusElements = document.querySelectorAll('.quiz-level-up__bonus-block');
+      const bonusValueEl = container.querySelector('.quiz-level-up__bonus-block .quiz-level-up__value');
+      
+      console.error('[LEVELUP DOM VERIFICATION]', {
+        totalBonusElements: bonusElements.length,
+        bonusTextInDOM: bonusValueEl?.textContent,
+        expectedBonus: `+${bonus}`,
+        match: bonusValueEl?.textContent === `+${bonus}`
+      });
+      
+      if (bonusElements.length > 1) {
+        console.error('❌ CRITICAL: Multiple bonus elements found! Legacy HTML still exists.');
+        alert('ENTWICKLER-FEHLER: Doppelte Bonus-Elemente im DOM. Bitte Dev-Team informieren.');
+      }
+      
+      if (bonusValueEl?.textContent !== `+${bonus}`) {
+        console.error('❌ CRITICAL: Bonus text mismatch! Expected:', `+${bonus}`, 'Got:', bonusValueEl?.textContent);
+        alert(`ENTWICKLER-FEHLER: Bonus-Anzeige falsch. Erwartet: +${bonus}, Angezeigt: ${bonusValueEl?.textContent}`);
+      }
+      
+      // ✅ PHASE 5: In-Code Assertions
+      const scoreValueEl = container.querySelector('.quiz-level-up__total-block .quiz-level-up__value');
+      if (scoreValueEl?.textContent !== String(scoreAfterBonus)) {
+        console.error('❌ CRITICAL: Score text mismatch! Expected:', scoreAfterBonus, 'Got:', scoreValueEl?.textContent);
+        alert(`ENTWICKLER-FEHLER: Score falsch. Erwartet: ${scoreAfterBonus}, Angezeigt: ${scoreValueEl?.textContent}`);
+      }
+      
+      console.error('✅ [LEVELUP DOM ASSERTIONS PASSED]', {
+        bonusCorrect: true,
+        scoreCorrect: true,
+        noDuplicates: true
+      });
+      
+      // ✅ PHASE 1: VISIBILITY CHECK - Beweise dass Container SICHTBAR ist
+      const questionContainer = document.getElementById('quiz-question-container');
+      const computedStyle = getComputedStyle(container);
+      const rect = container.getBoundingClientRect();
+      
+      console.error('[VIEW VISIBILITY CHECK - LEVEL_UP]', {
+        containerExists: !!container,
+        containerHiddenAttr: container.hasAttribute('hidden'),
+        containerDisplay: computedStyle.display,
+        containerVisibility: computedStyle.visibility,
+        containerOpacity: computedStyle.opacity,
+        containerZIndex: computedStyle.zIndex,
+        containerRect: { width: rect.width, height: rect.height, top: rect.top, left: rect.left },
+        questionHiddenAttr: questionContainer?.hasAttribute('hidden'),
+        questionDisplay: questionContainer ? getComputedStyle(questionContainer).display : null,
+        currentView: state.currentView,
+        activeElement: document.activeElement?.id
+      });
+      
+      // ✅ PHASE 2: CONTAINER COUNT CHECK
+      console.error('[CONTAINER COUNT]', {
+        levelUpContainers: document.querySelectorAll('#quiz-level-up-container').length,
+        legacyLevelUpContainers: document.querySelectorAll('#quiz-levelup-container').length
+      });
+      
+      // ✅ PHASE 4: TOPMOST ELEMENT CHECK
+      const topElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      console.error('[TOPMOST ELEMENT]', {
+        tagName: topElement?.tagName,
+        id: topElement?.id,
+        className: topElement?.className,
+        zIndex: topElement ? getComputedStyle(topElement).zIndex : null,
+        isLevelUpDescendant: container.contains(topElement)
+      });
+      
+      if (rect.height <= 0 || computedStyle.display === 'none') {
+        console.error('❌ CRITICAL: LevelUp container not visible!', { height: rect.height, display: computedStyle.display });
+        alert('ENTWICKLER-FEHLER: LevelUp Container im DOM aber nicht sichtbar!');
+      }
+    }, 50); // Small delay to ensure DOM update
+    
+    // ✅ PHASE 4: Event Delegation - Button wird über globalen Handler abgefangen (siehe init())
+    console.error('[LEVELUP BTN] Rendered, delegation active via data-quiz-action="levelup-continue"');
+
+    // Start Auto-Forward
+    startAutoForwardTimer();
+    
+    debugLog('renderLevelUpInContainer', { action: 'rendered', scenario, correctCount, totalCount });
+    window.__quizPlayLastLevelUpRender = { ok: true, reason: 'injected', pending: state.pendingLevelUpData };
+
+    // Announce for screen readers
+    announceA11y(`Stufe ${difficulty} abgeschlossen! Neuer Punktestand: ${scoreAfterBonus}`);
+  }
+
+  /**
+   * Show Level-Up screen as main stage view with auto-advance
+   * Uses pendingLevelUpData from state (set during answer handling)
+   */
+  async function showLevelUpScreen() {
+    debugLog('showLevelUpScreen', { data: state.pendingLevelUpData });
+    
+    if (!state.pendingLevelUpData) {
+      debugLog('showLevelUpScreen', { error: 'no level-up data, going to next question' });
+      // No level-up data, go directly to next question
+      await loadCurrentQuestion();
+      return;
+    }
+    
+    // Switch to LEVEL_UP view (this renders the level-up screen)
+    state.currentView = VIEW.LEVEL_UP;
+    renderCurrentView();
+    
+    debugLog('showLevelUpScreen', { action: 'view rendered (no auto-advance)' });
+  }
+
+  /**
+   * Handle click on level-up screen to skip auto-advance
+   */
+  function handleLevelUpClick() {
+    if (state.levelUpTimer) {
+      clearTimeout(state.levelUpTimer);
+      state.levelUpTimer = null;
+    }
+    advanceFromLevelUp();
+  }
+
+  /**
+   * Advance from level-up screen to next question or finish
+   */
+  async function advanceFromLevelUp() {
+    debugLog('advanceFromLevelUp', { isTransitioning: state.isTransitioning });
+    
+    if (state.isTransitioning) {
+      debugLog('advanceFromLevelUp', { action: 'blocked', reason: 'already transitioning' });
+      return;
+    }
+    
+    // ✅ PHASE 1: Ensure timer is stopped before transitioning
+    stopTimer();
+    console.error('[ADVANCE FROM LEVELUP] Timer stopped before loading next question');
+
+    // Check if we are finished
+    const isFinished = state.pendingLevelUpData && state.pendingLevelUpData.finished;
+    
+    // ✅ PHASE 3: Beim Verlassen von LevelUp wird Bonus visuell "applied"
+    // HUD Score muss auf scoreAfterBonus aktualisiert werden
+    if (state.pendingLevelUpData && state.pendingLevelUpData.scoreAfterBonus) {
+      state.runningScore = state.pendingLevelUpData.scoreAfterBonus;
+      updateScoreWithAnimation(state.runningScore);
+      debugLog('advanceFromLevelUp', { 
+        action: 'applied bonus to global score', 
+        scoreAfterBonus: state.pendingLevelUpData.scoreAfterBonus 
+      });
+    }
+    
+    // ✅ TEIL 3: Get nextQuestionIndex from pendingLevelUpData (was stored from answer)
+    const nextIndex = state.pendingLevelUpData?.nextQuestionIndex;
+    
+    // Clear level-up data
+    state.pendingLevelUp = false;
+    state.pendingLevelUpData = null;
+    
+    if (isFinished) {
+        debugLog('advanceFromLevelUp', { action: 'game finished -> finishRun' });
+        await finishRun();
+    } else {
+        // ✅ TEIL 3: Use nextQuestionIndex from backend, NOT currentIndex + 1
+        if (nextIndex === null || nextIndex === undefined) {
+          console.error('❌ CRITICAL: nextQuestionIndex is null after LevelUp! Cannot proceed.');
+          alert('Fehler: Nächste Frage nicht gefunden. Bitte Seite neu laden.');
+          return;
+        }
+        
+        state.currentIndex = nextIndex;
+        console.error('[INDEX] loading next question after LevelUp:', state.currentIndex);
+        
+        debugLog('advanceFromLevelUp', { action: 'transitioning to next question', nextIndex });
+        await transitionToView(VIEW.QUESTION);
+        await loadCurrentQuestion();
+    }
+  }
+
+  /**
    * Finish the run and show results
    */
   async function finishRun() {
+    debugLog('finishRun', { action: 'start' });
+    
     // Stop timer
     if (state.timerInterval) {
       clearInterval(state.timerInterval);
@@ -789,9 +2403,16 @@
     }
     cancelAutoAdvanceTimer();
     
+    // Clear level-up timer if active
+    if (state.levelUpTimer) {
+      clearTimeout(state.levelUpTimer);
+      state.levelUpTimer = null;
+    }
+    
     try {
       const response = await fetch(`${API_BASE}/run/${state.runId}/finish`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' }
       });
       
@@ -799,91 +2420,141 @@
         throw new Error('Failed to finish run');
       }
       
-      const data = await response.json();
+      const rawData = await response.json();
       
-      // Show finish screen
-      showFinishScreen(data);
+      debugLog('finishRun', { finishRawData: rawData });
+      
+      // ✅ MAPPER: Normalisiere Finish Response
+      let finish;
+      try {
+        finish = normalizeFinishResponse(rawData);
+        console.error('[FINISH MODEL]', finish);
+      } catch (e) {
+        console.error('❌ Failed to normalize finish response:', e);
+        // Fallback auf cached score
+        finish = {
+          totalScore: state.runningScore || 0,
+          tokensCount: 0,
+          breakdown: [],
+          rank: null
+        };
+      }
+      
+      // Update score to final value
+      state.runningScore = finish.totalScore;
+      state.displayedScore = finish.totalScore;
+      
+      // Store finish data for render
+      state.finishData = finish;
+      
+      // Switch to FINISH view
+      transitionToView(VIEW.FINISH);
+      
+      debugLog('finishRun', { action: 'complete' });
       
     } catch (error) {
       console.error('Failed to finish run:', error);
+      debugLog('finishRun', { error: error.message });
       // Show finish screen anyway with cached data
-      showFinishScreen({ total_score: 0, tokens_count: 0, breakdown: [] });
+      state.finishData = {
+        totalScore: state.runningScore || 0,
+        tokensCount: 0,
+        breakdown: [],
+        rank: null
+      };
+      transitionToView(VIEW.FINISH);
     }
   }
 
   /**
-   * Show the finish screen with results
+   * Render Finish Screen
    */
-  function showFinishScreen(data) {
-    // Set quiz state to finished (hides header via CSS)
-    const gameShell = document.querySelector('.game-shell[data-game="quiz"]');
-    if (gameShell) {
-      gameShell.setAttribute('data-quiz-state', 'finished');
-    }
-    
-    document.getElementById('quiz-header').hidden = true;
-    document.getElementById('quiz-question-container').hidden = true;
-    
-    const feedbackPanel = document.getElementById('quiz-feedback-panel');
-    if (feedbackPanel) feedbackPanel.hidden = true;
-    
-    const weiterBtn = document.getElementById('quiz-weiter-btn');
-    if (weiterBtn) weiterBtn.hidden = true;
-    
-    document.getElementById('quiz-finish').hidden = false;
-    
-    // Set scores
-    document.getElementById('quiz-final-score').textContent = data.total_score;
-    document.getElementById('quiz-final-tokens').textContent = data.tokens_count;
-    
-    // Render breakdown with new scannable structure
-    const breakdownContent = document.getElementById('quiz-breakdown-content');
-    if (breakdownContent && data.breakdown) {
-      breakdownContent.innerHTML = data.breakdown.map(b => {
-        const isPerfect = b.correct === b.total;
-        const icon = isPerfect ? '<span class="quiz-finish__breakdown-icon">✓</span>' : '<span class="quiz-finish__breakdown-icon"></span>';
-        
-        return `
-          <div class="quiz-finish__breakdown-row">
-            ${icon}
-            <span class="quiz-finish__breakdown-level">Stufe ${b.difficulty}</span>
-            <span class="quiz-finish__breakdown-accuracy">${b.correct} / ${b.total}</span>
-            <span class="quiz-finish__breakdown-points">${b.points + b.token_bonus}</span>
-          </div>
-        `;
-      }).join('');
-    }
-  }
-
-  /**
-   * Setup play again button
-   */
-  function setupPlayAgainButton() {
-    const btn = document.getElementById('quiz-play-again');
-    if (!btn) return;
-
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
+  async function renderFinishInContainer() {
+      const finish = state.finishData;
       
-      try {
-        const response = await fetch(`${API_BASE}/${state.topicId}/run/restart`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to restart');
+      // ✅ GUARD: Verhindere Crash wenn finishModel fehlt
+      if (!finish || typeof finish.totalScore !== 'number') {
+        console.error('❌ renderFinishInContainer: Invalid finishModel', finish);
+        ensureStageContainers();
+        const container = state.stageEls?.finishContainer;
+        if (container) {
+          container.innerHTML = `
+            <div class="quiz-finish-card md3-card md3-elevation-1">
+              <h2 class="quiz-finish-title display-small">Fehler beim Abschließen</h2>
+              <p>Das Quiz konnte nicht korrekt abgeschlossen werden. Bitte versuche es erneut.</p>
+              <button type="button" class="md3-btn md3-btn--filled" data-quiz-action="final-topics">
+                Zurück zur Übersicht
+              </button>
+            </div>
+          `;
         }
-        
-        // Reload the page
-        window.location.reload();
-        
-      } catch (error) {
-        console.error('Failed to restart:', error);
-        btn.disabled = false;
-        alert('Fehler beim Neustarten.');
+        return;
       }
-    });
+
+      ensureStageContainers();
+      const container = state.stageEls?.finishContainer;
+      if (!container) return;
+
+      // Calculate total correct/questions for summary
+      let totalCorrect = 0;
+      let totalQuestions = 0;
+      if (finish.breakdown) {
+          finish.breakdown.forEach(level => {
+              totalCorrect += level.correct;
+              totalQuestions += level.total;
+          });
+      }
+
+      container.innerHTML = `
+        <div class="quiz-finish-card md3-card md3-elevation-1">
+            <div class="quiz-finish-header">
+                <h2 class="quiz-finish-title display-small">Quiz beendet!</h2>
+                <div class="quiz-finish-score">
+                    <span class="quiz-finish-score-value display-large">${finish.totalScore}</span>
+                    <span class="quiz-finish-score-label label-large">Punkte</span>
+                </div>
+            </div>
+
+            <div class="quiz-finish-stats">
+                <div class="quiz-stat-row">
+                    <span class="material-symbols-rounded">check_circle</span>
+                    <span class="body-large">Gesamt: ${totalCorrect} / ${totalQuestions} richtig</span>
+                </div>
+            </div>
+
+            <div class="quiz-finish-breakdown" id="quiz-final-breakdown">
+                ${finish.breakdown ? finish.breakdown.map(level => `
+                    <div class="quiz-level-summary surface-variant-light">
+                        <div class="quiz-level-summary-header">
+                            <span class="quiz-level-badge label-medium">Level ${level.difficulty}</span>
+                            <span class="quiz-level-points label-medium">${level.points} Pkt</span>
+                        </div>
+                        <div class="quiz-level-progress-track">
+                            <div class="quiz-level-progress-fill" style="width: ${(level.correct / level.total) * 100}%"></div>
+                        </div>
+                        <div class="quiz-level-details body-small">
+                            ${level.correct} / ${level.total} richtig
+                        </div>
+                    </div>
+                `).join('') : ''}
+            </div>
+
+            <div class="quiz-finish-actions">
+                <button type="button" class="md3-button md3-button--filled" data-quiz-action="final-retry">
+                    <span class="material-symbols-rounded">replay</span>
+                    Nochmal spielen
+                </button>
+                <button type="button" class="md3-button md3-button--text" data-quiz-action="final-topics">
+                    Zur Übersicht
+                </button>
+            </div>
+        </div>
+      `;
+
+      // ✅ PHASE 4: Buttons nutzen globale Event Delegation (keine setup function mehr nötig)
+      
+      // Announce
+      announceA11y(`Quiz beendet. Dein Ergebnis: ${finish.totalScore} Punkte.`);
   }
 
   /**

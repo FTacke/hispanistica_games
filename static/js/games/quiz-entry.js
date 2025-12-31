@@ -12,12 +12,27 @@
 
   const API_BASE = '/api/quiz';
 
+  const DEBUG = new URLSearchParams(window.location.search).has('quizDebug') ||
+    window.localStorage.getItem('quizDebug') === '1';
+  let debugCallCounter = 0;
+
+  function debugLog(fnName, data) {
+    if (!DEBUG) return;
+    debugCallCounter++;
+    console.log(`[${debugCallCounter}] [quiz-entry] ${fnName}:`, {
+      timestamp: performance.now().toFixed(2),
+      ...data
+    });
+  }
+
   /**
    * Initialize the entry page
    */
   function init() {
     const topicId = document.querySelector('.game-shell')?.dataset.topic;
     if (!topicId) return;
+
+    debugLog('init', { topicId });
 
     // Load leaderboard
     loadLeaderboard(topicId);
@@ -28,6 +43,10 @@
     setupLogout();
     setupStartButton(topicId);
     setupRestartButton(topicId);
+
+    // Test hook: indicates that event handlers are attached.
+    // (No user-visible behavior; used by Playwright to avoid early form submits.)
+    window.__quizEntryReady = true;
   }
 
   /**
@@ -118,6 +137,7 @@
       hideError(errorEl);
 
       try {
+        debugLog('auth.submit', { topicId, name });
         // Use unified endpoint: auto-create if unknown, login if known + PIN correct
         const response = await fetch(`${API_BASE}/auth/name-pin`, {
           method: 'POST',
@@ -128,6 +148,7 @@
         const data = await response.json();
         
         if (!response.ok) {
+          debugLog('auth.error', { status: response.status, data });
           // Handle PIN mismatch error
           if (data.code === 'PIN_MISMATCH') {
             showError(errorEl, data.message || 'Profil existiert bereits. Bitte korrekten PIN eingeben.');
@@ -146,12 +167,14 @@
         if (data.is_new_user) {
           console.log('New profile created for:', data.player_name);
         }
-        
-        // Redirect to play
-        window.location.href = `/quiz/${topicId}/play`;
+
+        // Redirect back to topic entry so user gets explicit Start/Fortsetzen/Neu starten
+        debugLog('auth.success.redirect', { to: `/quiz/${topicId}` });
+        window.location.href = `/quiz/${topicId}`;
         
       } catch (error) {
         console.error('Auth failed:', error);
+        debugLog('auth.network_error', { message: error?.message });
         showError(errorEl, QuizI18n.t('ui.quiz.error_generic') || 'Ein Fehler ist aufgetreten.');
         submitBtn.disabled = false;
       }
@@ -169,6 +192,7 @@
       btn.disabled = true;
       
       try {
+        debugLog('anonymous.start', { topicId });
         const response = await fetch(`${API_BASE}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -179,11 +203,13 @@
           throw new Error('Anonymous login failed');
         }
         
-        // Redirect to play
-        window.location.href = `/quiz/${topicId}/play`;
+        // Redirect back to topic entry for explicit Start/Fortsetzen choices
+        debugLog('anonymous.success.redirect', { to: `/quiz/${topicId}` });
+        window.location.href = `/quiz/${topicId}`;
         
       } catch (error) {
         console.error('Anonymous login failed:', error);
+        debugLog('anonymous.error', { message: error?.message });
         btn.disabled = false;
         alert(QuizI18n.t('ui.quiz.error_generic') || 'Ein Fehler ist aufgetreten.');
       }
@@ -199,10 +225,12 @@
 
     btn.addEventListener('click', async () => {
       try {
+        debugLog('logout', {});
         await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
         window.location.reload();
       } catch (error) {
         console.error('Logout failed:', error);
+        debugLog('logout.error', { message: error?.message });
       }
     });
   }
@@ -218,10 +246,11 @@
       btn.disabled = true;
       
       try {
+        debugLog('run.start', { topicId, force_new: true });
         const response = await fetch(`${API_BASE}/${topicId}/run/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
+          body: JSON.stringify({ force_new: true })
         });
         
         if (!response.ok) {
@@ -229,10 +258,12 @@
         }
         
         // Redirect to play
+        debugLog('run.start.redirect', { to: `/quiz/${topicId}/play` });
         window.location.href = `/quiz/${topicId}/play`;
         
       } catch (error) {
         console.error('Start failed:', error);
+        debugLog('run.start.error', { message: error?.message });
         btn.disabled = false;
         alert(QuizI18n.t('ui.quiz.error_generic') || 'Ein Fehler ist aufgetreten.');
       }

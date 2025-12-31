@@ -27,14 +27,14 @@
 
 :root {
   /* Core color roles (light theme) - games.hispanistica branding */
-  --md-sys-color-primary: #0F4C5C;
-  --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #D4DFE2;
-  --md-sys-color-on-primary-container: #0F4C5C;
-  --md-sys-color-secondary: #276D7B;
+  --md-sys-color-primary: #0A3D4A;  /* Dunkler, satter Petrol für klaren Kontrast */
+  --md-sys-color-on-primary: #FFFFFF;  /* Reines Weiß */
+  --md-sys-color-primary-container: #B8D4DC;  /* Kräftiger getönt, klar unterscheidbar */
+  --md-sys-color-on-primary-container: #042228;
+  --md-sys-color-secondary: #1B5A68;  /* Dunkler, mehr Präsenz */
   --md-sys-color-on-secondary: #FFFFFF;
-  --md-sys-color-secondary-container: #D4E2E5;
-  --md-sys-color-on-secondary-container: #276D7B;
+  --md-sys-color-secondary-container: #B8D8DE;  /* Kräftigere Tönung */
+  --md-sys-color-on-secondary-container: #0D2F38;
 
   /* Tertiary role (für subtile Highlights) */
   --md-sys-color-tertiary: #3B6570;
@@ -43,26 +43,26 @@
   --md-sys-color-on-tertiary-container: #18343B;
 
   /* Surface & background */
-  --md-sys-color-surface: #EEF2F4;
-  --md-sys-color-on-surface: #061E25;
-  --md-sys-color-surface-variant: #E2EAEB;
-  --md-sys-color-on-surface-variant: #0A313C;
-  --_on-surface-variant-static: #0A313C; /* Fallback für Browser ohne OKLab/color-mix */
-  --md-sys-color-outline: #072229; /* Standard-Divider */
-  --md-sys-color-outline-variant: #B7C9CE;
-  --md-sys-color-background: #F3F6F7;
+  --md-sys-color-surface: #F0F5F7;  /* CONTENT-Ebene: Heller, Arbeitsfläche */
+  --md-sys-color-on-surface: #0A1F26;  /* Dunkler für besseren Kontrast */
+  --md-sys-color-surface-variant: #D8E3E7;  /* Noch deutlicher unterscheidbar */
+  --md-sys-color-on-surface-variant: #1A3B45;  /* Satter */
+  --_on-surface-variant-static: #1A3B45; /* Fallback für Browser ohne OKLab/color-mix */
+  --md-sys-color-outline: #4A6C76; /* Sichtbar stärker */
+  --md-sys-color-outline-variant: #8FA9B3;  /* Mehr Kontrast */
+  --md-sys-color-background: #D4DFE4;  /* PAGE-Ebene: Deutlich dunkler, kühles Grau */
   --md-sys-color-on-background: #061E25;
   
   /* NOTE: --app-background is defined in app-tokens.css, not here.
      This allows app-level customization without modifying core tokens. */
 
   /* Surface containers (games.hispanistica MD3 tokens) */
-  --md-sys-color-surface-container-lowest: #FFFFFF;
-  --md-sys-color-surface-container-low: #F7FAFB;
-  --md-sys-color-surface-container-mid: #F0F5F6;
-  --md-sys-color-surface-container: #F0F5F6;
-  --md-sys-color-surface-container-high: #E8EFF1;
-  --md-sys-color-surface-container-highest: #E1EAEC;
+  --md-sys-color-surface-container-lowest: #FFFFFF;  /* CARD-Ebene: Weiß für maximalen Kontrast */
+  --md-sys-color-surface-container-low: #F8FBFC;  /* Leicht getönt */
+  --md-sys-color-surface-container-mid: #F0F5F7;  /* = surface */
+  --md-sys-color-surface-container: #F0F5F7;  /* = surface */
+  --md-sys-color-surface-container-high: #E4EBED;  /* Dunkler als surface */
+  --md-sys-color-surface-container-highest: #D8E3E7;  /* = surface-variant */
 
   /* Error */
   --md-sys-color-error: #b3261e;
@@ -220,20 +220,20 @@
   --md-typography-heading-accent: var(--md-sys-color-primary);
 
   /* Extended Colors (Light Mode - games.hispanistica) */
-  --md-sys-color-success: #146C2E;
+  --md-sys-color-success: #0F5A24;  /* Dunkler, satter */
   --md-sys-color-on-success: #FFFFFF;
-  --md-sys-color-success-container: #D7E8DD;
-  --md-sys-color-on-success-container: #0D3F1C;
+  --md-sys-color-success-container: #B8E6C5;  /* Kräftiger grün, nicht seicht */
+  --md-sys-color-on-success-container: #052D12;
 
-  --md-sys-color-warning: #7A4D00;
+  --md-sys-color-warning: #8B5A00;  /* Etwas satter */
   --md-sys-color-on-warning: #FFFFFF;
-  --md-sys-color-warning-container: #F2E0C2;
-  --md-sys-color-on-warning-container: #4A2F00;
+  --md-sys-color-warning-container: #FFD699;  /* Kräftiger Orange-Ton */
+  --md-sys-color-on-warning-container: #3D2600;
 
-  --md-sys-color-info: #1A5A8A;
+  --md-sys-color-info: #155073;  /* Dunkler, mehr Kontrast */
   --md-sys-color-on-info: #FFFFFF;
-  --md-sys-color-info-container: #D7E7F3;
-  --md-sys-color-on-info-container: #103856;
+  --md-sys-color-info-container: #B8D9ED;  /* Kräftigeres Blau */
+  --md-sys-color-on-info-container: #0A2838;
 
   --md-sys-color-neutral: #5e5e5e;
   --md-sys-color-on-neutral: #ffffff;

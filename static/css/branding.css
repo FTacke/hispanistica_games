@@ -16,20 +16,20 @@
   /* --brand-project-tagline: "Spielerisch Sprache lernen"; */
 
   /* -----------------------------------------------------------------
-     BRAND: Primary Color (#0F4C5C)
+     BRAND: Primary Color (#0A3D4A)
      ----------------------------------------------------------------- */
-  --brand-primary: #0F4C5C;
+  --brand-primary: #0A3D4A;  /* Dunkler, satter Petrol */
   --brand-on-primary: #FFFFFF;
-  --brand-primary-container: #D4DFE2;
-  --brand-on-primary-container: #0F4C5C;
+  --brand-primary-container: #B8D4DC;  /* Kräftiger getönt */
+  --brand-on-primary-container: #042228;
 
   /* -----------------------------------------------------------------
-     BRAND: Secondary Color (#276D7B)
+     BRAND: Secondary Color (#1B5A68)
      ----------------------------------------------------------------- */
-  --brand-secondary: #276D7B;
+  --brand-secondary: #1B5A68;  /* Dunkler, mehr Präsenz */
   --brand-on-secondary: #FFFFFF;
-  --brand-secondary-container: #D4E2E5;
-  --brand-on-secondary-container: #276D7B;
+  --brand-secondary-container: #B8D8DE;  /* Kräftigere Tönung */
+  --brand-on-secondary-container: #0D2F38;
 
   /* -----------------------------------------------------------------
      BRAND: Tertiary Color
@@ -50,27 +50,27 @@
   /* -----------------------------------------------------------------
      BRAND: Neutrals / Layout
      ----------------------------------------------------------------- */
-  --brand-background: #F3F6F7;
-  --brand-on-background: #061E25;
-  --brand-surface: #EEF2F4;
-  --brand-on-surface: #061E25;
-  --brand-surface-variant: #E2EAEB;
-  --brand-on-surface-variant: #0A313C;
+  --brand-background: #D4DFE4;  /* PAGE-Ebene: Deutlich dunkler, kühles Grau */
+  --brand-on-background: #0A1F26;
+  --brand-surface: #F0F5F7;  /* CONTENT-Ebene: Heller, Arbeitsfläche */
+  --brand-on-surface: #0A1F26;
+  --brand-surface-variant: #D8E3E7;  /* Noch deutlicher unterscheidbar */
+  --brand-on-surface-variant: #1A3B45;
 
   /* -----------------------------------------------------------------
      BRAND: Surface Containers (MD3)
      ----------------------------------------------------------------- */
-  --brand-surface-container-lowest: #FFFFFF;
-  --brand-surface-container-low: #F7FAFB;
-  --brand-surface-container: #F0F5F6;
-  --brand-surface-container-high: #E8EFF1;
-  --brand-surface-container-highest: #E1EAEC;
+  --brand-surface-container-lowest: #FFFFFF;  /* CARD-Ebene: Weiß für maximalen Kontrast */
+  --brand-surface-container-low: #F8FBFC;
+  --brand-surface-container: #F0F5F7;  /* = surface */
+  --brand-surface-container-high: #E4EBED;
+  --brand-surface-container-highest: #D8E3E7;  /* = surface-variant */
 
   /* -----------------------------------------------------------------
      BRAND: Outlines / Dividers
      ----------------------------------------------------------------- */
-  --brand-outline: #072229;
-  --brand-outline-variant: #B7C9CE;
+  --brand-outline: #4A6C76;  /* Sichtbar stärker */
+  --brand-outline-variant: #8FA9B3;  /* Mehr Kontrast */
 
   /* -----------------------------------------------------------------
      BRAND: Inverse (für Tooltips etc.)
@@ -82,20 +82,20 @@
   /* -----------------------------------------------------------------
      BRAND: Feedback Colors
      ----------------------------------------------------------------- */
-  --brand-warning: #7A4D00;
+  --brand-warning: #8B5A00;
   --brand-on-warning: #FFFFFF;
-  --brand-warning-container: #F2E0C2;
-  --brand-on-warning-container: #4A2F00;
+  --brand-warning-container: #FFD699;  /* Kräftiger Orange-Ton */
+  --brand-on-warning-container: #3D2600;
 
-  --brand-success: #146C2E;
+  --brand-success: #0F5A24;  /* Dunkler, satter */
   --brand-on-success: #FFFFFF;
-  --brand-success-container: #D7E8DD;
-  --brand-on-success-container: #0D3F1C;
+  --brand-success-container: #B8E6C5;  /* Kräftiger grün */
+  --brand-on-success-container: #052D12;
 
-  --brand-info: #1A5A8A;
+  --brand-info: #155073;
   --brand-on-info: #FFFFFF;
-  --brand-info-container: #D7E7F3;
-  --brand-on-info-container: #103856;
+  --brand-info-container: #B8D9ED;  /* Kräftigeres Blau */
+  --brand-on-info-container: #0A2838;
 
   /* -----------------------------------------------------------------
      MAP: Brand → MD3 System Tokens

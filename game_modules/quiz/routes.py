@@ -26,6 +26,8 @@ import json
 import logging
 from functools import wraps
 from typing import Optional, Callable, Any
+import os
+import time
 
 from flask import (
     Blueprint,
@@ -42,6 +44,26 @@ from . import services
 from .models import QuizPlayer
 
 logger = logging.getLogger(__name__)
+
+
+_quiz_debug_counter = 0
+
+
+def _quiz_debug_enabled() -> bool:
+    return os.environ.get("QUIZ_DEBUG", "0") in {"1", "true", "TRUE", "yes", "YES"}
+
+
+def _quiz_debug_log(event: str, **fields: Any) -> None:
+    global _quiz_debug_counter
+    if not _quiz_debug_enabled():
+        return
+    _quiz_debug_counter += 1
+    logger.info(
+        "[quiz-debug:%s] %s %s",
+        _quiz_debug_counter,
+        event,
+        {"ts_ms": int(time.time() * 1000), **{k: v for k, v in fields.items() if v is not None}},
+    )
 
 # Blueprint with dual prefix for pages and API
 blueprint = Blueprint("quiz", __name__)
@@ -393,6 +415,13 @@ def api_start_run(topic_id: str):
     """Start a new run or resume existing one."""
     data = request.get_json() or {}
     force_new = data.get("force_new", False)
+
+    _quiz_debug_log(
+        "api_start_run",
+        player_id=getattr(g, "quiz_player_id", None),
+        topic_id=topic_id,
+        force_new=force_new,
+    )
     
     with get_session() as session:
         topic = services.get_topic(session, topic_id)
@@ -431,6 +460,14 @@ def api_restart_run(topic_id: str):
         
         run = services.restart_run(session, g.quiz_player_id, topic_id)
         state = services.get_run_state(session, run)
+
+        _quiz_debug_log(
+            "api_restart_run",
+            player_id=getattr(g, "quiz_player_id", None),
+            topic_id=topic_id,
+            run_id=state.run_id,
+            current_index=state.current_index,
+        )
         
         return jsonify({
             "success": True,
@@ -533,6 +570,16 @@ def api_submit_answer(run_id: str):
     selected_answer_id = data.get("selected_answer_id")  # Can be None for timeout
     answered_at_ms = data.get("answered_at_ms")
     used_joker = data.get("used_joker", False)
+
+    _quiz_debug_log(
+        "api_submit_answer.request",
+        run_id=run_id,
+        player_id=getattr(g, "quiz_player_id", None),
+        question_index=question_index,
+        selected_answer_id=selected_answer_id,
+        answered_at_ms=answered_at_ms,
+        used_joker=used_joker,
+    )
     
     if question_index is None or answered_at_ms is None:
         return jsonify({"error": "question_index and answered_at_ms required"}), 400
@@ -570,8 +617,108 @@ def api_submit_answer(run_id: str):
             "explanation_key": result.explanation_key,
             "next_question_index": result.next_question_index,
             "finished": result.finished,
+            "is_run_finished": result.finished,  # Explicit naming for frontend
             "joker_remaining": result.joker_remaining,
+            # Scoring fields - source of truth for live score
+            "earned_points": result.earned_points,
+            "running_score": result.running_score,  # INCLUDES bonus if level_completed && level_perfect
+            "level_completed": result.level_completed,
+            "level_perfect": result.level_perfect,
+            "level_bonus": result.level_bonus,  # The bonus amount (0 if not perfect)
+            "bonus_applied_now": result.level_completed and result.level_perfect and result.level_bonus > 0,  # True if bonus is in running_score
+            "difficulty": result.difficulty,
+            "level_correct_count": result.level_correct_count,
+            "level_questions_in_level": result.level_questions_in_level,
         })
+
+
+@blueprint.route("/api/quiz/run/<run_id>/status", methods=["GET"])
+@quiz_auth_required
+def api_get_run_status(run_id: str):
+    """Get current run status including running score (for page refresh)."""
+    with get_session() as session:
+        from .models import QuizRun, QuizRunAnswer
+        from sqlalchemy import select, and_
+
+        _quiz_debug_log(
+            "api_get_run_status.request",
+            run_id=run_id,
+            player_id=getattr(g, "quiz_player_id", None),
+        )
+
+        stmt = select(QuizRun).where(
+            and_(
+                QuizRun.id == run_id,
+                QuizRun.player_id == g.quiz_player_id,
+            )
+        )
+        run = session.execute(stmt).scalar_one_or_none()
+
+        if not run:
+            return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
+
+        # Calculate current score using same logic as answer endpoint
+        stmt_answers = select(QuizRunAnswer).where(
+            QuizRunAnswer.run_id == run.id
+        ).order_by(QuizRunAnswer.question_index)
+        answers = list(session.execute(stmt_answers).scalars().all())
+
+        from .services import calculate_running_score, QUESTIONS_PER_RUN
+
+        running_score = 0
+        level_completed = False
+        level_perfect = False
+        level_bonus = 0
+        level_correct_count = 0
+        level_questions_in_level = 0
+        bonus_applied_now = False
+        last_answer_result = None
+
+        if answers:
+            last_answer = answers[-1]
+            last_answer_result = last_answer.result
+            running_score, level_completed, level_perfect, level_bonus, level_correct_count, level_questions_in_level = calculate_running_score(
+                session, run, last_answer.question_index, last_answer.result
+            )
+            bonus_applied_now = level_completed and level_perfect and level_bonus > 0
+
+        # Use run.current_index as the canonical progress counter
+        current_index = run.current_index
+        is_run_finished = (run.status != "in_progress") or (current_index >= QUESTIONS_PER_RUN)
+
+        payload = {
+            "run_id": run.id,
+            "topic_id": run.topic_id,
+            "status": run.status,
+            "current_index": current_index,
+            "running_score": running_score,
+            "next_question_index": (current_index if not is_run_finished else None),
+            "finished": is_run_finished,
+            "is_run_finished": is_run_finished,
+            "joker_remaining": run.joker_remaining,
+            # Level info (best-effort, derived from last answered question)
+            "level_completed": level_completed,
+            "level_perfect": level_perfect,
+            "level_bonus": level_bonus,
+            "bonus_applied_now": bonus_applied_now,
+            "last_answer_result": last_answer_result,
+            "level_correct_count": level_correct_count,
+            "level_questions_in_level": level_questions_in_level,
+        }
+
+        _quiz_debug_log(
+            "api_get_run_status.response",
+            run_id=run.id,
+            player_id=getattr(g, "quiz_player_id", None),
+            current_index=current_index,
+            running_score=running_score,
+            finished=is_run_finished,
+            level_completed=level_completed,
+            level_perfect=level_perfect,
+            level_bonus=level_bonus,
+        )
+
+        return jsonify(payload)
 
 
 @blueprint.route("/api/quiz/run/<run_id>/joker", methods=["POST"])
@@ -627,7 +774,7 @@ def api_use_joker(run_id: str):
 @blueprint.route("/api/quiz/run/<run_id>/finish", methods=["POST"])
 @quiz_auth_required
 def api_finish_run(run_id: str):
-    """Finish run and get final score."""
+    """Finish run and get final score with highscore rank."""
     with get_session() as session:
         from .models import QuizRun
         from sqlalchemy import select, and_
@@ -648,11 +795,29 @@ def api_finish_run(run_id: str):
         
         result = services.finish_run(session, run)
         
+        # Get leaderboard to determine player's rank
+        leaderboard = services.get_leaderboard(session, run.topic_id)
+        player_rank = None
+        leaderboard_size = len(leaderboard)
+        
+        # Find player's position in leaderboard
+        for entry in leaderboard:
+            if entry["total_score"] == result.total_score:
+                player_rank = entry["rank"]
+                break
+        
+        # If not in top 30, calculate approximate rank
+        if player_rank is None:
+            # Player didn't make top 30
+            player_rank = leaderboard_size + 1
+        
         return jsonify({
             "success": True,
             "total_score": result.total_score,
             "tokens_count": result.tokens_count,
             "breakdown": result.breakdown,
+            "player_rank": player_rank,
+            "leaderboard_size": leaderboard_size,
         })
 
 

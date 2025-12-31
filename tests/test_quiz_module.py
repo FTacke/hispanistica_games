@@ -420,49 +420,49 @@ class TestQuizAuth:
         response = quiz_client.post(
             "/api/quiz/auth/register",
             json={
-                "pseudonym": "TestPlayer",
+                "name": "TestPlayer",
                 "pin": "1234",
             },
         )
         
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
         assert "quiz_session" in response.headers.get("Set-Cookie", "")
     
     def test_register_duplicate_pseudonym(self, quiz_client, seeded_quiz_db):
-        """Registering duplicate pseudonym should fail."""
+        """Registering duplicate name should fail."""
         # First registration
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "DupePlayer", "pin": "1234"},
+            json={"name": "DupePlayer", "pin": "1234"},
         )
         
         # Second registration with same pseudonym
         response = quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "DupePlayer", "pin": "5678"},
+            json={"name": "DupePlayer", "pin": "5678"},
         )
         
-        assert response.status_code == 409
+        assert response.status_code == 400
         data = response.get_json()
-        assert "exists" in data.get("error", "").lower() or data.get("code") == "PSEUDONYM_EXISTS"
+        assert data.get("code") == "NAME_TAKEN"
     
     def test_login_player(self, quiz_client, seeded_quiz_db):
         """Player login should set session cookie."""
         # Register first
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "LoginTest", "pin": "4321"},
+            json={"name": "LoginTest", "pin": "4321"},
         )
         
-        # Clear cookies
-        quiz_client.cookie_jar.clear()
+        # Clear quiz session cookie (FlaskClient may not expose cookie_jar)
+        quiz_client.delete_cookie("quiz_session")
         
         # Login
         response = quiz_client.post(
             "/api/quiz/auth/login",
-            json={"pseudonym": "LoginTest", "pin": "4321"},
+            json={"name": "LoginTest", "pin": "4321"},
         )
         
         assert response.status_code == 200
@@ -475,29 +475,34 @@ class TestQuizAuth:
         # Register first
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "WrongPinTest", "pin": "1111"},
+            json={"name": "WrongPinTest", "pin": "1111"},
         )
         
-        # Clear cookies
-        quiz_client.cookie_jar.clear()
+        # Clear quiz session cookie (FlaskClient may not expose cookie_jar)
+        quiz_client.delete_cookie("quiz_session")
         
         # Login with wrong PIN
         response = quiz_client.post(
             "/api/quiz/auth/login",
-            json={"pseudonym": "WrongPinTest", "pin": "9999"},
+            json={"name": "WrongPinTest", "pin": "9999"},
         )
         
         assert response.status_code == 401
     
     def test_anonymous_play(self, quiz_client, seeded_quiz_db):
-        """Anonymous players should be able to start runs."""
-        # Start run without authentication
-        response = quiz_client.post("/api/quiz/test_topic/run/start")
-        
-        # Should work for anonymous players
-        assert response.status_code in (200, 201)
+        """Anonymous players should be able to start runs after creating anonymous session."""
+        # Create anonymous session
+        anon_resp = quiz_client.post(
+            "/api/quiz/auth/register",
+            json={"anonymous": True},
+        )
+        assert anon_resp.status_code == 200
+
+        response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
+        assert response.status_code == 200
         data = response.get_json()
-        assert "run_id" in data or "error" in data
+        assert data.get("success") is True
+        assert data.get("run", {}).get("run_id")
 
 
 # ============================================================================
@@ -512,49 +517,50 @@ class TestRunLifecycle:
         # Register and get session
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "RunTest", "pin": "1234"},
+            json={"name": "RunTest", "pin": "1234"},
         )
         
-        response = quiz_client.post("/api/quiz/test_topic/run/start")
+        response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
         
-        assert response.status_code in (200, 201)
+        assert response.status_code == 200
         data = response.get_json()
-        assert "run_id" in data
-        assert data.get("total_questions") == 10
-        assert data.get("current_question_index") == 0
+        assert data.get("success") is True
+        assert data.get("run", {}).get("run_id")
+        assert data["run"].get("current_index") == 0
+        assert len(data["run"].get("run_questions", [])) == 10
     
     def test_get_current_run(self, quiz_client, seeded_quiz_db):
         """Getting current run should return run state."""
         # Register and start run
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "CurrentRunTest", "pin": "1234"},
+            json={"name": "CurrentRunTest", "pin": "1234"},
         )
-        quiz_client.post("/api/quiz/test_topic/run/start")
+        quiz_client.post("/api/quiz/test_topic/run/start", json={})
         
-        response = quiz_client.get("/api/quiz/run/current")
+        response = quiz_client.get("/api/quiz/run/current?topic_id=test_topic")
         
         assert response.status_code == 200
         data = response.get_json()
-        assert "run_id" in data
-        assert "questions" in data or "current_question" in data
+        assert data.get("has_run") is True
+        assert data.get("run", {}).get("run_id")
     
     def test_restart_run(self, quiz_client, seeded_quiz_db):
         """Restarting should abandon current run and create new one."""
         # Register and start run
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "RestartTest", "pin": "1234"},
+            json={"name": "RestartTest", "pin": "1234"},
         )
         
-        start_response = quiz_client.post("/api/quiz/test_topic/run/start")
-        first_run_id = start_response.get_json().get("run_id")
+        start_response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
+        first_run_id = start_response.get_json()["run"]["run_id"]
         
         # Restart
         restart_response = quiz_client.post("/api/quiz/test_topic/run/restart")
         
-        assert restart_response.status_code in (200, 201)
-        second_run_id = restart_response.get_json().get("run_id")
+        assert restart_response.status_code == 200
+        second_run_id = restart_response.get_json()["run"]["run_id"]
         
         # Should be different run
         assert second_run_id != first_run_id
@@ -572,31 +578,97 @@ class TestAnswerSubmission:
         # Register and start run
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "AnswerTest", "pin": "1234"},
+            json={"name": "AnswerTest", "pin": "1234"},
         )
         
-        start_response = quiz_client.post("/api/quiz/test_topic/run/start")
-        run_id = start_response.get_json().get("run_id")
+        start_response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
+        run_id = start_response.get_json()["run"]["run_id"]
         
         # Start question timer
-        quiz_client.post(f"/api/quiz/run/{run_id}/question/start")
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 0, "started_at_ms": 1000000},
+        )
         
-        # Submit answer (index 0 = first answer, which is correct in our test data)
+        # Submit answer (selected_answer_id=1 is correct in our seeded test data)
         response = quiz_client.post(
             f"/api/quiz/run/{run_id}/answer",
-            json={"answer_index": 0},
+            json={"question_index": 0, "selected_answer_id": 1, "answered_at_ms": 1001000},
         )
         
         assert response.status_code == 200
         data = response.get_json()
         assert "is_correct" in data
-        assert "score" in data
+        assert data.get("success") is True
+        assert data.get("correct_option_id") == 1
+        assert isinstance(data.get("earned_points"), int)
+        assert isinstance(data.get("running_score"), int)
+        assert data["running_score"] >= data["earned_points"]
     
     def test_submit_answer_timeout(self, quiz_client, seeded_quiz_db):
         """Answer submitted after timeout should be marked incorrect."""
         # This test would need to manipulate time or mock the deadline
         # For now, we just verify the endpoint exists
         pass
+
+    def test_level_perfect_sets_bonus_on_second_question(self, quiz_client, seeded_quiz_db):
+        """Second correct answer in same difficulty should complete a perfect level.
+
+        This is important for the LevelUp stage and must be deterministic.
+        """
+        quiz_client.post(
+            "/api/quiz/auth/register",
+            json={"name": "LevelPerfectTest", "pin": "1234"},
+        )
+
+        start_response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
+        assert start_response.status_code == 200
+        run_id = start_response.get_json()["run"]["run_id"]
+
+        # Difficulty 1 questions are always indices 0 and 1 (selection within the level can vary).
+        # In seeded test_topic data, BOTH difficulty-1 questions have correct answer id=1.
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 0, "started_at_ms": 1000000},
+        )
+        r1 = quiz_client.post(
+            f"/api/quiz/run/{run_id}/answer",
+            json={"question_index": 0, "selected_answer_id": 1, "answered_at_ms": 1001000},
+        )
+        assert r1.status_code == 200
+        d1 = r1.get_json()
+        assert d1["result"] == "correct"
+        assert d1["earned_points"] == 10
+        assert d1["level_completed"] is False
+        assert d1["level_perfect"] is False
+        assert d1["level_bonus"] == 0
+
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 1, "started_at_ms": 1002000},
+        )
+        r2 = quiz_client.post(
+            f"/api/quiz/run/{run_id}/answer",
+            json={"question_index": 1, "selected_answer_id": 1, "answered_at_ms": 1003000},
+        )
+        assert r2.status_code == 200
+        d2 = r2.get_json()
+
+        assert d2["result"] == "correct"
+        assert d2["earned_points"] == 10
+        assert d2["level_completed"] is True
+        assert d2["level_perfect"] is True
+        assert d2["level_bonus"] == 20
+        assert d2["running_score"] == 40
+
+        # /status must agree (refresh source-of-truth)
+        status = quiz_client.get(f"/api/quiz/run/{run_id}/status")
+        assert status.status_code == 200
+        s = status.get_json()
+        assert s["running_score"] == 40
+        assert s["level_completed"] is True
+        assert s["level_perfect"] is True
+        assert s["level_bonus"] == 20
 
 
 # ============================================================================
@@ -611,48 +683,85 @@ class TestJoker:
         # Register and start run
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "JokerTest", "pin": "1234"},
+            json={"name": "JokerTest", "pin": "1234"},
         )
         
-        start_response = quiz_client.post("/api/quiz/test_topic/run/start")
-        run_id = start_response.get_json().get("run_id")
+        start_response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
+        run_id = start_response.get_json()["run"]["run_id"]
         
         # Start question timer
-        quiz_client.post(f"/api/quiz/run/{run_id}/question/start")
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 0, "started_at_ms": 1000000},
+        )
         
         # Use joker
-        response = quiz_client.post(f"/api/quiz/run/{run_id}/joker")
+        response = quiz_client.post(
+            f"/api/quiz/run/{run_id}/joker",
+            json={"question_index": 0},
+        )
         
         assert response.status_code == 200
         data = response.get_json()
-        assert "eliminated_indices" in data
-        assert len(data["eliminated_indices"]) == 2
+        assert data.get("success") is True
+        assert "disabled_answer_ids" in data
+        assert len(data["disabled_answer_ids"]) == 2
+        assert 1 not in data["disabled_answer_ids"]
     
     def test_joker_only_once_per_run(self, quiz_client, seeded_quiz_db):
-        """Joker can only be used once per run."""
+        """Joker can be used exactly 2 times per run."""
         # Register and start run
         quiz_client.post(
             "/api/quiz/auth/register",
-            json={"pseudonym": "JokerOnceTest", "pin": "1234"},
+            json={"name": "JokerOnceTest", "pin": "1234"},
         )
         
-        start_response = quiz_client.post("/api/quiz/test_topic/run/start")
-        run_id = start_response.get_json().get("run_id")
+        start_response = quiz_client.post("/api/quiz/test_topic/run/start", json={})
+        run_id = start_response.get_json()["run"]["run_id"]
         
-        # Start question and use joker
-        quiz_client.post(f"/api/quiz/run/{run_id}/question/start")
-        quiz_client.post(f"/api/quiz/run/{run_id}/joker")
+        # Start question and use joker (1st time)
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 0, "started_at_ms": 1000000},
+        )
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/joker",
+            json={"question_index": 0},
+        )
         
         # Answer first question
-        quiz_client.post(f"/api/quiz/run/{run_id}/answer", json={"answer_index": 0})
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/answer",
+            json={"question_index": 0, "selected_answer_id": 1, "answered_at_ms": 1001000},
+        )
         
-        # Start next question and try to use joker again
-        quiz_client.post(f"/api/quiz/run/{run_id}/question/start")
-        response = quiz_client.post(f"/api/quiz/run/{run_id}/joker")
-        
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data.get("code") == "JOKER_ALREADY_USED"
+        # Start next question and use joker (2nd time)
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 1, "started_at_ms": 1002000},
+        )
+        response2 = quiz_client.post(
+            f"/api/quiz/run/{run_id}/joker",
+            json={"question_index": 1},
+        )
+        assert response2.status_code == 200
+        assert response2.get_json().get("fifty_fifty_remaining") == 0
+
+        # Start third question and try joker 3rd time -> LIMIT_REACHED
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/answer",
+            json={"question_index": 1, "selected_answer_id": 1, "answered_at_ms": 1003000},
+        )
+        quiz_client.post(
+            f"/api/quiz/run/{run_id}/question/start",
+            json={"question_index": 2, "started_at_ms": 1004000},
+        )
+        response3 = quiz_client.post(
+            f"/api/quiz/run/{run_id}/joker",
+            json={"question_index": 2},
+        )
+        assert response3.status_code == 400
+        assert response3.get_json().get("code") == "LIMIT_REACHED"
 
 
 # ============================================================================

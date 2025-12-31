@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quiz Module Styles
  * 
  * All styles are scoped to .game-shell[data-game="quiz"] to prevent
@@ -22,18 +22,25 @@
   --quiz-secondary-container: var(--md-sys-color-secondary-container, #cde8dc);
   
   --quiz-surface: var(--md-sys-color-surface, #f5faf7);
+  --quiz-surface-container: var(--md-sys-color-surface-container, #eef3f0);
+  --quiz-surface-container-lowest: var(--md-sys-color-surface-container-lowest, #ffffff);  /* CARD-Ebene */
+  --quiz-surface-container-low: var(--md-sys-color-surface-container-low, #f8fbfc);
+  --quiz-surface-container-high: var(--md-sys-color-surface-container-high, #e8ede9);
   --quiz-surface-variant: var(--md-sys-color-surface-variant, #dbe5df);
   --quiz-on-surface: var(--md-sys-color-on-surface, #191c1a);
   --quiz-on-surface-variant: var(--md-sys-color-on-surface-variant, #3f4944);
+  
+  --quiz-outline: var(--md-sys-color-outline, #6f7975);
+  --quiz-outline-variant: var(--md-sys-color-outline-variant, #bfc9c2);
   
   --quiz-error: var(--md-sys-color-error, #ba1a1a);
   --quiz-error-container: var(--md-sys-color-error-container, #ffdad6);
   --quiz-on-error: var(--md-sys-color-on-error, #ffffff);
   --quiz-on-error-container: var(--md-sys-color-on-error-container, #410002);
   
-  --quiz-success: #2e7d32;
-  --quiz-success-container: #c8e6c9;
-  --quiz-on-success-container: #003a1c;
+  --quiz-success: var(--md-sys-color-success, #2e7d32);
+  --quiz-success-container: var(--md-sys-color-success-container, #c8e6c9);
+  --quiz-on-success-container: var(--md-sys-color-on-success-container, #003a1c);
   
   --quiz-warning: #f57c00;
   --quiz-warning-container: #fff3e0;
@@ -69,11 +76,68 @@
   --quiz-transition-normal: 250ms ease;
   --quiz-transition-slow: 350ms ease;
   
+  /* Animation durations */
+  --quiz-anim-feedback: 180ms;
+  --quiz-anim-pop: 1000ms;      /* Points pop - longer visibility */
+  --quiz-anim-transition: 600ms; /* Slower, more noticeable transitions */
+  --quiz-anim-count-up: 700ms;    /* Score count-up animation */
+  --quiz-anim-level-up: 550ms;    /* Level-up card entrance */
+  --quiz-anim-level-auto: 1500ms; /* Auto-advance delay for level-up (longer) */
+  --quiz-anim-finish: 600ms;      /* Finish screen entrance */
+  --quiz-anim-explanation: 220ms;
+  
   /* Layout */
   font-family: var(--quiz-font-family);
   color: var(--quiz-on-surface);
   min-height: 100%;
   padding: var(--quiz-space-md);
+}
+
+/* ============================================================================
+   Accessibility: Screen Reader Only
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================================
+   Reduced Motion Support
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .game-shell[data-game="quiz"] {
+    --quiz-anim-feedback: 0ms;
+    --quiz-anim-pop: 300ms;
+    --quiz-anim-transition: 0ms;
+    --quiz-anim-explanation: 150ms;
+  }
+  
+  .game-shell[data-game="quiz"] *,
+  .game-shell[data-game="quiz"] *::before,
+  .game-shell[data-game="quiz"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+  }
+  
+  /* Keep opacity transitions but remove transform */
+  .game-shell[data-game="quiz"] .quiz-question-wrapper[data-transition-state="leaving"],
+  .game-shell[data-game="quiz"] .quiz-question-wrapper[data-transition-state="entering"] {
+    transform: none !important;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-score-chip__pop {
+    transform: none !important;
+  }
 }
 
 /* ============================================================================
@@ -153,9 +217,11 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--quiz-space-md);
-  background: var(--quiz-surface-variant);
+  background: var(--quiz-surface-container-high);
   border-radius: var(--quiz-radius-md);
   margin-bottom: var(--quiz-space-lg);
+  border: 1px solid var(--quiz-outline-variant);
+  box-shadow: var(--quiz-shadow-sm);
 }
 
 .game-shell[data-game="quiz"] .quiz-header__info {
@@ -261,7 +327,7 @@
   background: var(--quiz-accent-gold);
   border: none;
   border-radius: var(--quiz-radius-full);
-  color: #000;
+  color: var(--quiz-on-warning);  /* Token statt #000 */
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -281,10 +347,88 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-joker__count {
-  background: rgba(0, 0, 0, 0.2);
+  background: color-mix(in oklab, var(--quiz-on-surface) 20%, transparent);
   padding: 2px 8px;
   border-radius: var(--quiz-radius-full);
   font-size: 0.75rem;
+}
+
+/* ============================================================================
+   Score Chip (visible during run)
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-score-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-sm);
+  padding: var(--quiz-space-sm) var(--quiz-space-md);
+  background: var(--quiz-surface-container);
+  border-radius: var(--quiz-radius-full);
+  border: 1px solid var(--quiz-outline-variant);
+}
+
+.game-shell[data-game="quiz"] .quiz-score-chip__icon {
+  font-size: 1.25rem;
+  color: var(--quiz-primary);
+}
+
+.game-shell[data-game="quiz"] .quiz-score-chip__value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--quiz-on-surface);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5ch;
+  text-align: center;
+}
+
+/* Points Pop Animation */
+.game-shell[data-game="quiz"] .quiz-score-chip__pop {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  padding: 2px 6px;
+  background: var(--quiz-success);
+  color: var(--quiz-on-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: var(--quiz-radius-full);
+  opacity: 0;
+  transform: translateY(0);
+  pointer-events: none;
+}
+
+.game-shell[data-game="quiz"] .quiz-score-chip__pop--animate {
+  animation: quiz-points-pop var(--quiz-anim-pop) ease-out forwards;
+}
+
+@keyframes quiz-points-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+/* Reduced motion: only fade */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes quiz-points-pop {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
 }
 
 /* ============================================================================
@@ -292,16 +436,17 @@
    ============================================================================ */
 
 .game-shell[data-game="quiz"] .quiz-question {
-  background: var(--quiz-surface);
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene */
   border-radius: var(--quiz-radius-lg);
   padding: var(--quiz-space-lg);
   box-shadow: var(--quiz-shadow-md);
   margin-bottom: var(--quiz-space-lg);
+  border: 1px solid var(--quiz-outline-variant);
 }
 
 .game-shell[data-game="quiz"] .quiz-question__prompt {
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: 1.375rem;  /* Größer für mehr Hierarchie */
+  font-weight: 600;  /* Fetter */
   line-height: 1.5;
   color: var(--quiz-on-surface);
   margin-bottom: var(--quiz-space-lg);
@@ -317,7 +462,7 @@
 }
 
 /* ============================================================================
-   Answer Options
+   Answer Options - States: neutral, selected_correct, selected_wrong, correct_reveal, locked
    ============================================================================ */
 
 .game-shell[data-game="quiz"] .quiz-answers {
@@ -326,26 +471,31 @@
   gap: var(--quiz-space-md);
 }
 
+/* Base Answer Button (neutral state) */
 .game-shell[data-game="quiz"] .quiz-answer {
   display: flex;
   align-items: center;
   gap: var(--quiz-space-md);
   padding: var(--quiz-space-md) var(--quiz-space-lg);
-  background: var(--quiz-surface-variant);
-  border: 2px solid transparent;
+  background: var(--quiz-surface-container-lowest);  /* Heller als surface */
+  border: 2px solid var(--quiz-outline);  /* Stärker sichtbar */
   border-radius: var(--quiz-radius-md);
   cursor: pointer;
-  transition: all var(--quiz-transition-fast);
+  transition: 
+    background-color var(--quiz-anim-feedback) ease-out,
+    border-color var(--quiz-anim-feedback) ease-out,
+    box-shadow var(--quiz-anim-feedback) ease-out;
   text-align: left;
   font-size: 1rem;
   width: 100%;
   color: var(--quiz-on-surface);
 }
 
-.game-shell[data-game="quiz"] .quiz-answer:hover:not(:disabled):not(.quiz-answer--disabled) {
+/* Hover state (only when not disabled) */
+.game-shell[data-game="quiz"] .quiz-answer:hover:not(:disabled):not(.quiz-answer--locked) {
   border-color: var(--quiz-primary);
   background: var(--quiz-primary-container);
-  color: var(--quiz-on-surface);
+  box-shadow: var(--quiz-shadow-sm);  /* Mehr Tiefe beim Hover */
 }
 
 .game-shell[data-game="quiz"] .quiz-answer:focus-visible {
@@ -353,12 +503,109 @@
   outline-offset: 2px;
 }
 
+/* Selected state (before result) */
 .game-shell[data-game="quiz"] .quiz-answer--selected {
   border-color: var(--quiz-primary);
   background: var(--quiz-primary-container);
+  box-shadow: 0 0 0 2px var(--quiz-primary-container);  /* Ring-Effekt */
+}
+
+/* STATE: selected_correct - User chose correctly */
+.game-shell[data-game="quiz"] .quiz-answer--selected-correct {
+  background: var(--quiz-success-container);  /* Kräftiger grün */
+  border-color: var(--quiz-success);
+  color: var(--quiz-on-success-container);
+  box-shadow: 0 0 0 3px rgba(15, 90, 36, 0.15);  /* Grüner Glow */
+  font-weight: 600;  /* Mehr Gewicht */
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--selected-correct .quiz-answer__marker {
+  background: var(--quiz-success);
+  color: var(--quiz-on-primary);
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--selected-correct .quiz-answer__icon {
+  display: flex;
+}
+
+/* STATE: selected_wrong - User chose incorrectly */
+.game-shell[data-game="quiz"] .quiz-answer--selected-wrong {
+  background: var(--quiz-error-container);
+  border-color: var(--quiz-error);
+  color: var(--quiz-on-error-container);
+  box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.15);  /* Roter Glow */
+  font-weight: 600;
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--selected-wrong .quiz-answer__marker {
+  background: var(--quiz-error);
+  color: var(--quiz-on-primary);
+}
+
+/* STATE: correct_reveal - Show correct answer when user was wrong (subtle!) */
+.game-shell[data-game="quiz"] .quiz-answer--correct-reveal {
+  background: var(--quiz-surface-container-low);
+  border-color: var(--quiz-outline-variant);
+  border-left: 6px solid var(--quiz-success);  /* Dicker, sichtbarer */
+  color: var(--quiz-on-surface);
+  font-weight: 500;  /* Leicht hervorgehoben */
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--correct-reveal .quiz-answer__icon {
+  display: flex;
+  color: var(--quiz-success);
+}
+
+/* STATE: locked - Other answers after selection (NOT dimmed text!) */
+.game-shell[data-game="quiz"] .quiz-answer--locked {
+  cursor: default;
+  background: var(--quiz-surface-container);
+  border-color: var(--quiz-outline-variant);
   color: var(--quiz-on-surface);
 }
 
+/* Answer Marker (A, B, C, D) */
+.game-shell[data-game="quiz"] .quiz-answer__marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--quiz-surface);
+  border-radius: var(--quiz-radius-full);
+  font-weight: 600;
+  color: var(--quiz-on-surface-variant);
+  flex-shrink: 0;
+  transition: background-color var(--quiz-anim-feedback) ease-out,
+              color var(--quiz-anim-feedback) ease-out;
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--selected .quiz-answer__marker {
+  background: var(--quiz-primary);
+  color: var(--quiz-on-primary);
+}
+
+.game-shell[data-game="quiz"] .quiz-answer__text {
+  flex: 1;
+}
+
+/* Check icon for correct answers */
+.game-shell[data-game="quiz"] .quiz-answer__icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Answer hidden by 50/50 joker */
+.game-shell[data-game="quiz"] .quiz-answer--hidden {
+  display: none !important;
+}
+
+/* Legacy classes for backwards compatibility */
 .game-shell[data-game="quiz"] .quiz-answer--correct {
   border-color: var(--quiz-success);
   background: var(--quiz-success-container);
@@ -384,34 +631,10 @@
   background: var(--quiz-surface-variant);
   cursor: not-allowed;
   text-decoration: line-through;
-  opacity: 0.6;
 }
 
 .game-shell[data-game="quiz"] .quiz-answer--disabled .quiz-answer__text {
-  opacity: 1;
   color: var(--quiz-on-surface);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer__marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--quiz-surface);
-  border-radius: var(--quiz-radius-full);
-  font-weight: 600;
-  color: var(--quiz-on-surface-variant);
-  flex-shrink: 0;
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--selected .quiz-answer__marker {
-  background: var(--quiz-primary);
-  color: var(--quiz-on-primary);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer__text {
-  flex: 1;
 }
 
 /* ============================================================================
@@ -435,12 +658,12 @@
 
 .game-shell[data-game="quiz"] .quiz-snack--correct {
   background: var(--quiz-success);
-  color: #fff;
+  color: var(--quiz-on-success);
 }
 
 .game-shell[data-game="quiz"] .quiz-snack--wrong {
   background: var(--quiz-error);
-  color: #fff;
+  color: var(--quiz-on-error);
 }
 
 .game-shell[data-game="quiz"] .quiz-snack__content {
@@ -463,17 +686,17 @@
   display: block;
   width: 100%;
   padding: var(--quiz-space-sm) var(--quiz-space-md);
-  background: rgba(255, 255, 255, 0.25);
+  background: color-mix(in oklab, var(--quiz-surface) 25%, transparent);
   border: none;
   border-radius: var(--quiz-radius-sm);
-  color: #fff;
+  color: var(--quiz-on-success);  /* Verwendet Token */
   font-weight: 600;
   cursor: pointer;
   transition: background var(--quiz-transition-fast);
 }
 
 .game-shell[data-game="quiz"] .quiz-snack__button:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: color-mix(in oklab, var(--quiz-surface) 35%, transparent);
 }
 
 @keyframes quiz-snack-in {
@@ -498,7 +721,7 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-topic-card {
-  background: var(--quiz-surface);
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene: Weiß */
   border-radius: var(--quiz-radius-lg);
   padding: var(--quiz-space-lg);
   box-shadow: var(--quiz-shadow-sm);
@@ -506,10 +729,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--quiz-space-md);
+  border: 1px solid var(--quiz-outline-variant);  /* Klare Fassung */
 }
 
 .game-shell[data-game="quiz"] .quiz-topic-card:hover {
   box-shadow: var(--quiz-shadow-lg);
+  transform: translateY(-2px);  /* Lift-Effekt */
+  border-color: var(--quiz-outline);  /* Stärkere Border */
 }
 
 .game-shell[data-game="quiz"] .quiz-topic-card__icon {
@@ -607,10 +833,11 @@
 .game-shell[data-game="quiz"] .quiz-login {
   max-width: 520px;
   margin: 0 auto;
-  background: var(--quiz-surface);
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene: Weiß */
   border-radius: var(--quiz-radius-lg);
   padding: var(--quiz-space-xl);
   box-shadow: var(--quiz-shadow-md);
+  border: 1px solid var(--quiz-outline-variant);  /* Klare Fassung */
 }
 
 .game-shell[data-game="quiz"] .quiz-login__title {
@@ -732,11 +959,13 @@
 .game-shell[data-game="quiz"] .quiz-btn--primary {
   background: var(--quiz-primary);
   color: var(--quiz-on-primary);
+  box-shadow: var(--quiz-shadow-sm);  /* Immer leicht elevated */
 }
 
 .game-shell[data-game="quiz"] .quiz-btn--primary:hover {
-  filter: brightness(1.1);
-  box-shadow: var(--quiz-shadow-md);
+  filter: brightness(1.15);  /* Etwas heller */
+  box-shadow: var(--quiz-shadow-lg);  /* Stärkerer Shadow */
+  transform: translateY(-1px);  /* Leicht anheben */
 }
 
 .game-shell[data-game="quiz"] .quiz-btn--secondary {
@@ -772,10 +1001,11 @@
    ============================================================================ */
 
 .game-shell[data-game="quiz"] .quiz-leaderboard {
-  background: var(--md-sys-color-surface-container, var(--quiz-surface));
+  background: var(--md-sys-color-surface-container-lowest, var(--quiz-surface-container-lowest));
   border-radius: var(--quiz-radius-lg);
   overflow: hidden;
   box-shadow: var(--quiz-shadow-md);
+  border: 1px solid var(--quiz-outline-variant);  /* Klare Fassung */
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard__header {
@@ -797,8 +1027,8 @@
   grid-template-columns: 50px 1fr 80px 60px;
   gap: var(--quiz-space-md);
   padding: var(--quiz-space-md) var(--quiz-space-lg);
-  background: var(--md-sys-color-surface-container-highest, var(--quiz-surface));
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--quiz-surface-variant));
+  background: var(--md-sys-color-surface-container-low, var(--quiz-surface-container-low));
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
   align-items: center;
   transition: background var(--quiz-transition-fast);
 }
@@ -1066,10 +1296,103 @@
 }
 
 /* ============================================================================
-   Feedback Panel (shown after answer selection)
+   Question Transition Animation
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-question-wrapper {
+  transition: 
+    opacity var(--quiz-anim-transition) ease-out,
+    transform var(--quiz-anim-transition) ease-out;
+}
+
+/* Leaving state: slide out to left */
+.game-shell[data-game="quiz"] .quiz-question-wrapper[data-transition-state="leaving"] {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+/* Entering state: slide in from right */
+.game-shell[data-game="quiz"] .quiz-question-wrapper[data-transition-state="entering"] {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+/* Idle state: fully visible */
+.game-shell[data-game="quiz"] .quiz-question-wrapper[data-transition-state="idle"] {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ============================================================================
+   Explanation Card (separate from old feedback panel)
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-explanation-card {
+  margin-top: var(--quiz-space-xl);  /* Mehr Abstand zu Antworten */
+  padding: var(--quiz-space-lg);
+  border-radius: var(--quiz-radius-md);
+  background: var(--quiz-secondary-container);  /* Klar unterscheidbar */
+  border: 1px solid var(--quiz-outline-variant);
+  border-left: 6px solid var(--quiz-secondary);  /* Akzentlinie */
+  box-shadow: var(--quiz-shadow-sm);
+  overflow: hidden;
+  /* Animation: expand + fade */
+  animation: quiz-explanation-expand var(--quiz-anim-explanation) ease-out;
+}
+
+@keyframes quiz-explanation-expand {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    padding-top: var(--quiz-space-lg);
+    padding-bottom: var(--quiz-space-lg);
+    margin-top: var(--quiz-space-lg);
+  }
+}
+
+/* Reduced motion: only fade */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes quiz-explanation-expand {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--quiz-on-secondary-container);
+  margin: 0 0 var(--quiz-space-sm) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card__title .material-symbols-rounded {
+  font-size: 1.25rem;
+  color: var(--quiz-secondary);
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card__body {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--quiz-on-secondary-container);
+  line-height: 1.5;
+}
+
+/* ============================================================================
+   Feedback Panel (LEGACY - kept for backwards compatibility, hidden by default)
    ============================================================================ */
 
 .game-shell[data-game="quiz"] .quiz-feedback {
+  display: none; /* Hidden by default - use explanation card instead */
   margin-top: var(--quiz-space-lg);
   padding: var(--quiz-space-lg);
   border-radius: var(--quiz-radius-md);
@@ -1105,7 +1428,7 @@
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0 0 var(--quiz-space-sm) 0;
-  color: inherit; /* Inherits from parent (.quiz-feedback--correct/wrong) */
+  color: inherit;
 }
 
 .game-shell[data-game="quiz"] .quiz-feedback__status--correct {
@@ -1119,19 +1442,371 @@
 .game-shell[data-game="quiz"] .quiz-feedback__explanation {
   margin: 0;
   font-size: 1rem;
-  color: inherit; /* Inherits from parent (.quiz-feedback--correct/wrong) */
+  color: inherit;
   line-height: 1.5;
-  opacity: 1; /* Explicitly set - no transparency! */
 }
 
 /* Weiter Button */
 .game-shell[data-game="quiz"] .quiz-weiter-btn {
-  margin-top: var(--quiz-space-lg);
+  margin-top: var(--quiz-space-xl);  /* Mehr Abstand für klare Trennung */
 }
 
-/* Answer hidden by 50/50 joker */
-.game-shell[data-game="quiz"] .quiz-answer--hidden {
-  display: none !important;
+/* Weiter Button disabled during transition */
+.game-shell[data-game="quiz"] .quiz-weiter-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   Count-Up Animation for Score
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-score-chip__value--counting,
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-value--counting,
+.game-shell[data-game="quiz"] .quiz-finish__score-value--counting {
+  transition: none; /* Numbers change rapidly during count-up */
+}
+
+/* ============================================================================
+   Level-Up Screen
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-level-up {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--quiz-space-xl);
+  min-height: 60vh;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__card {
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene */
+  border-radius: var(--quiz-radius-lg);
+  padding: var(--quiz-space-xl) calc(var(--quiz-space-xl) * 1.5);
+  box-shadow: var(--quiz-shadow-lg);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  border: 1px solid var(--quiz-outline-variant);  /* Klare Fassung */
+  animation: quiz-level-up-enter var(--quiz-anim-level-up) cubic-bezier(0.2, 0.0, 0.2, 1) forwards;
+}
+
+@keyframes quiz-level-up-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Reduced motion: only fade */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes quiz-level-up-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__overline {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--quiz-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--quiz-space-sm);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--quiz-space-sm);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--quiz-on-surface);
+  margin: 0 0 var(--quiz-space-lg) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__emoji {
+  font-size: 2rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__achievement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--quiz-space-sm);
+  font-size: 1rem;
+  color: var(--quiz-success);
+  margin: 0 0 var(--quiz-space-lg) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__achievement .material-symbols-rounded {
+  font-size: 1.25rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus {
+  background: var(--quiz-primary-container);
+  border-radius: var(--quiz-radius-md);
+  padding: var(--quiz-space-md) var(--quiz-space-lg);
+  margin-bottom: var(--quiz-space-lg);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--quiz-on-primary-container);
+  margin-bottom: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--quiz-on-primary-container);
+  font-variant-numeric: tabular-nums;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__next {
+  font-size: 0.875rem;
+  color: var(--quiz-on-surface-variant);
+  margin: 0;
+}
+
+/* Level-Up exit animation */
+.game-shell[data-game="quiz"] .quiz-level-up--leaving .quiz-level-up__card {
+  animation: quiz-level-up-exit 300ms ease-out forwards;
+}
+
+@keyframes quiz-level-up-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes quiz-level-up-exit {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+}
+
+/* ============================================================================
+   Finish Screen (Updated with Highscore Rank)
+   ============================================================================ */
+
+/* Hide header when quiz is finished */
+.game-shell[data-game="quiz"][data-quiz-state="finished"] .quiz-header {
+  display: none;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--quiz-space-xl) var(--quiz-space-md);
+  min-height: 80vh;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__card {
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene */
+  border-radius: var(--quiz-radius-lg);
+  padding: var(--quiz-space-xl);
+  box-shadow: var(--quiz-shadow-lg);
+  max-width: 600px;
+  width: 100%;
+  border: 1px solid var(--quiz-outline-variant);  /* Klare Fassung */
+}
+  border-radius: var(--quiz-radius-lg);
+  padding: var(--quiz-space-xl) calc(var(--quiz-space-xl) * 1.5);
+  box-shadow: var(--quiz-shadow-lg);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  animation: quiz-finish-enter var(--quiz-anim-finish) cubic-bezier(0.2, 0.0, 0.2, 1) forwards;
+}
+
+@keyframes quiz-finish-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes quiz-finish-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__overline {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--quiz-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--quiz-space-sm);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--quiz-space-sm);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--quiz-primary);
+  margin: 0 0 var(--quiz-space-xl) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__emoji {
+  font-size: 2.5rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__primary-result {
+  margin-bottom: var(--quiz-space-xl);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__score {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--quiz-space-lg);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__score-item--large .quiz-finish__score-value {
+  font-size: 3rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__score-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--quiz-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__score-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--quiz-on-surface-variant);
+}
+
+/* Highscore Rank Block */
+.game-shell[data-game="quiz"] .quiz-finish__rank {
+  background: var(--quiz-primary-container);
+  border-radius: var(--quiz-radius-md);
+  padding: var(--quiz-space-lg);
+  margin-bottom: var(--quiz-space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__rank-icon {
+  font-size: 2rem;
+  margin-bottom: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__rank-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--quiz-on-primary-container);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__rank-label {
+  font-size: 0.875rem;
+  color: var(--quiz-on-primary-container);
+}
+
+/* Per-Level Results - Scannable Table */
+.game-shell[data-game="quiz"] .quiz-finish__breakdown {
+  background: var(--quiz-surface-container-lowest);  /* CARD-Ebene */
+  border-radius: var(--quiz-radius-md);
+  padding: var(--quiz-space-lg);
+  margin-bottom: var(--quiz-space-xl);
+  text-align: left;
+  border: 1px solid var(--quiz-outline-variant);  /* Klare Fassung */
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--quiz-on-surface);
+  margin: 0 0 var(--quiz-space-md) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--quiz-space-md);
+  align-items: center;
+  padding: var(--quiz-space-sm) 0;
+  border-bottom: 1px solid var(--quiz-outline-variant);
+  min-height: 40px;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-row:last-child {
+  border-bottom: none;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-level {
+  font-weight: 600;
+  color: var(--quiz-on-surface);
+  min-width: 60px;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-accuracy {
+  font-variant-numeric: tabular-nums;
+  color: var(--quiz-on-surface-variant);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-points {
+  font-weight: 700;
+  color: var(--quiz-on-surface);
+  text-align: right;
+  min-width: 60px;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__breakdown-icon {
+  color: var(--quiz-success);
+  font-size: 1.25rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Action Buttons */
+.game-shell[data-game="quiz"] .quiz-finish__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-md);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish__actions .quiz-btn {
+  width: 100%;
 }
 
 .game-shell[data-game="quiz"] .quiz-fade-enter-active {
@@ -1188,3 +1863,601 @@
     display: none;
   }
 }
+
+/* ============================================================================
+   Level Up & Final Screen (Gold Standard)
+   ============================================================================ */
+
+/* Container visibility management */
+.game-shell[data-game="quiz"] .quiz-level-up,
+.game-shell[data-game="quiz"] .quiz-finish-card {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  animation: quiz-card-enter var(--quiz-anim-level-up) cubic-bezier(0.2, 0.0, 0.2, 1) forwards;
+}
+
+@keyframes quiz-card-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Level Up Specifics */
+.game-shell[data-game="quiz"] .quiz-level-up__card {
+  background: var(--quiz-surface-container-high);
+  border-radius: var(--quiz-radius-lg);
+  padding: var(--quiz-space-xl);
+  box-shadow: var(--quiz-shadow-lg);
+  text-align: center;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--quiz-on-surface);
+  margin: 0 0 var(--quiz-space-xs) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__subline {
+  font-size: 1rem;
+  color: var(--quiz-on-surface-variant);
+  margin: 0 0 var(--quiz-space-xl) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__result-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--quiz-space-sm);
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: var(--quiz-space-lg);
+  color: var(--quiz-primary);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__points-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--quiz-space-md);
+  margin-bottom: var(--quiz-space-lg);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-block,
+.game-shell[data-game="quiz"] .quiz-level-up__total-block {
+  background: var(--quiz-surface);
+  padding: var(--quiz-space-md);
+  border-radius: var(--quiz-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-block--active {
+  background: var(--quiz-primary-container);
+  color: var(--quiz-on-primary-container);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__tip {
+  background: var(--quiz-surface-variant);
+  padding: var(--quiz-space-md);
+  border-radius: var(--quiz-radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-md);
+  text-align: left;
+  font-size: 0.875rem;
+  margin-bottom: var(--quiz-space-lg);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-sm);
+  align-items: center;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__timer {
+  font-size: 0.875rem;
+  color: var(--quiz-on-surface-variant);
+}
+
+/* Final Screen Specifics */
+.game-shell[data-game="quiz"] .quiz-finish-card {
+  background: var(--quiz-surface-container-high);
+  border-radius: var(--quiz-radius-lg);
+  padding: var(--quiz-space-xl);
+  box-shadow: var(--quiz-shadow-lg);
+  text-align: center;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-header {
+  margin-bottom: var(--quiz-space-xl);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-title {
+  margin-bottom: var(--quiz-space-lg);
+  color: var(--quiz-on-surface);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-score-value {
+  color: var(--quiz-primary);
+  line-height: 1;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-score-label {
+  color: var(--quiz-on-surface-variant);
+  margin-top: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-stats {
+  margin-bottom: var(--quiz-space-xl);
+  display: flex;
+  justify-content: center;
+}
+
+.game-shell[data-game="quiz"] .quiz-stat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-sm);
+  color: var(--quiz-on-surface);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-md);
+  margin-bottom: var(--quiz-space-xl);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-summary {
+  background: var(--quiz-surface);
+  padding: var(--quiz-space-md);
+  border-radius: var(--quiz-radius-md);
+  text-align: left;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-summary-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-badge {
+  background: var(--quiz-secondary-container);
+  color: var(--quiz-on-secondary-container);
+  padding: 2px 8px;
+  border-radius: var(--quiz-radius-sm);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-points {
+  font-weight: 600;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-progress-track {
+  height: 8px;
+  background: var(--quiz-surface-variant);
+  border-radius: var(--quiz-radius-full);
+  overflow: hidden;
+  margin-bottom: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-progress-fill {
+  height: 100%;
+  background: var(--quiz-primary);
+  border-radius: var(--quiz-radius-full);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-details {
+  color: var(--quiz-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-md);
+}
+/ *   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+ 
+       L e v e l   U p   &   F i n a l   S c r e e n s   ( G o l d   S t a n d a r d ) 
+ 
+       = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   * / 
+ 
+ 
+ 
+ / *   C o n t a i n e r   v i s i b i l i t y   m a n a g e m e n t   * / 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - c o n t a i n e r , 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - c o n t a i n e r   { 
+ 
+     p o s i t i o n :   a b s o l u t e ; 
+ 
+     t o p :   0 ; 
+ 
+     l e f t :   0 ; 
+ 
+     w i d t h :   1 0 0 % ; 
+ 
+     h e i g h t :   1 0 0 % ; 
+ 
+     z - i n d e x :   1 0 ; 
+ 
+     d i s p l a y :   f l e x ; 
+ 
+     a l i g n - i t e m s :   c e n t e r ; 
+ 
+     j u s t i f y - c o n t e n t :   c e n t e r ; 
+ 
+     p a d d i n g :   v a r ( - - q u i z - s p a c e - m d ) ; 
+ 
+     b a c k g r o u n d :   v a r ( - - q u i z - s u r f a c e ) ;   / *   C o v e r   e v e r y t h i n g   * / 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - c o n t a i n e r [ h i d d e n ] , 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - c o n t a i n e r [ h i d d e n ]   { 
+ 
+     d i s p l a y :   n o n e ; 
+ 
+ } 
+ 
+ 
+ 
+ / *   C a r d   S t y l e s   * / 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - c a r d , 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - c a r d   { 
+ 
+     b a c k g r o u n d :   v a r ( - - q u i z - s u r f a c e - c o n t a i n e r - h i g h ) ; 
+ 
+     b o r d e r - r a d i u s :   v a r ( - - q u i z - r a d i u s - l g ) ; 
+ 
+     p a d d i n g :   v a r ( - - q u i z - s p a c e - x l ) ; 
+ 
+     w i d t h :   1 0 0 % ; 
+ 
+     m a x - w i d t h :   4 8 0 p x ; 
+ 
+     b o x - s h a d o w :   v a r ( - - q u i z - s h a d o w - l g ) ; 
+ 
+     t e x t - a l i g n :   c e n t e r ; 
+ 
+     a n i m a t i o n :   q u i z - c a r d - e n t e r   v a r ( - - q u i z - a n i m - l e v e l - u p )   c u b i c - b e z i e r ( 0 . 2 ,   0 . 0 ,   0 . 2 ,   1 )   f o r w a r d s ; 
+ 
+ } 
+ 
+ 
+ 
+ @ k e y f r a m e s   q u i z - c a r d - e n t e r   { 
+ 
+     f r o m   {   o p a c i t y :   0 ;   t r a n s f o r m :   s c a l e ( 0 . 9 5 )   t r a n s l a t e Y ( 1 0 p x ) ;   } 
+ 
+     t o   {   o p a c i t y :   1 ;   t r a n s f o r m :   s c a l e ( 1 )   t r a n s l a t e Y ( 0 ) ;   } 
+ 
+ } 
+ 
+ 
+ 
+ / *   L e v e l   U p   S p e c i f i c s   * / 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - t i t l e   { 
+ 
+     f o n t - s i z e :   1 . 7 5 r e m ; 
+ 
+     f o n t - w e i g h t :   7 0 0 ; 
+ 
+     c o l o r :   v a r ( - - q u i z - o n - s u r f a c e ) ; 
+ 
+     m a r g i n :   0   0   v a r ( - - q u i z - s p a c e - x s )   0 ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - s u b t i t l e   { 
+ 
+     f o n t - s i z e :   1 r e m ; 
+ 
+     c o l o r :   v a r ( - - q u i z - o n - s u r f a c e - v a r i a n t ) ; 
+ 
+     m a r g i n :   0   0   v a r ( - - q u i z - s p a c e - x l )   0 ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - s t a t s   { 
+ 
+     d i s p l a y :   g r i d ; 
+ 
+     g r i d - t e m p l a t e - c o l u m n s :   1 f r   1 f r ; 
+ 
+     g a p :   v a r ( - - q u i z - s p a c e - m d ) ; 
+ 
+     m a r g i n - b o t t o m :   v a r ( - - q u i z - s p a c e - l g ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - s t a t - i t e m   { 
+ 
+     b a c k g r o u n d :   v a r ( - - q u i z - s u r f a c e ) ; 
+ 
+     p a d d i n g :   v a r ( - - q u i z - s p a c e - m d ) ; 
+ 
+     b o r d e r - r a d i u s :   v a r ( - - q u i z - r a d i u s - m d ) ; 
+ 
+     d i s p l a y :   f l e x ; 
+ 
+     f l e x - d i r e c t i o n :   c o l u m n ; 
+ 
+     g a p :   v a r ( - - q u i z - s p a c e - x s ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - s t a t - i t e m - - b o n u s   { 
+ 
+     b a c k g r o u n d :   v a r ( - - q u i z - p r i m a r y - c o n t a i n e r ) ; 
+ 
+     c o l o r :   v a r ( - - q u i z - o n - p r i m a r y - c o n t a i n e r ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - s t a t - l a b e l   { 
+ 
+     f o n t - s i z e :   0 . 8 7 5 r e m ; 
+ 
+     f o n t - w e i g h t :   5 0 0 ; 
+ 
+     o p a c i t y :   0 . 9 ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - s t a t - v a l u e   { 
+ 
+     f o n t - s i z e :   1 . 5 r e m ; 
+ 
+     f o n t - w e i g h t :   7 0 0 ; 
+ 
+     f o n t - v a r i a n t - n u m e r i c :   t a b u l a r - n u m s ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - s c o r e   { 
+ 
+     m a r g i n - b o t t o m :   v a r ( - - q u i z - s p a c e - x l ) ; 
+ 
+     p a d d i n g - t o p :   v a r ( - - q u i z - s p a c e - l g ) ; 
+ 
+     b o r d e r - t o p :   1 p x   s o l i d   v a r ( - - q u i z - o u t l i n e - v a r i a n t ) ; 
+ 
+     d i s p l a y :   f l e x ; 
+ 
+     f l e x - d i r e c t i o n :   c o l u m n ; 
+ 
+     g a p :   v a r ( - - q u i z - s p a c e - x s ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - l e v e l u p - t i m e r   { 
+ 
+     f o n t - s i z e :   0 . 8 7 5 r e m ; 
+ 
+     c o l o r :   v a r ( - - q u i z - o n - s u r f a c e - v a r i a n t ) ; 
+ 
+     m a r g i n - b o t t o m :   v a r ( - - q u i z - s p a c e - s m ) ; 
+ 
+ } 
+ 
+ 
+ 
+ / *   F i n a l   S c r e e n   S p e c i f i c s   * / 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - s c o r e - d i s p l a y   { 
+ 
+     m a r g i n :   v a r ( - - q u i z - s p a c e - l g )   0 ; 
+ 
+     d i s p l a y :   f l e x ; 
+ 
+     f l e x - d i r e c t i o n :   c o l u m n ; 
+ 
+     a l i g n - i t e m s :   c e n t e r ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - s c o r e - v a l u e   { 
+ 
+     f o n t - s i z e :   3 . 5 r e m ; 
+ 
+     f o n t - w e i g h t :   8 0 0 ; 
+ 
+     c o l o r :   v a r ( - - q u i z - p r i m a r y ) ; 
+ 
+     l i n e - h e i g h t :   1 ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - s c o r e - l a b e l   { 
+ 
+     f o n t - s i z e :   1 r e m ; 
+ 
+     f o n t - w e i g h t :   5 0 0 ; 
+ 
+     c o l o r :   v a r ( - - q u i z - o n - s u r f a c e - v a r i a n t ) ; 
+ 
+     m a r g i n - t o p :   v a r ( - - q u i z - s p a c e - x s ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - a c t i o n s   { 
+ 
+     d i s p l a y :   f l e x ; 
+ 
+     g a p :   v a r ( - - q u i z - s p a c e - m d ) ; 
+ 
+     j u s t i f y - c o n t e n t :   c e n t e r ; 
+ 
+     m a r g i n - t o p :   v a r ( - - q u i z - s p a c e - x l ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . g a m e - s h e l l [ d a t a - g a m e = " q u i z " ]   . q u i z - f i n a l - a c t i o n s   . q u i z - b t n   { 
+ 
+     f l e x :   1 ; 
+ 
+ } 
+ 
+ 
+/* ============================================================================
+   Level-Up Screen (MD3 Filled Button + Prominent Layout)
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-level-up-container {
+  display: block;
+  margin: 0 auto;
+  max-width: 600px;
+  padding: var(--quiz-space-xl, 24px);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__card {
+  background: var(--quiz-surface-container, #eef3f0);
+  border-radius: 16px;
+  padding: var(--quiz-space-xl, 24px);
+  box-shadow: var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12));
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--quiz-primary, #006e52);
+  margin: 0 0 var(--quiz-space-sm, 8px);
+  text-align: center;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__subline {
+  font-size: 1.125rem;
+  color: var(--quiz-on-surface-variant, #3f4944);
+  text-align: center;
+  margin: 0 0 var(--quiz-space-lg, 20px);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__result-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: var(--quiz-space-lg, 20px);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__points-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--quiz-space-md, 16px);
+  margin: var(--quiz-space-lg, 20px) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-block,
+.game-shell[data-game="quiz"] .quiz-level-up__total-block {
+  background: var(--quiz-surface, #f5faf7);
+  border-radius: 12px;
+  padding: var(--quiz-space-md, 16px);
+  text-align: center;
+  border: 2px solid var(--quiz-outline-variant, #bfc9c2);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-block--active {
+  border-color: var(--quiz-accent-gold, #ffc107);
+  background: var(--quiz-warning-container, #fff3e0);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--quiz-on-surface-variant, #3f4944);
+  margin-bottom: 4px;
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--quiz-primary, #006e52);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__bonus-block--active .quiz-level-up__value {
+  color: var(--quiz-accent-gold, #ffc107);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--quiz-secondary-container, #cde8dc);
+  padding: var(--quiz-space-md, 16px);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  margin-top: var(--quiz-space-lg, 20px);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--quiz-space-sm, 8px);
+  margin-top: var(--quiz-space-xl, 24px);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up__timer {
+  font-size: 0.875rem;
+  color: var(--quiz-on-surface-variant, #3f4944);
+  margin: 0;
+}
+
+
