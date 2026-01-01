@@ -15,7 +15,35 @@
   
   <div class="md3-page quiz-play-page quiz-page-stack" role="main" aria-label="Quiz Gameplay">
     
-    <div class="quiz-page-content">
+    <!-- Top-Bar: Quiz-Titel, Status-Chip, Spiel beenden -->
+    <header class="quiz-play-topbar" id="quiz-play-topbar">
+      <div class="quiz-play-topbar__title">
+        <span class="quiz-play-topbar__icon material-symbols-rounded" aria-hidden="true">quiz</span>
+        <h1 class="quiz-play-topbar__name" id="quiz-play-title">{{ topic_title_key }}</h1>
+      </div>
+      
+      <div class="quiz-play-topbar__status">
+        {% if player_name %}
+          <span class="quiz-play-topbar__chip">
+            <span class="material-symbols-rounded">person</span>
+            <span>Angemeldet als: {{ player_name }}</span>
+          </span>
+        {% else %}
+          <span class="quiz-play-topbar__chip quiz-play-topbar__chip--anon">
+            <span class="material-symbols-rounded">person_off</span>
+            <span>Du spielst anonym</span>
+          </span>
+        {% endif %}
+      </div>
+      
+      <a href="{{ url_for('quiz.quiz_topic_entry', topic_id=topic_id) }}" class="quiz-play-topbar__exit" id="quiz-exit-btn">
+        <span class="material-symbols-rounded">close</span>
+        <span>Spiel beenden</span>
+      </a>
+    </header>
+
+    <!-- Quiz Content Container (stabile Breite) -->
+    <div class="quiz-play-container">
       <!-- Quiz Header with Progress, Score, Timer, Joker -->
       <header class="quiz-header" id="quiz-header">
       <div class="quiz-header__info">
@@ -114,7 +142,7 @@
             </div>
         </div>
     </section>
-    </div><!-- .quiz-page-content -->
+    </div><!-- .quiz-play-container -->
 
   </div>
 </div>

@@ -173,7 +173,7 @@
   const TIMER_SECONDS = 30;
   const TIMER_WARNING = 10;
   const TIMER_DANGER = 5;
-  const AUTO_ADVANCE_DELAY_MS = 15000; // 15 seconds
+  const AUTO_ADVANCE_DELAY_MS = 20000; // 20 seconds - genug Zeit zum Lesen
   const TRANSITION_DURATION_MS = 600; // Slower transitions
   const COUNT_UP_DURATION_MS = 700;   // Score count-up animation
   // Level-up is a real intermediate stage; do not auto-advance.
@@ -418,34 +418,11 @@
   }
 
   /**
-   * Start a new run or get existing run state
+   * Start a new run (immer neu, kein Resume)
+   * Vereinfacht: Jeder Quiz-Start ist ein neuer Lauf.
    */
   async function startOrResumeRun() {
-    // Deterministic behavior:
-    // - If a run exists: resume it (explicit "Fortsetzen" comes from entry page)
-    // - If none exists: start a new run (index 0)
-    debugLog('startOrResumeRun', { action: 'checking current run' });
-
-    const currentResp = await fetch(`${API_BASE}/run/current?topic_id=${encodeURIComponent(state.topicId)}`, {
-      credentials: 'same-origin'
-    });
-
-    if (!currentResp.ok) {
-      if (currentResp.status === 401 || currentResp.status === 403) {
-        return null;
-      }
-      throw new Error(`HTTP ${currentResp.status}`);
-    }
-
-    const currentData = await currentResp.json();
-    debugLog('startOrResumeRun', { action: 'current run response', currentData });
-
-    if (currentData && currentData.has_run && currentData.run) {
-      return currentData.run;
-    }
-
-    // No run: start a new one
-    debugLog('startOrResumeRun', { action: 'starting new run (no existing)' });
+    debugLog('startOrResumeRun', { action: 'starting NEW run (always force_new)' });
 
     const startResp = await fetch(`${API_BASE}/${state.topicId}/run/start`, {
       method: 'POST',
@@ -1101,11 +1078,17 @@
       wrapper.setAttribute('data-transition-state', 'idle');
     }
     
-    // Focus on question prompt for accessibility
+    // ✅ CHANGE 6: Fokus für Accessibility setzen, aber ohne sichtbaren Ring
+    // Nutze { preventScroll: true } und verzögere den Fokus leicht
     const promptEl = document.getElementById('quiz-question-prompt');
     if (promptEl) {
       promptEl.setAttribute('tabindex', '-1');
-      promptEl.focus();
+      // Fokus für Screen-Reader, aber ohne visuellen Ring durch Verzögerung
+      requestAnimationFrame(() => {
+        promptEl.focus({ preventScroll: true });
+        // Sofort blur um Ring zu entfernen, Screen-Reader hat schon fokussiert
+        promptEl.blur();
+      });
     }
     
     // ✅ TIMER: Start countdown nur wenn phase = ANSWERING
@@ -1149,18 +1132,24 @@
 
   /**
    * Stop timer completely (cleanup)
+   * ✅ CHANGE 3: Immer alle Timer-State-Variablen zurücksetzen
    */
   function stopTimer() {
     if (state.timerInterval) {
       clearInterval(state.timerInterval);
       state.timerInterval = null;
-      console.error('[TIMER] ✅ Stopped for attemptId:', state.activeTimerAttemptId);
     }
-    state.activeTimerAttemptId = null; // ✅ Clear attemptId
+    // ✅ CHANGE 3: Immer attemptId clearen (auch wenn kein interval lief)
+    const oldAttemptId = state.activeTimerAttemptId;
+    state.activeTimerAttemptId = null;
+    if (oldAttemptId) {
+      console.error('[TIMER] ✅ Stopped and cleared attemptId:', oldAttemptId);
+    }
   }
 
   /**
    * Start the timer countdown display with attemptId guards
+   * ✅ CHANGE 3: Robuster Timer-Start - immer erst stoppen
    */
   function startTimerCountdown() {
     // ✅ GUARD: Timer darf NUR laufen bei view=QUESTION und phase=ANSWERING

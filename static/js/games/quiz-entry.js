@@ -45,7 +45,6 @@
     setupAnonymousLogin(topicId);
     setupLogout();
     setupStartButton(topicId);
-    setupRestartButton(topicId);
     setupShowLoginButton();
 
     // Test hook: indicates that event handlers are attached.
@@ -278,9 +277,24 @@
           console.log('New profile created for:', data.player_name);
         }
 
-        // Redirect back to topic entry so user gets explicit Start/Fortsetzen/Neu starten
-        debugLog('auth.success.redirect', { to: `/quiz/${topicId}` });
-        window.location.href = `/quiz/${topicId}`;
+        // ✅ CHANGE 1: Nach Login direkt neuen Run starten und ins Quiz
+        debugLog('auth.success.startRun', { topicId });
+        try {
+          const runResp = await fetch(`${API_BASE}/${topicId}/run/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ force_new: true })
+          });
+          if (!runResp.ok) {
+            throw new Error('Failed to start run');
+          }
+          debugLog('auth.success.redirect', { to: `/quiz/${topicId}/play` });
+          window.location.href = `/quiz/${topicId}/play`;
+        } catch (runError) {
+          console.error('Failed to start run after login:', runError);
+          // Fallback: zur topic_entry
+          window.location.href = `/quiz/${topicId}`;
+        }
         
       } catch (error) {
         console.error('Auth failed:', error);
@@ -313,9 +327,24 @@
           throw new Error('Anonymous login failed');
         }
         
-        // Redirect back to topic entry for explicit Start/Fortsetzen choices
-        debugLog('anonymous.success.redirect', { to: `/quiz/${topicId}` });
-        window.location.href = `/quiz/${topicId}`;
+        // ✅ CHANGE 1: Nach Anonym direkt neuen Run starten und ins Quiz
+        debugLog('anonymous.success.startRun', { topicId });
+        try {
+          const runResp = await fetch(`${API_BASE}/${topicId}/run/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ force_new: true })
+          });
+          if (!runResp.ok) {
+            throw new Error('Failed to start run');
+          }
+          debugLog('anonymous.success.redirect', { to: `/quiz/${topicId}/play` });
+          window.location.href = `/quiz/${topicId}/play`;
+        } catch (runError) {
+          console.error('Failed to start run after anonymous login:', runError);
+          // Fallback: zur topic_entry
+          window.location.href = `/quiz/${topicId}`;
+        }
         
       } catch (error) {
         console.error('Anonymous login failed:', error);

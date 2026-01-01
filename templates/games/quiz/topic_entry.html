@@ -70,21 +70,10 @@
           </div>
 
           <div class="quiz-start-card__cta">
-            {% if has_existing_run %}
-              <a href="{{ url_for('quiz.quiz_play', topic_id=topic_id) }}" class="quiz-start-card__btn-primary">
-                <span class="material-symbols-rounded">play_arrow</span>
-                <span>Fortsetzen</span>
-              </a>
-              <button type="button" class="quiz-start-card__btn-secondary" id="quiz-restart-btn">
-                <span class="material-symbols-rounded">restart_alt</span>
-                <span>Neu starten</span>
-              </button>
-            {% else %}
-              <button type="button" class="quiz-start-card__btn-primary" id="quiz-start-btn">
-                <span class="material-symbols-rounded">play_arrow</span>
-                <span>Quiz starten</span>
-              </button>
-            {% endif %}
+            <button type="button" class="quiz-start-card__btn-primary" id="quiz-start-btn">
+              <span class="material-symbols-rounded">play_arrow</span>
+              <span>Quiz starten</span>
+            </button>
           </div>
 
         {% else %}
@@ -180,16 +169,4 @@
     </main>
   </div>
 </div>
-
-<!-- Restart Confirmation Dialog -->
-<dialog id="quiz-restart-dialog" class="quiz-dialog">
-  <div class="quiz-dialog__content">
-    <h3 class="quiz-dialog__title" data-i18n="ui.quiz.restart">Neu starten</h3>
-    <p class="quiz-dialog__message" data-i18n="ui.quiz.restart_confirm">Aktuelles Spiel wirklich abbrechen und neu starten?</p>
-    <div class="quiz-dialog__actions">
-      <button type="button" class="quiz-btn quiz-btn--ghost" id="quiz-restart-cancel" data-i18n="ui.quiz.restart_no">Abbrechen</button>
-      <button type="button" class="quiz-btn quiz-btn--primary" id="quiz-restart-confirm" data-i18n="ui.quiz.restart_yes">Ja, neu starten</button>
-    </div>
-  </div>
-</dialog>
 {% endblock %}

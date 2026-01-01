@@ -231,22 +231,22 @@
   gap: var(--quiz-space-sm);
 }
 
-/* Level chip - compact badge style */
+/* Level chip - CHANGE 7: größere Badge für bessere Lesbarkeit */
 .game-shell[data-game="quiz"] .quiz-header__level-chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--quiz-space-xs);
-  padding: 4px var(--quiz-space-sm);
+  gap: var(--quiz-space-sm);
+  padding: var(--quiz-space-sm) var(--quiz-space-md);
   background: var(--quiz-primary-container);
   color: var(--quiz-on-primary-container);
   border-radius: var(--quiz-radius-full);
-  font-size: 0.75rem;
+  font-size: 0.9375rem; /* 15px - besser lesbar */
   font-weight: 600;
   align-self: flex-start;
 }
 
 .game-shell[data-game="quiz"] .quiz-header__level-chip .material-symbols-rounded {
-  font-size: 1rem;
+  font-size: 1.25rem;
 }
 
 .game-shell[data-game="quiz"] .quiz-header__progress {
@@ -1531,12 +1531,13 @@
    Level-Up Screen
    ============================================================================ */
 
+/* CHANGE 7: Level-Up Card höher positionieren */
 .game-shell[data-game="quiz"] .quiz-level-up {
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: var(--quiz-space-xl);
-  min-height: 60vh;
+  align-items: flex-start; /* Card oben statt mittig */
+  padding: var(--quiz-space-2xl) var(--quiz-space-xl); /* Mehr Abstand oben */
+  min-height: 50vh;
 }
 
 .game-shell[data-game="quiz"] .quiz-level-up__card {
@@ -2300,7 +2301,7 @@
   flex-grow: 1;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -3362,4 +3363,218 @@
   .game-shell[data-game="quiz"] .quiz-leaderboard-card__tokens {
     display: none;
   }
+}
+
+/* ==============================================================
+   QUIZ PLAY PAGE: Top-Bar (Titel, Status, Beenden)
+   ============================================================== */
+
+.game-shell[data-game="quiz"] .quiz-play-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--quiz-space-md);
+  padding: var(--quiz-space-md) var(--quiz-space-lg);
+  background: var(--quiz-surface-container);
+  border-bottom: 1px solid var(--quiz-outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__title {
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__icon {
+  color: var(--quiz-primary);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--quiz-on-surface);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__status {
+  flex-shrink: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--quiz-space-xs);
+  padding: var(--quiz-space-xs) var(--quiz-space-md);
+  background: var(--quiz-surface-variant);
+  border-radius: var(--quiz-radius-full);
+  font-size: 0.8125rem;
+  color: var(--quiz-on-surface-variant);
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__chip .material-symbols-rounded {
+  font-size: 1rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__chip--anon {
+  background: color-mix(in srgb, var(--quiz-warning) 15%, var(--quiz-surface-variant));
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__exit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--quiz-space-xs);
+  padding: var(--quiz-space-sm) var(--quiz-space-md);
+  background: transparent;
+  border: 1px solid var(--quiz-outline-variant);
+  border-radius: var(--quiz-radius-sm);
+  color: var(--quiz-on-surface-variant);
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--quiz-transition-fast);
+  flex-shrink: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__exit:hover {
+  background: var(--quiz-surface);
+  border-color: var(--quiz-error);
+  color: var(--quiz-error);
+}
+
+.game-shell[data-game="quiz"] .quiz-play-topbar__exit .material-symbols-rounded {
+  font-size: 1.125rem;
+}
+
+@media (max-width: 600px) {
+  .game-shell[data-game="quiz"] .quiz-play-topbar {
+    padding: var(--quiz-space-sm) var(--quiz-space-md);
+    flex-wrap: wrap;
+    gap: var(--quiz-space-sm);
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-play-topbar__title {
+    order: 1;
+    flex: 1 1 100%;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-play-topbar__status {
+    order: 2;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-play-topbar__exit {
+    order: 3;
+    margin-left: auto;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-play-topbar__exit span:last-child {
+    display: none;
+  }
+}
+
+/* ==============================================================
+   QUIZ PLAY PAGE: Content Container (stabile Breite)
+   ============================================================== */
+
+.game-shell[data-game="quiz"] .quiz-play-container {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--quiz-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-lg);
+}
+
+@media (max-width: 600px) {
+  .game-shell[data-game="quiz"] .quiz-play-container {
+    padding: var(--quiz-space-md);
+    gap: var(--quiz-space-md);
+  }
+}
+
+/* ==============================================================
+   FOCUS STYLES: Ruhig, nur :focus-visible, keine Browser-Outlines
+   ============================================================== */
+
+/* Reset browser default focus for quiz elements */
+.game-shell[data-game="quiz"] .quiz-answer:focus,
+.game-shell[data-game="quiz"] .quiz-question:focus,
+.game-shell[data-game="quiz"] .quiz-question-wrapper:focus,
+.game-shell[data-game="quiz"] .quiz-question-container:focus,
+.game-shell[data-game="quiz"] .quiz-btn:focus,
+.game-shell[data-game="quiz"] button:focus,
+.game-shell[data-game="quiz"] [tabindex]:focus {
+  outline: none;
+}
+
+/* Proper focus-visible for keyboard navigation */
+.game-shell[data-game="quiz"] .quiz-answer:focus-visible {
+  outline: 2px solid var(--quiz-primary);
+  outline-offset: 2px;
+}
+
+.game-shell[data-game="quiz"] .quiz-btn:focus-visible,
+.game-shell[data-game="quiz"] button:focus-visible {
+  outline: 2px solid var(--quiz-primary);
+  outline-offset: 2px;
+}
+
+.game-shell[data-game="quiz"] a:focus-visible {
+  outline: 2px solid var(--quiz-primary);
+  outline-offset: 2px;
+}
+
+/* Ensure no focus outline on containers */
+.game-shell[data-game="quiz"] .quiz-question-container,
+.game-shell[data-game="quiz"] .quiz-question-wrapper,
+.game-shell[data-game="quiz"] .quiz-question,
+.game-shell[data-game="quiz"] .quiz-answers {
+  outline: none !important;
+}
+
+/* Question prompt focus (for a11y) - subtle */
+.game-shell[data-game="quiz"] .quiz-question__prompt:focus {
+  outline: none;
+}
+
+.game-shell[data-game="quiz"] .quiz-question__prompt:focus-visible {
+  outline: 2px solid var(--quiz-outline-variant);
+  outline-offset: 4px;
+  border-radius: var(--quiz-radius-sm);
+}
+
+/* ==============================================================
+   LEVEL-UP CONTAINER: Als Sibling, eigene View
+   ============================================================== */
+
+.game-shell[data-game="quiz"] .quiz-level-up-container {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--quiz-space-lg);
+}
+
+.game-shell[data-game="quiz"] .quiz-level-up-container[hidden] {
+  display: none !important;
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-container {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--quiz-space-lg);
+}
+
+.game-shell[data-game="quiz"] .quiz-finish-container[hidden] {
+  display: none !important;
 }
