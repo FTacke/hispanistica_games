@@ -74,24 +74,54 @@
         }
       }
       
-      // Build authors line
-      let authorsLine = '';
+      // Build facts items (full display, no truncation, calm structure)
+      let factItems = [];
+      
+      // Authors fact (show all authors)
       if (authors.length > 0) {
-        authorsLine = `<p class="quiz-topic-card__authors">Von: ${escapeHtml(authors.join(', '))}</p>`;
+        const authorsList = escapeHtml(authors.join(', '));
+        factItems.push(`
+          <div class="quiz-topic-card__fact">
+            <span class="quiz-topic-card__fact-label">Autor:innen</span>
+            <span class="quiz-topic-card__fact-value">${authorsList}</span>
+          </div>
+        `);
       }
+      
+      // Source fact: "Kapitel [link] aus <em>Course</em>"
+      if (topic.based_on && topic.based_on.chapter_title && topic.based_on.chapter_url) {
+        const chapterTitle = escapeHtml(topic.based_on.chapter_title);
+        const chapterUrl = escapeHtml(topic.based_on.chapter_url);
+        const courseTitle = escapeHtml(topic.based_on.course_title || 'Spanische Linguistik @ School');
+        
+        factItems.push(`
+          <div class="quiz-topic-card__fact">
+            <span class="quiz-topic-card__fact-label">Grundlage</span>
+            <span class="quiz-topic-card__fact-value">
+              Kapitel <a class="quiz-topic-card__fact-link" href="${chapterUrl}" target="_blank" rel="noopener">${chapterTitle}</a> aus <em>${courseTitle}</em>
+            </span>
+          </div>
+        `);
+      }
+      
+      const factsBlock = factItems.length > 0 ? `<div class="quiz-topic-card__facts">${factItems.join('')}</div>` : '';
       
       return `
         <div class="quiz-topic-card">
           <div class="quiz-topic-card__icon">
             <span class="material-symbols-rounded">quiz</span>
           </div>
-          <h2 class="quiz-topic-card__title">${escapeHtml(title)}</h2>
-          ${description ? `<p class="quiz-topic-card__description">${escapeHtml(description)}</p>` : ''}
-          ${authorsLine}
-          <a href="${escapeHtml(topic.href)}" class="quiz-btn quiz-btn--primary quiz-btn--full quiz-topic-card__play-btn">
-            <span class="material-symbols-rounded">play_arrow</span>
-            <span>Spielen</span>
-          </a>
+          <div class="quiz-topic-card__content">
+            <h2 class="quiz-topic-card__title">${escapeHtml(title)}</h2>
+            ${description ? `<p class="quiz-topic-card__description">${escapeHtml(description)}</p>` : ''}
+            ${factsBlock}
+          </div>
+          <div class="quiz-topic-card__actions">
+            <a href="${escapeHtml(topic.href)}" class="quiz-btn quiz-btn--primary quiz-btn--full">
+              <span class="material-symbols-rounded">play_arrow</span>
+              <span>Spielen</span>
+            </a>
+          </div>
         </div>
       `;
     }).join('');

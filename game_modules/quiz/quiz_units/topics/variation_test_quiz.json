@@ -6,6 +6,12 @@
   "authors": [
     "Test Author"
   ],
+  "based_on": {
+    "chapter_title": "Test Quiz - Aussprache",
+    "chapter_url": "https://school.hispanistica.com/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  },
   "is_active": true,
   "order_index": 1,
   "questions_statistics": {

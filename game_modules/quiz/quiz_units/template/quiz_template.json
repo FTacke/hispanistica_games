@@ -4,6 +4,12 @@
   "title": "Replace Me: Quiz Title",
   "description": "Replace this description with a brief overview of the quiz content (3-6 sentences). Explain what topics are covered and what learners can expect.",
   "authors": ["Replace Me Author"],
+  "based_on": {
+    "chapter_title": "Replace Me: Chapter Title",
+    "chapter_url": "https://example.com/chapter",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  },
   "is_active": true,
   "order_index": 0,
   "questions_statistics": {},

@@ -87,6 +87,7 @@ class QuizTopic(QuizBase):
     title_key: Mapped[str] = mapped_column(String(100), nullable=False)  # i18n key for title (or plaintext)
     description_key: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # i18n key for description (or plaintext)
     authors: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True, server_default='{}')  # List of author names
+    based_on: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)  # Source information: {chapter_title, chapter_url, course_title, course_url}
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)

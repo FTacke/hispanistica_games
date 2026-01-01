@@ -9,6 +9,12 @@
     "Karina Stephan Quezada",
     "Felix Tacke (Koordination)"
   ],
+  "based_on": {
+    "chapter_title": "Variation in der Aussprache",
+    "chapter_url": "https://school.hispanistica.com/variation/variation_aussprache/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  },
   "is_active": true,
   "order_index": 1,
   "questions_statistics": {

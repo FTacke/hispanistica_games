@@ -74,6 +74,15 @@ class UnitQuestionSchema:
 
 
 @dataclass
+class BasedOnSchema:
+    """Source reference information for quiz unit."""
+    chapter_title: str
+    chapter_url: str
+    course_title: str = "Spanische Linguistik @ School"
+    course_url: Optional[str] = None
+
+
+@dataclass
 class QuizUnitSchema:
     """Complete quiz unit (JSON format)."""
     schema_version: str
@@ -84,6 +93,7 @@ class QuizUnitSchema:
     is_active: bool
     order_index: int
     questions: List[UnitQuestionSchema]
+    based_on: Optional[BasedOnSchema] = None
 
 
 def validate_answer(data: Dict[str, Any], question_id: str, idx: int) -> tuple[AnswerSchema, List[str]]:
@@ -343,6 +353,44 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
     if not isinstance(order_index, int):
         errors.append(f"Field 'order_index' must be an integer{context}")
     
+    # Validate based_on (optional)
+    based_on = data.get("based_on")
+    based_on_schema = None
+    if based_on is not None:
+        if not isinstance(based_on, dict):
+            errors.append(f"Field 'based_on' must be an object{context}")
+        else:
+            # Validate required fields
+            chapter_title = based_on.get("chapter_title", "").strip()
+            chapter_url = based_on.get("chapter_url", "").strip()
+            
+            if not chapter_title:
+                errors.append(f"Field 'based_on.chapter_title' is required and must be non-empty{context}")
+            if not chapter_url:
+                errors.append(f"Field 'based_on.chapter_url' is required and must be non-empty{context}")
+            elif not (chapter_url.startswith("http://") or chapter_url.startswith("https://")):
+                errors.append(f"Field 'based_on.chapter_url' must be a valid HTTP/HTTPS URL{context}")
+            
+            # Optional fields with defaults
+            course_title = based_on.get("course_title", "Spanische Linguistik @ School").strip()
+            if not course_title:
+                course_title = "Spanische Linguistik @ School"
+            
+            course_url = based_on.get("course_url")
+            if course_url is not None:
+                course_url = course_url.strip() if isinstance(course_url, str) else None
+                if course_url and not (course_url.startswith("http://") or course_url.startswith("https://")):
+                    errors.append(f"Field 'based_on.course_url' must be a valid HTTP/HTTPS URL or null{context}")
+            
+            # Create schema if valid
+            if chapter_title and chapter_url:
+                based_on_schema = BasedOnSchema(
+                    chapter_title=chapter_title,
+                    chapter_url=chapter_url,
+                    course_title=course_title,
+                    course_url=course_url if course_url else None
+                )
+    
     # Validate questions
     questions_data = data.get("questions", [])
     if not isinstance(questions_data, list):
@@ -385,6 +433,7 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
         is_active=is_active,
         order_index=order_index,
         questions=questions,
+        based_on=based_on_schema,
     )
 
 
