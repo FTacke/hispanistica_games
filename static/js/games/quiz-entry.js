@@ -34,6 +34,9 @@
 
     debugLog('init', { topicId });
 
+    // Load topic data (description)
+    loadTopicData(topicId);
+
     // Load leaderboard
     loadLeaderboard(topicId);
 
@@ -43,10 +46,101 @@
     setupLogout();
     setupStartButton(topicId);
     setupRestartButton(topicId);
+    setupShowLoginButton();
 
     // Test hook: indicates that event handlers are attached.
     // (No user-visible behavior; used by Playwright to avoid early form submits.)
     window.__quizEntryReady = true;
+  }
+
+  /**
+   * Load topic data and populate title, description, metadata (Single Source of Truth)
+   */
+  async function loadTopicData(topicId) {
+    try {
+      const response = await fetch(`${API_BASE}/topics`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      const topic = data.topics.find(t => t.topic_id === topicId);
+      
+      if (topic) {
+        // Populate TITLE (same source as quiz cards)
+        const titleEl = document.getElementById('quiz-topic-title');
+        if (titleEl) {
+          let title = topic.title_key || topicId;
+          // Try i18n translation first
+          if (window.QuizI18n && typeof window.QuizI18n.getTopicTitle === 'function') {
+            const i18nTitle = window.QuizI18n.getTopicTitle(topicId);
+            if (i18nTitle && i18nTitle !== topicId) {
+              title = i18nTitle;
+            }
+          }
+          titleEl.textContent = title;
+        }
+
+        // Populate description (same source as quiz cards)
+        const descEl = document.getElementById('quiz-topic-description');
+        if (descEl && topic.description) {
+          // Try i18n translation first
+          let description = topic.description;
+          if (window.QuizI18n && typeof window.QuizI18n.getTopicDescription === 'function') {
+            const i18nDesc = window.QuizI18n.getTopicDescription(topicId);
+            if (i18nDesc && i18nDesc !== topicId) {
+              description = i18nDesc;
+            }
+          }
+          descEl.textContent = description;
+        }
+
+        // Render authors and based_on metadata (exactly like Topic-Card)
+        const metaContainer = document.getElementById('quiz-topic-metadata');
+        if (metaContainer && (topic.authors?.length > 0 || topic.based_on)) {
+          let metaHTML = '';
+          
+          // Authors (same label as Topic-Card: "Autor:innen")
+          if (topic.authors && topic.authors.length > 0) {
+            metaHTML += '<div class="quiz-info-card__meta-item">';
+            metaHTML += '<span class="quiz-info-card__meta-label">Autor:innen</span>';
+            metaHTML += '<span class="quiz-info-card__meta-value">' + escapeHtml(topic.authors.join(', ')) + '</span>';
+            metaHTML += '</div>';
+          }
+          
+          // Based_on (same format as Topic-Card: "Grundlage")
+          if (topic.based_on && topic.based_on.chapter_title) {
+            const chapterTitle = escapeHtml(topic.based_on.chapter_title);
+            const chapterUrl = escapeHtml(topic.based_on.chapter_url || '');
+            const courseTitle = escapeHtml(topic.based_on.course_title || 'Spanische Linguistik @ School');
+            
+            metaHTML += '<div class="quiz-info-card__meta-item">';
+            metaHTML += '<span class="quiz-info-card__meta-label">Grundlage</span>';
+            metaHTML += '<span class="quiz-info-card__meta-value">';
+            metaHTML += 'Kapitel ';
+            if (chapterUrl) {
+              metaHTML += `<a href="${chapterUrl}" target="_blank" rel="noopener">${chapterTitle}</a>`;
+            } else {
+              metaHTML += chapterTitle;
+            }
+            metaHTML += ` aus <em>${courseTitle}</em>`;
+            metaHTML += '</span>';
+            metaHTML += '</div>';
+          }
+          
+          metaContainer.innerHTML = metaHTML;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load topic data:', error);
+    }
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   /**
@@ -69,41 +163,57 @@
   }
 
   /**
-   * Render leaderboard entries
+   * Render leaderboard entries with Top5 + expandable rest (new card design)
    */
   function renderLeaderboard(container, entries) {
     if (entries.length === 0) {
       container.innerHTML = `
-        <div class="quiz-leaderboard__empty" data-i18n="ui.quiz.leaderboard_empty">
+        <p class="quiz-leaderboard-card__empty">
           Noch keine Einträge.
-        </div>
+        </p>
       `;
       return;
     }
 
-    const html = `
-      <ul class="quiz-leaderboard__list">
-        ${entries.map((entry, idx) => `
-          <li class="quiz-leaderboard__item ${entry.rank === 1 ? 'quiz-leaderboard__item--top-1' : entry.rank === 2 ? 'quiz-leaderboard__item--top-2' : entry.rank === 3 ? 'quiz-leaderboard__item--top-3' : ''}">
-            <span class="quiz-leaderboard__rank quiz-leaderboard__rank--${entry.rank}">
-              ${entry.rank}
-            </span>
-            <span class="quiz-leaderboard__name">${escapeHtml(entry.player_name)}</span>
-            <span class="quiz-leaderboard__score">
-              <span class="quiz-leaderboard__score-value">${entry.total_score}</span>
-              <span class="quiz-leaderboard__score-label">Punkte</span>
-            </span>
-            <span class="quiz-leaderboard__tokens">
-              <span class="quiz-leaderboard__tokens-value">
-                <span class="material-symbols-rounded">toll</span>
-                ${entry.tokens_count}
-              </span>
-              <span class="quiz-leaderboard__tokens-label">Tokens</span>
-            </span>
-          </li>
-        `).join('')}
-      </ul>
+    // Split into top 5 and rest
+    const top5 = entries.slice(0, 5);
+    const rest = entries.slice(5);
+
+    const renderEntry = (entry) => `
+      <li class="quiz-leaderboard-card__item ${
+        entry.rank === 1 ? 'quiz-leaderboard-card__item--rank-1' : 
+        entry.rank === 2 ? 'quiz-leaderboard-card__item--rank-2' : 
+        entry.rank === 3 ? 'quiz-leaderboard-card__item--rank-3' : ''
+      }">
+        <span class="quiz-leaderboard-card__rank ${
+          entry.rank <= 3 ? 'quiz-leaderboard-card__rank--top' : ''
+        }">${entry.rank}</span>
+        <span class="quiz-leaderboard-card__name">${escapeHtml(entry.player_name)}</span>
+        <span class="quiz-leaderboard-card__score">
+          <span class="quiz-leaderboard-card__score-value">${entry.total_score}</span>
+          <span class="quiz-leaderboard-card__score-label">Punkte</span>
+        </span>
+        <span class="quiz-leaderboard-card__tokens">
+          <span class="material-symbols-rounded">toll</span>
+          <span>${entry.tokens_count}</span>
+        </span>
+      </li>
     `;
+
+    let html = `<ul class="quiz-leaderboard-card__list">${top5.map(renderEntry).join('')}</ul>`;
+
+    // Add accordion for rest if there are more than 5 entries
+    if (rest.length > 0) {
+      html += `
+        <details class="quiz-leaderboard-card__accordion">
+          <summary class="quiz-leaderboard-card__accordion-trigger">
+            Gesamte Rangliste anzeigen (${entries.length} Einträge)
+          </summary>
+          <ul class="quiz-leaderboard-card__list quiz-leaderboard-card__list--expanded">${rest.map(renderEntry).join('')}</ul>
+        </details>
+      `;
+    }
+
     container.innerHTML = html;
   }
 
@@ -321,6 +431,25 @@
   }
 
   /**
+   * Setup "Mit Namen spielen" button to toggle login form
+   */
+  function setupShowLoginButton() {
+    const btn = document.getElementById('quiz-show-login-btn');
+    const loginContainer = document.getElementById('quiz-login-container');
+    
+    if (!btn || !loginContainer) return;
+
+    btn.addEventListener('click', () => {
+      loginContainer.hidden = !loginContainer.hidden;
+      if (!loginContainer.hidden) {
+        // Focus first input when form appears
+        const nameInput = document.getElementById('quiz-name');
+        nameInput?.focus();
+      }
+    });
+  }
+
+  /**
    * Show error message
    */
   function showError(el, message) {
@@ -336,6 +465,25 @@
     if (!el) return;
     el.textContent = '';
     el.hidden = true;
+  }
+
+  /**
+   * Setup "Mit Namen spielen" button to toggle login form
+   */
+  function setupShowLoginButton() {
+    const btn = document.getElementById('quiz-show-login-btn');
+    const loginContainer = document.getElementById('quiz-login-container');
+    
+    if (!btn || !loginContainer) return;
+
+    btn.addEventListener('click', () => {
+      loginContainer.hidden = !loginContainer.hidden;
+      if (!loginContainer.hidden) {
+        // Focus first input when form appears
+        const nameInput = document.getElementById('quiz-name');
+        nameInput?.focus();
+      }
+    });
   }
 
   /**

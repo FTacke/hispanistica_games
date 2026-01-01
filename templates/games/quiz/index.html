@@ -23,15 +23,14 @@
       </div>
     </header>
 
-    <!-- Status Card (only when authenticated) -->
-    {% include 'games/quiz/_status_card.html' %}
-
     <main class="quiz-main">
-      <!-- Topic cards will be loaded here -->
-      <div class="quiz-topics" id="quiz-topics-container">
-        <div class="quiz-loading">
-          <span class="material-symbols-rounded quiz-loading__icon">hourglass_empty</span>
-          <span>Lade Themen...</span>
+      <div class="quiz-page-content">
+        <!-- Topic cards will be loaded here -->
+        <div class="quiz-topics" id="quiz-topics-container">
+          <div class="quiz-loading">
+            <span class="material-symbols-rounded quiz-loading__icon">hourglass_empty</span>
+            <span>Lade Themen...</span>
+          </div>
         </div>
       </div>
     </main>

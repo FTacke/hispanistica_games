@@ -1201,6 +1201,9 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
 # Leaderboard
 # ============================================================================
 
+# Legacy anonymous names that should always be filtered out (backup)
+ANONYMOUS_NAME_PATTERNS = frozenset(['anónimo', 'anonimo', 'anonymous', 'anonym', 'gast', 'guest'])
+
 def get_leaderboard(session: Session, topic_id: str, limit: int = 30) -> List[Dict[str, Any]]:
     """Get global leaderboard for topic, sorted by score.
     
@@ -1209,10 +1212,21 @@ def get_leaderboard(session: Session, topic_id: str, limit: int = 30) -> List[Di
     2. created_at ASC (Earlier finish wins tiebreaker)
     
     Returns top N entries (default 30).
+    Only includes non-anonymous players.
+    Filters both by is_anonymous flag AND legacy anonymous names.
     """
     stmt = (
         select(QuizScore)
-        .where(QuizScore.topic_id == topic_id)
+        .join(QuizRun, QuizScore.run_id == QuizRun.id)
+        .join(QuizPlayer, QuizRun.player_id == QuizPlayer.id)
+        .where(
+            and_(
+                QuizScore.topic_id == topic_id,
+                QuizPlayer.is_anonymous == False,
+                # Legacy backup: also exclude known anonymous name patterns
+                ~func.lower(QuizPlayer.name).in_(ANONYMOUS_NAME_PATTERNS)
+            )
+        )
         .order_by(
             desc(QuizScore.total_score),
             asc(QuizScore.created_at)

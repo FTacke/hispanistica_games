@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
 {% set page_name = 'quiz' %}
-{% block page_title %}Quiz: {{ topic_title_key }} – Games.Hispanistica{% endblock %}
+{% block page_title %}Quiz spielen – Games.Hispanistica{% endblock %}
 
 {% block extra_head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/games/quiz.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/games/quiz-buttons-fix.css') }}">
   <script src="{{ url_for('static', filename='js/games/quiz-i18n.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/games/quiz-play.js') }}" defer></script>
 {% endblock %}
@@ -16,8 +15,9 @@
   
   <div class="md3-page quiz-play-page quiz-page-stack" role="main" aria-label="Quiz Gameplay">
     
-    <!-- Quiz Header with Progress, Score, Timer, Joker -->
-    <header class="quiz-header" id="quiz-header">
+    <div class="quiz-page-content">
+      <!-- Quiz Header with Progress, Score, Timer, Joker -->
+      <header class="quiz-header" id="quiz-header">
       <div class="quiz-header__info">
         <div class="quiz-header__level-chip" id="quiz-level-chip">
           <span class="material-symbols-rounded">signal_cellular_alt</span>
@@ -114,6 +114,7 @@
             </div>
         </div>
     </section>
+    </div><!-- .quiz-page-content -->
 
   </div>
 </div>

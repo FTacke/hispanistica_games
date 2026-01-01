@@ -158,6 +158,7 @@ def quiz_topic_entry(topic_id: str):
             topic_title_key=topic.title_key,
             player_name=g.quiz_player_name,
             player_authenticated=g.quiz_player_id is not None,
+            player_anonymous=g.quiz_player_anonymous,
             has_existing_run=has_run,
         )
 
