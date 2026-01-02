@@ -15,74 +15,79 @@
   
   <div class="md3-page quiz-play-page quiz-page-stack" role="main" aria-label="Quiz Gameplay">
     
-    <!-- Top-Bar: Quiz-Titel, Status-Chip, Spiel beenden -->
-    <header class="quiz-play-topbar" id="quiz-play-topbar">
-      <div class="quiz-play-topbar__title">
-        <span class="quiz-play-topbar__icon material-symbols-rounded" aria-hidden="true">quiz</span>
-        <h1 class="quiz-play-topbar__name" id="quiz-play-title">{{ topic_title_key }}</h1>
+    <!-- HUD/SPIEL-BAR: Flat full-width Instrumentenleiste -->
+    <header class="quiz-hud" id="quiz-hud">
+      <!-- Links: Quiz-Titel -->
+      <div class="quiz-hud__title">
+        <span class="material-symbols-rounded" aria-hidden="true">quiz</span>
+        <h1 id="quiz-play-title">{{ topic_title_key }}</h1>
       </div>
       
-      <div class="quiz-play-topbar__status">
-        {% if player_name %}
-          <span class="quiz-play-topbar__chip">
-            <span class="material-symbols-rounded">person</span>
-            <span>Angemeldet als: {{ player_name }}</span>
-          </span>
-        {% else %}
-          <span class="quiz-play-topbar__chip quiz-play-topbar__chip--anon">
-            <span class="material-symbols-rounded">person_off</span>
-            <span>Du spielst anonym</span>
-          </span>
-        {% endif %}
-      </div>
-      
-      <a href="{{ url_for('quiz.quiz_topic_entry', topic_id=topic_id) }}" class="quiz-play-topbar__exit" id="quiz-exit-btn">
-        <span class="material-symbols-rounded">close</span>
-        <span>Spiel beenden</span>
-      </a>
-    </header>
-
-    <!-- Quiz Content Container (stabile Breite) -->
-    <div class="quiz-play-container">
-      <!-- Quiz Header with Progress, Score, Timer, Joker -->
-      <header class="quiz-header" id="quiz-header">
-      <div class="quiz-header__info">
-        <div class="quiz-header__level-chip" id="quiz-level-chip">
-          <span class="material-symbols-rounded">signal_cellular_alt</span>
-          <span data-i18n="ui.quiz.level_label">Level</span>
-          <span id="quiz-level-num">1</span>
-        </div>
-        <span class="quiz-header__progress" id="quiz-progress">
-          <span data-i18n="ui.quiz.question_label">Frage</span> <span id="quiz-question-current">1</span> <span data-i18n="ui.quiz.of">von</span> <span id="quiz-question-total">10</span>
-        </span>
-      </div>
-      
-      <div class="quiz-header__controls">
-        <!-- Score Chip: visible during run -->
-        <div class="quiz-score-chip" id="quiz-score-chip">
-          <span class="material-symbols-rounded quiz-score-chip__icon">emoji_events</span>
-          <span class="quiz-score-chip__value" id="quiz-score-display">0</span>
-          <!-- Points Pop: appears briefly on correct answer -->
+      <!-- Mittig: Spielwerte (Punkte, Timer, Joker) - einheitliche Größe -->
+      <div class="quiz-hud__stats">
+        <!-- Score Chip -->
+        <div class="quiz-stat-chip" id="quiz-score-chip">
+          <span class="material-symbols-rounded">emoji_events</span>
+          <span id="quiz-score-display">0</span>
           <span class="quiz-score-chip__pop" id="quiz-score-pop" aria-hidden="true"></span>
         </div>
         
-        <div class="quiz-timer" id="quiz-timer">
-          <span class="material-symbols-rounded quiz-timer__icon">timer</span>
-          <span class="quiz-timer__time" id="quiz-timer-display">30</span>
+        <!-- Timer - stärker durch filled style -->
+        <div class="quiz-stat-chip quiz-stat-chip--timer" id="quiz-timer">
+          <span class="material-symbols-rounded">timer</span>
+          <span id="quiz-timer-display">30</span>
         </div>
         
-        <button type="button" class="quiz-joker" id="quiz-joker-btn">
+        <!-- Joker -->
+        <button type="button" class="quiz-stat-chip quiz-stat-chip--joker" id="quiz-joker-btn">
           <span class="material-symbols-rounded">casino</span>
           <span>50:50</span>
           <span class="quiz-joker__count" id="quiz-joker-count">2</span>
         </button>
       </div>
+      
+      <!-- Rechts: Spielerstatus + Spiel beenden -->
+      <div class="quiz-hud__actions">
+        <!-- Spielerstatus-Chip: nur Icon + Name -->
+        {% if player_name %}
+          <span class="quiz-hud__status-chip">
+            <span class="material-symbols-rounded">person</span>
+            <span>{{ player_name }}</span>
+          </span>
+        {% else %}
+          <span class="quiz-hud__status-chip quiz-hud__status-chip--anon">
+            <span class="material-symbols-rounded">person_off</span>
+            <span>Anonym</span>
+          </span>
+        {% endif %}
+        
+        <!-- Spiel beenden Button -->
+        <a href="{{ url_for('quiz.quiz_topic_entry', topic_id=topic_id) }}" class="quiz-hud__exit-btn" id="quiz-exit-btn">
+          <span class="material-symbols-rounded">close</span>
+          <span>Beenden</span>
+        </a>
+      </div>
     </header>
+
+    <!-- Quiz Content Container (stabile Breite) -->
+    <div class="quiz-play-container">
 
     <!-- Question Container with transition wrapper -->
     <main class="quiz-question-container" id="quiz-question-container">
       <div class="quiz-question-wrapper" id="quiz-question-wrapper" data-transition-state="idle">
         <div class="quiz-question" id="quiz-question">
+          <!-- Card Header: Level links + Fortschritt rechts (eine Zeile) -->
+          <div class="quiz-question-card__meta">
+            <div class="quiz-level-chip" id="quiz-level-chip">
+              <span class="material-symbols-rounded">signal_cellular_alt</span>
+              <span data-i18n="ui.quiz.level_label">Level</span>
+              <span id="quiz-level-num">1</span>
+            </div>
+            <span class="quiz-question-progress" id="quiz-progress">
+              <span data-i18n="ui.quiz.question_label">Frage</span> <span id="quiz-question-current">1</span> <span data-i18n="ui.quiz.of">von</span> <span id="quiz-question-total">10</span>
+            </span>
+          </div>
+          
           <p class="quiz-question__prompt" id="quiz-question-prompt">
             <!-- Question text loaded dynamically -->
           </p>

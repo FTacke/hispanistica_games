@@ -82,27 +82,17 @@
         const authorsList = escapeHtml(authors.join(', '));
         factItems.push(`
           <div class="quiz-topic-card__fact">
-            <span class="quiz-topic-card__fact-label">Autor:innen</span>
+            <span class="quiz-topic-card__fact-label">Quiz-Autor:innen</span>
             <span class="quiz-topic-card__fact-value">${authorsList}</span>
           </div>
         `);
       }
       
       // Source fact: "Kapitel [link] aus <em>Course</em>"
-      if (topic.based_on && topic.based_on.chapter_title && topic.based_on.chapter_url) {
-        const chapterTitle = escapeHtml(topic.based_on.chapter_title);
-        const chapterUrl = escapeHtml(topic.based_on.chapter_url);
-        const courseTitle = escapeHtml(topic.based_on.course_title || 'Spanische Linguistik @ School');
-        
-        factItems.push(`
-          <div class="quiz-topic-card__fact">
-            <span class="quiz-topic-card__fact-label">Grundlage</span>
-            <span class="quiz-topic-card__fact-value">
-              Kapitel <a class="quiz-topic-card__fact-link" href="${chapterUrl}" target="_blank" rel="noopener">${chapterTitle}</a> aus <em>${courseTitle}</em>
-            </span>
-          </div>
-        `);
-      }
+      // ❌ HIDDEN: Grundlage wird nicht mehr angezeigt
+      // if (topic.based_on && topic.based_on.chapter_title && topic.based_on.chapter_url) {
+      //   ...
+      // }
       
       const factsBlock = factItems.length > 0 ? `<div class="quiz-topic-card__facts">${factItems.join('')}</div>` : '';
       

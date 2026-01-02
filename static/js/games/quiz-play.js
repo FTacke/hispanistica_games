@@ -641,16 +641,16 @@
     
     const questionContainer = document.getElementById('quiz-question-container');
     const questionWrapper = document.getElementById('quiz-question-wrapper');
-    const headerEl = document.getElementById('quiz-header');
+    const hudEl = document.getElementById('quiz-hud');
     
     if (!questionContainer) {
       debugLog('renderCurrentView', { error: 'question container not found' });
       return;
     }
     
-    // Keep header always visible so score display is accessible
+    // Keep HUD always visible so score display is accessible
     // Only hide timer/joker during non-question views
-    if (headerEl) {
+    if (hudEl) {
       const timerEl = document.getElementById('quiz-timer');
       const jokerEl = document.getElementById('quiz-joker-btn');
       const isQuestion = state.currentView === VIEW.QUESTION;

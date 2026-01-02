@@ -92,40 +92,36 @@
           descEl.textContent = description;
         }
 
-        // Render authors and based_on metadata (exactly like Topic-Card)
-        const metaContainer = document.getElementById('quiz-topic-metadata');
-        if (metaContainer && (topic.authors?.length > 0 || topic.based_on)) {
-          let metaHTML = '';
+        // Render authors under title ("Quiz-Autor:innen")
+        const authorsContainer = document.getElementById('quiz-topic-authors');
+        if (authorsContainer && topic.authors && topic.authors.length > 0) {
+          let authorsHTML = '<div class="quiz-info-card__authors-section">';
+          authorsHTML += '<span class="quiz-info-card__label">Quiz-Autor:innen</span>';
+          authorsHTML += '<span class="quiz-info-card__text">' + escapeHtml(topic.authors.join(', ')) + '</span>';
+          authorsHTML += '</div>';
+          authorsContainer.innerHTML = authorsHTML;
+        }
+        
+        // Render based_on / Grundlage
+        const basedOnContainer = document.getElementById('quiz-topic-based-on');
+        if (basedOnContainer && topic.based_on && topic.based_on.chapter_title) {
+          const chapterTitle = escapeHtml(topic.based_on.chapter_title);
+          const chapterUrl = escapeHtml(topic.based_on.chapter_url || '');
+          const courseTitle = escapeHtml(topic.based_on.course_title || 'Spanische Linguistik @ School');
           
-          // Authors (same label as Topic-Card: "Autor:innen")
-          if (topic.authors && topic.authors.length > 0) {
-            metaHTML += '<div class="quiz-info-card__meta-item">';
-            metaHTML += '<span class="quiz-info-card__meta-label">Autor:innen</span>';
-            metaHTML += '<span class="quiz-info-card__meta-value">' + escapeHtml(topic.authors.join(', ')) + '</span>';
-            metaHTML += '</div>';
+          let basedOnHTML = '<div class="quiz-info-card__based-on-section">';
+          basedOnHTML += '<span class="quiz-info-card__label">Grundlage</span>';
+          basedOnHTML += '<span class="quiz-info-card__text">';
+          basedOnHTML += 'Kapitel ';
+          if (chapterUrl) {
+            basedOnHTML += `<a href="${chapterUrl}" target="_blank" rel="noopener">${chapterTitle}</a>`;
+          } else {
+            basedOnHTML += chapterTitle;
           }
-          
-          // Based_on (same format as Topic-Card: "Grundlage")
-          if (topic.based_on && topic.based_on.chapter_title) {
-            const chapterTitle = escapeHtml(topic.based_on.chapter_title);
-            const chapterUrl = escapeHtml(topic.based_on.chapter_url || '');
-            const courseTitle = escapeHtml(topic.based_on.course_title || 'Spanische Linguistik @ School');
-            
-            metaHTML += '<div class="quiz-info-card__meta-item">';
-            metaHTML += '<span class="quiz-info-card__meta-label">Grundlage</span>';
-            metaHTML += '<span class="quiz-info-card__meta-value">';
-            metaHTML += 'Kapitel ';
-            if (chapterUrl) {
-              metaHTML += `<a href="${chapterUrl}" target="_blank" rel="noopener">${chapterTitle}</a>`;
-            } else {
-              metaHTML += chapterTitle;
-            }
-            metaHTML += ` aus <em>${courseTitle}</em>`;
-            metaHTML += '</span>';
-            metaHTML += '</div>';
-          }
-          
-          metaContainer.innerHTML = metaHTML;
+          basedOnHTML += ` aus <em>${courseTitle}</em>`;
+          basedOnHTML += '</span>';
+          basedOnHTML += '</div>';
+          basedOnContainer.innerHTML = basedOnHTML;
         }
       }
     } catch (error) {
