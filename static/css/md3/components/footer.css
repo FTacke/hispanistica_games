@@ -10,7 +10,7 @@
   border-top: 0px solid var(--md-sys-color-outline-variant);
   background: var(--app-background);
   color: var(--md-sys-color-on-surface-variant);
-  margin-top: var(--space-12);
+  margin-top: none;
   /* ~64px margin top for spacing from content */
 
   padding-block: var(--space-4);

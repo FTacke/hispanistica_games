@@ -34,7 +34,8 @@
 /* Ab 600px: Logo kann auf bis zu 700px wachsen */
 @media (min-width: 600px) {
   .md3-index-logo__img {
-    max-width: 740px;
+    max-width: 620px;
+      margin-bottom: var(--space-8);
   }
 }
 
@@ -44,7 +45,7 @@
   grid-template-columns: 1fr; /* Mobile: 1 Spalte */
   gap: var(--space-4);
   padding: var(--space-4);
-  max-width: 1200px;
+  max-width: 1200px; /* Breite bleibt wie vorher, Cards werden nicht breiter */
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -61,9 +62,9 @@
   }
 }
 
-/* Desktop: 2 Spalten ab 840px bis ~1100px (Drawer wird PERMANENT 280px)
+/* Desktop: 3 Spalten ab 840px bis ~1100px (Drawer wird PERMANENT 280px)
    Available space: 840px - 280px = 560px (tight für 3 Spalten)
-   2 Spalten bei 840px–1099px */
+   Daher 2 Spalten bei 840px–1099px */
 @media (min-width: 840px) and (max-width: 1099px) {
   .md3-index-cards {
     grid-template-columns: repeat(2, 1fr);
@@ -73,7 +74,8 @@
 }
 
 /* Large Desktop: 3 Spalten ab 1100px (max-width MD3 = 1440px)
-   Available space: 1100px - 280px = 820px (gut für 3 Spalten) */
+   Available space: 1100px - 280px = 820px (gut für 3 Spalten)
+   School-Card fließt automatisch in zweite Zeile */
 @media (min-width: 1100px) {
   .md3-index-cards {
     grid-template-columns: repeat(3, 1fr);
@@ -107,6 +109,80 @@
 .md3-index-card__text {
   margin: 0;
   color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Eyebrow/Label styling */
+.md3-index-card__eyebrow {
+  display: block;
+  font-size: var(--md-sys-typescale-label-small-font-size);
+  font-weight: var(--md-sys-typescale-label-small-font-weight);
+  line-height: var(--md-sys-typescale-label-small-line-height);
+  letter-spacing: var(--md-sys-typescale-label-small-letter-spacing);
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: var(--space-2);
+}
+
+/* External icon styling */
+.md3-index-card__external-icon {
+  font-size: 1.125rem; /* Leicht kleiner für ruhigere Optik */
+  vertical-align: text-top;
+  margin-left: var(--space-1);
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   Disabled Card State
+   ============================================================================ */
+
+.md3-card--disabled {
+  background: var(--md-sys-color-surface-variant);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.md3-card--disabled .md3-index-card__icon,
+.md3-card--disabled .md3-index-card__title,
+.md3-card--disabled .md3-index-card__text {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.6;
+}
+
+.md3-card--disabled .md3-button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* No hover effects for disabled cards */
+.md3-card--disabled:hover {
+  box-shadow: var(--elev-2); /* Bleibt bei normaler Elevation, kein Lift */
+  border-color: var(--md-sys-color-outline-variant); /* Keine Änderung */
+  transform: none;
+}
+
+/* ============================================================================
+   School Card - Logo statt Icon
+   ============================================================================ */
+
+/* Logo im Content-Bereich (ersetzt Icon) */
+.md3-index-card__logo {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  display: block;
+}
+
+/* School Button - Sonderfarbe #3a4f7a */
+.md3-button--school {
+  /* NEEDS_HARDCODED: School brand color */
+  background-color: #3a4f7a !important;
+  color: #ffffff !important;
+}
+
+.md3-button--school:hover {
+  /* NEEDS_HARDCODED: School brand color hover */
+  background-color: #2d3e5f !important;
 }
 
 /* ============================================

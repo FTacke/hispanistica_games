@@ -26,12 +26,12 @@
       <div class="md3-card__content">
         <span class="material-symbols-rounded md3-index-card__icon" aria-hidden="true">folder_open</span>
         <h2 class="md3-title-large md3-index-card__title">Projekt</h2>
-        <p class="md3-body-large md3-index-card__text">Erfahre mehr über das didaktische Konzept und die offene Entwicklung.</p>
+        <p class="md3-body-large md3-index-card__text">Worum geht es hier? Einblick in Idee, didaktisches Konzept und offene Entwicklung.</p>
       </div>
       <footer class="md3-card__footer md3-card__actions">
         <a href="{{ url_for('public.projekt_ueber') }}" class="md3-button md3-button--filled">
           <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">arrow_forward</span>
-          Mehr erfahren
+          Zum Projekt
         </a>
       </footer>
     </article>
@@ -40,12 +40,41 @@
       <div class="md3-card__content">
         <span class="material-symbols-rounded md3-index-card__icon" aria-hidden="true">quiz</span>
         <h2 class="md3-title-large md3-index-card__title">Quiz</h2>
-        <p class="md3-body-large md3-index-card__text">Teste und erweitere dein Sprachwissen mit interaktiven Quiz-Modulen.</p>
+        <p class="md3-body-large md3-index-card__text">Teste und erweitere Deine linguistische Kompetenz mit interaktiven Quiz-Modulen.</p>
       </div>
       <footer class="md3-card__footer md3-card__actions">
         <a href="{{ url_for('quiz.quiz_index') }}" class="md3-button md3-button--filled">
           <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">arrow_forward</span>
           Starten
+        </a>
+      </footer>
+    </article>
+
+    <article class="md3-card md3-card--filled md3-card--landing md3-card--disabled">
+      <div class="md3-card__content">
+        <span class="material-symbols-rounded md3-index-card__icon" aria-hidden="true">hourglass_top</span>
+        <h2 class="md3-title-large md3-index-card__title">Weitere Games</h2>
+        <p class="md3-body-large md3-index-card__text">Weitere Lernspiele sind in Entwicklung und werden hier ergänzt.</p>
+      </div>
+      <footer class="md3-card__footer md3-card__actions">
+        <button type="button" class="md3-button md3-button--filled" disabled aria-disabled="true">
+          <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">schedule</span>
+          Coming soon
+        </button>
+      </footer>
+    </article>
+
+    <article class="md3-card md3-card--filled md3-card--landing md3-card--school">
+      <div class="md3-card__content">
+        <img src="{{ url_for('static', filename='img/school_logo.png') }}" 
+             alt="School.Hispanistica Logo" 
+             class="md3-index-card__logo">
+        <p class="md3-body-large md3-index-card__text">Digitales Lehrbuch zur fachlichen Vertiefung.</p>
+      </div>
+      <footer class="md3-card__footer md3-card__actions">
+        <a href="https://school.hispanistica.com" target="_blank" rel="noopener noreferrer" class="md3-button md3-button--filled md3-button--school">
+          <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">open_in_new</span>
+          Zur Plattform
         </a>
       </footer>
     </article>
