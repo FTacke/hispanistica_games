@@ -680,7 +680,7 @@ def _next_url_after_logout() -> str:
 
     # Public route prefixes (can stay on page after logout)
     PUBLIC_PATHS = (
-        "/gamification",
+        "/projekt",
         "/quiz",
         "/impressum",
         "/privacy",

@@ -1,5 +1,5 @@
 /**
- * CO.RA.PAN Login Handler
+ * Games.Hispanistica Login Handler
  *
  * Provides JavaScript-based login handling for cases where AJAX login
  * is preferred over traditional form submission. Uses the api.js module

@@ -172,15 +172,14 @@
 /* Active State - ARIA-first mit Fallback-Klasse */
 .md3-navigation-drawer__item[aria-current="page"],
 .md3-navigation-drawer__item--active {
-  color: var(--md-sys-color-on-primary-container);
-  background: var(--md-sys-color-primary-container);  /* Kräftig sichtbar */
+  color: var(--md-sys-color-primary);
+  background: color-mix(in oklab, var(--md-sys-color-primary) 10%, transparent);
   font-weight: 600;
 }
 
 .md3-navigation-drawer__item[aria-current="page"]:hover,
 .md3-navigation-drawer__item--active:hover {
-  background: var(--md-sys-color-primary-container);
-  filter: brightness(1.05);  /* Leicht heller beim Hover */
+  background: color-mix(in oklab, var(--md-sys-color-primary) 15%, transparent);
 }
 
 /* Icon */
@@ -374,8 +373,9 @@ html:not([data-anim-ready="1"]) .md3-navigation-drawer__chevron {
 }
 
 .md3-navigation-drawer__subitem:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface);
+  cursor: pointer;
   /* Einrückung bleibt beim Hover erhalten */
 }
 
@@ -385,6 +385,12 @@ html:not([data-anim-ready="1"]) .md3-navigation-drawer__chevron {
   color: var(--md-sys-color-primary);
   background: color-mix(in oklab, var(--md-sys-color-primary) 10%, transparent);
   font-weight: 600;
+}
+
+.md3-navigation-drawer__subitem[aria-current="page"]:hover,
+.md3-navigation-drawer__subitem--active:hover {
+  background: color-mix(in oklab, var(--md-sys-color-primary) 20%, transparent);
+  color: var(--md-sys-color-primary);
 }
 
 /* ============================================

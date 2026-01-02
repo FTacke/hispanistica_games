@@ -1,12 +1,12 @@
-{# Page Navigation Macro - Previous/Next Navigation für Proyecto-Seiten #}
+{# Page Navigation Macro - Previous/Next Navigation für Projekt-Seiten #}
 {% macro page_navigation(prev_title=None, prev_url=None, next_title=None, next_url=None) %}
-  <nav class="md3-page-navigation" aria-label="Navegación de páginas">
+  <nav class="md3-page-navigation" aria-label="Seitennavigation">
     <div class="md3-page-navigation__container">
       {% if prev_title and prev_url %}
       <a href="{{ prev_url }}" class="md3-page-navigation__prev">
         <span class="md3-page-navigation__icon" aria-hidden="true">‹</span>
         <div class="md3-page-navigation__content">
-          <span class="md3-page-navigation__label">Anterior</span>
+          <span class="md3-page-navigation__label">Zurück</span>
           <span class="md3-page-navigation__title">{{ prev_title }}</span>
         </div>
       </a>
@@ -19,7 +19,7 @@
       {% if next_title and next_url %}
       <a href="{{ next_url }}" class="md3-page-navigation__next">
         <div class="md3-page-navigation__content">
-          <span class="md3-page-navigation__label">Siguiente</span>
+          <span class="md3-page-navigation__label">Weiter</span>
           <span class="md3-page-navigation__title">{{ next_title }}</span>
         </div>
         <span class="md3-page-navigation__icon" aria-hidden="true">›</span>

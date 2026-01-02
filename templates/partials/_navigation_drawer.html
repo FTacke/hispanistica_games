@@ -14,10 +14,25 @@
     'match': ['public.landing_page']
   },
   {
-    'label': 'Gamification',
-    'href': url_for('public.gamification_page'),
-    'icon': 'sports_esports',
-    'match': ['public.gamification_page']
+    'label': 'Projekt',
+    'icon': 'folder_open',
+    'submenu': [
+      {
+        'label': 'Über das Projekt',
+        'href': url_for('public.projekt_ueber'),
+        'match': ['public.projekt_ueber']
+      },
+      {
+        'label': 'Didaktisches Konzept',
+        'href': url_for('public.projekt_konzept'),
+        'match': ['public.projekt_konzept']
+      },
+      {
+        'label': 'Offene Entwicklung',
+        'href': url_for('public.projekt_entwicklung'),
+        'match': ['public.projekt_entwicklung']
+      }
+    ]
   },
   {
     'label': 'Quiz',
@@ -47,15 +62,55 @@
     {# Main Navigation Items #}
     <nav class="md3-navigation-drawer__content" aria-label="Hauptmenü">
       {% for item in main_nav_items %}
-        {% set is_active = active_endpoint in item.match %}
-        
-        {# Simple navigation item #}
-        <a href="{{ item.href }}" 
-           class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if is_active else '' }}"
-           aria-current="{{ 'page' if is_active else 'false' }}">
-          <span class="material-symbols-rounded md3-navigation-drawer__icon">{{ item.icon }}</span>
-          <span class="md3-navigation-drawer__label">{{ item.label }}</span>
-        </a>
+        {% if item.submenu %}
+          {# Accordion-Item mit Submenu #}
+          {% set has_active_child = namespace(found=false) %}
+          {% for subitem in item.submenu %}
+            {% if active_endpoint in subitem.match %}
+              {% set has_active_child.found = true %}
+            {% endif %}
+          {% endfor %}
+          
+          <div class="md3-navigation-drawer__collapsible">
+            <button type="button"
+                    id="drawer-trigger-{{ loop.index }}"
+                    class="md3-navigation-drawer__item md3-navigation-drawer__trigger {{ 'md3-navigation-drawer__item--active' if has_active_child.found else '' }}"
+                    aria-expanded="{{ 'true' if has_active_child.found else 'false' }}"
+                    aria-controls="drawer-submenu-{{ loop.index }}"
+                    data-section="{{ item.label|lower }}">
+              <span class="material-symbols-rounded md3-navigation-drawer__icon">{{ item.icon }}</span>
+              <span class="md3-navigation-drawer__label">{{ item.label }}</span>
+              <span class="material-symbols-rounded md3-navigation-drawer__chevron">expand_more</span>
+            </button>
+            
+            <div id="drawer-submenu-{{ loop.index }}"
+                 class="md3-navigation-drawer__submenu"
+                 role="group"
+                 aria-labelledby="drawer-trigger-{{ loop.index }}"
+                 aria-hidden="{{ 'false' if has_active_child.found else 'true' }}"
+                 {{ 'data-open' if has_active_child.found else '' }}>
+              <div class="md3-navigation-drawer__submenu-inner">
+                {% for subitem in item.submenu %}
+                  {% set is_active_sub = active_endpoint in subitem.match %}
+                  <a href="{{ subitem.href }}"
+                     class="md3-navigation-drawer__subitem {{ 'md3-navigation-drawer__subitem--active' if is_active_sub else '' }}"
+                     aria-current="{{ 'page' if is_active_sub else 'false' }}">
+                    <span class="md3-navigation-drawer__label">{{ subitem.label }}</span>
+                  </a>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          {# Simple navigation item #}
+          {% set is_active = active_endpoint in item.match %}
+          <a href="{{ item.href }}" 
+             class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if is_active else '' }}"
+             aria-current="{{ 'page' if is_active else 'false' }}">
+            <span class="material-symbols-rounded md3-navigation-drawer__icon">{{ item.icon }}</span>
+            <span class="md3-navigation-drawer__label">{{ item.label }}</span>
+          </a>
+        {% endif %}
       {% endfor %}
     </nav>
 
@@ -116,15 +171,55 @@
   {# Main Navigation Items #}
   <nav class="md3-navigation-drawer__content" aria-label="Hauptmenü">
     {% for item in main_nav_items %}
-      {% set is_active = active_endpoint in item.match %}
-      
-      {# Simple navigation item #}
-      <a href="{{ item.href }}" 
-         class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if is_active else '' }}"
-         aria-current="{{ 'page' if is_active else 'false' }}">
-        <span class="material-symbols-rounded md3-navigation-drawer__icon">{{ item.icon }}</span>
-        <span class="md3-navigation-drawer__label">{{ item.label }}</span>
-      </a>
+      {% if item.submenu %}
+        {# Accordion-Item mit Submenu #}
+        {% set has_active_child = namespace(found=false) %}
+        {% for subitem in item.submenu %}
+          {% if active_endpoint in subitem.match %}
+            {% set has_active_child.found = true %}
+          {% endif %}
+        {% endfor %}
+        
+        <div class="md3-navigation-drawer__collapsible">
+          <button type="button"
+                  id="drawer-standard-trigger-{{ loop.index }}"
+                  class="md3-navigation-drawer__item md3-navigation-drawer__trigger {{ 'md3-navigation-drawer__item--active' if has_active_child.found else '' }}"
+                  aria-expanded="{{ 'true' if has_active_child.found else 'false' }}"
+                  aria-controls="drawer-standard-submenu-{{ loop.index }}"
+                  data-section="{{ item.label|lower }}">
+            <span class="material-symbols-rounded md3-navigation-drawer__icon">{{ item.icon }}</span>
+            <span class="md3-navigation-drawer__label">{{ item.label }}</span>
+            <span class="material-symbols-rounded md3-navigation-drawer__chevron">expand_more</span>
+          </button>
+          
+          <div id="drawer-standard-submenu-{{ loop.index }}"
+               class="md3-navigation-drawer__submenu"
+               role="group"
+               aria-labelledby="drawer-standard-trigger-{{ loop.index }}"
+               aria-hidden="{{ 'false' if has_active_child.found else 'true' }}"
+               {{ 'data-open' if has_active_child.found else '' }}>
+            <div class="md3-navigation-drawer__submenu-inner">
+              {% for subitem in item.submenu %}
+                {% set is_active_sub = active_endpoint in subitem.match %}
+                <a href="{{ subitem.href }}"
+                   class="md3-navigation-drawer__subitem {{ 'md3-navigation-drawer__subitem--active' if is_active_sub else '' }}"
+                   aria-current="{{ 'page' if is_active_sub else 'false' }}">
+                  <span class="md3-navigation-drawer__label">{{ subitem.label }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% else %}
+        {# Simple navigation item #}
+        {% set is_active = active_endpoint in item.match %}
+        <a href="{{ item.href }}" 
+           class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if is_active else '' }}"
+           aria-current="{{ 'page' if is_active else 'false' }}">
+          <span class="material-symbols-rounded md3-navigation-drawer__icon">{{ item.icon }}</span>
+          <span class="md3-navigation-drawer__label">{{ item.label }}</span>
+        </a>
+      {% endif %}
     {% endfor %}
   </nav>
 

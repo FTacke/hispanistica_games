@@ -1,5 +1,5 @@
 /**
- * CO.RA.PAN Global Theme Controller (MD3-konform)
+ * Games.Hispanistica Global Theme Controller (MD3-konform)
  *
  * Unterstützt drei Modi:
  * - 'auto': Folgt System-Präferenz (prefers-color-scheme)

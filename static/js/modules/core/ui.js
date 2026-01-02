@@ -21,24 +21,8 @@ export function initPageTitleAndScroll() {
   if (window.__pageTitleInit) return;
   window.__pageTitleInit = true;
 
-  const SUFFIX = 'Games.Hispanistica';
-
-  function pickTitle() {
-    const main = document.querySelector('main');
-    const fromAttr = main?.getAttribute('data-page-title')?.trim();
-    if (fromAttr) return fromAttr;
-    const h1 = main?.querySelector('h1,[data-h1]');
-    if (h1 && h1.textContent.trim()) return h1.textContent.trim();
-    const noSuffix = document.title.replace(/\s*\|\s*Games\.Hispanistica\s*$/i, '');
-    return noSuffix || 'Games.Hispanistica';
-  }
-
-  function applyTitle() {
-    const t = pickTitle();
-    const el = document.querySelector('[data-page-title-el]');
-    if (el) el.textContent = t;
-    document.title = t ? `${t} | ${SUFFIX}` : SUFFIX;
-  }
+  // Title wird ausschließlich serverseitig über page_section in base.html gesetzt
+  // Diese Funktion kümmert sich nur noch um Scroll-State
 
   function applyScroll() {
     const thr = 8;
@@ -49,42 +33,18 @@ export function initPageTitleAndScroll() {
     }
   }
 
-  applyTitle();
   applyScroll();
   window.addEventListener('scroll', applyScroll, { passive: true });
 
   if (window.htmx) {
-    document.body.addEventListener('htmx:afterSwap', function() {
-      applyTitle();
-      applyScroll();
-    });
-    document.body.addEventListener('htmx:afterSettle', function() {
-      applyTitle();
-      applyScroll();
-    });
-    document.body.addEventListener('htmx:historyRestore', function() {
-      applyTitle();
-      applyScroll();
-    });
+    document.body.addEventListener('htmx:afterSwap', applyScroll);
+    document.body.addEventListener('htmx:afterSettle', applyScroll);
+    document.body.addEventListener('htmx:historyRestore', applyScroll);
   }
 
   if (window.Turbo) {
-    document.addEventListener('turbo:render', function() {
-      applyTitle();
-      applyScroll();
-    });
+    document.addEventListener('turbo:render', applyScroll);
   }
 
-  window.addEventListener('popstate', function() {
-    applyTitle();
-    applyScroll();
-  });
-  
-  // Also run on DOMContentLoaded if not already there (though this function is likely called from there)
-  if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        applyTitle();
-        applyScroll();
-      });
-  }
+  window.addEventListener('popstate', applyScroll);
 }

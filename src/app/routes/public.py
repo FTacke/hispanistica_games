@@ -60,16 +60,28 @@ def health_check():
     }), 200
 
 
-@blueprint.get("/gamification")
-def gamification_page():
-    """Render the gamification page."""
-    return render_template("pages/gamification.html", page_name="gamification")
-
-
 @blueprint.get("/impressum")
 def impressum_page():
     """Render the legal notice (Impressum) page."""
     return render_template("pages/impressum.html", page_name="impressum")
+
+
+@blueprint.get("/projekt/ueber")
+def projekt_ueber():
+    """Render the 'Über das Projekt' page."""
+    return render_template("pages/projekt_ueber.html", page_name="projekt")
+
+
+@blueprint.get("/projekt/konzept")
+def projekt_konzept():
+    """Render the 'Didaktisches Konzept' page."""
+    return render_template("pages/projekt_konzept.html", page_name="projekt")
+
+
+@blueprint.get("/projekt/entwicklung")
+def projekt_entwicklung():
+    """Render the 'Offene Entwicklung' page."""
+    return render_template("pages/projekt_entwicklung.html", page_name="projekt")
 
 
 @blueprint.get("/privacy")

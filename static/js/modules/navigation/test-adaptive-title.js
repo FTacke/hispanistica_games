@@ -30,8 +30,8 @@ console.log("✓ body[data-scrolled]:", bodyScrolled || "false");
 
 if (!pageTitle || !siteTitle) {
   console.error("❌ FAIL: Required elements missing!");
-} else if (!document.title.includes("CO.RA.PAN")) {
-  console.warn("⚠️ WARNING: document.title missing CO.RA.PAN suffix");
+} else if (!document.title.includes("Games.Hispanistica")) {
+  console.warn("⚠️ WARNING: document.title missing Games.Hispanistica suffix");
 } else {
   console.log("%c✅ PASS: Initial Load", "color: #4CAF50; font-weight: bold");
 }

@@ -104,54 +104,17 @@ function setupObserver() {
 
 /**
  * Exports
+ * 
+ * DEAKTIVIERT: Titel werden ausschließlich serverseitig über page_section
+ * in base.html gesetzt. Keine clientseitige Titel-Manipulation mehr.
  */
 export function initPageTitle() {
   if (__pageTitleInit) {
-    console.log("[Page Title] Already initialized, skipping");
     return;
   }
   __pageTitleInit = true;
-
-  console.log("[Page Title] Initializing...");
-
-  // Initial anwenden
-  applyTitle();
-  setupObserver();
-
-  // Event Handler - nur einmal registrieren
-  const handleNav = () => {
-    console.log("[Page Title] Navigation event");
-    applyTitle();
-    setupObserver(); // Observer nach Swap neu aufbauen
-  };
-
-  // Standard: DOMContentLoaded (bei erster Ladung)
-  document.addEventListener("DOMContentLoaded", handleNav, { once: true });
-
-  // HTMX Events
-  if (window.htmx) {
-    document.body.addEventListener("htmx:afterSwap", handleNav);
-    document.body.addEventListener("htmx:afterSettle", handleNav);
-    document.body.addEventListener("htmx:historyRestore", handleNav);
-  }
-
-  // Turbo Events
-  if ("Turbo" in window) {
-    document.addEventListener("turbo:render", handleNav);
-  }
-
-  // Browser Back/Forward
-  window.addEventListener("popstate", handleNav);
-
-  // Fallback: pageshow (bfcache)
-  window.addEventListener("pageshow", handleNav);
-
-  console.log("[Page Title] ✅ Initialized");
+  console.log("[Page Title] Module deaktiviert - Titel werden serverseitig gesetzt");
 }
 
-// Auto-Init wenn direkt als Script geladen
-try {
-  initPageTitle();
-} catch (e) {
-  console.warn("[Page Title] Auto-init failed:", e);
-}
+// Auto-Init deaktiviert
+// Titel werden ausschließlich über <title> Tag in base.html gesetzt

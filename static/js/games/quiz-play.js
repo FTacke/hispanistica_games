@@ -901,14 +901,15 @@
   }
 
   /**
-   * Set page title dynamically based on current view
+   * Set page title (removed - now handled by template)
+   * Titles remain stable: "Quiz | Games.Hispanistica"
+   * @deprecated No longer sets document.title dynamically
    * @param {string} view - Current view (QUESTION, LEVEL_UP, or FINISH)
    * @param {string} quizTitle - Quiz topic title
    */
   function setPageTitle(view, quizTitle = '') {
-    const base = 'Games.Hispanistica';
-    const title = quizTitle ? `Quiz: ${quizTitle}` : 'Quiz';
-    document.title = `${title} – ${base}`;
+    // Title is now set by template and stays stable
+    // No dynamic changes during quiz navigation
   }
 
   /**

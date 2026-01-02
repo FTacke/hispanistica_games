@@ -18,13 +18,13 @@ This directory contains the MD3 Navigation System with framework-agnostic module
 1. `main[data-page-title]` attribute
 2. First `<h1>` element inside `<main>`
 3. `<meta name="page-title" content="...">` tag
-4. `document.title` (with "| CO.RA.PAN" suffix removed)
-5. Fallback: "CO.RA.PAN"
+4. `document.title` (with "| Games.Hispanistica" suffix removed)
+5. Fallback: "Games.Hispanistica"
 
 **HTML Requirements:**
 ```html
 <header class="md3-top-app-bar">
-  <span class="md3-top-app-bar__title-site" id="siteTitle">CO.RA.PAN</span>
+  <span class="md3-top-app-bar__title-site" id="siteTitle">Games.Hispanistica</span>
   <span class="md3-top-app-bar__title-page" id="pageTitle"></span>
 </header>
 
@@ -58,7 +58,7 @@ body[data-scrolled="true"] .md3-top-app-bar__title-page {
 - ✅ No duplicate listeners (Guard: `__pageTitleInit`)
 - ✅ Framework-agnostic (works with HTMX, Turbo, vanilla)
 - ✅ MutationObserver for Partial Updates / Streaming
-- ✅ Automatic document.title sync with "| CO.RA.PAN" suffix
+- ✅ Automatic document.title sync with "| Games.Hispanistica" suffix
 
 #### `scroll-state.js` - Scroll Detection
 

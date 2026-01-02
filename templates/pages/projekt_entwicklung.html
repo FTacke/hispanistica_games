@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% from 'partials/page_navigation.html' import page_navigation %}
+{% set page_section = 'Projekt' %}
+
+{% block content %}
+<div class="md3-page" role="main" aria-label="Offene Entwicklung">
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">code</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Projekt</p>
+        <h1 class="md3-headline-medium md3-hero__title">Offene Entwicklung</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="md3-text-page">
+    <div class="md3-text-content">
+
+      <section class="md3-text-section">
+        <p class="md3-body-large">
+          Games.Hispanistica ist als offenes Projekt angelegt. Ziel ist es nicht, ein abgeschlossenes Produkt
+          bereitzustellen, sondern eine Struktur, die weiterentwickelt, angepasst und in unterschiedlichen
+          Kontexten genutzt werden kann. Diese Offenheit betrifft sowohl die Inhalte als auch die technische
+          Umsetzung der Games-Module.
+        </p>
+        <p class="md3-body-large">
+          Die enge Verbindung zum digitalen Lehrbuch <strong>Spanische Linguistik @ School</strong>, das als
+          Open Educational Resource konzipiert ist, bildet dabei den Ausgangspunkt. Games.Hispanistica greift
+          diesen Gedanken auf und überträgt ihn auf interaktive Formate: Lernmaterialien sollen nicht nur
+          konsumiert, sondern gemeinsam weiterentwickelt werden können.
+        </p>
+      </section>
+
+      <section class="md3-text-section">
+        <h2 class="md3-title-large md3-section-title md3-text-heading">Entwicklung als Teil der Lehre</h2>
+        <p class="md3-body-large">
+          Die Games-Module entstehen nicht losgelöst von der Lehre, sondern aus ihr heraus. Spielmechaniken,
+          Aufgabenformate und Inhalte werden in Lehrveranstaltungen entwickelt, erprobt und überarbeitet.
+          Studierende sind an diesen Prozessen beteiligt und bringen fachliche, didaktische und konzeptionelle
+          Perspektiven ein.
+        </p>
+        <p class="md3-body-large">
+          Diese Form der offenen Entwicklung macht sichtbar, dass digitale Lehrmaterialien nicht „fertig“ sind,
+          sondern wachsen. Gleichzeitig wird deutlich, dass hinter den Games keine vorgegebenen technischen
+          Lösungen stehen, sondern didaktische Entscheidungen: Welche Inhalte eignen sich für ein bestimmtes
+          Format? Wie lassen sich typische Verständnisschwierigkeiten abbilden? Welche Rückmeldungen sind
+          sinnvoll?
+        </p>
+      </section>
+
+      <section class="md3-text-section">
+        <h2 class="md3-title-large md3-section-title md3-text-heading">Technik und KI als Empowerment</h2>
+        <p class="md3-body-large">
+          Die technische Umsetzung von Games.Hispanistica ist bewusst so angelegt, dass sie die didaktischen
+          und konzeptionellen Ideen des Projekts unterstützt und erweitert. Die zentralen Überlegungen zu
+          Inhalten, Spielmechaniken und Aufgabenformaten entstehen dabei primär aus der gemeinsamen Arbeit von
+          Studierenden und Lehrenden. Technik und KI dienen nicht als Vorgabe, sondern als Mittel, um diese
+          Ideen in konkrete, funktionierende Formate zu überführen.
+        </p>
+        <p class="md3-body-large">
+          Generative KI spielt insbesondere bei der Umsetzung eine zentrale Rolle: Sie ermöglicht es,
+          konzeptionell entwickelte Spielideen in maßgeschneiderte, offene technische Lösungen zu übersetzen
+          und als Open-Source-Code zu realisieren. Dadurch lassen sich interaktive Games entwickeln, die nicht
+          an die Einschränkungen vorgefertigter Templates oder proprietärer Plattformen gebunden sind, sondern
+          genau auf die jeweiligen didaktischen Anforderungen zugeschnitten werden können.
+        </p>
+        <p class="md3-body-large">
+          Diese Form der Arbeit wirkt als Empowerment. Ideen, die vor wenigen Jahren nur mit erheblichem
+          finanziellem Aufwand oder externen Entwicklungsressourcen umsetzbar gewesen wären, können heute im
+          Rahmen universitärer Lehre realisiert werden. Technik und KI erweitern damit den Handlungsspielraum:
+          Sie machen es möglich, didaktische Konzepte experimentell zu erproben, weiterzuentwickeln und offen
+          zugänglich zu machen – ohne die Kontrolle über Inhalte, Struktur und Weiterverwendung aus der Hand zu
+          geben.
+        </p>
+      </section>
+
+      <section class="md3-text-section">
+        <h2 class="md3-title-large md3-section-title md3-text-heading">Open Source und Nachnutzbarkeit</h2>
+        <p class="md3-body-large">
+          Weiterführende Informationen zur technischen Umsetzung, zu verwendeten Werkzeugen sowie zur offenen
+          Entwicklungsstruktur finden sich auf der Projekt- und Dokumentationsseite unter
+          <a href="https://hispanistica.com/games" target="_blank" rel="noopener noreferrer">hispanistica.com/games</a>.
+          Der Quellcode der Games-Module wird offen entwickelt und ist im
+          <a href="https://github.com/FTacke/hispanistica_games" target="_blank" rel="noopener noreferrer">
+            GitHub-Repository
+          </a>
+          verfügbar (inklusive Dokumentation und Lizenzhinweisen).
+        </p>
+        <p class="md3-body-large">
+          Diese Offenheit ist integraler Bestandteil des Projekts: Sie ermöglicht Nachnutzung, Anpassung und
+          Weiterentwicklung und macht transparent, wie didaktische Ideen in konkrete technische Lösungen
+          überführt werden.
+        </p>
+      </section>
+
+      <section class="md3-text-section">
+        <h2 class="md3-title-large md3-section-title md3-text-heading">Perspektiven</h2>
+        <p class="md3-body-large">
+          Die offene Anlage von Games.Hispanistica schafft die Voraussetzung dafür, das Projekt langfristig
+          weiterzuführen. Neue Module, zusätzliche Spielformate und weitere Beteiligte können integriert werden,
+          ohne das bestehende Konzept zu verändern. Offenheit bedeutet hier nicht Beliebigkeit, sondern die
+          bewusste Entscheidung für ein wachsendes, gemeinschaftlich getragenes Projekt.
+        </p>
+        <p class="md3-body-large">
+          Games.Hispanistica versteht sich damit als Teil einer Lehrpraxis, die Transparenz, Nachnutzbarkeit und
+          Weiterentwicklung ernst nimmt – und die technische Umsetzung konsequent in den Dienst
+          hochschuldidaktischer Ziele stellt.
+        </p>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+{{ page_navigation(prev_title='Didaktisches Konzept', prev_url=url_for('public.projekt_konzept')) }}
+{% endblock %}
