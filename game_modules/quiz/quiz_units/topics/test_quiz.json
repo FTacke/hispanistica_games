@@ -1,0 +1,54 @@
+{
+  "schema_version": "quiz_unit_v2",
+  "slug": "test_quiz",
+  "title": "Test Quiz mit Audio",
+  "description": "Testet Audio-Medien in Frage und Antwort.",
+  "authors": [
+    "DEV"
+  ],
+  "is_active": true,
+  "order_index": 999,
+  "questions_statistics": {
+    "1": 1
+  },
+  "questions": [
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Aus welchem Land stammt diese Sprecher:in?",
+      "explanation": "Wenn du das siehst, hat das Rendering funktioniert.",
+      "media": [
+        {
+          "id": "m1",
+          "type": "audio",
+          "seed_src": "test_quiz.media/q01_audio_1.mp3",
+          "label": "Sprecher:in 1"
+        }
+      ],
+      "answers": [
+        {
+          "text": "Antwort A",
+          "correct": false,
+          "media": [],
+          "id": "a1"
+        },
+        {
+          "text": "Antwort B (hat Audio)",
+          "correct": true,
+          "media": [
+            {
+              "id": "m1",
+              "type": "audio",
+              "seed_src": "test_quiz.media/q01_a2_audio_1.mp3",
+              "label": "Antwort B Audio"
+            }
+          ],
+          "id": "a2"
+        }
+      ],
+      "sources": [],
+      "meta": {},
+      "id": "test_quiz_q_01KE59P9SVXJF4WMBPGHSJXDK6"
+    }
+  ]
+}

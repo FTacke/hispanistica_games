@@ -6,6 +6,9 @@ Ensures all quiz unit JSON files have:
 1. Stable ULID-based question IDs (never overwrites existing IDs)
 2. Correct questions_statistics object
 3. Deterministic formatting (sorted keys, indent=2)
+4. Media defaults (empty arrays for questions and answers without media)
+
+Supports both quiz_unit_v1 and quiz_unit_v2 formats.
 
 Usage:
   python scripts/quiz_units_normalize.py --check                    # Check only, exit 1 if changes needed
@@ -36,6 +39,41 @@ def calculate_questions_statistics(questions: List[Dict[str, Any]]) -> Dict[str,
     return {str(k): counter[k] for k in sorted(counter.keys())}
 
 
+def normalize_media_array(media: Any) -> List[Dict[str, Any]]:
+    """Normalize media field to v2 array format.
+    
+    v1: null or single object {"type": "audio", "url": "..."}
+    v2: array of media objects [{id, type, seed_src, ...}]
+    
+    Returns normalized array (may be empty).
+    """
+    if media is None:
+        return []
+    
+    if isinstance(media, list):
+        # Already v2 format, ensure each item has id
+        normalized = []
+        for idx, item in enumerate(media):
+            if isinstance(item, dict):
+                if 'id' not in item:
+                    item = dict(item)  # Copy to avoid mutation
+                    item['id'] = f"m{idx+1}"
+                normalized.append(item)
+        return normalized
+    
+    if isinstance(media, dict):
+        # v1 format: convert to array
+        converted = dict(media)
+        if 'id' not in converted:
+            converted['id'] = 'm1'
+        # Convert legacy 'url' to 'src' if present
+        if 'url' in converted and 'src' not in converted:
+            converted['src'] = converted.pop('url')
+        return [converted]
+    
+    return []
+
+
 def normalize_quiz_unit(
     unit_data: Dict[str, Any],
     slug: str,
@@ -44,6 +82,8 @@ def normalize_quiz_unit(
     """
     Normalize a quiz unit by:
     - Adding missing question IDs (never overwrites existing)
+    - Adding missing answer IDs
+    - Normalizing media arrays (v1 -> v2 conversion)
     - Updating questions_statistics
     
     Returns: (normalized_data, was_modified)
@@ -53,16 +93,52 @@ def normalize_quiz_unit(
     
     # Step 1: Add missing question IDs
     ids_added = 0
-    for question in questions:
+    for q_idx, question in enumerate(questions):
         if "id" not in question or not question["id"]:
             question["id"] = generate_question_id(slug)
             ids_added += 1
             modified = True
     
     if verbose and ids_added > 0:
-        print(f"  → Added {ids_added} question IDs")
+        print(f"  -> Added {ids_added} question IDs")
     
-    # Step 2: Calculate and update questions_statistics
+    # Step 2: Normalize answers (add IDs if missing)
+    answer_ids_added = 0
+    for question in questions:
+        answers = question.get("answers", [])
+        for ans_idx, answer in enumerate(answers):
+            if "id" not in answer or not answer["id"]:
+                answer["id"] = f"a{ans_idx + 1}"
+                answer_ids_added += 1
+                modified = True
+    
+    if verbose and answer_ids_added > 0:
+        print(f"  -> Added {answer_ids_added} answer IDs")
+    
+    # Step 3: Normalize media (v1 -> v2 format)
+    media_normalized = 0
+    for question in questions:
+        # Question media
+        old_media = question.get("media")
+        new_media = normalize_media_array(old_media)
+        if old_media != new_media:
+            question["media"] = new_media
+            media_normalized += 1
+            modified = True
+        
+        # Answer media (ensure each answer has media field)
+        for answer in question.get("answers", []):
+            old_ans_media = answer.get("media")
+            new_ans_media = normalize_media_array(old_ans_media)
+            if old_ans_media != new_ans_media:
+                answer["media"] = new_ans_media
+                media_normalized += 1
+                modified = True
+    
+    if verbose and media_normalized > 0:
+        print(f"  -> Normalized {media_normalized} media fields")
+    
+    # Step 4: Calculate and update questions_statistics
     calculated_stats = calculate_questions_statistics(questions)
     current_stats = unit_data.get("questions_statistics", {})
     
@@ -70,7 +146,7 @@ def normalize_quiz_unit(
         unit_data["questions_statistics"] = calculated_stats
         modified = True
         if verbose:
-            print(f"  → Updated questions_statistics: {calculated_stats}")
+            print(f"  -> Updated questions_statistics: {calculated_stats}")
     
     return unit_data, modified
 

@@ -82,6 +82,10 @@
   --md-sys-color-error: #b3261e;
   --md-sys-color-on-error: #ffffff;
 
+  /* Outline (für Borders, Dividers - KRITISCH für Form-Felder) */
+  --md-sys-color-outline: #5A7A84;  /* Dunkler, deutlich sichtbar */
+  --md-sys-color-outline-variant: #8FA9B3;  /* Leichter, für subtile Trennungen */
+
   /* Inverse surface (für Tooltips) */
   --md-sys-color-inverse-surface: #041317;
   --md-sys-color-inverse-on-surface: #FFFFFF;

@@ -150,7 +150,7 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
       const data = await response.json();
-      renderLeaderboard(container, data.leaderboard || []);
+      renderLeaderboard(container, data.leaderboard || [], data.is_admin || false, topicId);
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
       container.innerHTML = `<div class="quiz-leaderboard__empty">Fehler beim Laden.</div>`;
@@ -160,9 +160,30 @@
   /**
    * Render leaderboard entries with Top5 + expandable rest (new card design)
    */
-  function renderLeaderboard(container, entries) {
+  function renderLeaderboard(container, entries, isAdmin, topicId) {
+    // Build header with optional admin actions (always show, even if empty)
+    let headerHTML = '<h2 class="quiz-leaderboard-card__title">';
+    headerHTML += '<span class="material-symbols-rounded">leaderboard</span>';
+    headerHTML += 'Rangliste';
+    headerHTML += '</h2>';
+    
+    if (isAdmin && entries.length > 0) {
+      headerHTML = '<div class="quiz-leaderboard-card__header">' + headerHTML;
+      headerHTML += `
+        <div class="quiz-leaderboard-card__admin-actions">
+          <button type="button" 
+                  class="quiz-admin-btn--reset" 
+                  data-action="reset-all"
+                  title="Alle Highscores zurücksetzen">
+            <span class="material-symbols-rounded">restart_alt</span>
+            <span>Zurücksetzen</span>
+          </button>
+        </div>
+      </div>`;
+    }
+
     if (entries.length === 0) {
-      container.innerHTML = `
+      container.innerHTML = headerHTML + `
         <p class="quiz-leaderboard-card__empty">
           Noch keine Einträge.
         </p>
@@ -176,6 +197,8 @@
 
     const renderEntry = (entry) => `
       <li class="quiz-leaderboard-card__item ${
+        isAdmin ? 'quiz-leaderboard-card__item--admin' : ''
+      } ${
         entry.rank === 1 ? 'quiz-leaderboard-card__item--rank-1' : 
         entry.rank === 2 ? 'quiz-leaderboard-card__item--rank-2' : 
         entry.rank === 3 ? 'quiz-leaderboard-card__item--rank-3' : ''
@@ -192,10 +215,23 @@
           <span class="material-symbols-rounded">toll</span>
           <span>${entry.tokens_count}</span>
         </span>
+        ${isAdmin ? `
+          <button type="button" 
+                  class="quiz-admin-icon-btn" 
+                  data-action="delete-entry"
+                  data-entry-id="${entry.entry_id}"
+                  data-player-name="${escapeHtml(entry.player_name)}"
+                  data-score="${entry.total_score}"
+                  title="Eintrag löschen"
+                  aria-label="Eintrag von ${escapeHtml(entry.player_name)} löschen">
+            <span class="material-symbols-rounded">delete</span>
+          </button>
+        ` : ''}
       </li>
     `;
 
-    let html = `<ul class="quiz-leaderboard-card__list">${top5.map(renderEntry).join('')}</ul>`;
+    let html = headerHTML;
+    html += `<ul class="quiz-leaderboard-card__list">${top5.map(renderEntry).join('')}</ul>`;
 
     // Add accordion for rest if there are more than 5 entries
     if (rest.length > 0) {
@@ -210,6 +246,11 @@
     }
 
     container.innerHTML = html;
+
+    // Setup admin action handlers
+    if (isAdmin) {
+      setupAdminActions(topicId);
+    }
   }
 
   /**
@@ -518,6 +559,198 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Setup admin action handlers
+   */
+  function setupAdminActions(topicId) {
+    // Reset all button
+    const resetBtn = document.querySelector('[data-action="reset-all"]');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        showConfirmDialog(
+          'Alle Highscores zurücksetzen?',
+          'Alle Highscore-Einträge dieses Quiz werden permanent gelöscht. Dies kann nicht rückgängig gemacht werden.',
+          'Zurücksetzen',
+          async () => {
+            await resetAllHighscores(topicId);
+          }
+        );
+      });
+    }
+
+    // Delete entry buttons
+    const deleteButtons = document.querySelectorAll('[data-action="delete-entry"]');
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const entryId = btn.dataset.entryId;
+        const playerName = btn.dataset.playerName;
+        const score = btn.dataset.score;
+        
+        showConfirmDialog(
+          'Highscore-Eintrag löschen?',
+          `Eintrag von "${playerName}" (${score} Punkte) wird gelöscht. Die Rangliste wird automatisch neu berechnet.`,
+          'Löschen',
+          async () => {
+            await deleteHighscoreEntry(topicId, entryId);
+          }
+        );
+      });
+    });
+  }
+
+  /**
+   * Show MD3-conform confirm dialog
+   */
+  function showConfirmDialog(title, message, confirmLabel, onConfirm) {
+    // Check if dialog already exists and remove it
+    const existingDialog = document.getElementById('quiz-admin-confirm-dialog');
+    if (existingDialog) {
+      existingDialog.remove();
+    }
+
+    // Create dialog element (native <dialog>)
+    const dialog = document.createElement('dialog');
+    dialog.id = 'quiz-admin-confirm-dialog';
+    dialog.className = 'md3-dialog quiz-admin-dialog';
+    
+    dialog.innerHTML = `
+      <div class="md3-dialog__surface">
+        <h2 class="md3-dialog__title">${escapeHtml(title)}</h2>
+        <div class="md3-dialog__content">
+          <div class="quiz-admin-dialog__warning">
+            <span class="material-symbols-rounded quiz-admin-dialog__warning-icon">warning</span>
+            <div class="quiz-admin-dialog__warning-text">${escapeHtml(message)}</div>
+          </div>
+        </div>
+        <div class="md3-dialog__actions">
+          <button type="button" class="md3-button--text" data-action="cancel">
+            Abbrechen
+          </button>
+          <button type="button" class="md3-button--filled md3-button--danger" data-action="confirm">
+            ${escapeHtml(confirmLabel)}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Setup event handlers
+    const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+    const confirmBtn = dialog.querySelector('[data-action="confirm"]');
+
+    cancelBtn.addEventListener('click', () => {
+      dialog.close();
+      dialog.remove();
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Wird gelöscht...';
+      
+      try {
+        await onConfirm();
+        dialog.close();
+        dialog.remove();
+      } catch (error) {
+        console.error('Admin action failed:', error);
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = confirmLabel;
+        showToast('Aktion fehlgeschlagen. Bitte versuchen Sie es erneut.', 'error');
+      }
+    });
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        dialog.close();
+        dialog.remove();
+      }
+    });
+
+    // Close on Escape key
+    dialog.addEventListener('cancel', () => {
+      dialog.remove();
+    });
+
+    dialog.showModal();
+  }
+
+  /**
+   * Reset all highscores for a topic
+   */
+  async function resetAllHighscores(topicId) {
+    try {
+      const response = await fetch(`${API_BASE}/admin/topics/${topicId}/highscores/reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      showToast(`${data.deleted_count} Einträge gelöscht`, 'success');
+      
+      // Reload leaderboard
+      await loadLeaderboard(topicId);
+    } catch (error) {
+      console.error('Reset failed:', error);
+      showToast(error.message || 'Fehler beim Zurücksetzen', 'error');
+    }
+  }
+
+  /**
+   * Delete a single highscore entry
+   */
+  async function deleteHighscoreEntry(topicId, entryId) {
+    try {
+      const response = await fetch(`${API_BASE}/admin/topics/${topicId}/highscores/${entryId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      showToast('Eintrag gelöscht', 'success');
+      
+      // Reload leaderboard
+      await loadLeaderboard(topicId);
+    } catch (error) {
+      console.error('Delete failed:', error);
+      showToast(error.message || 'Fehler beim Löschen', 'error');
+    }
+  }
+
+  /**
+   * Show toast notification
+   */
+  function showToast(message, type = 'info') {
+    // Remove existing toast
+    const existingToast = document.getElementById('quiz-admin-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'quiz-admin-toast';
+    toast.className = `quiz-snack quiz-snack--${type}`;
+    toast.innerHTML = `<div class="quiz-snack__content">${escapeHtml(message)}</div>`;
+    
+    document.body.appendChild(toast);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
   }
 
   // Initialize on DOM ready

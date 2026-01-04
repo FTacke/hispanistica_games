@@ -22,8 +22,8 @@
     
     <!-- Header (optional, but recommended for accessibility) -->
     <header class="md3-sheet__header">
-      <h2 id="sheet-title" class="md3-title-large md3-sheet__title">Filtros</h2>
-      <button class="md3-icon-button" data-md3-sheet-action="close" aria-label="Cerrar">
+      <h2 id="sheet-title" class="md3-title-large md3-sheet__title">Filter</h2>
+      <button class="md3-icon-button" data-md3-sheet-action="close" aria-label="Schließen">
         <span class="material-symbols-rounded">close</span>
       </button>
     </header>
@@ -31,20 +31,21 @@
     <!-- Content -->
     <div class="md3-sheet__content md3-stack--sheet">
       <!-- Form elements, lists, or other content -->
-      <div class="md3-form-field">
-        <label for="filter-example" class="md3-label-large">Filtro</label>
-        <select id="filter-example" class="md3-select">
-          <option value="">Todos</option>
-          <option value="option1">Opción 1</option>
-          <option value="option2">Opción 2</option>
+      <!-- NOTE: Use .form-field pattern for forms in sheets -->
+      <div class="form-field">
+        <label for="filter-example">Filter</label>
+        <select id="filter-example">
+          <option value="">Alle</option>
+          <option value="option1">Option 1</option>
+          <option value="option2">Option 2</option>
         </select>
       </div>
     </div>
     
     <!-- Actions (optional) -->
     <footer class="md3-sheet__actions">
-      <button class="md3-button md3-button--text" data-md3-sheet-action="close">Cancelar</button>
-      <button class="md3-button md3-button--filled" data-md3-sheet-action="apply">Aplicar</button>
+      <button class="md3-button md3-button--text" data-md3-sheet-action="close">Abbrechen</button>
+      <button class="md3-button md3-button--filled" data-md3-sheet-action="apply">Anwenden</button>
     </footer>
   </div>
 </aside>

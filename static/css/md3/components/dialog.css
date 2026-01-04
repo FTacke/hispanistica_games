@@ -60,6 +60,8 @@
   border-radius: 28px;
   /* Use the canonical page surface token — dialogs should be non-tonal */
   background: var(--md-sys-color-surface);
+  /* LABEL-BG INHERITANCE: Labels need to match dialog surface background */
+  --app-textfield-label-bg: var(--md-sys-color-surface);
   box-sizing: border-box;
   margin: 0 auto;
   display: flex;

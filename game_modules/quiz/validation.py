@@ -2,6 +2,8 @@
 
 Uses dataclasses for validation since Pydantic is not in the project.
 Provides strict validation for questions imported from YAML and JSON quiz units.
+
+Supports both quiz_unit_v1 (legacy) and quiz_unit_v2 (with media arrays).
 """
 
 from __future__ import annotations
@@ -48,27 +50,56 @@ class TopicContentSchema:
 
 
 # ============================================================================
-# Quiz Unit v1 Schemas (JSON format with plaintext content)
+# Quiz Unit v1/v2 Schemas (JSON format with plaintext content)
 # ============================================================================
+
+# Allowed file extensions for media
+ALLOWED_AUDIO_EXTENSIONS = {'.mp3', '.ogg', '.wav'}
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+ALLOWED_MEDIA_EXTENSIONS = ALLOWED_AUDIO_EXTENSIONS | ALLOWED_IMAGE_EXTENSIONS
+
+
+@dataclass
+class UnitMediaSchema:
+    """Media item for quiz unit (audio or image).
+    
+    In seed JSON: seed_src points to local file relative to JSON.
+    After import: src contains final URL (/static/quiz-media/...).
+    """
+    id: str  # Unique within question/answer context (e.g., "m1", "m2")
+    type: str  # "audio" or "image"
+    seed_src: Optional[str] = None  # Local path relative to JSON (seed time only)
+    src: Optional[str] = None  # Final URL after import (/static/quiz-media/...)
+    label: Optional[str] = None  # Display label (e.g., "Audio 1", "Bild 1")
+    alt: Optional[str] = None  # Alt text for images (accessibility)
+    caption: Optional[str] = None  # Optional caption
+
 
 @dataclass
 class UnitAnswerSchema:
-    """Answer for quiz unit (JSON format with plaintext)."""
+    """Answer for quiz unit (JSON format with plaintext).
+    
+    v2 supports media array per answer.
+    """
     id: str  # String ID (generated if missing)
     text: str  # Plaintext answer
     correct: bool
+    media: List[UnitMediaSchema] = field(default_factory=list)  # v2: media per answer
 
 
 @dataclass
 class UnitQuestionSchema:
-    """Question for quiz unit (JSON format with plaintext)."""
+    """Question for quiz unit (JSON format with plaintext).
+    
+    v2 supports media array instead of single object.
+    """
     id: str  # String ID (generated if missing)
     difficulty: int  # 1-5
     type: str  # "single_choice"
     prompt: str  # Plaintext question
     explanation: str  # Plaintext explanation
     answers: List[UnitAnswerSchema]
-    media: Optional[Dict[str, Any]] = None
+    media: List[UnitMediaSchema] = field(default_factory=list)  # v2: array of media
     sources: Optional[List[Dict[str, Any]]] = None
     meta: Optional[Dict[str, Any]] = None
 
@@ -282,14 +313,125 @@ def validate_i18n_keys(topic_content: TopicContentSchema, i18n_data: Dict[str, A
 
 
 # ============================================================================
-# Quiz Unit v1 Validation
+# Quiz Unit v1/v2 Validation
 # ============================================================================
 
 SLUG_PATTERN = re.compile(r'^[a-z0-9_]+$')
+MEDIA_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_]+$')  # Simple alphanumeric IDs
+SUPPORTED_SCHEMA_VERSIONS = {'quiz_unit_v1', 'quiz_unit_v2'}
+
+
+def _validate_media_item(
+    media_data: Dict[str, Any],
+    context: str,
+    is_v2: bool = True
+) -> tuple[UnitMediaSchema, List[str]]:
+    """Validate a single media item.
+    
+    Args:
+        media_data: Raw media dict from JSON
+        context: Error context string
+        is_v2: Whether this is v2 format (array) or v1 (single object)
+    
+    Returns:
+        Tuple of (UnitMediaSchema, errors)
+    """
+    errors = []
+    
+    # Validate id (required in v2, auto-generated for v1)
+    media_id = media_data.get('id')
+    if not media_id:
+        if is_v2:
+            errors.append(f"Media missing required 'id'{context}")
+        media_id = 'm1'  # Default for v1 conversion
+    elif not isinstance(media_id, str):
+        errors.append(f"Media 'id' must be a string{context}")
+        media_id = str(media_id)
+    elif not MEDIA_ID_PATTERN.match(media_id):
+        errors.append(f"Media 'id' must be alphanumeric{context}: '{media_id}'")
+    
+    # Validate type (required)
+    media_type = media_data.get('type')
+    if not media_type:
+        errors.append(f"Media missing required 'type'{context}")
+    elif media_type not in ('audio', 'image'):
+        errors.append(f"Media 'type' must be 'audio' or 'image'{context}, got '{media_type}'")
+    
+    # Validate seed_src or src (one must be present for v2)
+    seed_src = media_data.get('seed_src')
+    src = media_data.get('src') or media_data.get('url')  # Support legacy 'url' field
+    
+    if is_v2 and not seed_src and not src:
+        errors.append(f"Media must have 'seed_src' or 'src'{context}")
+    
+    # Validate extension if seed_src is provided
+    if seed_src:
+        from pathlib import Path
+        ext = Path(seed_src).suffix.lower()
+        if ext not in ALLOWED_MEDIA_EXTENSIONS:
+            errors.append(f"Media file extension '{ext}' not allowed{context}. Allowed: {sorted(ALLOWED_MEDIA_EXTENSIONS)}")
+        # Type/extension mismatch check
+        if media_type == 'audio' and ext not in ALLOWED_AUDIO_EXTENSIONS:
+            errors.append(f"Audio media has non-audio extension '{ext}'{context}")
+        elif media_type == 'image' and ext not in ALLOWED_IMAGE_EXTENSIONS:
+            errors.append(f"Image media has non-image extension '{ext}'{context}")
+    
+    # Optional fields
+    label = media_data.get('label')
+    alt = media_data.get('alt')
+    caption = media_data.get('caption')
+    
+    if errors:
+        return None, errors
+    
+    return UnitMediaSchema(
+        id=media_id,
+        type=media_type,
+        seed_src=seed_src,
+        src=src,
+        label=label,
+        alt=alt,
+        caption=caption,
+    ), []
+
+
+def _convert_v1_media_to_v2(media_data: Any, context: str) -> tuple[List[UnitMediaSchema], List[str]]:
+    """Convert v1 media format (null|object) to v2 format (array).
+    
+    v1 formats:
+    - null/missing -> []
+    - {"type": "audio", "url": "..."} -> [UnitMediaSchema(...)]
+    
+    Returns:
+        Tuple of (media_list, errors)
+    """
+    if media_data is None:
+        return [], []
+    
+    if isinstance(media_data, list):
+        # Already v2 format (array)
+        media_list = []
+        errors = []
+        for idx, item in enumerate(media_data):
+            item_context = f"{context} Media #{idx+1}"
+            media_schema, item_errors = _validate_media_item(item, item_context, is_v2=True)
+            errors.extend(item_errors)
+            if media_schema:
+                media_list.append(media_schema)
+        return media_list, errors
+    
+    if isinstance(media_data, dict):
+        # v1 format: single object -> convert to array
+        media_schema, errors = _validate_media_item(media_data, context, is_v2=False)
+        if media_schema:
+            return [media_schema], errors
+        return [], errors
+    
+    return [], [f"Invalid media format{context}: expected null, object, or array"]
 
 
 def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSchema:
-    """Validate quiz unit JSON content (quiz_unit_v1 format).
+    """Validate quiz unit JSON content (quiz_unit_v1 or quiz_unit_v2 format).
     
     Args:
         data: Parsed JSON content
@@ -304,10 +446,12 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
     errors = []
     context = f" in {filename}" if filename else ""
     
-    # Validate schema_version
+    # Validate schema_version (v1 or v2)
     schema_version = data.get("schema_version")
-    if schema_version != "quiz_unit_v1":
-        errors.append(f"Invalid schema_version{context}: expected 'quiz_unit_v1', got '{schema_version}'")
+    if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+        errors.append(f"Invalid schema_version{context}: expected one of {SUPPORTED_SCHEMA_VERSIONS}, got '{schema_version}'")
+    
+    is_v2 = (schema_version == "quiz_unit_v2")
     
     # Validate slug
     slug = data.get("slug", "")
@@ -441,9 +585,13 @@ def _validate_unit_question(
     data: Dict[str, Any],
     slug: str,
     index: int,
-    context: str = ""
+    context: str = "",
+    is_v2: bool = True
 ) -> UnitQuestionSchema:
-    """Validate a single question in quiz unit format."""
+    """Validate a single question in quiz unit format.
+    
+    Supports both v1 (media as object) and v2 (media as array) formats.
+    """
     errors = []
     
     # Generate ID if missing
@@ -479,6 +627,12 @@ def _validate_unit_question(
     elif len(explanation.strip()) < 5:
         errors.append(f"Field 'explanation' too short{context} (min 5 chars)")
     
+    # Validate question media (v1: object, v2: array)
+    question_media, media_errors = _convert_v1_media_to_v2(
+        data.get("media"), f"{context} Question media"
+    )
+    errors.extend(media_errors)
+    
     # Validate answers
     answers_data = data.get("answers", [])
     if not isinstance(answers_data, list):
@@ -491,7 +645,7 @@ def _validate_unit_question(
     if errors:
         raise ValidationError("Question validation failed", errors)
     
-    # Validate each answer
+    # Validate each answer (with media support)
     answers = []
     correct_count = 0
     seen_answer_ids = set()
@@ -526,10 +680,17 @@ def _validate_unit_question(
         elif correct:
             correct_count += 1
         
+        # Validate answer media (v2 feature, optional array)
+        answer_media, ans_media_errors = _convert_v1_media_to_v2(
+            ans_data.get("media"), f"{ans_context} media"
+        )
+        errors.extend(ans_media_errors)
+        
         answers.append(UnitAnswerSchema(
             id=answer_id,
             text=text.strip() if text else "",
             correct=correct if isinstance(correct, bool) else False,
+            media=answer_media,
         ))
     
     # Must have exactly 1 correct answer
@@ -546,7 +707,7 @@ def _validate_unit_question(
         prompt=prompt.strip(),
         explanation=explanation.strip(),
         answers=answers,
-        media=data.get("media"),
+        media=question_media,
         sources=data.get("sources"),
         meta=data.get("meta"),
     )

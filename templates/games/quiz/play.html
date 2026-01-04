@@ -88,17 +88,22 @@
             </span>
           </div>
           
-          <p class="quiz-question__prompt" id="quiz-question-prompt">
-            <!-- Question text loaded dynamically -->
-          </p>
-          
-          <div class="quiz-question__media" id="quiz-question-media" hidden>
-            <!-- Audio player if present -->
-          </div>
-          
-          <div class="quiz-answers" id="quiz-answers" role="group" aria-label="Antwortoptionen">
-            <!-- Answers loaded dynamically -->
-          </div>
+          <!-- Question Surface: Consolidated container for prompt + media + answers -->
+          <section class="quiz-question-surface">
+            <div class="quiz-question-media-surface" id="quiz-question-media-surface">
+              <p class="quiz-question__prompt" id="quiz-question-prompt" tabindex="-1">
+                <!-- Question text loaded dynamically -->
+              </p>
+              
+              <div class="quiz-question__media" id="quiz-question-media" hidden>
+                <!-- Audio player if present -->
+              </div>
+            </div>
+            
+            <div class="quiz-answers" id="quiz-answers" role="group" aria-label="Antwortoptionen">
+              <!-- Answers loaded dynamically -->
+            </div>
+          </section>
         </div>
         
         <!-- Explanation Card (separate from feedback, always visible after answer) -->

@@ -240,9 +240,22 @@ def api_get_leaderboard(topic_id: str):
             return jsonify({"error": "Topic not found"}), 404
         
         leaderboard = services.get_leaderboard(session, topic_id, limit)
+        
+        # Check if current user is webapp admin
+        is_admin = False
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt
+            verify_jwt_in_request(optional=True)
+            jwt_data = get_jwt()
+            role = jwt_data.get("role", None)
+            is_admin = (role == "admin")
+        except Exception:
+            pass
+        
         return jsonify({
             "topic_id": topic_id,
             "leaderboard": leaderboard,
+            "is_admin": is_admin,  # NEW: Inform frontend about admin status
         })
 
 
@@ -829,10 +842,16 @@ def api_finish_run(run_id: str):
 # API Routes - Questions (for gameplay)
 # ============================================================================
 
+# Media-based time bonus in seconds (for audio/visual media loading)
+MEDIA_TIME_BONUS_SECONDS = 10
+
 @blueprint.route("/api/quiz/questions/<question_id>")
 @quiz_auth_required
 def api_get_question(question_id: str):
-    """Get question details (for displaying during gameplay)."""
+    """Get question details (for displaying during gameplay).
+    
+    Returns time_limit_bonus_s if question or any answer has media.
+    """
     with get_session() as session:
         from .models import QuizQuestion
         from sqlalchemy import select
@@ -843,7 +862,22 @@ def api_get_question(question_id: str):
         if not question:
             return jsonify({"error": "Question not found"}), 404
         
-        return jsonify({
+        # Check if question has media that warrants bonus time
+        has_media = False
+        
+        # Check question-level media
+        if question.media and isinstance(question.media, list) and len(question.media) > 0:
+            has_media = True
+        
+        # Check answer-level media
+        if not has_media and question.answers:
+            for ans in question.answers:
+                ans_media = ans.get("media", [])
+                if ans_media and len(ans_media) > 0:
+                    has_media = True
+                    break
+        
+        response = {
             "id": question.id,
             "difficulty": question.difficulty,
             "type": question.type,
@@ -851,7 +885,13 @@ def api_get_question(question_id: str):
             "explanation_key": question.explanation_key,
             "answers": question.answers,
             "media": question.media,
-        })
+        }
+        
+        # Add time bonus for media-rich questions
+        if has_media:
+            response["time_limit_bonus_s"] = MEDIA_TIME_BONUS_SECONDS
+        
+        return jsonify(response)
 
 
 # ============================================================================
@@ -910,4 +950,116 @@ def webapp_admin_required(f: Callable) -> Callable:
     return decorated
 
 
+# ============================================================================
+# Admin API Routes - Highscore Management
+# ============================================================================
 
+@blueprint.route("/api/quiz/admin/topics/<topic_id>/highscores/reset", methods=["POST"])
+@webapp_admin_required
+def api_admin_reset_highscores(topic_id: str):
+    """Reset all highscores for a topic (admin only).
+    
+    This deletes all QuizScore entries for the given topic.
+    The associated runs remain (status='finished') but no longer appear in leaderboard.
+    
+    Security:
+    - Requires webapp admin role
+    - No CSRF token needed (JWT-based auth)
+    - Topic ownership is implicit (all topics accessible to admin)
+    
+    Returns:
+        200: {"ok": true, "deleted_count": N}
+        404: Topic not found
+        403: Not admin
+    """
+    with get_session() as session:
+        from .models import QuizScore
+        from sqlalchemy import and_, delete
+        
+        # Verify topic exists
+        topic = services.get_topic(session, topic_id)
+        if not topic:
+            return jsonify({
+                "error": "Topic not found",
+                "code": "TOPIC_NOT_FOUND"
+            }), 404
+        
+        # Delete all scores for this topic
+        stmt = delete(QuizScore).where(QuizScore.topic_id == topic_id)
+        result = session.execute(stmt)
+        deleted_count = result.rowcount
+        
+        session.commit()
+        
+        logger.info(
+            "Admin reset highscores",
+            extra={
+                "topic_id": topic_id,
+                "deleted_count": deleted_count,
+                "admin_role": getattr(g, "role", None),
+            }
+        )
+        
+        return jsonify({
+            "ok": True,
+            "deleted_count": deleted_count
+        })
+
+
+@blueprint.route("/api/quiz/admin/topics/<topic_id>/highscores/<entry_id>", methods=["DELETE"])
+@webapp_admin_required
+def api_admin_delete_highscore(topic_id: str, entry_id: str):
+    """Delete a single highscore entry (admin only).
+    
+    This removes one QuizScore entry. Leaderboard ranks are recalculated dynamically,
+    so remaining entries automatically "move up".
+    
+    Security:
+    - Requires webapp admin role
+    - No CSRF token needed (JWT-based auth)
+    - Validates that entry belongs to specified topic (prevents IDOR)
+    
+    Returns:
+        204: No content (success)
+        404: Entry not found or doesn't belong to topic
+        403: Not admin
+    """
+    with get_session() as session:
+        from .models import QuizScore
+        from sqlalchemy import and_, delete
+        
+        # Verify topic exists
+        topic = services.get_topic(session, topic_id)
+        if not topic:
+            return jsonify({
+                "error": "Topic not found",
+                "code": "TOPIC_NOT_FOUND"
+            }), 404
+        
+        # Find and delete score entry (must belong to this topic)
+        stmt = delete(QuizScore).where(
+            and_(
+                QuizScore.id == entry_id,
+                QuizScore.topic_id == topic_id
+            )
+        )
+        result = session.execute(stmt)
+        
+        if result.rowcount == 0:
+            return jsonify({
+                "error": "Highscore entry not found or does not belong to this topic",
+                "code": "ENTRY_NOT_FOUND"
+            }), 404
+        
+        session.commit()
+        
+        logger.info(
+            "Admin deleted highscore entry",
+            extra={
+                "topic_id": topic_id,
+                "entry_id": entry_id,
+                "admin_role": getattr(g, "role", None),
+            }
+        )
+        
+        return '', 204

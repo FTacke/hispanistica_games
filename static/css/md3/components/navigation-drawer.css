@@ -51,7 +51,7 @@
 /* in static/css/md3/components/navigation-drawer.css */
 .md3-navigation-drawer hr.md3-divider {
   border: 0;
-  border-top: 1px solid var(--md-sys-color-outline-variant, rgba(0,0,0,0.08));
+  border-top: 1px solid var(--md-sys-color-outline, rgba(0,0,0,0.12));
   margin: var(--space-3, 0.65rem) 0;
 }
 
@@ -64,7 +64,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-6) var(--space-4);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  border-bottom: 1px solid var(--md-sys-color-outline);
 }
 
 /* Logo Container - Neutraler, nicht-fokussierbarer Container */
@@ -398,7 +398,7 @@ html:not([data-anim-ready="1"]) .md3-navigation-drawer__chevron {
 
 .md3-navigation-drawer__divider {
   height: 1px;
-  background: var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-outline);
   margin: var(--space-2) var(--space-4);
 }
 
@@ -408,7 +408,6 @@ html:not([data-anim-ready="1"]) .md3-navigation-drawer__chevron {
 
 .md3-navigation-drawer__footer {
   padding: var(--space-2) 0 var(--space-4) 0;
-  border-top: 1px solid var(--md-sys-color-outline-variant);
   /* Wrapper wie bei Content */
   display: flex;
   flex-direction: column;

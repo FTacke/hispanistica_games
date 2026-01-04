@@ -114,24 +114,31 @@
       {% endfor %}
     </nav>
 
-    {# Footer Navigation #}
-    <nav class="md3-navigation-drawer__footer" aria-label="Weitere Links">
-      {# Impressum #}
-      <a href="{{ url_for('public.impressum_page') }}" 
-         class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'public.impressum_page' else '' }}">
-        <span class="material-symbols-rounded md3-navigation-drawer__icon">gavel</span>
-        <span class="md3-navigation-drawer__label">Impressum</span>
-      </a>
-      
-      {# Datenschutz #}
-      <a href="{{ url_for('public.privacy_page') }}" 
-         class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'public.privacy_page' else '' }}">
-        <span class="material-symbols-rounded md3-navigation-drawer__icon">privacy_tip</span>
-        <span class="md3-navigation-drawer__label">Datenschutz</span>
-      </a>
-      
+    {# Footer Navigation - Role-based Account Section #}
+    <nav class="md3-navigation-drawer__footer" aria-label="Account">
       {% if is_authenticated %}
-        {# Authenticated: Logout Link #}
+        {# Divider before account section #}
+        <hr class="md3-divider" role="separator" aria-hidden="true">
+        
+        {# Profile - visible to all authenticated users #}
+        <a href="{{ url_for('auth.account_profile_page') }}"
+           class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'auth.account_profile_page' else '' }}"
+           aria-current="{{ 'page' if active_endpoint == 'auth.account_profile_page' else 'false' }}">
+          <span class="material-symbols-rounded md3-navigation-drawer__icon">person</span>
+          <span class="md3-navigation-drawer__label">Profil</span>
+        </a>
+        
+        {# Admin-only: User Management #}
+        {% if role_value == 'admin' %}
+          <a href="{{ url_for('auth.admin_users_page') }}"
+             class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'auth.admin_users_page' else '' }}"
+             aria-current="{{ 'page' if active_endpoint == 'auth.admin_users_page' else 'false' }}">
+            <span class="material-symbols-rounded md3-navigation-drawer__icon">group</span>
+            <span class="md3-navigation-drawer__label">Benutzer</span>
+          </a>
+        {% endif %}
+        
+        {# Logout - always at the bottom for authenticated users #}
         <a href="{{ url_for('auth.logout_any') }}"
            data-logout="fetch"
            data-logout-url="{{ url_for('auth.logout_any') }}"
@@ -142,6 +149,9 @@
         </a>
       {% else %}
         {# Unauthenticated: Login #}
+        {# Divider before login section #}
+        <hr class="md3-divider" role="separator" aria-hidden="true">
+        
         <a href="{{ url_for('public.login', next=request.path) }}"
            class="md3-navigation-drawer__item">
           <span class="material-symbols-rounded md3-navigation-drawer__icon">account_circle</span>
@@ -223,24 +233,31 @@
     {% endfor %}
   </nav>
 
-  {# Footer Navigation #}
-  <nav class="md3-navigation-drawer__footer" aria-label="Weitere Links">
-    {# Impressum #}
-    <a href="{{ url_for('public.impressum_page') }}" 
-       class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'public.impressum_page' else '' }}">
-      <span class="material-symbols-rounded md3-navigation-drawer__icon">gavel</span>
-      <span class="md3-navigation-drawer__label">Impressum</span>
-    </a>
-    
-    {# Datenschutz #}
-    <a href="{{ url_for('public.privacy_page') }}" 
-       class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'public.privacy_page' else '' }}">
-      <span class="material-symbols-rounded md3-navigation-drawer__icon">privacy_tip</span>
-      <span class="md3-navigation-drawer__label">Datenschutz</span>
-    </a>
-    
+  {# Footer Navigation - Role-based Account Section #}
+  <nav class="md3-navigation-drawer__footer" aria-label="Account">
     {% if is_authenticated %}
-      {# Authenticated: Logout Link #}
+      {# Divider before account section #}
+      <hr class="md3-divider" role="separator" aria-hidden="true">
+      
+      {# Profile - visible to all authenticated users #}
+      <a href="{{ url_for('auth.account_profile_page') }}"
+         class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'auth.account_profile_page' else '' }}"
+         aria-current="{{ 'page' if active_endpoint == 'auth.account_profile_page' else 'false' }}">
+        <span class="material-symbols-rounded md3-navigation-drawer__icon">person</span>
+        <span class="md3-navigation-drawer__label">Profil</span>
+      </a>
+      
+      {# Admin-only: User Management #}
+      {% if role_value == 'admin' %}
+        <a href="{{ url_for('auth.admin_users_page') }}"
+           class="md3-navigation-drawer__item {{ 'md3-navigation-drawer__item--active' if active_endpoint == 'auth.admin_users_page' else '' }}"
+           aria-current="{{ 'page' if active_endpoint == 'auth.admin_users_page' else 'false' }}">
+          <span class="material-symbols-rounded md3-navigation-drawer__icon">group</span>
+          <span class="md3-navigation-drawer__label">Benutzer</span>
+        </a>
+      {% endif %}
+      
+      {# Logout - always at the bottom for authenticated users #}
       <a href="{{ url_for('auth.logout_any') }}"
          data-logout="fetch"
          data-logout-url="{{ url_for('auth.logout_any') }}"
@@ -251,6 +268,9 @@
       </a>
     {% else %}
       {# Unauthenticated: Login #}
+      {# Divider before login section #}
+      <hr class="md3-divider" role="separator" aria-hidden="true">
+      
       <a href="{{ url_for('public.login', next=request.path) }}"
          class="md3-navigation-drawer__item">
         <span class="material-symbols-rounded md3-navigation-drawer__icon">account_circle</span>

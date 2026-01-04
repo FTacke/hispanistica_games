@@ -1237,6 +1237,7 @@ def get_leaderboard(session: Session, topic_id: str, limit: int = 30) -> List[Di
     
     return [
         {
+            "entry_id": s.id,  # NEW: Include entry ID for admin delete functionality
             "rank": i + 1,
             "player_name": s.player_name,
             "total_score": s.total_score,

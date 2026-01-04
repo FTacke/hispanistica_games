@@ -26,15 +26,10 @@
       </header>
       <div class="md3-card__content">
         <p class="md3-body-medium">Das Löschen ist irreversibel. Bitte geben Sie Ihr Passwort ein, um zu bestätigen.</p>
-        <form id="del" class="md3-auth-form" novalidate>
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="pw" name="password" type="password" class="md3-outlined-textfield__input" required aria-label="Passwort" />
-            <label class="md3-outlined-textfield__label" for="pw">Passwort</label>
-            <div class="md3-outlined-textfield__outline">
-              <div class="md3-outlined-textfield__outline-start"></div>
-              <div class="md3-outlined-textfield__outline-notch"></div>
-              <div class="md3-outlined-textfield__outline-end"></div>
-            </div>
+        <form id="del" class="md3-auth-form form-surface" novalidate>
+          <div class="form-field">
+            <label for="pw">Passwort</label>
+            <input id="pw" name="password" type="password" required aria-label="Passwort" />
           </div>
           <div class="md3-actions">
             <a href="{{ url_for('auth.account_profile_page') }}" class="md3-button md3-button--text">Abbrechen</a>

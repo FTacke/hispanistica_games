@@ -33,6 +33,12 @@
   z-index: 1;
 }
 
+/* Input background for dialog/card contexts */
+.md3-dialog__surface .md3-outlined-textfield__input,
+.md3-card .md3-outlined-textfield__input {
+  background: var(--md-sys-color-surface-variant);
+}
+
 .md3-outlined-textfield__input--select {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -117,6 +123,10 @@
   pointer-events: none;
   transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
   z-index: 2;
+  white-space: nowrap;
+  max-width: calc(100% - var(--space-8));
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .md3-outlined-textfield__label--select {
@@ -129,8 +139,8 @@
 }
 
 .md3-outlined-textfield__input:focus ~ .md3-outlined-textfield__label,
-.md3-outlined-textfield__input:not(:placeholder-shown)
-  ~ .md3-outlined-textfield__label {
+.md3-outlined-textfield__input:not(:placeholder-shown) ~ .md3-outlined-textfield__label,
+.md3-outlined-textfield__input[value]:not([value=""]) ~ .md3-outlined-textfield__label {
   top: -10px;
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant);
@@ -186,7 +196,7 @@
 .md3-outlined-textfield__outline-start {
   border: 1px solid var(--md-sys-color-outline-variant);
   border-right: none;
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
   width: var(--space-3);
   transition:
     border-color 200ms cubic-bezier(0.2, 0, 0, 1),
@@ -205,7 +215,7 @@
 .md3-outlined-textfield__outline-end {
   border: 1px solid var(--md-sys-color-outline-variant);
   border-left: none;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   flex: 1;
   transition:
     border-color 200ms cubic-bezier(0.2, 0, 0, 1),
@@ -243,10 +253,8 @@
 
 /* Visual focus ring without changing border width (prevents jumps) */
 .md3-outlined-textfield:focus-within .md3-outlined-textfield__outline {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
-  border-radius: var(--radius-sm);
-}
-
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  border-radius: var(--radius-md);
 /* ============================================================================
    Compact Variant (Corpus-specific)
    ============================================================================ */

@@ -1,12 +1,333 @@
 /* ============================================================================
-   MD3 Forms - Corpus-specific layouts (From Legacy md3-components.css)
+   MD3 Forms System - Globales Design-System für alle Formularfelder
    ============================================================================
-   TRANSFERRED FROM: static/css/md3-components.css (Lines 1471-1732)
-  STATUS: ⚠️ Uses some legacy MD3 tokens (--md3-*) in older rules; these
-  should be migrated. NOTE: This file also contains a custom checkbox
-  implementation which is NOT MD3-canonical. See the TODO below.
-   CUSTOM: Corpus search form, filter grid, regional filter section
+   SOURCE OF TRUTH: Abgeleitet von quiz-input-group (quiz.css)
+   
+   Dieses System definiert ein einheitliches Form-Pattern für die gesamte
+   Webapp (Login, Profil, Admin, Quiz, etc.).
+   
+   STRUCTURE:
+   1. GLOBAL FORM SYSTEM (Base + Variants)
+   2. CORPUS-SPECIFIC LAYOUTS (Legacy-Migration)
+   3. CUSTOM CHECKBOX IMPLEMENTATION (Legacy)
+   
+   USAGE:
+   - Wrapper: Jedes Feld in <div class="form-field">
+   - Label: <label> oberhalb des Inputs
+   - Input/Select/Textarea: Standard HTML-Elemente
+   - Varianten: Container mit .form-surface/.form-panel/.form-background
    ============================================================================ */
+
+/* ====== PART 1: GLOBAL FORM SYSTEM ====== */
+
+/* === Form Tokens (Semantic Layer) === */
+:root {
+  /* Border: IMMER sichtbar, wie bei Quiz-Feldern
+     Fallback-Werte für den Fall dass Tokens nicht gesetzt sind */
+  --form-field-bg: var(--md-sys-color-surface-container-lowest, #fff);
+  --form-field-border: var(--md-sys-color-outline-variant, #8FA9B3);  /* Deutlich sichtbares Grau */
+  --form-field-border-focus: var(--md-sys-color-primary, #276D7B);    /* Primary bei Focus */
+  --form-field-label: var(--md-sys-color-on-surface, #0A1F26);
+  --form-field-text: var(--md-sys-color-on-surface, #0A1F26);
+  --form-field-help: var(--md-sys-color-on-surface-variant, #1A3B45);
+  --form-field-focus: var(--md-sys-color-primary, #276D7B);
+  --form-field-error: var(--md-sys-color-error, #b3261e);
+  --form-field-disabled-opacity: 0.7;
+  --form-field-radius: var(--radius-md, 8px);
+  --form-field-border-width: 2px;
+}
+
+/* === Base Form Structure === */
+.form-field {
+  display: block;
+  margin-bottom: var(--space-4, 16px); /* reduziert von space-6 für dichtere Formulare */
+}
+
+.form-field:last-child {
+  margin-bottom: 0;
+}
+
+.form-field > label {
+  display: block;
+  margin-bottom: var(--space-1, 4px); /* reduziert von space-2 für dichteres Layout */
+  color: var(--form-field-label);
+  font-size: 0.875rem;
+  font-weight: 500; /* reduziert von 600 für weniger Dominanz */
+  line-height: 1.4;
+}
+
+.form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  width: 100%;
+  background: var(--form-field-bg);
+  border: var(--form-field-border-width) solid var(--form-field-border);
+  border-radius: var(--form-field-radius);
+  padding: var(--space-4, 16px);
+  color: var(--form-field-text);
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-field select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px 20px;
+  padding-right: 44px;
+}
+
+/* === States === */
+.form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+  outline: none;
+  border-color: var(--form-field-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--form-field-focus) 16%, transparent); /* reduziert von 18% für subtileren Effekt */
+}
+
+.form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):disabled {
+  opacity: var(--form-field-disabled-opacity);
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--form-field-bg) 50%, var(--md-sys-color-surface-variant));
+}
+
+.form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea)::placeholder {
+  color: var(--form-field-help);
+  opacity: 0.7;
+}
+
+.form-field input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--form-field-bg) inset;
+  -webkit-text-fill-color: var(--form-field-text);
+  border-color: var(--form-field-border);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* === Help Text === */
+.form-field .help {
+  display: block;
+  margin-top: var(--space-1, 4px); /* reduziert von space-2 für engere Bindung */
+  color: var(--form-field-help);
+  font-size: 0.75rem;
+  line-height: 1.35; /* leicht kompakter */
+}
+
+/* === Error State === */
+.form-field.is-error > label {
+  color: var(--form-field-error);
+}
+
+.form-field.is-error :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: var(--form-field-error);
+}
+
+.form-field.is-error :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--form-field-error) 16%, transparent); /* reduziert von 18% für subtileren Effekt */
+}
+
+.form-field .field-error {
+  display: block;
+  margin-top: var(--space-1, 4px); /* reduziert von space-2 für engere Bindung */
+  color: var(--form-field-error);
+  font-size: 0.875rem;
+  line-height: 1.35; /* leicht kompakter */
+}
+
+.form-error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-radius: var(--form-field-radius);
+  padding: var(--space-4, 16px);
+  margin-bottom: var(--space-4, 16px); /* reduziert von space-6 für dichteres Layout */
+  display: flex;
+  gap: var(--space-3, 12px);
+  align-items: flex-start;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.form-error .icon {
+  color: var(--form-field-error);
+  flex-shrink: 0;
+}
+
+/* === Hintergrund-Varianten === 
+   WICHTIG: Border muss IMMER klar sichtbar sein (wie Quiz-Felder)
+   Verwendet DUNKLERE Farben für maximale Sichtbarkeit auf allen Hintergründen
+*/
+
+/* Auf Cards (surface-container-lowest = weiß) */
+.form-surface {
+  --form-field-bg: var(--md-sys-color-surface-container-lowest, #fff);
+  --form-field-border: var(--md-sys-color-outline-variant, #8FA9B3);  /* Deutlich sichtbares Grau */
+}
+
+.form-surface .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 2px solid var(--md-sys-color-outline-variant, #8FA9B3);
+}
+
+.form-surface .form-field :is(input, select, textarea):focus {
+  border-color: var(--md-sys-color-primary, #276D7B);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #276D7B) 16%, transparent);
+}
+
+/* Auf getönten Panels (surface-container-high) */
+.form-panel {
+  --form-field-bg: var(--md-sys-color-surface-container-lowest, #fff);
+  --form-field-border: var(--md-sys-color-outline, #5A7A84);  /* Dunkler für mehr Kontrast */
+}
+
+.form-panel .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 2px solid var(--md-sys-color-outline, #5A7A84);
+}
+
+.form-panel .form-field :is(input, select, textarea):focus {
+  border-color: var(--md-sys-color-primary, #276D7B);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #276D7B) 16%, transparent);
+}
+
+/* Direkt auf Background */
+.form-background {
+  --form-field-bg: var(--md-sys-color-surface-container-lowest, #fff);
+  --form-field-border: var(--md-sys-color-outline, #5A7A84);  /* Dunkler für Background */
+}
+
+.form-background .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 2px solid var(--md-sys-color-outline, #5A7A84);
+}
+
+.form-background .form-field :is(input, select, textarea):focus {
+  border-color: var(--md-sys-color-primary, #276D7B);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #276D7B) 16%, transparent);
+}
+
+/* In Dialogen (md3-dialog__surface = weiß) */
+.form-dialog {
+  --form-field-bg: var(--md-sys-color-surface-container-lowest, #fff);
+  --form-field-border: var(--md-sys-color-outline-variant, #8FA9B3);  /* Deutlich sichtbares Grau */
+}
+
+.form-dialog .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 2px solid var(--md-sys-color-outline-variant, #8FA9B3);
+}
+
+.form-dialog .form-field :is(input, select, textarea):focus {
+  border-color: var(--md-sys-color-primary, #276D7B);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #276D7B) 16%, transparent);
+}
+
+/* EXPLIZITE Dialog-Regeln für garantierte Sichtbarkeit */
+.md3-dialog .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+.md3-dialog__surface .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 2px solid var(--md-sys-color-outline-variant, #8FA9B3);
+}
+
+.md3-dialog .form-field :is(input, select, textarea):focus,
+.md3-dialog__surface .form-field :is(input, select, textarea):focus {
+  border-color: var(--md-sys-color-primary, #276D7B);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #276D7B) 16%, transparent);
+}
+
+/* Dialog-Content hat bereits .md3-stack--dialog mit eigenem Gap */
+.md3-dialog__content .form-field {
+  margin-bottom: 0; /* Dialog-Stack übernimmt Spacing */
+}
+
+/* === Form Layout Helpers === */
+.form-stack {
+  display: grid;
+  gap: var(--space-4, 16px);
+}
+
+.form-stack .form-field {
+  margin-bottom: 0; /* Gap ersetzt margin im Stack-Kontext */
+}
+
+.form-row {
+  display: grid;
+  gap: var(--space-4, 16px);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-field--compact {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.form-field--compact :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  padding: var(--space-3, 12px);
+  font-size: 0.875rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-5, 20px); /* reduziert von space-6 für dichteres Layout */
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.form-actions--right {
+  justify-content: flex-end;
+}
+
+.form-actions--center {
+  justify-content: center;
+}
+
+/* === Checkbox und Radio === */
+.form-field--checkbox,
+.form-field--radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.form-field--checkbox input[type="checkbox"],
+.form-field--radio input[type="radio"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.form-field--checkbox label,
+.form-field--radio label {
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* === Mobile Responsive === */
+@media (max-width: 599px) {
+  .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    padding: var(--space-3, 12px);
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ====== PART 2: CORPUS-SPECIFIC LAYOUTS (Legacy) ====== */
 
 /* Form Container */
 .md3-corpus-form {

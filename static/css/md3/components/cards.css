@@ -74,11 +74,11 @@
 .md3-card--landing,
 .md3-card.md3-card--landing {
   --_card-bg: var(--md-sys-color-surface-container-lowest);  /* CARD-Ebene: Weiß */
-  background: var(--_card-bg);
+  background: var(--md-sys-color-surface);
   /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
   --app-textfield-label-bg: var(--_card-bg);
   border: 1px solid var(--md-sys-color-outline-variant);  /* Klare Fassung */
-  box-shadow: var(--elev-2);
+  box-shadow: var(--elev-1);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   /* Flex layout for button alignment at bottom */

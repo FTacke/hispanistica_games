@@ -1,4 +1,5 @@
 <!-- Auth — Profile skeleton (canonical MD3) -->
+<!-- NOTE: Use .form-field pattern instead of md3-outlined-textfield -->
 <div class="md3-page">
   <!-- Canonical Hero -->
   <header class="md3-page__header">
@@ -14,35 +15,27 @@
   <main class="md3-page__main md3-stack--page">
     <section class="md3-page__section md3-stack--section">
       <div class="md3-card md3-card--outlined md3-auth-card">
-        <div class="md3-card__content md3-form" role="form" aria-labelledby="profile-title">
+        <div class="md3-card__content" role="form" aria-labelledby="profile-title">
           <h1 id="profile-title" class="md3-title-large md3-card__title">Mein Konto</h1>
           <p class="md3-body-medium">Profileinstellungen und Kontenpräferenzen.</p>
 
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="id_fullname" name="fullname" class="md3-outlined-textfield__input" type="text" />
-            <label class="md3-outlined-textfield__label" for="id_fullname">Vollständiger Name</label>
-            <span class="md3-outlined-textfield__outline">
-              <span class="md3-outlined-textfield__outline-start"></span>
-              <span class="md3-outlined-textfield__outline-notch"></span>
-              <span class="md3-outlined-textfield__outline-end"></span>
-            </span>
-          </div>
+          <form class="md3-auth-form form-surface">
+            <div class="form-field">
+              <label for="id_fullname">Vollständiger Name</label>
+              <input id="id_fullname" name="fullname" type="text" autocomplete="name" />
+            </div>
 
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="id_email" name="email" class="md3-outlined-textfield__input" type="email" />
-            <label class="md3-outlined-textfield__label" for="id_email">E-Mail-Adresse</label>
-            <span class="md3-outlined-textfield__outline">
-              <span class="md3-outlined-textfield__outline-start"></span>
-              <span class="md3-outlined-textfield__outline-notch"></span>
-              <span class="md3-outlined-textfield__outline-end"></span>
-            </span>
-          </div>
+            <div class="form-field">
+              <label for="id_email">E-Mail-Adresse</label>
+              <input id="id_email" name="email" type="email" autocomplete="email" />
+            </div>
 
-          <div class="md3-actions">
-            <button class="md3-button md3-button--text">Abbrechen</button>
-            <div class="md3-actions__spacer" aria-hidden="true"></div>
-            <button class="md3-button md3-button--filled">Speichern</button>
-          </div>
+            <div class="md3-actions">
+              <button class="md3-button md3-button--text" type="button">Abbrechen</button>
+              <div class="md3-actions__spacer" aria-hidden="true"></div>
+              <button class="md3-button md3-button--filled" type="submit">Speichern</button>
+            </div>
+          </form>
         </div>
       </div>
     </section>

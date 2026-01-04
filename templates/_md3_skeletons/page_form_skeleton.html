@@ -5,7 +5,10 @@
   - .md3-page wrapper
   - .md3-page__header with Hero (canonical format)
   - .md3-page__section (form container)
-  - use canonical components: .md3-outlined-textfield, .md3-button--filled
+  - use canonical components: .form-field, .md3-button--filled
+  
+  NOTE: Use .form-field pattern (not md3-outlined-textfield)
+  Variants: .form-surface (card), .form-panel (tinted), .form-background (direct), .form-dialog (dialog)
 #}
 
 {% extends 'base.html' %}
@@ -17,39 +20,29 @@
     <div class="md3-hero md3-hero--card md3-hero__container">
       <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">edit_document</span></div>
       <div class="md3-hero__content">
-        <p class="md3-body-small md3-hero__eyebrow">Form Area</p>
-        <h1 class="md3-headline-medium md3-hero__title">Form Title</h1>
+        <p class="md3-body-small md3-hero__eyebrow">Formular</p>
+        <h1 class="md3-headline-medium md3-hero__title">Formular-Titel</h1>
       </div>
     </div>
   </header>
 
   <div class="md3-page__section">
-    <article class="md3-card md3-card--outlined max-w-600" role="region" aria-label="Form example">
+    <article class="md3-card md3-card--outlined max-w-600" role="region" aria-label="Formular-Beispiel">
       <div class="md3-card__content">
-        <form class="md3-form">
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input class="md3-outlined-textfield__input" name="username" placeholder="" aria-label="Username" />
-            <label class="md3-outlined-textfield__label">Username</label>
-            <span class="md3-outlined-textfield__outline">
-              <span class="md3-outlined-textfield__outline-start"></span>
-              <span class="md3-outlined-textfield__outline-notch"></span>
-              <span class="md3-outlined-textfield__outline-end"></span>
-            </span>
+        <form class="md3-form form-surface">
+          <div class="form-field">
+            <label for="username">Benutzername</label>
+            <input type="text" id="username" name="username" required />
           </div>
 
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input class="md3-outlined-textfield__input" name="password" type="password" aria-label="Password" />
-            <label class="md3-outlined-textfield__label">Password</label>
-            <span class="md3-outlined-textfield__outline">
-              <span class="md3-outlined-textfield__outline-start"></span>
-              <span class="md3-outlined-textfield__outline-notch"></span>
-              <span class="md3-outlined-textfield__outline-end"></span>
-            </span>
+          <div class="form-field">
+            <label for="password">Passwort</label>
+            <input type="password" id="password" name="password" />
           </div>
 
           <div class="md3-actions">
-            <button class="md3-button md3-button--filled" type="submit">Submit</button>
-            <button class="md3-button md3-button--outlined" type="button">Cancel</button>
+            <button class="md3-button md3-button--filled" type="submit">Absenden</button>
+            <button class="md3-button md3-button--outlined" type="button">Abbrechen</button>
           </div>
         </form>
       </div>
@@ -59,8 +52,8 @@
   <div class="md3-page__section md3-stack--page">
     <article class="md3-card md3-card--outlined max-w-600">
       <div class="md3-card__content">
-        <h3 class="md3-title-medium">Additional info</h3>
-        <p class="md3-body-medium">Explain additional steps, security notes and helpers.</p>
+        <h3 class="md3-title-medium">Zusatzinformationen</h3>
+        <p class="md3-body-medium">Erläuterungen zu weiteren Schritten, Sicherheitshinweise und Hilfestellungen.</p>
       </div>
     </article>
   </div>

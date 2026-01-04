@@ -179,6 +179,9 @@
   // Level-up is a real intermediate stage; do not auto-advance.
   const LEVEL_UP_AUTO_ADVANCE_MS = null;
   const POINTS_POP_DURATION_MS = 1000; // Points pop visibility
+  
+  // Media bonus time (fetched from API response time_limit_bonus_s)
+  let currentQuestionMediaBonusSeconds = 0;
 
   // Debug flag (default OFF). Enable with ?quizDebug=1 or localStorage quizDebug=1
   const DEBUG = new URLSearchParams(window.location.search).has('quizDebug') ||
@@ -305,6 +308,9 @@
   async function init() {
     debugLog('init', { action: 'start' });
     
+    // Setup audio button event delegation (once)
+    setupAudioButtonDelegation();
+    
     const container = document.querySelector('.game-shell');
     if (!container) {
       debugLog('init', { error: 'container not found' });
@@ -402,6 +408,10 @@
         case 'final-retry':
           // Restart run
           window.location.href = `/quiz/${state.topicId}?restart=1`;
+          break;
+        case 'final-leaderboard':
+          // Go to topic entry (where leaderboard is) and scroll to it
+          window.location.href = `/quiz/${state.topicId}#leaderboard`;
           break;
         case 'final-topics':
           // Go to topic selection
@@ -728,6 +738,9 @@
       console.error('[TRANSITION] Stopped timer, transitioning to:', newView);
     }
     
+    // Stop any playing audio on view transition
+    AudioController.stopAndReset();
+    
     state.isTransitioning = true;
     const wrapper = document.getElementById('quiz-question-wrapper');
     
@@ -921,14 +934,15 @@
     const explanationCard = document.getElementById('quiz-explanation-card');
     const weiterBtn = document.getElementById('quiz-weiter-btn');
     const jokerBtn = document.getElementById('quiz-joker-btn');
-    const answerBtns = document.querySelectorAll('.quiz-answer');
+    const answerBtns = document.querySelectorAll('.quiz-answer-option');
     
     switch (newState) {
       case STATE.IDLE:
-        // Enable answers (unless joker-disabled)
+        // Enable answers (unless hidden)
         answerBtns.forEach(btn => {
-          if (!btn.classList.contains('quiz-answer--disabled') && !btn.classList.contains('quiz-answer--hidden')) {
-            btn.disabled = false;
+          if (!btn.hidden) {
+            btn.removeAttribute('aria-disabled');
+            btn.setAttribute('tabindex', '0');
           }
         });
         // Enable joker if available
@@ -944,7 +958,8 @@
       case STATE.ANSWERED_LOCKED:
         // Disable ALL answers and add locked class
         answerBtns.forEach(btn => {
-          btn.disabled = true;
+          btn.setAttribute('aria-disabled', 'true');
+          btn.setAttribute('tabindex', '-1');
           // Only add locked class to non-selected, non-correct-reveal answers
           if (!btn.classList.contains('quiz-answer--selected-correct') &&
               !btn.classList.contains('quiz-answer--selected-wrong') &&
@@ -965,7 +980,10 @@
         
       case STATE.TRANSITIONING:
         // Everything disabled
-        answerBtns.forEach(btn => btn.disabled = true);
+        answerBtns.forEach(btn => {
+          btn.setAttribute('aria-disabled', 'true');
+          btn.setAttribute('tabindex', '-1');
+        });
         if (jokerBtn) jokerBtn.disabled = true;
         if (weiterBtn) weiterBtn.disabled = true;
         // Cancel auto-advance
@@ -1023,6 +1041,9 @@
       return;
     }
     
+    // Stop any playing audio when loading new question
+    AudioController.stopAndReset();
+    
     debugLog('loadCurrentQuestion', { index: state.currentIndex });
     
     if (state.currentIndex >= state.runQuestions.length) {
@@ -1051,6 +1072,13 @@
     state.pendingLevelUp = false;
     state.pendingLevelUpData = null;
     state.pendingTransition = null; // ✅ Clear pending transition
+    
+    // Check for media time bonus (API returns time_limit_bonus_s for media-rich questions)
+    currentQuestionMediaBonusSeconds = state.questionData.time_limit_bonus_s || 0;
+    debugLog('loadCurrentQuestion', { 
+      hasMedia: !!(state.questionData.media && state.questionData.media.length),
+      mediaBonus: currentQuestionMediaBonusSeconds 
+    });
     
     // ✅ PHASE: Set to ANSWERING when loading new question
     state.phase = PHASE.ANSWERING;
@@ -1100,9 +1128,21 @@
 
   /**
    * Start question timer on server
+   * Includes media bonus time if question has audio/image
    */
   async function startQuestionTimer() {
     const startedAtMs = Date.now();
+    
+    // Calculate total time including media bonus
+    const totalTimerSeconds = TIMER_SECONDS + currentQuestionMediaBonusSeconds;
+    
+    if (currentQuestionMediaBonusSeconds > 0) {
+      debugLog('startQuestionTimer', { 
+        baseTimer: TIMER_SECONDS, 
+        mediaBonus: currentQuestionMediaBonusSeconds,
+        totalTimer: totalTimerSeconds
+      });
+    }
     
     try {
       const response = await fetch(`${API_BASE}/run/${state.runId}/question/start`, {
@@ -1111,7 +1151,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question_index: state.currentIndex,
-          started_at_ms: startedAtMs
+          started_at_ms: startedAtMs,
+          time_limit_bonus_s: currentQuestionMediaBonusSeconds
         })
       });
       
@@ -1120,14 +1161,14 @@
         state.questionStartedAtMs = data.question_started_at_ms;
         state.deadlineAtMs = data.deadline_at_ms;
       } else {
-        // Fallback to client-side timer
+        // Fallback to client-side timer (with bonus)
         state.questionStartedAtMs = startedAtMs;
-        state.deadlineAtMs = startedAtMs + (TIMER_SECONDS * 1000);
+        state.deadlineAtMs = startedAtMs + (totalTimerSeconds * 1000);
       }
     } catch (error) {
-      // Fallback to client-side timer
+      // Fallback to client-side timer (with bonus)
       state.questionStartedAtMs = startedAtMs;
-      state.deadlineAtMs = startedAtMs + (TIMER_SECONDS * 1000);
+      state.deadlineAtMs = startedAtMs + (totalTimerSeconds * 1000);
     }
   }
 
@@ -1244,10 +1285,11 @@
     const promptEl = document.getElementById('quiz-question-prompt');
     promptEl.textContent = q.prompt_key;
     
-    // Render media if present
+    // Render question-level media (supports v2 array format)
     const mediaEl = document.getElementById('quiz-question-media');
-    if (q.media && q.media.type === 'audio') {
-      mediaEl.innerHTML = `<audio controls src="${escapeHtml(q.media.url)}"></audio>`;
+    const mediaHtml = renderMediaArray(q.media);
+    if (mediaHtml) {
+      mediaEl.innerHTML = mediaHtml;
       mediaEl.hidden = false;
     } else {
       mediaEl.innerHTML = '';
@@ -1274,42 +1316,100 @@
       const marker = String.fromCharCode(65 + idx); // A, B, C, D
       const answerText = answer.text_key;
       
+      // Check if answer has audio media
+      const answerMedia = answer.media || [];
+      const audioItem = answerMedia.find(m => m.type === 'audio');
+      const hasAudio = !!audioItem;
+      const audioSrc = audioItem ? audioItem.src : '';
+      const audioCaption = audioItem ? (audioItem.caption || audioItem.label || '') : '';
+      
+      // Build audio elements HTML (only if audio exists)
+      const audioElementsHtml = hasAudio ? `
+        <span class="quiz-answer-audio-icon material-symbols-rounded" aria-hidden="true">headphones</span>
+        <button type="button"
+                class="md3-audio-btn md3-audio-btn--inline"
+                data-audio-src="${escapeHtml(audioSrc)}"
+                data-audio-label="Antwort ${marker}"
+                aria-label="Antwort ${marker} abspielen"
+                aria-pressed="false"
+                tabindex="-1">
+          <span class="material-symbols-rounded md3-audio-btn__icon" aria-hidden="true">play_arrow</span>
+        </button>
+      ` : '';
+      
+      const audioCaptionHtml = hasAudio && audioCaption ? `
+        <span class="quiz-answer-audio-text">${escapeHtml(audioCaption)}</span>
+      ` : '';
+      
+      const inlineClass = hasAudio ? 'quiz-answer-inline has-audio' : 'quiz-answer-inline';
+      
       // If joker was used, hide the disabled options completely
       if (isDisabled) {
         return `
-          <button 
-            type="button" 
-            class="quiz-answer quiz-answer--hidden"
+          <div 
+            class="quiz-answer-option quiz-answer-option--hidden"
             data-answer-id="${answerId}"
-            disabled
+            role="button"
+            tabindex="-1"
+            aria-disabled="true"
             hidden
           >
-            <span class="quiz-answer__marker">${marker}</span>
-            <span class="quiz-answer__text">${escapeHtml(answerText)}</span>
-            <span class="quiz-answer__icon material-symbols-rounded" aria-hidden="true">check</span>
-          </button>
+            <div class="${inlineClass}">
+              <span class="quiz-answer-letter">${marker}</span>
+              ${audioElementsHtml}
+              <span class="quiz-answer-text">${escapeHtml(answerText)}</span>
+              ${audioCaptionHtml}
+            </div>
+          </div>
         `;
       }
       
       return `
-        <button 
-          type="button" 
-          class="quiz-answer"
+        <div 
+          class="quiz-answer-option"
           data-answer-id="${answerId}"
+          role="button"
+          tabindex="0"
           aria-label="Antwort ${marker}: ${escapeHtml(answerText)}"
         >
-          <span class="quiz-answer__marker">${marker}</span>
-          <span class="quiz-answer__text">${escapeHtml(answerText)}</span>
-          <span class="quiz-answer__icon material-symbols-rounded" aria-hidden="true">check</span>
-        </button>
+          <div class="${inlineClass}">
+            <span class="quiz-answer-letter">${marker}</span>
+            ${audioElementsHtml}
+            <span class="quiz-answer-text">${escapeHtml(answerText)}</span>
+            ${audioCaptionHtml}
+          </div>
+        </div>
       `;
     }).join('');
     
     answersEl.innerHTML = answersHtml;
     
-    // Add click handlers
-    answersEl.querySelectorAll('.quiz-answer:not([disabled])').forEach(btn => {
-      btn.addEventListener('click', () => handleAnswerClick(btn.dataset.answerId));
+    // Add click handlers for answer option divs (not the audio buttons inside)
+    answersEl.querySelectorAll('.quiz-answer-option:not([hidden])').forEach(answerDiv => {
+      // Click on answer option (but not on audio button inside)
+      answerDiv.addEventListener('click', (e) => {
+        // Don't select answer if clicking on audio button
+        if (e.target.closest('.md3-audio-btn')) {
+          return;
+        }
+        // Don't select if disabled
+        if (answerDiv.getAttribute('aria-disabled') === 'true') {
+          return;
+        }
+        handleAnswerClick(answerDiv.dataset.answerId);
+      });
+      
+      // Keyboard support for div[role="button"]
+      answerDiv.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          // Don't select if disabled
+          if (answerDiv.getAttribute('aria-disabled') === 'true') {
+            return;
+          }
+          handleAnswerClick(answerDiv.dataset.answerId);
+        }
+      });
     });
     
     // Hide explanation card initially
@@ -1345,7 +1445,7 @@
     setUIState(STATE.ANSWERED_LOCKED);
     
     // Highlight selected answer
-    const answerBtns = document.querySelectorAll('.quiz-answer');
+    const answerBtns = document.querySelectorAll('.quiz-answer-option');
     answerBtns.forEach(btn => {
       if (btn.dataset.answerId === answerId) {
         btn.classList.add('quiz-answer--selected');
@@ -1829,7 +1929,7 @@
    * Show result styling on answer buttons (new state system)
    */
   function showAnswerResult(selectedId, result, correctId) {
-    document.querySelectorAll('.quiz-answer').forEach(btn => {
+    document.querySelectorAll('.quiz-answer-option').forEach(btn => {
       const id = btn.dataset.answerId;
       
       // Remove old classes
@@ -1854,7 +1954,7 @@
    * Show the correct answer (for timeout)
    */
   function showCorrectAnswer(correctId) {
-    document.querySelectorAll('.quiz-answer').forEach(btn => {
+    document.querySelectorAll('.quiz-answer-option').forEach(btn => {
       const id = btn.dataset.answerId;
       if (id === correctId) {
         btn.classList.add('quiz-answer--correct-reveal');
@@ -2055,9 +2155,10 @@
         
         // Hide wrong answers (not just disabled - completely hidden)
         data.disabled_answer_ids.forEach(id => {
-          const answerBtn = document.querySelector(`.quiz-answer[data-answer-id="${id}"]`);
+          const answerBtn = document.querySelector(`.quiz-answer-option[data-answer-id="${id}"]`);
           if (answerBtn) {
-            answerBtn.disabled = true;
+            answerBtn.setAttribute('aria-disabled', 'true');
+            answerBtn.setAttribute('tabindex', '-1');
             answerBtn.hidden = true;
             answerBtn.classList.add('quiz-answer--hidden');
           }
@@ -2534,6 +2635,10 @@
                     <span class="material-symbols-rounded">replay</span>
                     Nochmal spielen
                 </button>
+                <button type="button" class="md3-button md3-button--filled" data-quiz-action="final-leaderboard">
+                    <span class="material-symbols-rounded">leaderboard</span>
+                    Zur Rangliste
+                </button>
                 <button type="button" class="md3-button md3-button--text" data-quiz-action="final-topics">
                     Zur Übersicht
                 </button>
@@ -2545,6 +2650,265 @@
       
       // Announce
       announceA11y(`Quiz beendet. Dein Ergebnis: ${finish.totalScore} Punkte.`);
+  }
+
+  // ============================================================================
+  // AudioController - Single playback, custom MD3 buttons (no native <audio controls>)
+  // ============================================================================
+  
+  /**
+   * AudioController manages a single Audio instance for the entire quiz.
+   * Only one audio can play at a time. Buttons toggle Play↔Pause.
+   * 
+   * media.src wird beim Seeding aus seed_src erzeugt und zeigt auf /static/quiz-media/...
+   * Reihenfolge im JSON bestimmt Labels (Audio 1, Audio 2...), falls label fehlt.
+   */
+  const AudioController = (function() {
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    
+    let currentBtn = null;
+    let currentSrc = null;
+    
+    /**
+     * Set button playing state (icon, aria, class)
+     */
+    function setBtnPlaying(btn, isPlaying) {
+      if (!btn) return;
+      
+      const icon = btn.querySelector('.md3-audio-btn__icon');
+      const text = btn.querySelector('.md3-audio-btn__text');
+      
+      if (icon) {
+        icon.textContent = isPlaying ? 'pause' : 'play_arrow';
+      }
+      if (text) {
+        text.textContent = isPlaying ? 'Pause' : 'Play';
+      }
+      
+      btn.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+      btn.classList.toggle('is-playing', isPlaying);
+      
+      // Update aria-label
+      const baseLabel = btn.dataset.audioLabel || 'Audio';
+      btn.setAttribute('aria-label', `${baseLabel} ${isPlaying ? 'pausieren' : 'abspielen'}`);
+    }
+    
+    /**
+     * Handle button click - toggle play/pause, ensure single playback
+     */
+    function handleClick(btn) {
+      const src = btn.dataset.audioSrc;
+      if (!src) return;
+      
+      // Different source - stop current, play new
+      if (src !== currentSrc) {
+        // Reset previous button
+        if (currentBtn) {
+          setBtnPlaying(currentBtn, false);
+        }
+        
+        audio.src = src;
+        currentSrc = src;
+        currentBtn = btn;
+        
+        audio.play().then(() => {
+          setBtnPlaying(btn, true);
+        }).catch(err => {
+          console.warn('[AudioController] Play failed:', err);
+          setBtnPlaying(btn, false);
+        });
+      } else {
+        // Same source - toggle play/pause
+        if (audio.paused) {
+          audio.play().then(() => {
+            setBtnPlaying(btn, true);
+          }).catch(err => {
+            console.warn('[AudioController] Play failed:', err);
+          });
+        } else {
+          audio.pause();
+          setBtnPlaying(btn, false);
+        }
+      }
+    }
+    
+    /**
+     * Stop and reset everything (call on question change, level-up, finish)
+     */
+    function stopAndReset() {
+      audio.pause();
+      audio.currentTime = 0;
+      
+      if (currentBtn) {
+        setBtnPlaying(currentBtn, false);
+      }
+      
+      currentBtn = null;
+      currentSrc = null;
+    }
+    
+    // Audio ended - reset button state
+    audio.addEventListener('ended', () => {
+      if (currentBtn) {
+        setBtnPlaying(currentBtn, false);
+      }
+    });
+    
+    // Audio error - reset and warn
+    audio.addEventListener('error', () => {
+      console.warn('[AudioController] Audio error for:', currentSrc);
+      if (currentBtn) {
+        setBtnPlaying(currentBtn, false);
+      }
+    });
+    
+    return {
+      handleClick,
+      stopAndReset
+    };
+  })();
+  
+  // Event delegation for audio buttons (attached once)
+  let audioButtonsDelegated = false;
+  function setupAudioButtonDelegation() {
+    if (audioButtonsDelegated) return;
+    audioButtonsDelegated = true;
+    
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.md3-audio-btn');
+      if (!btn) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      AudioController.handleClick(btn);
+    });
+  }
+  
+  /**
+   * Render media array (v2 format) to HTML
+   * Uses custom MD3 audio buttons instead of native <audio controls>
+   * 
+   * @param {Array|Object|null} media - Media array (v2) or single object (v1 legacy)
+   * @param {Object} options - Rendering options
+   * @param {boolean} options.compact - If true, render in compact/inline style (for answers)
+   * @param {string} options.answerId - Answer ID for namespacing audio IDs
+   * @returns {string} HTML string for media elements
+   */
+  function renderMediaArray(media, options = {}) {
+    if (!media) return '';
+    
+    // Handle legacy v1 single object format (convert to array)
+    let mediaArray = Array.isArray(media) ? media : [media];
+    
+    if (mediaArray.length === 0) return '';
+    
+    const isCompact = options.compact || false;
+    const answerId = options.answerId || '';
+    
+    // Separate audio and image items
+    const audioItems = mediaArray.filter(m => m.type === 'audio');
+    const imageItems = mediaArray.filter(m => m.type === 'image');
+    
+    let html = '';
+    
+    // Render audio items in grid layout
+    if (audioItems.length > 0) {
+      const gridLayout = audioItems.length > 1 ? 'grid-2' : 'single';
+      const gridClass = isCompact ? 'quiz-media-grid quiz-media-grid--compact' : 'quiz-media-grid';
+      
+      const audioHtml = audioItems.map((m, idx) => {
+        const src = m.src || m.url || '';
+        const mediaId = m.id || `m${idx + 1}`;
+        const audioId = answerId ? `${answerId}_${mediaId}` : mediaId;
+        const label = m.label || `Audio ${idx + 1}`;
+        
+        if (!src) return '';
+        
+        if (isCompact) {
+          // Inline button only (no label row, used in answers)
+          return `
+            <button type="button"
+                    class="md3-audio-btn md3-audio-btn--inline"
+                    data-audio-src="${escapeHtml(src)}"
+                    data-audio-id="${escapeHtml(audioId)}"
+                    data-audio-label="${escapeHtml(label)}"
+                    aria-label="${escapeHtml(label)} abspielen"
+                    aria-pressed="false">
+              <span class="material-symbols-rounded md3-audio-btn__icon" aria-hidden="true">play_arrow</span>
+            </button>
+          `;
+        }
+        
+        // Full audio item with label
+        return `
+          <div class="quiz-media-item quiz-media-item--audio">
+            <div class="quiz-media-label">
+              <span class="material-symbols-rounded quiz-media-icon" aria-hidden="true">headphones</span>
+              <span class="quiz-media-label-text">${escapeHtml(label)}</span>
+            </div>
+            <button type="button"
+                    class="md3-audio-btn"
+                    data-audio-src="${escapeHtml(src)}"
+                    data-audio-id="${escapeHtml(audioId)}"
+                    data-audio-label="${escapeHtml(label)}"
+                    aria-label="${escapeHtml(label)} abspielen"
+                    aria-pressed="false">
+              <span class="material-symbols-rounded md3-audio-btn__icon" aria-hidden="true">play_arrow</span>
+              <span class="md3-audio-btn__text">Play</span>
+            </button>
+          </div>
+        `;
+      }).filter(Boolean).join('');
+      
+      if (audioHtml) {
+        html += `<div class="${gridClass}" data-layout="${gridLayout}">${audioHtml}</div>`;
+      }
+    }
+    
+    // Render image items
+    if (imageItems.length > 0) {
+      const imageHtml = imageItems.map(m => {
+        const src = m.src || m.url || '';
+        const alt = m.alt || m.label || '';
+        const caption = m.caption || '';
+        
+        if (!src) return '';
+        
+        const imgClass = isCompact ? 'quiz-media__item quiz-media__item--image quiz-media__item--compact' : 'quiz-media__item quiz-media__item--image';
+        
+        return `
+          <figure class="${imgClass}">
+            <img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="quiz-media__image" loading="lazy">
+            ${caption ? `<figcaption class="quiz-media__caption">${escapeHtml(caption)}</figcaption>` : ''}
+          </figure>
+        `;
+      }).filter(Boolean).join('');
+      
+      if (imageHtml) {
+        const containerClass = isCompact ? 'quiz-media quiz-media--compact' : 'quiz-media';
+        html += `<div class="${containerClass}">${imageHtml}</div>`;
+      }
+    }
+    
+    // Handle unknown types
+    mediaArray.filter(m => m.type !== 'audio' && m.type !== 'image').forEach(m => {
+      console.warn('[renderMediaArray] Unknown media type:', m.type, m);
+    });
+    
+    return html;
+  }
+  
+  /**
+   * Render answer media (compact inline style)
+   * Returns inline audio buttons for answer row layout
+   * 
+   * @param {Array|null} media - Answer media array
+   * @param {string} answerId - Answer ID for namespacing
+   * @returns {string} HTML string
+   */
+  function renderAnswerMedia(media, answerId = '') {
+    return renderMediaArray(media, { compact: true, answerId });
   }
 
   /**

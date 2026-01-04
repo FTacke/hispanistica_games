@@ -6,12 +6,6 @@
   "authors": [
     "Test Author"
   ],
-  "based_on": {
-    "chapter_title": "Test Quiz - Aussprache",
-    "chapter_url": "https://school.hispanistica.com/",
-    "course_title": "Spanische Linguistik @ School",
-    "course_url": null
-  },
   "is_active": true,
   "order_index": 1,
   "questions_statistics": {
@@ -26,31 +20,48 @@
       "id": "variation_q01",
       "difficulty": 1,
       "type": "single_choice",
-      "prompt": "Was ist 'Seseo'?",
+      "prompt": "Was ist 'Seseo'?\n\n(Höre dir beide Audios an.)",
       "explanation": "Seseo bezeichnet die Aussprache von 'c' (vor e/i) und 'z' als [s], wie in weiten Teilen Lateinamerikas und Teilen Südspaniens üblich.",
+      "media": [
+        {
+          "id": "m1",
+          "type": "audio",
+          "seed_src": "variation_test_quiz.media/q01_audio_1.mp3",
+          "label": "Sprecher:in 1"
+        },
+        {
+          "id": "m2",
+          "type": "audio",
+          "seed_src": "variation_test_quiz.media/q01_audio_2.mp3",
+          "label": "Sprecher:in 2"
+        }
+      ],
       "answers": [
         {
           "id": "a1",
           "text": "Die Aussprache von 'c' und 'z' als [s]",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Die Aussprache von 'll' und 'y' gleich",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Die Aussprache von 'c' und 'z' als [θ]",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Das Weglassen von 's' am Wortende",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
       "sources": [
         {
           "type": "book",
@@ -70,25 +81,29 @@
         {
           "id": "a1",
           "text": "In Teilen Andalusiens",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "In ganz Mexiko",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "In Argentinien",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "In Katalonien",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {}
     },
@@ -102,25 +117,29 @@
         {
           "id": "a1",
           "text": "Die gleiche Aussprache von 'll' und 'y'",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Die Betonung der letzten Silbe",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Das Verschlucken von Konsonanten",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Die Aussprache von 'j' als [h]",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [
         {
           "type": "article",
@@ -140,25 +159,29 @@
         {
           "id": "a1",
           "text": "Aspiración/elisión de 's'",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Seseo",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Voseo",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Leísmo",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "region": "Caribbean, Andalusia"
@@ -174,25 +197,29 @@
         {
           "id": "a1",
           "text": "Argentinien",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Spanien",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Mexiko",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Peru",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [
         {
           "type": "book",
@@ -212,25 +239,29 @@
         {
           "id": "a1",
           "text": "Als [ʃ] oder [ʒ] (wie 'sch')",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Als [l] (wie reguläres 'l')",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Als [θ] (wie englisches 'th')",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Wird nicht ausgesprochen",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "region": "Rioplatense"
@@ -246,25 +277,29 @@
         {
           "id": "a1",
           "text": "Unterscheidung zwischen 'c/z' [θ] und 's' [s]",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Seseo (alle als [s])",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Voseo",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Aspiration von 's'",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [
         {
           "type": "book",
@@ -284,25 +319,29 @@
         {
           "id": "a1",
           "text": "Velarización/elisión de 'r'",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Rotacismo",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Lambdacismo",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Ensordecimiento",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [
         {
           "type": "article",
@@ -324,25 +363,29 @@
         {
           "id": "a1",
           "text": "Die Substitution von 'r' durch 'l'",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Die Substitution von 'l' durch 'r'",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Die Aussprache von 'll' als [ʎ]",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Das Weglassen von Vokalen",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {}
     },
@@ -356,25 +399,29 @@
         {
           "id": "a1",
           "text": "Ländliches Kastilien-León",
-          "correct": true
+          "correct": true,
+          "media": []
         },
         {
           "id": "a2",
           "text": "Madrid",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a3",
           "text": "Sevilla",
-          "correct": false
+          "correct": false,
+          "media": []
         },
         {
           "id": "a4",
           "text": "Barcelona",
-          "correct": false
+          "correct": false,
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [
         {
           "type": "book",
@@ -386,5 +433,11 @@
         "difficulty_note": "Dialectology"
       }
     }
-  ]
+  ],
+  "based_on": {
+    "chapter_title": "Test Quiz - Aussprache",
+    "chapter_url": "https://school.hispanistica.com/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  }
 }

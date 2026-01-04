@@ -1,22 +1,40 @@
-/* Auth & Profile Pages - MD3 Standards */
+/* Auth & Profile Pages - MD3 Standards
+   ============================================================================
+   This stylesheet ensures login/signup/profile forms are clear, professional,
+   and accessible while adhering to MD3 design tokens. */
 
-/* 1) MD3-CARD-STANDARDS */
+/* ============================================================================
+   1) CONTAINER / CARD — Auth Card Base Styling
+   ============================================================================ */
+
 .md3-auth-card {
-  /* Define local background color for consistency */
-  --_auth-card-bg: var(--md-sys-color-surface-container-high);
+  /* Define local background color for consistent label-bg inheritance */
+  --_auth-card-bg: var(--md-sys-color-surface);
   
+  /* Card dimensions and positioning */
   max-width: 480px;
   margin-inline: auto;
-  /* Use canonical token for card surface */
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* Surface and elevation */
   background: var(--_auth-card-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-2);
+  
+  /* Internal padding for breathing room */
+  padding: var(--space-10);
+  
   /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
   --app-textfield-label-bg: var(--_auth-card-bg);
-  border-radius: var(--radius-sm);
+  
+  /* Border: subtle outline for definition */
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .md3-card__header,
 .md3-card__content {
-  padding: var(--space-4);
+  padding: 0; /* No extra padding; card itself handles it */
 }
 
 .md3-card__header > h1,
@@ -24,108 +42,153 @@
   margin: 0;
 }
 
-/* Auth-specific card header spacing & color */
-.md3-auth-card .md3-card__header {
-  padding-top: var(--space-6);
-  padding-bottom: var(--space-3);
-}
+/* ============================================================================
+   2) TYPOGRAPHY — Headline & Subtitle (Hierarchie)
+   ============================================================================ */
 
+/* Main title — dominant, clear primary color */
 .md3-auth-card .md3-card__title {
-  color: var(--md-sys-color-primary);
+  font-size: var(--md-sys-typescale-headline-small-font-size, 1.5rem);
+  font-weight: var(--md-sys-typescale-headline-small-weight, 500);
+  line-height: var(--md-sys-typescale-headline-small-line-height, 2rem);
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--space-3) 0;
 }
 
-/* 2) MD3-TYPO & SPACING */
-.md3-card__content > * + * {
-  margin-top: var(--space-4);
+/* Description/subtitle — secondary, muted color for visual calm */
+.md3-auth-card .md3-body-medium {
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 var(--space-8) 0;
+  font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
+  line-height: var(--md-sys-typescale-body-medium-line-height, 1.25rem);
 }
+
+
+
+/* ============================================================================
+   3) FORM FIELDS — Outlined Textfields with Clear Focus States
+   ============================================================================ */
 
 .md3-auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4); /* 16px vertical rhythm for form fields */
-  margin-top: var(--space-4);
+  gap: var(--space-6); /* 24px: consistent vertical rhythm */
 }
 
-/* If a paragraph precedes a form in card content (e.g. password forgot)
-   give slightly more breathing room for better form separation */
-.md3-card__content > p + .md3-auth-form {
-  margin-top: var(--space-6);
+/* Form field wrapper container */
+.md3-outlined-textfield {
+  width: 100%;
+  position: relative;
 }
 
-/* Remove utility classes effect if present */
-.md3-auth-card .mt-3,
-.md3-auth-card .mb-3 {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-}
-
-/* 3) MD3-OUTLINED TEXTFIELDS (Auth specific overrides) */
-.md3-auth-card .md3-outlined-textfield,
-.md3-dialog__surface .md3-outlined-textfield {
+.md3-auth-card .md3-outlined-textfield {
   width: 100%;
 }
 
-/* Label background now inherited via --app-textfield-label-bg from .md3-auth-card */
-
-.md3-auth-card .md3-outlined-textfield__input,
-.md3-dialog__surface .md3-outlined-textfield__input,
-.md3-sheet__surface .md3-outlined-textfield__input {
-  background: transparent;
+/* Input field: clear background and text color */
+.md3-auth-card .md3-outlined-textfield__input {
+  background: var(--md-sys-color-surface-variant);
   color: var(--md-sys-color-on-surface);
+  padding: var(--space-4) var(--space-4);
+  font-size: var(--md-sys-typescale-body-large-font-size, 1rem);
+  border-radius: var(--radius-md);
 }
 
-.md3-auth-card .md3-outlined-textfield__outline,
-.md3-dialog__surface .md3-outlined-textfield__outline,
-.md3-sheet__surface .md3-outlined-textfield__outline {
+/* Outline: subtle border for inactive state */
+.md3-auth-card .md3-outlined-textfield__outline {
   border-color: var(--md-sys-color-outline-variant);
+  border-width: 1px;
+  border-radius: var(--radius-md);
 }
 
-.md3-auth-card .md3-outlined-textfield--focused .md3-outlined-textfield__outline,
-.md3-dialog__surface .md3-outlined-textfield--focused .md3-outlined-textfield__outline,
-.md3-sheet__surface .md3-outlined-textfield--focused .md3-outlined-textfield__outline {
+/* Focus state: primary color border + soft glow */
+.md3-auth-card .md3-outlined-textfield--focused .md3-outlined-textfield__outline {
   border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 20%,
+    transparent
+  );
 }
 
-/* 4) MD3-BUTTON-STANDARDS (Auth specific) */
-/* Removed overrides to enforce canonical button styles (pill shape, 48px height, etc.) */
+/* Label styling */
+.md3-auth-card .md3-outlined-textfield__label {
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--app-textfield-label-bg, var(--md-sys-color-surface));
+  padding: 0 var(--space-1);
+  font-size: var(--md-sys-typescale-body-small-font-size, 0.75rem);
+}
+
+
+
+/* ============================================================================
+   4) ACTIONS — Button and Secondary Links (CTA Prominence)
+   ============================================================================ */
 
 .md3-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8); /* Breathing room before actions */
 }
 
-/* Responsive Actions - Stack on Mobile */
-@media (max-width: 600px) {
-  .md3-actions--stack,
-  .md3-auth-card .md3-actions {
+/* Primary action button — filled, prominent */
+.md3-actions .md3-button--filled {
+  font-size: var(--md-sys-typescale-label-large-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-label-large-weight, 500);
+}
+
+/* Secondary action link (e.g., "Passwort vergessen") — text only, subtle */
+.md3-actions .md3-button--text {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  font-size: var(--md-sys-typescale-label-medium-font-size, 0.75rem);
+}
+
+.md3-actions .md3-button--text:hover {
+  text-decoration: underline;
+}
+
+/* Spacer: Push primary button to the right on desktop */
+.md3-actions__spacer {
+  flex: 1;
+}
+
+
+/* ============================================================================
+   5) RESPONSIVE BEHAVIOR — Mobile-First Adjustments
+   ============================================================================ */
+
+@media (max-width: 599px) {
+  .md3-auth-card {
+    padding: var(--space-6); /* Smaller padding on mobile */
+    border-radius: var(--radius-lg);
+  }
+
+  /* Stack actions vertically on mobile */
+  .md3-actions {
     flex-direction: column;
     gap: var(--space-3);
+    margin-top: var(--space-6);
   }
   
-  .md3-actions--stack .md3-button,
-  .md3-auth-card .md3-actions .md3-button {
+  .md3-actions__spacer {
+    display: none;
+  }
+  
+  /* Primary button full width on mobile */
+  .md3-actions .md3-button--filled {
     width: 100%;
     justify-content: center;
-  }
-  
-  /* Order: Primary first, then secondary, danger last */
-  .md3-actions .md3-button--filled:not(.md3-button--danger) {
     order: 1;
   }
   
-  .md3-actions .md3-button--outlined:not(.md3-button--danger) {
-    order: 2;
-  }
-  
+  /* Secondary button/link full width and subtle on mobile */
   .md3-actions .md3-button--text {
-    order: 3;
-  }
-  
-  .md3-actions .md3-button--danger {
-    order: 4;
+    width: 100%;
+    justify-content: center;
+    order: 2;
   }
 }
 
@@ -141,10 +204,9 @@
   padding: var(--space-5);
 }
 
-/* Form within dialog needs consistent spacing */
+/* Form within dialog: Remove gap, use dialog's stack spacing instead */
 .md3-dialog__content .md3-form {
-  display: flex;
-  flex-direction: column;
+  gap: 0; /* Dialog verwendet .md3-stack--dialog mit var(--space-4) */
 }
 
 /* 6) PAGE LAYOUT & SPACING */

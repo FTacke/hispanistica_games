@@ -39,27 +39,17 @@
 
         <hr class="md3-divider">
 
-        <form id="profile-form" class="md3-auth-form" novalidate>
+        <form id="profile-form" class="md3-auth-form form-surface" novalidate>
           <p class="md3-body-small md3-text-variant">Änderungen speichern.</p>
           
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="username" name="username" class="md3-outlined-textfield__input" aria-label="Neuer Benutzername" placeholder=" ">
-            <label class="md3-outlined-textfield__label" for="username">Neuer Benutzername</label>
-              <span class="md3-outlined-textfield__outline">
-                <span class="md3-outlined-textfield__outline-start"></span>
-                <span class="md3-outlined-textfield__outline-notch"></span>
-                <span class="md3-outlined-textfield__outline-end"></span>
-              </span>
+          <div class="form-field">
+            <label for="username">Neuer Benutzername</label>
+            <input id="username" name="username" aria-label="Neuer Benutzername">
           </div>
 
-          <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="email" name="email" type="email" class="md3-outlined-textfield__input" aria-label="Neue E-Mail" placeholder=" ">
-            <label class="md3-outlined-textfield__label" for="email">Neue E-Mail</label>
-              <span class="md3-outlined-textfield__outline">
-                <span class="md3-outlined-textfield__outline-start"></span>
-                <span class="md3-outlined-textfield__outline-notch"></span>
-                <span class="md3-outlined-textfield__outline-end"></span>
-              </span>
+          <div class="form-field">
+            <label for="email">Neue E-Mail</label>
+            <input id="email" name="email" type="email" aria-label="Neue E-Mail">
           </div>
 
           {# display_name removed — not required in Profile UI; keep server-side data intact #}
@@ -116,20 +106,12 @@
         <h2 id="delete-dialog-title" class="md3-title-large md3-dialog__title">Konto löschen?</h2>
       </header>
 
-      <div class="md3-dialog__content md3-stack--dialog">
+      <div class="md3-dialog__content md3-stack--dialog form-dialog">
         <p class="md3-body-medium">Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten werden unwiderruflich gelöscht. Zum Fortfahren bitte dein Passwort eingeben.</p>
 
-        <div class="md3-outlined-textfield md3-outlined-textfield--block">
-          <input id="delete-password" name="password" type="password" class="md3-outlined-textfield__input" required aria-label="Passwort zur Löschung" aria-describedby="delete-error" />
-          <label class="md3-outlined-textfield__label" for="delete-password">Dein Passwort</label>
-          <button type="button" class="md3-outlined-textfield__icon--trailing" data-toggle="delete-password" aria-label="Passwort anzeigen/verstecken">
-            <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">visibility</span>
-          </button>
-          <span class="md3-outlined-textfield__outline">
-            <span class="md3-outlined-textfield__outline-start"></span>
-            <span class="md3-outlined-textfield__outline-notch"></span>
-            <span class="md3-outlined-textfield__outline-end"></span>
-          </span>
+        <div class="form-field">
+          <label for="delete-password">Dein Passwort</label>
+          <input id="delete-password" name="password" type="password" required aria-label="Passwort zur Löschung" aria-describedby="delete-error" />
         </div>
 
         <!-- Field error (populated by JS) -->

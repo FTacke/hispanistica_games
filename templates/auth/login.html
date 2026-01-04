@@ -44,55 +44,43 @@
 
           <!-- Login Form - Standard HTML POST (no HTMX) -->
           <form id="login-form" 
-              class="md3-auth-form" 
+              class="md3-auth-form form-surface" 
               method="post" 
               action="{{ url_for('auth.login_post') }}"
               novalidate>
             
             <!-- Username Field -->
-            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <div class="form-field">
+              <label for="login-username">Benutzername</label>
               <input 
                 type="text" 
-                class="md3-outlined-textfield__input" 
                 name="username" 
                 id="login-username"
                 autocomplete="username" 
                 required
-                  aria-label="Usuario"
+                aria-label="Benutzername"
                 minlength="1"
                 maxlength="50">
-              <label class="md3-outlined-textfield__label" for="login-username">Usuario</label>
-              <span class="md3-outlined-textfield__outline">
-                <span class="md3-outlined-textfield__outline-start"></span>
-                <span class="md3-outlined-textfield__outline-notch"></span>
-                <span class="md3-outlined-textfield__outline-end"></span>
-              </span>
             </div>
 
             <!-- Password Field -->
-            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <div class="form-field">
+              <label for="login-password">Passwort</label>
               <input 
                 type="password" 
-                class="md3-outlined-textfield__input" 
                 name="password" 
                 id="login-password"
                 autocomplete="current-password" 
                 required
-                aria-label="Contraseña"
+                aria-label="Passwort"
                 minlength="1">
-              <label class="md3-outlined-textfield__label" for="login-password">Contraseña</label>
-              <span class="md3-outlined-textfield__outline">
-                <span class="md3-outlined-textfield__outline-start"></span>
-                <span class="md3-outlined-textfield__outline-notch"></span>
-                <span class="md3-outlined-textfield__outline-end"></span>
-              </span>
             </div>
 
             <div class="md3-row--between md3-actions">
-               <a class="md3-button md3-button--text" href="{{ url_for('auth.password_forgot_page') }}">¿Olvidó su contraseña?</a>
+               <a class="md3-button md3-button--text" href="{{ url_for('auth.password_forgot_page') }}">Passwort vergessen?</a>
                <button type="submit" class="md3-button md3-button--filled">
                 <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">login</span>
-                Entrar
+                Anmelden
               </button>
             </div>
 

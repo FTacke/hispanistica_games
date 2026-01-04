@@ -272,6 +272,68 @@
   border-bottom: 1px solid var(--quiz-outline-variant);
 }
 
+/* ============================================================================
+   Question Surface - Consolidated container for prompt + media + answers
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .quiz-question-surface {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Media surface - subtly inset within question surface */
+.game-shell[data-game="quiz"] .quiz-question-media-surface {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 16px;
+  padding: 12px;
+  display: none; /* Hidden by default */
+}
+
+/* Show media surface only when media container has content */
+.game-shell[data-game="quiz"] .quiz-question-media-surface:has(.quiz-question__media:not([hidden])) {
+  display: block;
+}
+
+.game-shell[data-game="quiz"] .quiz-question__media {
+  margin: 0; /* Reset margin - handled by surface container */
+}
+
+/* Media items get subtle container (detail fix) */
+.game-shell[data-game="quiz"] .quiz-media-item {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Responsive adjustments for question surface */
+@media (max-width: 600px) {
+  .game-shell[data-game="quiz"] .quiz-question-surface {
+    padding: 16px;
+    gap: 14px;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-question-media-surface {
+    padding: 10px;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-media-item {
+    padding: 10px;
+  }
+}
+
+/* ============================================================================
+   Original Question Card Styles (updated)
+   ============================================================================ */
+
 /* Level-Chip in Card - leicht prominenter */
 .game-shell[data-game="quiz"] .quiz-level-chip {
   display: inline-flex;
@@ -301,15 +363,15 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-question__prompt {
-  font-size: 1.375rem;  /* Gr��er f�r mehr Hierarchie */
+  font-size: 1.375rem;  /* Größer für mehr Hierarchie */
   font-weight: 600;  /* Fetter */
   line-height: 1.5;
   color: var(--quiz-on-surface);
-  margin-bottom: var(--quiz-space-lg);
+  margin: 0; /* Margin now handled by quiz-question-surface gap */
 }
 
 .game-shell[data-game="quiz"] .quiz-question__media {
-  margin-bottom: var(--quiz-space-lg);
+  margin: 0; /* Margin now handled by surface containers */
 }
 
 .game-shell[data-game="quiz"] .quiz-question__media audio {
@@ -325,103 +387,48 @@
   display: flex;
   flex-direction: column;
   gap: var(--quiz-space-md);
+  margin: 0; /* Margin now handled by quiz-question-surface gap */
 }
 
-/* Base Answer Button (neutral state) */
-.game-shell[data-game="quiz"] .quiz-answer {
-  display: flex;
-  align-items: center;
-  gap: var(--quiz-space-md);
+/* ========================================
+   ANSWER OPTIONS - New Inline Layout
+   ======================================== */
+
+/* Base Answer Option Container */
+.game-shell[data-game="quiz"] .quiz-answer-option {
   padding: var(--quiz-space-md) var(--quiz-space-lg);
-  background: var(--quiz-surface-container-lowest);  /* Heller als surface */
-  border: 2px solid var(--quiz-outline);  /* St�rker sichtbar */
+  background: var(--md-sys-color-surface);
+  border: 2px solid var(--quiz-outline);
   border-radius: var(--quiz-radius-md);
   cursor: pointer;
   transition: 
     background-color var(--quiz-anim-feedback) ease-out,
     border-color var(--quiz-anim-feedback) ease-out,
     box-shadow var(--quiz-anim-feedback) ease-out;
-  text-align: left;
-  font-size: 1rem;
   width: 100%;
   color: var(--quiz-on-surface);
 }
 
-/* Hover state (only when not disabled) */
-.game-shell[data-game="quiz"] .quiz-answer:hover:not(:disabled):not(.quiz-answer--locked) {
+/* Hover state (only when not locked) */
+.game-shell[data-game="quiz"] .quiz-answer-option:hover:not(.quiz-answer-option--locked):not([hidden]) {
   border-color: var(--quiz-primary);
   background: var(--quiz-primary-container);
-  box-shadow: var(--quiz-shadow-sm);  /* Mehr Tiefe beim Hover */
+  box-shadow: var(--quiz-shadow-sm);
 }
 
-.game-shell[data-game="quiz"] .quiz-answer:focus-visible {
+.game-shell[data-game="quiz"] .quiz-answer-option:focus-visible {
   outline: 2px solid var(--quiz-primary);
   outline-offset: 2px;
 }
 
-/* Selected state (before result) */
-.game-shell[data-game="quiz"] .quiz-answer--selected {
-  border-color: var(--quiz-primary);
-  background: var(--quiz-primary-container);
-  box-shadow: 0 0 0 2px var(--quiz-primary-container);  /* Ring-Effekt */
-}
-
-/* STATE: selected_correct - User chose correctly */
-.game-shell[data-game="quiz"] .quiz-answer--selected-correct {
-  background: var(--quiz-success-container);  /* Kr�ftiger gr�n */
-  border-color: var(--quiz-success);
-  color: var(--quiz-on-success-container);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-success) 15%, transparent);  /* Gr�ner Glow */
-  font-weight: 600;  /* Mehr Gewicht */
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--selected-correct .quiz-answer__marker {
-  background: var(--quiz-success);
-  color: var(--quiz-on-primary);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--selected-correct .quiz-answer__icon {
+/* Inline Answer Layout: [A] 🎧 [Play] Text */
+.game-shell[data-game="quiz"] .quiz-answer-inline {
   display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* STATE: selected_wrong - User chose incorrectly */
-.game-shell[data-game="quiz"] .quiz-answer--selected-wrong {
-  background: var(--quiz-error-container);
-  border-color: var(--quiz-error);
-  color: var(--quiz-on-error-container);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-error) 15%, transparent);  /* Roter Glow */
-  font-weight: 600;
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--selected-wrong .quiz-answer__marker {
-  background: var(--quiz-error);
-  color: var(--quiz-on-primary);
-}
-
-/* STATE: correct_reveal - Show correct answer when user was wrong (subtle!) */
-.game-shell[data-game="quiz"] .quiz-answer--correct-reveal {
-  background: var(--quiz-surface-container-low);
-  border-color: var(--quiz-outline-variant);
-  border-left: 6px solid var(--quiz-success);  /* Dicker, sichtbarer */
-  color: var(--quiz-on-surface);
-  font-weight: 500;  /* Leicht hervorgehoben */
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--correct-reveal .quiz-answer__icon {
-  display: flex;
-  color: var(--quiz-success);
-}
-
-/* STATE: locked - Other answers after selection (NOT dimmed text!) */
-.game-shell[data-game="quiz"] .quiz-answer--locked {
-  cursor: default;
-  background: var(--quiz-surface-container);
-  border-color: var(--quiz-outline-variant);
-  color: var(--quiz-on-surface);
-}
-
-/* Answer Marker (A, B, C, D) */
-.game-shell[data-game="quiz"] .quiz-answer__marker {
+.game-shell[data-game="quiz"] .quiz-answer-letter {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -436,61 +443,87 @@
               color var(--quiz-anim-feedback) ease-out;
 }
 
-.game-shell[data-game="quiz"] .quiz-answer--selected .quiz-answer__marker {
+.game-shell[data-game="quiz"] .quiz-answer-audio-icon {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-answer-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+}
+
+.game-shell[data-game="quiz"] .quiz-answer-audio-text {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Selected state (before result) */
+.game-shell[data-game="quiz"] .quiz-answer--selected {
+  border-color: var(--quiz-primary);
+  background: var(--quiz-primary-container);
+  box-shadow: 0 0 0 2px var(--quiz-primary-container);  /* Ring-Effekt */
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--selected .quiz-answer-letter {
   background: var(--quiz-primary);
   color: var(--quiz-on-primary);
 }
 
-.game-shell[data-game="quiz"] .quiz-answer__text {
-  flex: 1;
+/* STATE: selected_correct - User chose correctly */
+.game-shell[data-game="quiz"] .quiz-answer--selected-correct {
+  background: var(--quiz-success-container);
+  border-color: var(--quiz-success);
+  color: var(--quiz-on-success-container);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-success) 15%, transparent);
+  font-weight: 600;
 }
 
-/* Check icon for correct answers */
-.game-shell[data-game="quiz"] .quiz-answer__icon {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 1.25rem;
-  flex-shrink: 0;
+.game-shell[data-game="quiz"] .quiz-answer--selected-correct .quiz-answer-letter {
+  background: var(--quiz-success);
+  color: var(--quiz-on-primary);
+}
+
+/* STATE: selected_wrong - User chose incorrectly */
+.game-shell[data-game="quiz"] .quiz-answer--selected-wrong {
+  background: var(--quiz-error-container);
+  border-color: var(--quiz-error);
+  color: var(--quiz-on-error-container);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-error) 15%, transparent);
+  font-weight: 600;
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--selected-wrong .quiz-answer-letter {
+  background: var(--quiz-error);
+  color: var(--quiz-on-primary);
+}
+
+/* STATE: correct_reveal - Show correct answer when user was wrong (subtle!) */
+.game-shell[data-game="quiz"] .quiz-answer--correct-reveal {
+  background: var(--quiz-surface-container-low);
+  border-color: var(--quiz-outline-variant);
+  border-left: 6px solid var(--quiz-success);
+  color: var(--quiz-on-surface);
+  font-weight: 500;
+}
+
+/* STATE: locked - Other answers after selection */
+.game-shell[data-game="quiz"] .quiz-answer-option--locked,
+.game-shell[data-game="quiz"] .quiz-answer-option[aria-disabled="true"] {
+  cursor: default;
+  background: var(--quiz-surface-container);
+  border-color: var(--quiz-outline-variant);
+  color: var(--quiz-on-surface);
+  pointer-events: none;
 }
 
 /* Answer hidden by 50/50 joker */
-.game-shell[data-game="quiz"] .quiz-answer--hidden {
+.game-shell[data-game="quiz"] .quiz-answer-option--hidden {
   display: none !important;
-}
-
-/* Legacy classes for backwards compatibility */
-.game-shell[data-game="quiz"] .quiz-answer--correct {
-  border-color: var(--quiz-success);
-  background: var(--quiz-success-container);
-  color: var(--quiz-on-success-container);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--correct .quiz-answer__marker {
-  background: var(--quiz-success);
-  color: var(--quiz-on-success-container);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--correct .quiz-answer__text {
-  color: var(--quiz-on-success-container);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--wrong {
-  border-color: var(--quiz-error);
-  background: var(--quiz-error-container);
-  color: var(--quiz-on-surface);
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--disabled {
-  background: var(--quiz-surface-variant);
-  cursor: not-allowed;
-  text-decoration: line-through;
-}
-
-.game-shell[data-game="quiz"] .quiz-answer--disabled .quiz-answer__text {
-  color: var(--quiz-on-surface);
 }
 
 /* ============================================================================
@@ -3656,4 +3689,391 @@
 
 .game-shell[data-game="quiz"] .quiz-finish-container[hidden] {
   display: none !important;
+}
+/* ============================================================================
+   ADMIN CONTROLS - Highscore Management (Admin-only)
+   ============================================================================ */
+
+/* Admin action bar in leaderboard header */
+.game-shell[data-game="quiz"] .quiz-leaderboard-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--quiz-space-md);
+}
+
+.game-shell[data-game="quiz"] .quiz-leaderboard-card__admin-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-sm);
+}
+
+/* Reset button - destructive but subtle */
+.game-shell[data-game="quiz"] .quiz-admin-btn--reset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--quiz-space-xs);
+  padding: var(--quiz-space-sm) var(--quiz-space-md);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--quiz-radius-full);
+  background: transparent;
+  color: var(--md-sys-color-error);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--quiz-transition-fast);
+  min-height: 40px;
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-btn--reset:hover {
+  background: var(--md-sys-color-error-container);
+  border-color: var(--md-sys-color-error);
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-btn--reset:focus-visible {
+  outline: 2px solid var(--md-sys-color-error);
+  outline-offset: 2px;
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-btn--reset .material-symbols-rounded {
+  font-size: 1.125rem;
+}
+
+/* Trash icon button in leaderboard rows */
+.game-shell[data-game="quiz"] .quiz-leaderboard-card__item--admin {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto 40px;
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--quiz-transition-fast);
+  flex-shrink: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-icon-btn:hover {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-error);
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-icon-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-error);
+  outline-offset: 2px;
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-icon-btn .material-symbols-rounded {
+  font-size: 20px;
+}
+
+/* Confirm dialog for admin actions */
+.game-shell[data-game="quiz"] .quiz-admin-dialog {
+  /* Uses standard .md3-dialog styles from dialog.css */
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-dialog__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--md-sys-color-error-container);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-dialog__warning-icon {
+  flex-shrink: 0;
+  color: var(--md-sys-color-error);
+  font-size: 24px;
+}
+
+.game-shell[data-game="quiz"] .quiz-admin-dialog__warning-text {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* ============================================================================
+   Quiz Media (Audio & Image) - Question and Answer Level
+   ============================================================================ */
+
+/*
+ * media.src wird beim Seeding aus seed_src erzeugt und zeigt auf /static/quiz-media/...
+ * Die Reihenfolge im JSON bestimmt die Labels (Audio 1, Audio 2...), falls label fehlt.
+ */
+
+/* Media Grid Layout (for multiple audio items) */
+.game-shell[data-game="quiz"] .quiz-media-grid {
+  display: grid;
+  gap: var(--quiz-space-md);
+  margin: var(--quiz-space-md) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-media-grid[data-layout="grid-2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.game-shell[data-game="quiz"] .quiz-media-grid[data-layout="single"] {
+  grid-template-columns: 1fr;
+  max-width: 320px;
+}
+
+.game-shell[data-game="quiz"] .quiz-media-grid--compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--quiz-space-sm);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .game-shell[data-game="quiz"] .quiz-media-grid[data-layout="grid-2"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Media Item (container for label + button) */
+.game-shell[data-game="quiz"] .quiz-media-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-sm);
+}
+
+.game-shell[data-game="quiz"] .quiz-media-item--audio {
+  /* align-items removed - defaults to stretch, centering handled by label */
+}
+
+/* Media Label (with icon) - centered over play button */
+.game-shell[data-game="quiz"] .quiz-media-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--quiz-space-xs);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.game-shell[data-game="quiz"] .quiz-media-icon {
+  font-size: 1.125rem;
+  color: var(--md-sys-color-primary);
+}
+
+.game-shell[data-game="quiz"] .quiz-media-label-text {
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   MD3 Audio Button (Custom Player - no native <audio controls>)
+   ============================================================================ */
+
+.game-shell[data-game="quiz"] .md3-audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--quiz-space-sm);
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--quiz-transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-shell[data-game="quiz"] .md3-audio-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-on-surface-variant);
+}
+
+.game-shell[data-game="quiz"] .md3-audio-btn:active {
+  transform: scale(0.98);
+}
+
+/* Playing state */
+.game-shell[data-game="quiz"] .md3-audio-btn.is-playing {
+  background: var(--md-sys-color-secondary-container);
+  border-color: var(--md-sys-color-secondary);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.game-shell[data-game="quiz"] .md3-audio-btn.is-playing:hover {
+  background: var(--md-sys-color-secondary-container);
+  filter: brightness(0.95);
+}
+
+/* Focus styling (A11y) */
+.game-shell[data-game="quiz"] .md3-audio-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Icon inside button */
+.game-shell[data-game="quiz"] .md3-audio-btn__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Text inside button */
+.game-shell[data-game="quiz"] .md3-audio-btn__text {
+  font-weight: 500;
+}
+
+/* Inline variant (for answers - icon only, compact) */
+.game-shell[data-game="quiz"] .md3-audio-btn--inline {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.game-shell[data-game="quiz"] .md3-audio-btn--inline .md3-audio-btn__icon {
+  font-size: 1.125rem;
+}
+
+/* ============================================================================
+   Image Media (kept from original)
+   ============================================================================ */
+
+/* Media container (for images) */
+.game-shell[data-game="quiz"] .quiz-media {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-md);
+  margin: var(--quiz-space-md) 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-media--compact {
+  flex-direction: row;
+  gap: var(--quiz-space-sm);
+  margin: var(--quiz-space-sm) 0 0 0;
+  flex-wrap: wrap;
+}
+
+/* Media item (figure) */
+.game-shell[data-game="quiz"] .quiz-media__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--quiz-space-xs);
+  margin: 0;
+  padding: 0;
+}
+
+.game-shell[data-game="quiz"] .quiz-media__item--image {
+  max-width: 100%;
+}
+
+.game-shell[data-game="quiz"] .quiz-media__item--compact {
+  max-width: 200px;
+}
+
+/* Image styling */
+.game-shell[data-game="quiz"] .quiz-media__image {
+  max-width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: var(--quiz-radius-md);
+  background: var(--quiz-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* Compact image (in answers) */
+.game-shell[data-game="quiz"] .quiz-media--compact .quiz-media__image {
+  max-height: 150px;
+  max-width: 200px;
+}
+
+/* Caption for images */
+.game-shell[data-game="quiz"] .quiz-media__caption {
+  font-size: 0.75rem;
+  color: var(--quiz-on-surface-variant);
+  font-style: italic;
+  text-align: center;
+  padding: var(--quiz-space-xs) 0;
+}
+
+/* ============================================================================
+   Answer with Media - Inline Layout
+   ============================================================================ */
+
+/* Answer with media stays in single row with audio button inline */
+.game-shell[data-game="quiz"] .quiz-answer--has-media {
+  /* Keep flex-row layout, don't break to column */
+  display: flex;
+  align-items: center;
+  gap: var(--quiz-space-sm);
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--has-media .quiz-answer__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Audio grid in answer context - inline */
+.game-shell[data-game="quiz"] .quiz-answer--has-media .quiz-media-grid {
+  margin: 0;
+  gap: var(--quiz-space-xs);
+}
+
+.game-shell[data-game="quiz"] .quiz-answer--has-media .quiz-media-grid--compact {
+  flex-shrink: 0;
+}
+
+/* Question media container */
+.game-shell[data-game="quiz"] #quiz-question-media {
+  margin: var(--quiz-space-md) 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .game-shell[data-game="quiz"] .md3-audio-btn {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+  }
+  
+  .game-shell[data-game="quiz"] .md3-audio-btn--inline {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-media__image {
+    max-height: 200px;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-media--compact .quiz-media__image {
+    max-height: 100px;
+    max-width: 150px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .game-shell[data-game="quiz"] .md3-audio-btn {
+    transition: none;
+  }
+  
+  .game-shell[data-game="quiz"] .md3-audio-btn:active {
+    transform: none;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-media__image {
+    transition: none;
+  }
 }

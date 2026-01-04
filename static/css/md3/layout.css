@@ -75,25 +75,26 @@
   /* Define local background for consistent label-bg inheritance */
   --_auth-card-bg: var(--md-sys-color-surface);
   
-  /* Auth pages use a constrained card for forms — centered and token-driven.
-     Keep values token-based and avoid hard-coded px in templates. */
-  max-width: 480px; /* canonical width for auth cards */
+  /* Auth pages use a constrained card for forms — centered and token-driven */
+  max-width: 480px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
+  padding: var(--space-10);
+  border-radius: var(--radius-xl);
   background: var(--_auth-card-bg);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--elev-2);
+  box-sizing: border-box;
   /* LABEL-BG INHERITANCE: Textfield labels inherit this to match card bg */
   --app-textfield-label-bg: var(--_auth-card-bg);
-  box-sizing: border-box;
 }
 
 /* Auth-specific form helper: column layout + consistent gap between controls */
 .md3-auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-6);
 }
 
 /* Responsive tweaks for auth page / card */
@@ -104,7 +105,8 @@
   }
 
   .md3-auth-card {
-    padding: var(--space-3);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
   }
 }
 .md3-align--center { margin-left: auto; margin-right: auto; }

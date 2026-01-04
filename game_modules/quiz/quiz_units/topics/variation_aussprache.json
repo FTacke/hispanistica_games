@@ -9,12 +9,6 @@
     "Karina Stephan Quezada",
     "Felix Tacke (Koordination)"
   ],
-  "based_on": {
-    "chapter_title": "Variation in der Aussprache",
-    "chapter_url": "https://school.hispanistica.com/variation/variation_aussprache/",
-    "course_title": "Spanische Linguistik @ School",
-    "course_url": null
-  },
   "is_active": true,
   "order_index": 1,
   "questions_statistics": {
@@ -33,22 +27,30 @@
       "answers": [
         {
           "text": "distinción",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "yeísmo",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "seseo",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "Velarisierung",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -68,22 +70,30 @@
       "answers": [
         {
           "text": "[ʃ]",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "[θ]",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "[ʒ]",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "[ŋ]",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -103,22 +113,30 @@
       "answers": [
         {
           "text": "in weiten Teilen Spaniens",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "in Hispanoamerika",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "in Zentralspanien",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "in Nordspanien",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -138,22 +156,30 @@
       "answers": [
         {
           "text": "<z>",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "<s>",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "<c>",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "<h>",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -173,22 +199,30 @@
       "answers": [
         {
           "text": "Spanien",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "einem Großteil der spanischsprachigen Länder",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "großen Teilen Spaniens",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "einigen Regionen Europas",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "Mika",
@@ -208,22 +242,30 @@
       "answers": [
         {
           "text": "in amerikanischen Hochlandregionen",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "hauptsächlich in ganz Spanien",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "in amerikanischen Tieflandregionen",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "überall im spanischsprachigen Raum gleichermaßen",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "Mika",
@@ -243,22 +285,30 @@
       "answers": [
         {
           "text": "im Französischen",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "im Deutschen",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "im Englischen",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "im Italienischen",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "Mika",
@@ -278,22 +328,30 @@
       "answers": [
         {
           "text": "Abschwächung von /s/ am Silbenende",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "Unterscheidung der Phoneme /s/ und /θ/",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "Unterscheidung der Grapheme <ll> und <y>",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "Velarisierung des Phonems /n/",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "KSQ",
@@ -313,22 +371,30 @@
       "answers": [
         {
           "text": "die Unterscheidung der Phoneme /ʎ/ und /ʝ/",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "die Neutralisierung der Phoneme /ʎ/ und /ʝ/ zugunsten von /ʎ/",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "die Neutralisierung der Phoneme /ʎ/ und /ʝ/ zugunsten von /ʝ/",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "die Neutralisierung der Phoneme /s/ und /θ/",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "Mika",
@@ -348,22 +414,30 @@
       "answers": [
         {
           "text": "in karibischen Küstenregionen",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "in amerikanischen Hochlandregionen",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "in tiefliegenden Küstengebieten Südamerikas",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "auf Inseln der Karibik",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -383,22 +457,30 @@
       "answers": [
         {
           "text": "in der Karibik",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "im Río-de-la-Plata-Gebiet",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "im bolivianischen Hochland",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "in Andalusien",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "KSQ",
@@ -418,22 +500,30 @@
       "answers": [
         {
           "text": "Angleichung von /l/ und /r/ am Silbenende",
-          "correct": true
+          "correct": true,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "distinción",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "besonders starke Artikulation von /s/ am Silbenende",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "voseo",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "KSQ",
@@ -453,22 +543,30 @@
       "answers": [
         {
           "text": "distinción + starker /s/-Erhalt",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "seseo + /s/-Abschwächung + /l/-/r/-Neutralisierung",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "yeísmo + [ʝ] + starker /r/-Erhalt",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "voseo + distinción",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -488,22 +586,30 @@
       "answers": [
         {
           "text": "[pan]",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "[pam]",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "[paŋ]",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "[pal]",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -522,22 +628,30 @@
       "answers": [
         {
           "text": "[j]",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "[ʝ]",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "[ʒ]",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "[ʃ]",
-          "correct": true
+          "correct": true,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -557,22 +671,30 @@
       "answers": [
         {
           "text": "Weil zwei Grapheme gleich geschrieben werden",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "Weil zwei Allophone verschmelzen",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "Weil zwei Phoneme ihre Opposition verlieren",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "Weil ein Laut verschwindet",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -592,22 +714,30 @@
       "answers": [
         {
           "text": "Weil sie nur in informeller Sprache vorkommt",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "Weil sie vom Bildungsgrad abhängt",
-          "correct": false
+          "correct": false,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "Weil sie regional unterschiedlich systematisch verteilt ist",
-          "correct": true
+          "correct": true,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "Weil sie orthographisch markiert ist",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -628,22 +758,30 @@
       "answers": [
         {
           "text": "Weil sie nur schriftlich existiert",
-          "correct": false
+          "correct": false,
+          "id": "a1",
+          "media": []
         },
         {
           "text": "Weil sie historisch sekundär und regional begrenzt ist",
-          "correct": true
+          "correct": true,
+          "id": "a2",
+          "media": []
         },
         {
           "text": "Weil sie nur in formellen Registern vorkommt",
-          "correct": false
+          "correct": false,
+          "id": "a3",
+          "media": []
         },
         {
           "text": "Weil sie phonologisch instabil ist",
-          "correct": false
+          "correct": false,
+          "id": "a4",
+          "media": []
         }
       ],
-      "media": null,
+      "media": [],
       "sources": [],
       "meta": {
         "author_initials": "FT",
@@ -656,5 +794,11 @@
       },
       "id": "variation_aussprache_q_01KDT5WVTVXYEBZMKK9NWF7SP4"
     }
-  ]
+  ],
+  "based_on": {
+    "chapter_title": "Variation in der Aussprache",
+    "chapter_url": "https://school.hispanistica.com/variation/variation_aussprache/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  }
 }

@@ -348,24 +348,24 @@ def login_post() -> Response:
         current_app.logger.warning(
             f"Failed login attempt - unknown user: {identifier} from {request.remote_addr}"
         )
-        # Generic Spanish error message (avoid account enumeration)
-        flash("Nombre de usuario o contraseña incorrectos.", "error")
+        # Generic German error message (avoid account enumeration)
+        flash("Benutzername oder Passwort ist falsch.", "error")
         return _render_login_error(400)
 
     # check account status and password
     status = auth_services.check_account_status(user)
     if not status.ok:
         current_app.logger.warning(f"Login blocked for {identifier}: {status.code}")
-        # Map status codes to user-friendly Spanish messages
+        # Map status codes to user-friendly German messages
         error_messages = {
-            "account_inactive": "Su cuenta ha sido desactivada. Contacte al administrador.",
-            "account_deleted": "Esta cuenta ya no existe.",
-            "account_not_yet_valid": "Su cuenta aún no está activa. Vuelva a intentarlo más tarde.",
-            "account_expired": "Su acceso ha expirado. Contacte al administrador.",
-            "account_locked": "Su cuenta está temporalmente bloqueada. Inténtelo más tarde.",
+            "account_inactive": "Ihr Konto wurde deaktiviert. Bitte kontaktieren Sie den Administrator.",
+            "account_deleted": "Dieses Konto existiert nicht mehr.",
+            "account_not_yet_valid": "Ihr Konto ist noch nicht aktiv. Bitte versuchen Sie es später erneut.",
+            "account_expired": "Ihr Zugang ist abgelaufen. Bitte kontaktieren Sie den Administrator.",
+            "account_locked": "Ihr Konto ist vorübergehend gesperrt. Bitte versuchen Sie es später erneut.",
         }
         flash(
-            error_messages.get(status.code, "No se puede acceder a esta cuenta."),
+            error_messages.get(status.code, "Auf dieses Konto kann nicht zugegriffen werden."),
             "error",
         )
         return _render_login_error(403, error_code=status.code)
@@ -375,8 +375,8 @@ def login_post() -> Response:
         current_app.logger.warning(
             f"Failed login attempt - wrong password: {identifier} from {request.remote_addr}"
         )
-        # Generic Spanish error message for invalid credentials
-        flash("Nombre de usuario o contraseña incorrectos.", "error")
+        # Generic German error message for invalid credentials
+        flash("Benutzername oder Passwort ist falsch.", "error")
         return _render_login_error(400)
 
     # Success: create tokens and set cookies
