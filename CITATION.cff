@@ -1,8 +1,9 @@
 cff-version: 1.2.0
-title: "CO.RA.PAN Web Application"
+title: "Games.Hispanistica"
 message: >
-  If you use this software or its infrastructure, please cite it using the
-  metadata from this file.
+  If you use this software, its games, or the underlying infrastructure in
+  teaching, research, or development, please cite it using the metadata from
+  this file.
 type: software
 
 authors:
@@ -12,42 +13,45 @@ authors:
     affiliation: Philipps-Universität Marburg
     orcid: "https://orcid.org/0000-0002-6716-7839"
 
-repository-code: "https://github.com/FTacke/corapan-webapp"
-url: "https://corapan.online.uni-marburg.de"
+repository-code: "https://github.com/FTacke/hispanistica_games"
+url: "https://games.hispanistica.com"
 
 abstract: >
-  The CO.RA.PAN Web Application is the digital interface for the Corpus
-  Radiofónico Panhispánico, a comparative corpus of professional spoken Spanish
-  covering all Spanish-speaking countries. The platform integrates data
-  preparation workflows (audio acquisition, cleaning, automatic speech
-  recognition, manual verification and segmentation, structured JSON encoding,
-  and automatic linguistic annotation) with high-performance corpus search via
-  BlackLab Server, synchronized audio–transcript playback, metadata filtering,
-  and geolinguistic visualization.
+  Games.Hispanistica is an open-source, higher-education teaching project that
+  develops interactive, game-based learning modules for Spanish linguistics.
+  The project emerges from university teaching and is closely connected to the
+  digital textbook "Spanische Linguistik @ School". Its primary aim is to
+  support active learning by complementing textual explanations with
+  interactive formats that foster repetition, application, and reflection.
 
-  The web application enables lexical, morphological, and syntactic queries,
-  supports the analysis of national standard and near-standard varieties, and
-  provides controlled scientific access to short audio–text extracts in
-  accordance with European copyright and text-and-data mining regulations.
+  The games are developed collaboratively in teaching contexts, with students
+  participating in the conceptual design of content, game mechanics, and task
+  structures. Technical implementation follows didactic decisions and enables
+  the realization of custom, non-template-based games using open-source
+  technologies. Generative AI is employed primarily as a development and
+  implementation aid, supporting the translation of didactic concepts into
+  modular, reusable code.
+
+  Games.Hispanistica is designed as an open and evolving infrastructure that
+  supports reuse, adaptation, and further development in other linguistic or
+  educational contexts.
 
 keywords:
-  - corpus linguistics
+  - higher education
+  - linguistics education
   - Spanish linguistics
-  - pluricentric Spanish
-  - spoken language
-  - model speaker
-  - audio transcription
-  - ASR
-  - spaCy
-  - linguistic annotation
-  - BlackLab Server
-  - corpus search
-  - geolinguistics
-  - panhispanic variation
+  - game-based learning
+  - digital teaching
+  - open educational resources
+  - open source
+  - didactic design
+  - interactive learning
+  - generative AI
+  - educational games
   - web application
   - Flask
 
 license: MIT
 
 version: "1.0.0"
-date-released: "2025-12-05"
+date-released: "2026-01-01"

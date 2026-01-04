@@ -26,31 +26,45 @@
 /* MD3 Farb-Tokens — generiert und gepflegt mit generate-tokens.py */
 
 :root {
-  /* Core color roles (light theme) - games.hispanistica branding */
-  --md-sys-color-primary: #0A3D4A;  /* Dunkler, satter Petrol für klaren Kontrast */
-  --md-sys-color-on-primary: #FFFFFF;  /* Reines Weiß */
-  --md-sys-color-primary-container: #B8D4DC;  /* Kräftiger getönt, klar unterscheidbar */
-  --md-sys-color-on-primary-container: #042228;
-  --md-sys-color-secondary: #1B5A68;  /* Dunkler, mehr Präsenz */
-  --md-sys-color-on-secondary: #FFFFFF;
-  --md-sys-color-secondary-container: #B8D8DE;  /* Kräftigere Tönung */
-  --md-sys-color-on-secondary-container: #0D2F38;
+  /* ---------------------------------------------------------
+     Primary
+     --------------------------------------------------------- */
+  --md-sys-color-primary: #276D7B;
+  --md-sys-color-on-primary: #FFFFFF;
 
-  /* Tertiary role (für subtile Highlights) */
-  --md-sys-color-tertiary: #3B6570;
+  /* Primary container: hell, klar, aus Primary abgeleitet */
+  --md-sys-color-primary-container: #C2DDE3;
+  --md-sys-color-on-primary-container: #0A2F36;
+
+  /* ---------------------------------------------------------
+     Secondary (leicht dunkler, aber nicht dominanter)
+     --------------------------------------------------------- */
+  --md-sys-color-secondary: #215E6B;
+  --md-sys-color-on-secondary: #FFFFFF;
+
+  --md-sys-color-secondary-container: #C6E0E5;
+  --md-sys-color-on-secondary-container: #0C333C;
+
+  /* ---------------------------------------------------------
+     Tertiary (neutraler, kühler Akzent)
+     --------------------------------------------------------- */
+  --md-sys-color-tertiary: #3F6A73;
   --md-sys-color-on-tertiary: #FFFFFF;
-  --md-sys-color-tertiary-container: #D7E2E6;
+
+  --md-sys-color-tertiary-container: #D8E5E8;
   --md-sys-color-on-tertiary-container: #18343B;
 
-  /* Surface & background */
-  --md-sys-color-surface: #F0F5F7;  /* CONTENT-Ebene: Heller, Arbeitsfläche */
-  --md-sys-color-on-surface: #0A1F26;  /* Dunkler für besseren Kontrast */
-  --md-sys-color-surface-variant: #D8E3E7;  /* Noch deutlicher unterscheidbar */
-  --md-sys-color-on-surface-variant: #1A3B45;  /* Satter */
-  --_on-surface-variant-static: #1A3B45; /* Fallback für Browser ohne OKLab/color-mix */
-  --md-sys-color-outline: #4A6C76; /* Sichtbar stärker */
-  --md-sys-color-outline-variant: #8FA9B3;  /* Mehr Kontrast */
-  --md-sys-color-background: #D4DFE4;  /* PAGE-Ebene: Deutlich dunkler, kühles Grau */
+  /* ---------------------------------------------------------
+     Surface & background (unverändert, kompatibel)
+     --------------------------------------------------------- */
+  --md-sys-color-surface: #F0F5F7;
+  --md-sys-color-on-surface: #0A1F26;
+
+  --md-sys-color-surface-variant: #D8E3E7;
+  --md-sys-color-on-surface-variant: #1A3B45;
+  --_on-surface-variant-static: #1A3B45;
+
+  --md-sys-color-background: #D4DFE4;
   --md-sys-color-on-background: #061E25;
   
   /* NOTE: --app-background is defined in app-tokens.css, not here.
@@ -363,8 +377,8 @@
   --md-sys-color-surface-variant: #0A313C;
   --md-sys-color-on-surface-variant: #C6D7DB;
   --_on-surface-variant-static: #C6D7DB;
-  --md-sys-color-outline: #8AA4AA;
-  --md-sys-color-outline-variant: #2A444C;
+  --md-sys-color-outline: #4F7781;
+  --md-sys-color-outline-variant: #9BB6BE;
 
   /* Surface container hierarchy (dark - games.hispanistica) */
   --md-sys-color-surface-container-lowest: #020B0D;
