@@ -143,7 +143,7 @@ This is expected behavior when BlackLab server is not running. To run tests with
 
 Ensure Flask app can be imported:
 ```bash
-export PYTHONPATH=/home/runner/work/corapan-webapp/corapan-webapp/src:$PYTHONPATH
+export PYTHONPATH=/path/to/hispanistica_games/src:$PYTHONPATH
 pytest tests/ -v
 ```
 
@@ -157,6 +157,6 @@ If tests fail with connection errors instead of skipping:
 
 ## Related Documentation
 
-- `docs/search_ui/search_ui_tests.md` - Manual test cases
+- `docs/components/` - Component documentation
 - `docs/search_ui/search_ui_progress.md` - Implementation progress and flow documentation
 - `docs/blacklab_stack.md` - BlackLab infrastructure documentation
