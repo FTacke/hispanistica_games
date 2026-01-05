@@ -36,7 +36,7 @@ Wenn alles bereits eingerichtet ist:
 oder noch schneller:
 
 ```powershell
-.\quick-start.ps1
+.\scripts\quick-start.ps1
 ```
 
 ---
