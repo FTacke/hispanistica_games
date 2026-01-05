@@ -97,7 +97,56 @@ media/
 !data/.gitkeep
 !media/.gitkeep
 
-game_modules/quiz/quiz_units/topics
+# =============================================================================
+# Content & Seed Data (NEVER COMMIT - managed outside Git)
+# =============================================================================
+# Quiz seed data & media
+game_modules/quiz/quiz_units/topics/
+game_modules/quiz/quiz_units/topics/**/*.json
+game_modules/quiz/quiz_units/topics/**/*.mp3
+game_modules/quiz/quiz_units/topics/**/*.wav
+game_modules/quiz/quiz_units/topics/**/*.ogg
+static/quiz-media/**/*.mp3
+static/quiz-media/**/*.wav
+static/quiz-media/**/*.ogg
+
+# All audio/video media files
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.aac
+*.flac
+*.mp4
+*.webm
+*.mov
+*.avi
+
+# Data exports & archives (NOT for Git)
+*.csv
+*.xlsx
+*.xls
+*.ods
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tgz
+*.zip
+*.7z
+*.rar
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+
+# Local content directories
+content/
+local_content/
+exports/
+releases/
 
 # =============================================================================
 # IDEs & Editors
