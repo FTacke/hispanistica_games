@@ -1,8 +1,19 @@
 # Deployment Component
 
-**Purpose:** Docker configuration, CI/CD pipelines, deployment scripts.
+**Purpose:** Docker configuration, CI/CD pipelines, deployment scripts, security hardening.
 
-**Scope:** Production deployment, dev environment setup, database initialization, health checks.
+**Scope:** Production deployment, dev environment setup, database initialization, health checks, branch protection, self-hosted runner security.
+
+---
+
+## ⚠️ Security & Branch Protection
+
+**Important:** This is a public repository with a self-hosted runner.
+
+- 📖 **Setup guide:** [BRANCH_PROTECTION.md](./BRANCH_PROTECTION.md) (comprehensive)
+- 🚀 **Quick checklist:** [BRANCH_PROTECTION_QUICK.md](./BRANCH_PROTECTION_QUICK.md) (5 min setup)
+
+**Key rule:** `main` branch requires PR review + approval before merge. Pushes restricted to maintainers only.
 
 ---
 
