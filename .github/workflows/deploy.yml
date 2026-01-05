@@ -18,7 +18,7 @@
 #   - Docker installed
 #   - /srv/webapps/games_hispanistica/{app,data,media,config,logs} exist
 #   - passwords.env configured in config/
-#   - Docker network 'games-network' exists
+#   - Docker network 'corapan-network' exists
 #
 # See: docs/components/deployment/README.md
 # =============================================================================
@@ -36,7 +36,7 @@ on:
 jobs:
   deploy:
     name: Deploy games_hispanistica
-    runs-on: self-hosted
+    runs-on: [self-hosted, games-prod]
 
     steps:
       - name: Deploy via deploy_prod.sh
