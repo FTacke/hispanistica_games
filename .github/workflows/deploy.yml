@@ -1,24 +1,26 @@
 # =============================================================================
-# CO.RA.PAN Production Deployment Workflow
+# games_hispanistica Production Deployment Workflow
 # =============================================================================
 #
-# This workflow automatically deploys the application to the production server
-# (marele.online.uni-marburg.de) when code is pushed to the main branch.
+# Automatically deploys the application to production when code is pushed
+# to the main branch. Uses a self-hosted GitHub Actions runner on the
+# production server.
 #
-# The deployment runs on a self-hosted GitHub Actions runner installed on the
-# production server itself. The runner executes the deploy_prod.sh script which:
-#   - Updates the code from Git
-#   - Builds a new Docker image
-#   - Restarts the container with new image
-#   - Runs database migrations
+# The deployment executes scripts/deploy/deploy_prod.sh which:
+#   - Updates code from Git
+#   - Builds Docker image (tagged with git SHA)
+#   - Restarts container with new image
+#   - Runs database setup (idempotent)
+#   - Executes smoke checks
 #
-# Prerequisites on the server:
+# Prerequisites on server (run server_bootstrap.sh first):
 #   - GitHub self-hosted runner configured and running
 #   - Docker installed
-#   - /srv/webapps/games_hispanistica/{app,data,media,config,logs} directories set up
-#   - passwords.env configured in /srv/webapps/games_hispanistica/config/
-#   - data/media synced via rsync (not part of this workflow)
+#   - /srv/webapps/games_hispanistica/{app,data,media,config,logs} exist
+#   - passwords.env configured in config/
+#   - Docker network 'games-network' exists
 #
+# See: docs/components/deployment/README.md
 # =============================================================================
 
 name: Deploy to Production
@@ -33,25 +35,35 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to marele.online.uni-marburg.de
+    name: Deploy games_hispanistica
     runs-on: self-hosted
 
     steps:
-      - name: Deploy games_hispanistica
+      - name: Deploy via deploy_prod.sh
         run: |
           cd /srv/webapps/games_hispanistica/app
-          bash scripts/deploy_prod.sh
+          bash scripts/deploy/deploy_prod.sh
 
-      - name: Verify deployment
+      - name: Final verification
         run: |
-          # Wait a moment for the container to fully start
-          sleep 10
-          # Check if container is running
-          if docker ps --format '{{.Names}}' | grep -q '^games-hispanistica$'; then
-            echo "✓ Container games-hispanistica is running"
-            docker ps --filter "name=games-hispanistica" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          # Additional verification after deployment
+          sleep 5
+
+          # Check container is running
+          if docker ps --format '{{.Names}}' | grep -q '^games-webapp$'; then
+            echo "✓ Container games-webapp is running"
+            docker ps --filter "name=games-webapp" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           else
-            echo "✗ Container games-hispanistica is not running!"
-            docker logs games-hispanistica 2>&1 | tail -50
+            echo "✗ Container games-webapp is not running!"
+            docker logs games-webapp 2>&1 | tail -50
+            exit 1
+          fi
+
+          # Verify health endpoint
+          HEALTH=$(curl -sf http://localhost:7000/health || echo "FAILED")
+          if echo "$HEALTH" | grep -q '"status"'; then
+            echo "✓ Health check passed: $HEALTH"
+          else
+            echo "✗ Health check failed"
             exit 1
           fi

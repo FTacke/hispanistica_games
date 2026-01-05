@@ -369,7 +369,7 @@ class TestHealthEndpoint:
         assert "status" in data
         assert "service" in data
         assert "checks" in data
-        assert data["service"] == "corapan-web"
+        assert data["service"] == "games.hispanistica"
 
     def test_health_checks_flask(self, client):
         """Test /health reports Flask as healthy."""

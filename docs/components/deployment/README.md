@@ -1,4 +1,4 @@
-# deployment Component
+# Deployment Component
 
 **Purpose:** Docker configuration, CI/CD pipelines, deployment scripts.
 
@@ -6,11 +6,88 @@
 
 ---
 
+## Phase 1: Deploy Foundation Checklist
+
+> Source of Truth: [games_hispanistica_production.md](../../../games_hispanistica_production.md)
+
+### Target State
+
+- [x] Self-hosted GitHub runner deployment pipeline
+- [x] Idempotent database setup (schema + admin user)
+- [x] Health endpoints (`/health`, `/health/db`)
+- [x] Server bootstrap script (one-time setup)
+- [x] Deploy script (repeatable deployment)
+- [x] Smoke check script (post-deployment verification)
+- [x] Nginx configuration template
+
+### Server Paths
+
+| Path | Purpose |
+|------|---------|
+| `/srv/webapps/games_hispanistica/app/` | Git repository checkout |
+| `/srv/webapps/games_hispanistica/config/` | Environment files (passwords.env) |
+| `/srv/webapps/games_hispanistica/data/` | Persistent data |
+| `/srv/webapps/games_hispanistica/logs/` | Application logs |
+| `/srv/webapps/games_hispanistica/media/` | Content releases (MP3, etc.) |
+| `/srv/webapps/games_hispanistica/runner/` | GitHub Actions runner |
+
+### Ports
+
+| Service | Port |
+|---------|------|
+| Host (Nginx proxy target) | 7000 |
+| Container internal | 5000 |
+
+### Docker
+
+| Setting | Value |
+|---------|-------|
+| Container name | `games-webapp` |
+| Image name | `games-webapp:latest` |
+| Network | `games-network` |
+| Subnet | `172.19.0.0/16` |
+
+### PostgreSQL
+
+| Setting | Value |
+|---------|-------|
+| Database name | `games_hispanistica` |
+| User | `games_app` |
+| Connection | `postgresql://games_app:<PASSWORD>@172.19.0.1:5432/games_hispanistica` |
+
+### Environment Variables (passwords.env)
+
+```bash
+# Required
+FLASK_SECRET_KEY=<random-hex-64>
+JWT_SECRET_KEY=<random-hex-64>
+AUTH_DATABASE_URL=postgresql://games_app:<PASSWORD>@172.19.0.1:5432/games_hispanistica
+AUTH_HASH_ALGO=argon2
+JWT_COOKIE_SECURE=true
+FLASK_ENV=production
+
+# Admin user (for setup_prod_db.py)
+START_ADMIN_USERNAME=admin
+START_ADMIN_PASSWORD=<secure-password>
+START_ADMIN_EMAIL=admin@games.hispanistica.com
+```
+
+### Nginx
+
+| Setting | Value |
+|---------|-------|
+| Domain | `games.hispanistica.com` |
+| SSL | Let's Encrypt |
+| Proxy to | `127.0.0.1:7000` |
+| Media alias | `/srv/webapps/games_hispanistica/media/current/` |
+
+---
+
 ## Responsibility
 
 1. **Docker** - Production + dev containers (Dockerfile, docker-compose)
-2. **CI/CD** - GitHub Actions (tests, linting, MD3 validation)
-3. **Scripts** - Database init, user management, deployment checks
+2. **CI/CD** - GitHub Actions (tests, linting, deployment)
+3. **Scripts** - Database init, user management, deployment
 4. **Health Checks** - Container health monitoring
 5. **Environment Configuration** - `.env` setup, secrets management
 
@@ -20,283 +97,104 @@
 
 | Path | Purpose |
 |------|---------|
-| `Dockerfile` | Multi-stage production image |
-| `docker-compose.yml` | Production deployment |
+| `Dockerfile` | Production image (multi-stage) |
+| `docker-compose.yml` | Production compose |
 | `docker-compose.dev-postgres.yml` | Dev environment (PostgreSQL) |
-| `.github/workflows/ci.yml` | CI pipeline (tests, linting) |
-| `.github/workflows/deploy.yml` | Deployment pipeline |
+| `.github/workflows/ci.yml` | CI pipeline |
+| `.github/workflows/deploy.yml` | **Production deployment** |
+| `scripts/deploy/server_bootstrap.sh` | **One-time server setup** |
+| `scripts/deploy/deploy_prod.sh` | **Repeatable deployment** |
+| `scripts/deploy/smoke_check.sh` | **Post-deployment checks** |
+| `scripts/setup_prod_db.py` | **Idempotent DB setup** |
 | `scripts/init_auth_db.py` | Initialize auth database |
-| `scripts/init_quiz_db.py` | Initialize quiz database |
 | `scripts/create_initial_admin.py` | Create admin user |
-| `scripts/dev-setup.ps1` | Dev environment setup (Windows) |
-| `scripts/dev-start.ps1` | Start dev server (Windows) |
+| `infra/nginx/games_hispanistica.conf.template` | **Nginx vhost template** |
+| `src/app/config/app_identity.py` | **App constants** |
 
 ---
 
-## Docker Setup
+## Production Deployment
 
-### Production Image
+### First-Time Server Setup
 
-**File:** `Dockerfile`
+```bash
+# On production server as root
+cd /srv/webapps
+git clone https://github.com/<org>/hispanistica_games.git games_hispanistica/app
+cd games_hispanistica/app
+sudo bash scripts/deploy/server_bootstrap.sh
 
-**Multi-Stage Build:**
-1. **Builder stage** - Install dependencies (build tools, libpq-dev)
-2. **Runtime stage** - Minimal image (ffmpeg, libsndfile1, libpq5, curl)
+# Configure passwords.env
+sudo cp /srv/webapps/games_hispanistica/config/passwords.env.template \
+        /srv/webapps/games_hispanistica/config/passwords.env
+sudo nano /srv/webapps/games_hispanistica/config/passwords.env
+# Fill in real values!
 
-**Python:** 3.12-slim  
-**User:** `corapan` (non-root, UID 1000)  
-**Workdir:** `/app`  
-**Entrypoint:** `scripts/docker-entrypoint.sh`
-
-**Health Check:**
-```dockerfile
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 --start-period=10s \
-  CMD curl -f http://localhost:8000/health || exit 1
+# Create PostgreSQL database
+sudo -u postgres createuser games_app -P
+sudo -u postgres createdb games_hispanistica -O games_app
 ```
 
-### Production Compose
+### Regular Deployment
 
-**File:** `docker-compose.yml`
+Deployment happens automatically when pushing to `main` branch (via GitHub Actions).
 
-**Service:** `web` (Flask app)
-- **Port:** 6000:8000 (external:internal)
-- **Restart:** unless-stopped
-- **Resource Limits:** 2 CPUs, 2GB RAM
-- **Volumes:**
-  - Media: `~/corapan/media/*` (read-only)
-  - Config: `~/corapan/config/keys` (read-only)
-  - Database: `~/corapan/data/db` (read-only)
-  - Logs: `~/corapan/logs` (read-write)
-
-### Dev Compose
-
-**File:** `docker-compose.dev-postgres.yml`
-
-**Services:**
-- `db` (PostgreSQL 15)
-- `web` (Flask app, development mode)
-
-**Usage:**
+Manual deployment:
 ```bash
-docker-compose -f docker-compose.dev-postgres.yml up
+cd /srv/webapps/games_hispanistica/app
+bash scripts/deploy/deploy_prod.sh
+```
+
+### Smoke Checks
+
+```bash
+# After deployment
+bash scripts/deploy/smoke_check.sh
+
+# With domain check
+bash scripts/deploy/smoke_check.sh --domain games.hispanistica.com
 ```
 
 ---
 
-## CI/CD Pipelines
+## Health Endpoints
 
-### CI Pipeline
+### GET /health
 
-**File:** `.github/workflows/ci.yml`
+Basic health check for load balancers and monitoring.
 
-**Triggers:** Push to `main`, `prod_prep`; PRs to `main`
-
-**Jobs:**
-1. **Test Matrix:**
-   - Python: 3.12
-   - Auth Hash: bcrypt, argon2
-2. **Checks:**
-   - MD3 forms/auth guard (`scripts/md3-forms-auth-guard.py`)
-   - MD3 lint (`scripts/md3-lint.py`)
-   - Project structure (`scripts/check_structure.py`)
-   - Ruff linting
-3. **Tests:**
-   - Unit tests (pytest)
-   - Auth integration tests
-   - Quiz integration tests
-
-### Deployment Pipeline
-
-**File:** `.github/workflows/deploy.yml`
-
-**Trigger:** Push to `prod` branch
-
-**Steps:**
-1. SSH to production server
-2. Git pull
-3. Docker build + restart
-4. Health check
-5. Rollback on failure
-
----
-
-## Environment Variables
-
-**Required:**
-- `AUTH_DATABASE_URL` - Auth database connection string
-- `QUIZ_DATABASE_URL` - Quiz database connection string
-- `SECRET_KEY` - Flask secret key (JWT signing)
-- `JWT_SECRET_KEY` - JWT secret key
-- `JWT_COOKIE_SECURE` - True for HTTPS (False for dev)
-
-**Optional:**
-- `QUIZ_DEBUG` - Enable quiz debug logging (0/1)
-- `QUIZ_ADMIN_KEY` - Admin API key for quiz import
-- `FLASK_ENV` - development/production
-
-**Template:** `.env.example`
-
----
-
-## Database Initialization
-
-### Auth Database
-
-**Script:** `scripts/init_auth_db.py`
-
-**Usage:**
-```bash
-# PostgreSQL
-python scripts/init_auth_db.py --engine postgres
-
-# SQLite (dev)
-python scripts/init_auth_db.py --engine sqlite
-```
-
-**Creates:**
-- `auth.users` table
-- `auth.refresh_tokens` table
-- `auth.reset_tokens` table
-
-**Migration Files:**
-- `migrations/0001_create_auth_schema_postgres.sql`
-- `migrations/0001_create_auth_schema_sqlite.sql`
-
-### Quiz Database
-
-**Script:** `scripts/init_quiz_db.py`
-
-**Usage:**
-```bash
-# Seed demo topic
-python scripts/init_quiz_db.py
-
-# Seed specific topic
-python scripts/init_quiz_db.py --topic-file game_modules/quiz/content/topics/my_topic.yml
-
-# Dry-run
-python scripts/init_quiz_db.py --dry-run
-```
-
-**Creates:**
-- All quiz tables (`quiz_players`, `quiz_topics`, `quiz_questions`, etc.)
-- Seeds demo topic from YAML
-
-### Admin User
-
-**Script:** `scripts/create_initial_admin.py`
-
-**Usage:**
-```bash
-python scripts/create_initial_admin.py
-```
-
-**Interactive prompts:**
-- Username
-- Email
-- Password
-
-**Creates:** Admin user with `Role.ADMIN`
-
----
-
-## Development Setup
-
-### Windows (PowerShell)
-
-**Setup:**
-```powershell
-.\scripts\dev-setup.ps1
-```
-
-**Actions:**
-1. Creates virtual environment (`.venv`)
-2. Installs dependencies (`requirements.txt`)
-3. Initializes auth + quiz databases (SQLite)
-4. Creates admin user
-5. Seeds demo topic
-
-**Start Server:**
-```powershell
-.\scripts\dev-start.ps1
-```
-
-**Opens:** `http://localhost:5000`
-
-### Linux/Mac
-
-**Setup:**
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/init_auth_db.py --engine sqlite
-python scripts/init_quiz_db.py
-python scripts/create_initial_admin.py
-```
-
-**Start:**
-```bash
-flask run
-```
-
----
-
-## Health Checks
-
-**Endpoint:** `GET /health`
-
-**Response (200 OK):**
+**Response (200):**
 ```json
 {
   "status": "ok",
-  "timestamp": "2025-01-24T12:00:00Z"
+  "service": "games.hispanistica",
+  "version": "0.1.0",
+  "commit": "abc1234",
+  "timestamp": "2026-01-05T12:00:00Z"
 }
 ```
 
-**Docker Health Check:**
-```bash
-curl -f http://localhost:8000/health || exit 1
+### GET /health/db
+
+Database connectivity check.
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "database": "connected",
+  "timestamp": "2026-01-05T12:00:00Z"
+}
 ```
 
-**Runs:** Every 30 seconds, 3 retries, 10s start period
-
----
-
-## Deployment Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `deploy_prod.sh` | Deploy to production server |
-| `deploy_checklist.sh` | Pre-deployment checks |
-| `backup.sh` | Backup databases + media |
-| `scripts/check_users.py` | Verify user accounts |
-| `scripts/reset_user_password.py` | Admin password reset |
-| `scripts/anonymize_old_users.py` | Anonymize old users (GDPR) |
-
----
-
-## Quick Start
-
-**See:** [../QUICKSTART.md](../QUICKSTART.md)
-
-**Dev Environment:**
-```powershell
-# Windows
-.\scripts\dev-setup.ps1
-.\scripts\dev-start.ps1
-
-# Linux/Mac
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/init_auth_db.py --engine sqlite
-python scripts/init_quiz_db.py
-flask run
-```
-
-**Production:**
-```bash
-docker-compose up -d
+**Response (500):**
+```json
+{
+  "status": "error",
+  "database": "disconnected",
+  "error": "Connection refused",
+  "timestamp": "2026-01-05T12:00:00Z"
+}
 ```
 
 ---
