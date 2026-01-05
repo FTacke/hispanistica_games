@@ -12,6 +12,8 @@
 
 ## Quick Start
 
+**For detailed setup instructions, see [docs/QUICKSTART.md](docs/QUICKSTART.md) or [startme.md](startme.md).**
+
 ### Prerequisites
 
 - Python 3.12+

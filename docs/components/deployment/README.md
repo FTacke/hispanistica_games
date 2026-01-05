@@ -278,7 +278,7 @@ curl -f http://localhost:8000/health || exit 1
 
 ## Quick Start
 
-**See:** [QUICKSTART.md](../../../QUICKSTART.md)
+**See:** [../QUICKSTART.md](../QUICKSTART.md)
 
 **Dev Environment:**
 ```powershell
@@ -313,5 +313,5 @@ docker-compose up -d
 - Dockerfile: [../../../Dockerfile](../../../Dockerfile)
 - Docker Compose: [../../../docker-compose.yml](../../../docker-compose.yml)
 - CI Pipeline: [../../../.github/workflows/ci.yml](../../../.github/workflows/ci.yml)
-- Quick Start: [../../../QUICKSTART.md](../../../QUICKSTART.md)
+- Quick Start: [../QUICKSTART.md](../QUICKSTART.md)
 - Main README: [../../README.md](../../README.md)
