@@ -253,7 +253,7 @@ auth.db
 #
 # ✅ CONFIGURATION (Templates & Formats):
 #    - config/blacklab/*.blf.yaml (BlackLab format configs)
-#    - passwords.env.template (setup template)
+#    - .env.example (setup template)
 #
 # ✅ SOURCE CODE:
 #    - src/ (Python backend)

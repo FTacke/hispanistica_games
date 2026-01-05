@@ -134,7 +134,7 @@ docker-compose -f docker-compose.dev-postgres.yml up
 - `QUIZ_ADMIN_KEY` - Admin API key for quiz import
 - `FLASK_ENV` - development/production
 
-**Template:** `passwords.env.template`
+**Template:** `.env.example`
 
 ---
 
