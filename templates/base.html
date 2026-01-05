@@ -30,15 +30,6 @@
       }
 
       
-      /* Hide selects during hydration to prevent options flash */
-      .corpus-hydrating .md3-corpus-filter-grid select[data-enhance]:not([data-enhanced]),
-      .md3-corpus-filter-grid select[data-enhance][data-enhance-pending] {
-        visibility: hidden;
-      }
-      .no-js .md3-corpus-filter-grid select[data-enhance] {
-        visibility: visible; /* Fallback without JS */
-      }
-      
       /* Prevent focus effects during hydration */
       body[data-hydrating] :focus,
       body[data-hydrating] :focus-visible {

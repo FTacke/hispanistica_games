@@ -15,8 +15,8 @@
 # Prerequisites on the server:
 #   - GitHub self-hosted runner configured and running
 #   - Docker installed
-#   - /srv/webapps/corapan/{app,data,media,config,logs} directories set up
-#   - passwords.env configured in /srv/webapps/corapan/config/
+#   - /srv/webapps/games_hispanistica/{app,data,media,config,logs} directories set up
+#   - passwords.env configured in /srv/webapps/games_hispanistica/config/
 #   - data/media synced via rsync (not part of this workflow)
 #
 # =============================================================================
@@ -37,9 +37,9 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Deploy corapan-webapp
+      - name: Deploy games_hispanistica
         run: |
-          cd /srv/webapps/corapan/app
+          cd /srv/webapps/games_hispanistica/app
           bash scripts/deploy_prod.sh
 
       - name: Verify deployment
@@ -47,11 +47,11 @@ jobs:
           # Wait a moment for the container to fully start
           sleep 10
           # Check if container is running
-          if docker ps --format '{{.Names}}' | grep -q '^corapan-webapp$'; then
-            echo "✓ Container corapan-webapp is running"
-            docker ps --filter "name=corapan-webapp" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          if docker ps --format '{{.Names}}' | grep -q '^games-hispanistica$'; then
+            echo "✓ Container games-hispanistica is running"
+            docker ps --filter "name=games-hispanistica" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           else
-            echo "✗ Container corapan-webapp is not running!"
-            docker logs corapan-webapp 2>&1 | tail -50
+            echo "✗ Container games-hispanistica is not running!"
+            docker logs games-hispanistica 2>&1 | tail -50
             exit 1
           fi

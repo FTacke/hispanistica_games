@@ -85,7 +85,7 @@
   });
 
   // Expose helper for tests
-  window.CORAPAN = window.CORAPAN || {};
-  window.CORAPAN.logout = performLogout;
+  window.HISPANISTICA = window.HISPANISTICA || {};
+  window.HISPANISTICA.logout = performLogout;
 
 })();

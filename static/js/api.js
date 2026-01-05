@@ -230,7 +230,7 @@ export const api = {
 
 // Also expose on window for non-module scripts
 if (typeof window !== "undefined") {
-  window.corapanApi = api;
+  window.hispanisticaApi = api;
   window.getCsrfToken = getCsrfToken;
 }
 

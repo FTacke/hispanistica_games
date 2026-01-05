@@ -399,7 +399,7 @@ def setup_logging(app: Flask) -> None:
 
         # Setup rotating file handler
         file_handler = RotatingFileHandler(
-            log_dir / "corapan.log",
+            log_dir / "games_hispanistica.log",
             maxBytes=10_000_000,  # 10MB
             backupCount=5,
         )
