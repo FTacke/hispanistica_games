@@ -1,7 +1,7 @@
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 module.exports = {
   timeout: 30_000,
-  globalSetup: require.resolve('./tests/e2e/playwright/global-setup.js'),
+  globalSetup: require.resolve('./playwright/global-setup.js'),
   // Test outputs go to tests/e2e/ (gitignored), not root
   outputDir: 'tests/e2e/playwright-results',
   use: {
