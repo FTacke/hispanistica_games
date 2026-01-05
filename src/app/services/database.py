@@ -1,4 +1,4 @@
-"""SQLite database utilities for the CO.RA.PAN web app."""
+"""SQLite database utilities for the games_hispanistica web app."""
 
 from __future__ import annotations
 

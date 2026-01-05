@@ -1,5 +1,5 @@
 """
-Configuración centralizada de códigos de país y regiones para CO.RA.PAN.
+Configuración centralizada de códigos de país y regiones para games_hispanistica.
 
 Este módulo proporciona:
 - Códigos estandarizados para países y regiones

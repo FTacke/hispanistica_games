@@ -1,4 +1,4 @@
-"""Configuration module for CO.RA.PAN application."""
+"""Configuration module for games_hispanistica application."""
 
 from __future__ import annotations
 

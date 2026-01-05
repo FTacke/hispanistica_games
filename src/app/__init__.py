@@ -1,4 +1,4 @@
-"""Application factory for the modern CO.RA.PAN web app."""
+"""Application factory for the games_hispanistica web app."""
 
 from __future__ import annotations
 
@@ -410,4 +410,4 @@ def setup_logging(app: Flask) -> None:
 
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
-        app.logger.info("CO.RA.PAN application startup")
+        app.logger.info("games_hispanistica application startup")
