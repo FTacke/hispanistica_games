@@ -881,8 +881,10 @@ def api_get_question(question_id: str):
             "id": question.id,
             "difficulty": question.difficulty,
             "type": question.type,
-            "prompt_key": question.prompt_key,
-            "explanation_key": question.explanation_key,
+            "prompt": question.prompt_key,  # Return as 'prompt' for frontend compatibility
+            "prompt_key": question.prompt_key,  # Keep old name for backwards compat
+            "explanation": question.explanation_key,  # Return as 'explanation' for frontend
+            "explanation_key": question.explanation_key,  # Keep old name for backwards compat
             "answers": question.answers,
             "media": question.media,
         }

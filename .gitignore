@@ -31,6 +31,7 @@ ENV/
 .env.production
 passwords.env
 *.env.backup
+games_hispanistica_production.md
 
 # JWT Keys (CRITICAL - NEVER COMMIT!)
 config/keys/
@@ -95,6 +96,8 @@ media/
 # Keep directory structure for deployment
 !data/.gitkeep
 !media/.gitkeep
+
+game_modules/quiz/quiz_units/topics
 
 # =============================================================================
 # IDEs & Editors

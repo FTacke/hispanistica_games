@@ -291,12 +291,7 @@
   background: var(--md-sys-color-surface-container-low);
   border-radius: 16px;
   padding: 12px;
-  display: none; /* Hidden by default */
-}
-
-/* Show media surface only when media container has content */
-.game-shell[data-game="quiz"] .quiz-question-media-surface:has(.quiz-question__media:not([hidden])) {
-  display: block;
+  display: block; /* Always visible - contains prompt + optional media */
 }
 
 .game-shell[data-game="quiz"] .quiz-question__media {
@@ -3601,7 +3596,7 @@
   max-width: 960px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--quiz-space-lg);
+  padding: none;
   display: flex;
   flex-direction: column;
   gap: var(--quiz-space-lg);

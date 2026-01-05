@@ -1098,6 +1098,12 @@
     state.currentView = VIEW.QUESTION;
     renderCurrentView();
     
+    // [DEBUG] Verify prompt text after renderCurrentView
+    const promptCheck = document.getElementById('quiz-question-prompt');
+    if (promptCheck) {
+      console.log('[DEBUG] Prompt after renderCurrentView:', promptCheck.textContent);
+    }
+    
     // Set UI to idle
     setUIState(STATE.IDLE);
     
@@ -1281,9 +1287,11 @@
     // Update joker button
     updateJokerButton();
     
-    // Render prompt
+    // Render prompt - support both 'prompt' and 'prompt_key'
     const promptEl = document.getElementById('quiz-question-prompt');
-    promptEl.textContent = q.prompt_key;
+    const promptText = q.prompt || q.prompt_key || '';
+    console.log('[DEBUG] Prompt text:', promptText, 'from q:', q);
+    promptEl.textContent = promptText;
     
     // Render question-level media (supports v2 array format)
     const mediaEl = document.getElementById('quiz-question-media');
@@ -1314,7 +1322,7 @@
       
       const isDisabled = jokerDisabled.includes(answerId);
       const marker = String.fromCharCode(65 + idx); // A, B, C, D
-      const answerText = answer.text_key;
+      const answerText = answer.text || answer.text_key || '';  // Support both 'text' and 'text_key'
       
       // Check if answer has audio media
       const answerMedia = answer.media || [];
