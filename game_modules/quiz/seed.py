@@ -33,8 +33,10 @@ from .validation import (
 
 logger = logging.getLogger(__name__)
 
-# Path to quiz units content
-QUIZ_UNITS_DIR = Path(__file__).parent / "quiz_units"
+# Path to quiz units content (now in content/quiz, not in module)
+# Auto-detect project root: seed.py is in game_modules/quiz/, root is 2 levels up
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+QUIZ_UNITS_DIR = _PROJECT_ROOT / "content" / "quiz"
 QUIZ_UNITS_TOPICS_DIR = QUIZ_UNITS_DIR / "topics"
 
 # Path to static media output

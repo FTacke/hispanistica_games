@@ -205,7 +205,7 @@ def main():
         "--topics-dir",
         type=str,
         default=None,
-        help="Custom topics directory (default: game_modules/quiz/quiz_units/topics)"
+        help="Custom topics directory (default: content/quiz/topics)"
     )
     
     args = parser.parse_args()

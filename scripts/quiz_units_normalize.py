@@ -251,8 +251,8 @@ def main():
     parser.add_argument(
         "--topics-dir",
         type=str,
-        default="game_modules/quiz/quiz_units/topics",
-        help="Path to topics directory (default: game_modules/quiz/quiz_units/topics)"
+        default="content/quiz/topics",
+        help="Path to topics directory (default: content/quiz/topics)"
     )
     
     args = parser.parse_args()

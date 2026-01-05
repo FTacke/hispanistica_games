@@ -1,0 +1,66 @@
+{
+  "schema_version": "quiz_unit_v2",
+  "slug": "orthographie",
+  "title": "Orthographie",
+  "description": "Dieses Quiz behandelt grundlegende Prinzipien der spanischen Orthographie und ihre Relevanz für Schreiben, Lesen und Korrektur. Im Mittelpunkt stehen Laut-Buchstaben-Zuordnungen, Akzentsetzung, Groß- und Kleinschreibung sowie typische Fehlerquellen für deutschsprachige Lernende.",
+  "authors": [
+    "Martin Seidel",
+    "Laura Steinbach",
+    "Nina Hartwig"
+  ],
+  "is_active": true,
+  "order_index": 0,
+  "questions_statistics": {
+    "1": 1
+  },
+  "questions": [
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Platzhalterfrage (wird später ersetzt).",
+      "explanation": "Technischer Platzhalter, damit das quiz_unit_v2-Schema erfüllt ist.",
+      "answers": [
+        {
+          "text": "Platzhalterantwort (korrekt)",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Platzhalterantwort",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Platzhalterantwort",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Platzhalterantwort",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "meta": {
+        "author_initials": "MS",
+        "commentary": "Placeholder-Item für initiales Seeding ohne Inhalte.",
+        "tags": [
+          "placeholder"
+        ]
+      },
+      "id": "orthographie_q_placeholder_01"
+    }
+  ],
+  "based_on": {
+    "chapter_title": "Orthographie",
+    "chapter_url": "https://school.hispanistica.com/orthographie/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  }
+}

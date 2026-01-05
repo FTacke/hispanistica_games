@@ -1,0 +1,66 @@
+{
+  "schema_version": "quiz_unit_v2",
+  "slug": "variation_grammatik",
+  "title": "Variation in Grammatik und Pragmatik",
+  "description": "Dieses Quiz behandelt grammatische und pragmatische Variation im Spanischen als Normalfall plurizentrischer Normen. Im Fokus stehen Tempusvariation, Anredeformen sowie weitere verbreitete Variationsphänomene. Ziel ist eine praxisnahe Orientierung für Unterricht, Korrektur und Bewertung bei authentischen Varietäten.",
+  "authors": [
+    "Felix Brandt",
+    "Theresa Vogt",
+    "Jonas Neumann"
+  ],
+  "is_active": true,
+  "order_index": 2,
+  "questions_statistics": {
+    "1": 1
+  },
+  "questions": [
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Platzhalterfrage (wird später ersetzt).",
+      "explanation": "Technischer Platzhalter, damit das quiz_unit_v2-Schema erfüllt ist.",
+      "answers": [
+        {
+          "text": "Platzhalterantwort (korrekt)",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Platzhalterantwort",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Platzhalterantwort",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Platzhalterantwort",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "meta": {
+        "author_initials": "FB",
+        "commentary": "Placeholder-Item für initiales Seeding ohne Inhalte.",
+        "tags": [
+          "placeholder"
+        ]
+      },
+      "id": "variation_grammatik_q_placeholder_01"
+    }
+  ],
+  "based_on": {
+    "chapter_title": "Variation in Grammatik und Pragmatik",
+    "chapter_url": "https://school.hispanistica.com/variation/variation_grammatik/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": null
+  }
+}
