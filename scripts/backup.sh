@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# CO.RA.PAN Backup Script
+# games_hispanistica Backup Script
 # =============================================================================
 #
 # Erstellt Backups von:
@@ -13,7 +13,7 @@
 #   ./backup.sh --full             # Alles (langsam, viel Speicher)
 #   ./backup.sh --db-only          # Nur Datenbank + Counters
 #
-# Backups werden gespeichert in: /root/corapan/backups/
+# Backups werden gespeichert in: /srv/webapps/games_hispanistica/backups/
 # Alte Backups (>30 Tage) werden automatisch gelöscht
 #
 # =============================================================================
@@ -31,10 +31,10 @@ NC='\033[0m'
 # Konfiguration
 # =============================================================================
 
-BACKUP_DIR="~/corapan/backups"
+BACKUP_DIR="/srv/webapps/games_hispanistica/backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DATA_DIR="~/corapan/data"
-MEDIA_DIR="~/corapan/media"
+DATA_DIR="/srv/webapps/games_hispanistica/data"
+MEDIA_DIR="/srv/webapps/games_hispanistica/media"
 RETENTION_DAYS=30  # Behalte Backups für 30 Tage
 
 BACKUP_TYPE="minimal"  # minimal, db-only, oder full
@@ -54,7 +54,7 @@ for arg in "$@"; do
       shift
       ;;
     --help)
-      echo "CO.RA.PAN Backup Script"
+      echo "games_hispanistica Backup Script"
       echo ""
       echo "Optionen:"
       echo "  (keine)       Nur Counter-Daten (empfohlen, schnell)"
