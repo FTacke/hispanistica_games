@@ -172,6 +172,101 @@ Siehe: `topics/variation_in_der_aussprache.json`
 
 ---
 
+## Release Deploy Workflow (Production)
+
+For production deployments, quiz content is packaged into versioned releases and deployed atomically.
+
+### Overview
+
+1. **Develop locally** → Edit files in `content/quiz/topics/*.json`
+2. **Normalize & test** → `python scripts/quiz_units_normalize.py --write`
+3. **Create release** → Copy content to `content/quiz_releases/YYYY-MM-DD_HHMM/`
+4. **Deploy** → One command deploys, imports, and verifies
+
+### One-Command Deployment
+
+```bash
+python scripts/release_deploy.py \
+  --release 2026-01-06_1430 \
+  --ssh root@marele.online.uni-marburg.de \
+  --media-root /srv/webapps/games_hispanistica/media \
+  --container games-webapp \
+  --prune soft
+```
+
+**What happens:**
+1. ✅ Validates local release (topics exist, JSON valid)
+2. 📤 Rsyncs to server (`/media/releases/{release}/`)
+3. 🔗 Switches `current` symlink atomically
+4. 📦 Runs `quiz_seed.py` inside container
+5. 🏥 Health check on app
+6. 🔄 **Auto-rollback** on any failure
+
+**Dry-run before deploying:**
+```bash
+python scripts/release_deploy.py \
+  --release 2026-01-06_1430 \
+  --ssh root@marele.online.uni-marburg.de \
+  --dry-run
+```
+
+### Release Structure
+
+```
+content/quiz_releases/
+├── 2026-01-06_1430/              # Release timestamp
+│   ├── topics/
+│   │   ├── aussprache.json
+│   │   ├── orthographie.json
+│   │   └── ...
+│   ├── media/                     # Optional media assets
+│   │   ├── audio/
+│   │   └── images/
+│   └── RELEASE_NOTES.md           # Changelog
+└── EXAMPLE_RELEASE/              # Skeleton for docs
+```
+
+**Naming convention:** `YYYY-MM-DD_HHMM` (sortable, unambiguous)
+
+### Production Architecture
+
+```
+Server: /srv/webapps/games_hispanistica/media/
+├── releases/
+│   ├── 2026-01-05_1200/    # Previous
+│   ├── 2026-01-06_1430/    # Current
+│   └── 2026-01-10_0900/    # Future
+└── current -> releases/2026-01-06_1430  # Symlink (atomic)
+```
+
+**Atomic deployment:**
+- New release synced to `releases/{name}/`
+- Symlink switched: `current -> releases/{name}` (no downtime)
+- Container reads `/app/media/current/topics/`
+- On failure: symlink reverted instantly
+
+### Rollback
+
+**Automatic:** Deploy script rolls back on failure (switch + re-seed)
+
+**Manual:**
+```bash
+# Re-deploy previous release
+python scripts/release_deploy.py \
+  --release 2026-01-05_1200 \
+  --ssh root@marele.online.uni-marburg.de
+```
+
+**Safety:** Player data (runs, scores) is never deleted during rollback.
+
+### See Also
+
+- [content/quiz_releases/README.md](../../../content/quiz_releases/README.md) - Full release workflow
+- [scripts/release_deploy.py](../../../scripts/release_deploy.py) - Deployment script
+- [src/app/services/content_release.py](../../../src/app/services/content_release.py) - Core functions
+
+---
+
 ## Fragen?
 
 Bei Problemen:

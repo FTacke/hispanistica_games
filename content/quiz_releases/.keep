@@ -1,0 +1,3 @@
+# This directory contains quiz content releases for production deployment.
+# Real releases are deployed via rsync and not tracked in Git.
+# See README.md for workflow and EXAMPLE_RELEASE/ for structure.

@@ -98,9 +98,20 @@ media/
 !media/.gitkeep
 
 # =============================================================================
+# Quiz Content Releases (deployed via rsync, not tracked)
+# =============================================================================
+# Local quiz content releases are deployed to production via rsync
+# Only skeleton documentation and example structure are tracked in Git
+content/quiz_releases/*
+!content/quiz_releases/README.md
+!content/quiz_releases/.keep
+!content/quiz_releases/EXAMPLE_RELEASE/**
+
+# =============================================================================
 # Content & Seed Data (NEVER COMMIT - managed outside Git)
 # =============================================================================
-# Quiz seed data & media
+# Quiz seed data & media (legacy paths - content now in content/quiz/)
+# Kept for safety during migration period
 game_modules/quiz/quiz_units/topics/
 game_modules/quiz/quiz_units/topics/**/*.json
 game_modules/quiz/quiz_units/topics/**/*.mp3
