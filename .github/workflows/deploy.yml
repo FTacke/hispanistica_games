@@ -1,36 +1,9 @@
-# =============================================================================
-# games_hispanistica Production Deployment Workflow
-# =============================================================================
-#
-# Automatically deploys the application to production when code is pushed
-# to the main branch. Uses a self-hosted GitHub Actions runner on the
-# production server.
-#
-# The deployment executes scripts/deploy/deploy_prod.sh which:
-#   - Updates code from Git
-#   - Builds Docker image (tagged with git SHA)
-#   - Restarts container with new image
-#   - Runs database setup (idempotent)
-#   - Executes smoke checks
-#
-# Prerequisites on server (run server_bootstrap.sh first):
-#   - GitHub self-hosted runner configured and running
-#   - Docker installed
-#   - /srv/webapps/games_hispanistica/{app,data,media,config,logs} exist
-#   - passwords.env configured in config/
-#   - Docker network 'corapan-network' exists
-#
-# See: docs/components/deployment/README.md
-# =============================================================================
-
 name: Deploy to Production
 
 on:
   push:
     branches:
       - main
-
-  # Allow manual trigger from GitHub UI
   workflow_dispatch:
 
 jobs:
@@ -39,6 +12,14 @@ jobs:
     runs-on: [self-hosted, games-prod]
 
     steps:
+      - name: Debug - Check environment
+        run: |
+          echo "=== Environment Debug ==="
+          whoami
+          pwd
+          ls -la /srv/webapps/games_hispanistica/app || echo "app dir not accessible"
+          docker network ls | grep -E 'NAME|corapan' || echo "corapan-network not found"
+          
       - name: Deploy via deploy_prod.sh
         run: |
           cd /srv/webapps/games_hispanistica/app
@@ -46,10 +27,7 @@ jobs:
 
       - name: Final verification
         run: |
-          # Additional verification after deployment
           sleep 5
-
-          # Check container is running
           if docker ps --format '{{.Names}}' | grep -q '^games-webapp$'; then
             echo "✓ Container games-webapp is running"
             docker ps --filter "name=games-webapp" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -59,7 +37,6 @@ jobs:
             exit 1
           fi
 
-          # Verify health endpoint
           HEALTH=$(curl -sf http://localhost:7000/health || echo "FAILED")
           if echo "$HEALTH" | grep -q '"status"'; then
             echo "✓ Health check passed: $HEALTH"
