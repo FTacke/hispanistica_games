@@ -20,6 +20,13 @@ jobs:
           ls -la /srv/webapps/games_hispanistica/app || echo "app dir not accessible"
           docker network ls | grep -E 'NAME|corapan' || echo "corapan-network not found"
           
+      - name: Sync server checkout to origin/main
+        run: |
+          cd /srv/webapps/games_hispanistica/app
+          git fetch origin
+          git reset --hard origin/main
+          git clean -fd
+          
       - name: Deploy via deploy_prod.sh
         run: |
           cd /srv/webapps/games_hispanistica/app
