@@ -14,15 +14,7 @@ Das Quiz-Modul für hispanistica_games bietet ein interaktives Multiple-Choice-Q
 
 ## Installation
 
-### 1. Abhängigkeiten
-
-Stelle sicher, dass `PyYAML` installiert ist:
-
-```bash
-pip install PyYAML>=6.0
-```
-
-### 2. Datenbank initialisieren
+### 1. Datenbank initialisieren
 
 ```bash
 python scripts/init_quiz_db.py
@@ -55,11 +47,16 @@ game_modules/quiz/
 ├── routes.py             # Flask routes (pages + API)
 ├── validation.py         # Content validation
 ├── seed.py               # Database seeding
-├── content/
-│   ├── topics/           # Topic YAML files
-│   │   └── demo_topic.yml
-│   └── i18n/             # Translations
-│       └── de.yml
+├── quiz_units/
+│   ├── topics/           # Topic JSON files (quiz_unit_v1/v2 schema)
+│   │   ├── aussprache.json
+│   │   ├── kreativitaet.json
+│   │   ├── orthographie.json
+│   │   └── variation_grammatik.json
+│   └── template/         # Template for new quiz units
+│       └── quiz_template.json
+├── migrations/           # Manual SQL migrations
+│   └── *.sql
 ├── styles/
 │   └── quiz.css          # Scoped CSS styles
 └── templates/            # Jinja2 templates (in templates/games/quiz/)
@@ -110,30 +107,38 @@ game_modules/quiz/
 |-------|--------|--------------|
 | `/api/admin/quiz/import` | POST | Topic-Content importieren |
 
-## Topic-Format (YAML)
+## Topic-Format (JSON)
 
-```yaml
-topic_id: my_topic
-title_key: topics.my_topic.title
-description_key: topics.my_topic.description
-is_active: true
+**Current Format:** JSON (quiz_unit_v1/v2 schema)
+**See:** [quiz_units/README.md](quiz_units/README.md) for detailed schema documentation
 
-questions:
-  - id: q1
-    difficulty: 1
-    type: single_choice
-    prompt_key: questions.q1.prompt
-    explanation_key: questions.q1.explanation
-    answers:
-      - text_key: questions.q1.a1
-        is_correct: true
-      - text_key: questions.q1.a2
-        is_correct: false
-      - text_key: questions.q1.a3
-        is_correct: false
-      - text_key: questions.q1.a4
-        is_correct: false
+```json
+{
+  "schema_version": "quiz_unit_v1",
+  "slug": "my_topic",
+  "title": "Mein Quiz-Titel",
+  "description": "Eine kurze Beschreibung des Quiz.",
+  "authors": ["Author Name"],
+  "is_active": true,
+  "questions": [
+    {
+      "id": "my_topic_q_01J9X...",
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Was ist die richtige Antwort?",
+      "explanation": "Dies ist die Erklärung.",
+      "answers": [
+        {"id": "a1", "text": "Richtige Antwort", "correct": true},
+        {"id": "a2", "text": "Falsche Antwort 1", "correct": false},
+        {"id": "a3", "text": "Falsche Antwort 2", "correct": false},
+        {"id": "a4", "text": "Falsche Antwort 3", "correct": false}
+      ]
+    }
+  ]
+}
 ```
+
+**Note:** Question IDs are auto-generated as ULID format by `scripts/quiz_units_normalize.py`
 
 ## Scoring
 
@@ -166,21 +171,27 @@ Bei Verwendung des Jokers wird die Punktzahl für die betreffende Frage halbiert
 pytest tests/test_quiz_module.py -v
 ```
 
-## Admin-Import
+## Content Management
 
-Content kann über die Admin-API importiert werden:
+### Adding/Editing Quiz Content
 
-```bash
-curl -X POST \
-  -H "X-Admin-Key: $QUIZ_ADMIN_KEY" \
-  -F "file=@my_topic.yml" \
-  -F "mode=upsert" \
-  http://localhost:5000/api/admin/quiz/import
-```
+1. Edit JSON files in `quiz_units/topics/`
+2. Normalize content (generates IDs and statistics):
+   ```bash
+   python scripts/quiz_units_normalize.py --write --topics-dir game_modules/quiz/quiz_units/topics
+   ```
+3. Seed database:
+   ```bash
+   python scripts/quiz_seed.py --prune-soft
+   ```
 
-Modi:
-- `upsert`: Bestehende Fragen aktualisieren, neue hinzufügen
-- `replace`: Alle bestehenden Fragen löschen und durch neue ersetzen
+**Note:** In dev mode, `dev-start.ps1` automatically runs steps 2-3 before starting the server.
+
+### Seeding Modes
+
+- `--prune-soft`: Deactivates topics without JSON files (`is_active=false`)
+- `--prune-hard`: **DANGEROUS** - Permanently deletes topics and questions without JSON files
+- Default: Soft prune (safe for development)
 
 ## Architektur
 

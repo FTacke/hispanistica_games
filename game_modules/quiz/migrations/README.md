@@ -1,37 +1,16 @@
-# Quiz Database Migrations
+# Quiz Database Migrations (Historical)
 
-Manual SQL migrations for the Quiz module schema.
+**Status:** These migrations are historical records. Production database schema is managed via `init_quiz_db.py` models.
 
-## Running Migrations
+## Files
 
-### Via Docker (Recommended)
+- `001_increase_question_id_length.sql` - Increase ID columns to VARCHAR(100) for ULID support (required for current JSON format)
+- `001_add_authors_to_topics.sql` - Add authors column to quiz_topics
+
+## Running (if needed)
 
 ```powershell
-Get-Content game_modules/quiz/migrations/<migration_file>.sql | docker exec -i hispanistica_auth_db psql -U hispanistica_auth -d hispanistica_auth
+Get-Content game_modules/quiz/migrations/<file>.sql | docker exec -i hispanistica_auth_db psql -U hispanistica_auth -d hispanistica_auth
 ```
 
-### Via psql (if installed locally)
-
-```bash
-psql -h 127.0.0.1 -p 54320 -U hispanistica_auth -d hispanistica_auth -f game_modules/quiz/migrations/<migration_file>.sql
-```
-
-## Migration History
-
-### 001_increase_question_id_length.sql
-- **Date:** 2025-12-31
-- **Purpose:** Increase `id` column length from VARCHAR(50) to VARCHAR(100)
-- **Reason:** Support ULID-based question IDs with long topic slugs (e.g., `variation_in_der_aussprache_q_<ULID>` = 58 chars)
-- **Tables affected:** `quiz_questions`, `quiz_run_answers`, `quiz_question_stats`
-
-## Development Workflow
-
-For development environments using `init_quiz_db.py --drop`, migrations are not needed as the schema is recreated from models.
-
-For production environments, run migrations manually before deploying new code.
-
-## Notes
-
-- Migrations are idempotent (safe to re-run)
-- Always backup database before running migrations in production
-- Test migrations in development environment first
+**Development:** Use `python scripts/init_quiz_db.py --drop` to recreate schema from models.

@@ -52,7 +52,7 @@ python scripts/quiz_units_normalize.py --write
 
 Generiert fehlende `id`-Felder (ULID-Format) und aktualisiert `questions_statistics`.
 
-**Hinweis:** Standard-Pfad ist jetzt `content/quiz/topics`.
+**Hinweis:** Content liegt unter `content/quiz/topics/`. Releases werden in `content/quiz_releases/` versioniert.
 
 ### Komplette Pipeline manuell ausführen
 
