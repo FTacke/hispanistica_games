@@ -66,38 +66,61 @@ def import_content(units_path, audio_path, release, dry_run):
             --units-path media/current/units \\
             --audio-path media/current/audio \\
             --release 2026-01-06_1430
+    
+    Exit codes:
+        0 = success
+        2 = validation error
+        3 = filesystem error
+        4 = database error
     """
-    logger.info(f"🚧 STUB: import-content command")
-    logger.info(f"  Units path: {units_path}")
-    logger.info(f"  Audio path: {audio_path}")
-    logger.info(f"  Release ID: {release}")
-    logger.info(f"  Dry-run: {dry_run}")
+    from game_modules.quiz.import_service import QuizImportService
+    from src.app.extensions.sqlalchemy_ext import get_session
     
-    # TODO: Implement actual import logic
-    # from game_modules.quiz.import_service import QuizImportService
-    # service = QuizImportService()
-    # result = service.import_release(
-    #     units_path=units_path,
-    #     audio_path=audio_path,
-    #     release_id=release,
-    #     dry_run=dry_run
-    # )
-    # if result.success:
-    #     click.echo(f"✓ Import successful: {result.units_imported} units")
-    # else:
-    #     click.echo(f"✗ Import failed: {result.error_message}", err=True)
-    #     sys.exit(1)
+    try:
+        service = QuizImportService()
+        
+        with get_session() as session:
+            result = service.import_release(
+                session=session,
+                units_path=units_path,
+                audio_path=audio_path,
+                release_id=release,
+                dry_run=dry_run
+            )
+        
+        if result.success:
+            click.echo(f"✓ Import successful")
+            click.echo(f"  Units: {result.units_imported}")
+            click.echo(f"  Questions: {result.questions_imported}")
+            click.echo(f"  Audio files: {result.audio_files_processed}")
+            
+            if result.warnings:
+                click.echo(f"\n⚠️  Warnings: {len(result.warnings)}")
+                for warning in result.warnings:
+                    click.echo(f"  - {warning}")
+            
+            if dry_run:
+                click.echo("\n(Dry-run: no data written)")
+            
+            sys.exit(0)
+        else:
+            click.echo(f"✗ Import failed", err=True)
+            for error in result.errors:
+                click.echo(f"  - {error}", err=True)
+            
+            # Determine exit code from error types
+            error_text = " ".join(result.errors)
+            if "not found" in error_text.lower() or "directory" in error_text.lower():
+                sys.exit(3)  # Filesystem error
+            elif "validation" in error_text.lower() or "invalid" in error_text.lower():
+                sys.exit(2)  # Validation error
+            else:
+                sys.exit(4)  # Database/other error
     
-    click.echo("")
-    click.echo("⚠️  This is a STUB implementation")
-    click.echo("   Full import logic will be implemented as QuizImportService")
-    click.echo("   The service will handle:")
-    click.echo("   - JSON validation & parsing")
-    click.echo("   - Audio file hash calculation")
-    click.echo("   - Database UPSERT (idempotent)")
-    click.echo("   - Detailed logging to data/import_logs/")
-    click.echo("")
-    click.echo("   See: games_hispanistica_production.md Section 8 for requirements")
+    except Exception as e:
+        click.echo(f"✗ Fatal error: {e}", err=True)
+        logger.exception("Import failed with exception")
+        sys.exit(4)
 
 
 @cli.command('publish-release')
@@ -108,25 +131,35 @@ def publish_release(release):
     Sets status='published' and published_at=NOW() for all units in release.
     Makes content visible to end users.
     
+    Only one release can be published at a time.
+    Publishing a new release automatically unpublishes the previous one.
+    
     Example:
         python manage.py publish-release --release 2026-01-06_1430
     """
-    logger.info(f"🚧 STUB: publish-release command")
-    logger.info(f"  Release ID: {release}")
+    from game_modules.quiz.import_service import QuizImportService
+    from src.app.extensions.sqlalchemy_ext import get_session
     
-    # TODO: Implement actual publish logic
-    # from game_modules.quiz.import_service import QuizImportService
-    # service = QuizImportService()
-    # result = service.publish_release(release_id=release)
-    # if result.success:
-    #     click.echo(f"✓ Release '{release}' published ({result.units_published} units)")
-    # else:
-    #     click.echo(f"✗ Publish failed: {result.error_message}", err=True)
-    #     sys.exit(1)
+    try:
+        service = QuizImportService()
+        
+        with get_session() as session:
+            result = service.publish_release(session=session, release_id=release)
+        
+        if result.success:
+            click.echo(f"✓ Release '{release}' published")
+            click.echo(f"  Units affected: {result.units_affected}")
+            sys.exit(0)
+        else:
+            click.echo(f"✗ Publish failed", err=True)
+            for error in result.errors:
+                click.echo(f"  - {error}", err=True)
+            sys.exit(4)
     
-    click.echo("")
-    click.echo("⚠️  This is a STUB implementation")
-    click.echo("   Full publish logic will be implemented as QuizImportService.publish_release()")
+    except Exception as e:
+        click.echo(f"✗ Fatal error: {e}", err=True)
+        logger.exception("Publish failed with exception")
+        sys.exit(4)
 
 
 @cli.command('unpublish-release')
@@ -134,56 +167,87 @@ def publish_release(release):
 def unpublish_release(release):
     """Unpublish a release (rollback)
     
-    Sets status='draft' and clears published_at for all units in release.
+    Sets status='unpublished' and sets unpublished_at for the release.
     Makes content invisible to end users.
     
     Example:
         python manage.py unpublish-release --release 2026-01-06_1430
     """
-    logger.info(f"🚧 STUB: unpublish-release command")
-    logger.info(f"  Release ID: {release}")
+    from game_modules.quiz.import_service import QuizImportService
+    from src.app.extensions.sqlalchemy_ext import get_session
     
-    # TODO: Implement actual unpublish logic
-    # from game_modules.quiz.import_service import QuizImportService
-    # service = QuizImportService()
-    # result = service.unpublish_release(release_id=release)
-    # if result.success:
-    #     click.echo(f"✓ Release '{release}' unpublished")
-    # else:
-    #     click.echo(f"✗ Unpublish failed: {result.error_message}", err=True)
-    #     sys.exit(1)
+    try:
+        service = QuizImportService()
+        
+        with get_session() as session:
+            result = service.unpublish_release(session=session, release_id=release)
+        
+        if result.success:
+            click.echo(f"✓ Release '{release}' unpublished")
+            click.echo(f"  Units affected: {result.units_affected}")
+            sys.exit(0)
+        else:
+            click.echo(f"✗ Unpublish failed", err=True)
+            for error in result.errors:
+                click.echo(f"  - {error}", err=True)
+            sys.exit(4)
     
-    click.echo("")
-    click.echo("⚠️  This is a STUB implementation")
+    except Exception as e:
+        click.echo(f"✗ Fatal error: {e}", err=True)
+        logger.exception("Unpublish failed with exception")
+        sys.exit(4)
 
 
 @cli.command('list-releases')
-@click.option('--media-path', default='media/releases', help='Path to releases directory')
-def list_releases(media_path):
-    """List available content releases
+def list_releases():
+    """List all content releases
     
-    Scans media/releases/ directory and shows release status.
+    Shows release ID, status, counts, and timestamps.
     
     Example:
         python manage.py list-releases
     """
-    logger.info(f"🚧 STUB: list-releases command")
-    logger.info(f"  Media path: {media_path}")
+    from game_modules.quiz.import_service import QuizImportService
+    from src.app.extensions.sqlalchemy_ext import get_session
     
-    # TODO: Implement actual listing logic
-    # - Scan media/releases/ directory
-    # - Check current symlink
-    # - Query DB for import/publish status per release
-    # - Display table with status
+    try:
+        service = QuizImportService()
+        
+        with get_session() as session:
+            releases = service.list_releases(session=session)
+        
+        if not releases:
+            click.echo("No releases found")
+            sys.exit(0)
+        
+        # Print header
+        click.echo(f"{'Release ID':<20} {'Status':<12} {'Units':<8} {'Questions':<10} {'Imported At':<20}")
+        click.echo("-" * 80)
+        
+        # Print releases
+        for r in releases:
+            status_display = r['status']
+            if r['status'] == 'published':
+                status_display = click.style(status_display, fg='green', bold=True)
+            elif r['status'] == 'draft':
+                status_display = click.style(status_display, fg='yellow')
+            
+            imported_at = r['imported_at'][:19] if r['imported_at'] else "not imported"
+            
+            click.echo(
+                f"{r['release_id']:<20} "
+                f"{status_display:<12} "
+                f"{r['units_count'] or 0:<8} "
+                f"{r['questions_count'] or 0:<10} "
+                f"{imported_at:<20}"
+            )
+        
+        sys.exit(0)
     
-    click.echo("")
-    click.echo("⚠️  This is a STUB implementation")
-    click.echo("   Will scan media/releases/ and show:")
-    click.echo("   - Release ID")
-    click.echo("   - Upload date")
-    click.echo("   - Import status (imported / not imported)")
-    click.echo("   - Publish status (published / draft)")
-    click.echo("   - Active (symlink points to this release)")
+    except Exception as e:
+        click.echo(f"✗ Fatal error: {e}", err=True)
+        logger.exception("List failed with exception")
+        sys.exit(4)
 
 
 if __name__ == '__main__':

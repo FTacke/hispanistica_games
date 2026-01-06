@@ -73,7 +73,7 @@
    ============================================================================ */
 .md3-card--landing,
 .md3-card.md3-card--landing {
-  --_card-bg: var(--md-sys-color-surface-container-low);
+  --_card-bg: var(--md-sys-color-surface-container-high);
   background: var(--_card-bg);
 
   /* LABEL-BG INHERITANCE */

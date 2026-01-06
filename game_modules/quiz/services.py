@@ -23,7 +23,7 @@ from typing import Optional, List, Tuple, Dict, Any
 
 from flask import current_app
 from passlib.hash import argon2
-from sqlalchemy import select, and_, desc, asc, func
+from sqlalchemy import select, and_, desc, asc, func, or_
 from sqlalchemy.orm import Session
 
 from .models import (
@@ -465,8 +465,24 @@ def logout_player(session: Session, token: str) -> bool:
 # ============================================================================
 
 def get_active_topics(session: Session) -> List[QuizTopic]:
-    """Get all active quiz topics ordered by order_index."""
-    stmt = select(QuizTopic).where(QuizTopic.is_active).order_by(QuizTopic.order_index)
+    """Get all active quiz topics ordered by order_index.
+    
+    Only returns topics from published releases (or topics without release_id for backward compatibility).
+    """
+    from .release_model import QuizContentRelease
+    
+    # Get published release IDs
+    published_releases = session.query(QuizContentRelease.release_id).filter(
+        QuizContentRelease.status == 'published'
+    ).all()
+    published_ids = [r[0] for r in published_releases]
+    
+    # Filter topics: must be active AND (release_id in published OR release_id is NULL)
+    stmt = select(QuizTopic).where(
+        QuizTopic.is_active,
+        or_(QuizTopic.release_id.in_(published_ids), QuizTopic.release_id.is_(None))
+    ).order_by(QuizTopic.order_index)
+    
     return list(session.execute(stmt).scalars().all())
 
 
@@ -629,10 +645,19 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     - Shuffle answer order per question
     """
     # Get all active questions for topic grouped by difficulty
+    # Only use questions from published releases (or questions without release_id)
+    from .release_model import QuizContentRelease
+    
+    published_releases = session.query(QuizContentRelease.release_id).filter(
+        QuizContentRelease.status == 'published'
+    ).all()
+    published_ids = [r[0] for r in published_releases]
+    
     stmt = select(QuizQuestion).where(
         and_(
             QuizQuestion.topic_id == topic_id,
-            QuizQuestion.is_active
+            QuizQuestion.is_active,
+            or_(QuizQuestion.release_id.in_(published_ids), QuizQuestion.release_id.is_(None))
         )
     )
     all_questions = list(session.execute(stmt).scalars().all())

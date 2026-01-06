@@ -90,6 +90,7 @@ class QuizTopic(QuizBase):
     based_on: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)  # Source information: {chapter_title, chapter_url, course_title, course_url}
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    release_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # Release tracking for production imports
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # Relationships
@@ -119,6 +120,7 @@ class QuizQuestion(QuizBase):
     sources: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     meta: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    release_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # Release tracking for production imports
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # Relationships
