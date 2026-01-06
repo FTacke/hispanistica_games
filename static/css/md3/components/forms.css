@@ -271,6 +271,11 @@
   font-size: 0.875rem;
 }
 
+/* Modifier: Remove bottom margin for inline/toolbar usage */
+.form-field--no-margin {
+  margin-bottom: 0;
+}
+
 .form-actions {
   display: flex;
   gap: var(--space-3, 12px);

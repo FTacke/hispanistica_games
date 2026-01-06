@@ -111,7 +111,7 @@ class TestAdminRouteProtection:
 
     def test_admin_dashboard_requires_auth(self, client):
         """Unauthenticated user cannot access admin dashboard."""
-        resp = client.get("/admin/dashboard")
+        resp = client.get("/api/admin/dashboard")
         assert resp.status_code in (401, 302, 303), "Should reject unauthenticated"
 
     def test_admin_dashboard_requires_admin_role(self, client):
@@ -119,7 +119,7 @@ class TestAdminRouteProtection:
         create_user("regularuser", role="user")
         login_and_get_token(client, "regularuser")
 
-        resp = client.get("/admin/dashboard")
+        resp = client.get("/api/admin/dashboard")
         assert resp.status_code == 403, "Regular user should get 403"
 
     def test_admin_dashboard_allows_admin(self, client):
@@ -127,7 +127,7 @@ class TestAdminRouteProtection:
         create_user("adminuser", role="admin")
         login_and_get_token(client, "adminuser")
 
-        resp = client.get("/admin/dashboard")
+        resp = client.get("/api/admin/dashboard")
         assert resp.status_code == 200, "Admin should access dashboard"
 
     def test_analytics_stats_requires_admin(self, client):
@@ -143,7 +143,7 @@ class TestAdminRouteProtection:
         create_user("user2", role="user")
         login_and_get_token(client, "user2")
 
-        resp = client.get("/admin/users")
+        resp = client.get("/api/admin/users")
         assert resp.status_code == 403
 
     def test_admin_users_list_allows_admin(self, client):
@@ -151,7 +151,7 @@ class TestAdminRouteProtection:
         create_user("admin2", role="admin")
         login_and_get_token(client, "admin2")
 
-        resp = client.get("/admin/users")
+        resp = client.get("/api/admin/users")
         assert resp.status_code == 200
         assert "items" in resp.json
 
@@ -248,10 +248,11 @@ class TestRoleEscalation:
 
         login_and_get_token(client, "superadmin")
 
-        resp = client.patch(f"/admin/users/{target.id}", json={"role": "editor"})
+        resp = client.patch(f"/api/admin/users/{target.id}", json={"role": "editor"})
 
         assert resp.status_code == 200
 
         # Verify role was changed
-        detail = client.get(f"/admin/users/{target.id}")
+        detail = client.get(f"/api/admin/users/{target.id}")
         assert detail.json.get("role") == "editor"
+

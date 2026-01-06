@@ -90,11 +90,11 @@ def test_admin_list_and_get_detail(client):
     u1 = create_user("u1")
     create_user("u2")
 
-    r = client.get("/admin/users")
+    r = client.get("/api/admin/users")
     assert r.status_code == 200
     assert "items" in r.json
 
-    r2 = client.get(f"/admin/users/{u1.id}")
+    r2 = client.get(f"/api/admin/users/{u1.id}")
     assert r2.status_code == 200
     assert r2.json.get("username") == "u1"
 
@@ -103,7 +103,7 @@ def test_admin_create_invite_and_no_plaintext(client):
     make_admin_and_login(client)
 
     r = client.post(
-        "/admin/users", json={"username": "invited", "email": "invite@example.org"}
+        "/api/admin/users", json={"username": "invited", "email": "invite@example.org"}
     )
     assert r.status_code == 201
     assert r.json.get("inviteSent") is True
@@ -121,7 +121,7 @@ def test_admin_create_invite_and_no_plaintext(client):
 def test_admin_create_invite_has_metadata(client):
     make_admin_and_login(client)
     r = client.post(
-        "/admin/users", json={"username": "invited2", "email": "invite2@example.org"}
+        "/api/admin/users", json={"username": "invited2", "email": "invite2@example.org"}
     )
     assert r.status_code == 201
     assert r.json.get("inviteSent") is True
@@ -139,7 +139,7 @@ def test_admin_create_invite_has_metadata(client):
 def test_admin_reset_returns_invite_link(client):
     make_admin_and_login(client)
     target = create_user("targ2")
-    r = client.post(f"/admin/users/{target.id}/reset-password")
+    r = client.post(f"/api/admin/users/{target.id}/reset-password")
     assert r.status_code == 200
     # should contain invite link and metadata
     assert r.json.get("ok") is True
@@ -153,24 +153,24 @@ def test_admin_patch_lock_unlock_invalidate_delete(client):
 
     # patch role and must_reset
     p = client.patch(
-        f"/admin/users/{target.id}",
+        f"/api/admin/users/{target.id}",
         json={"role": "editor", "must_reset_password": True},
     )
     assert p.status_code == 200
 
     # admin reset password (should create reset token)
-    r = client.post(f"/admin/users/{target.id}/reset-password")
+    r = client.post(f"/api/admin/users/{target.id}/reset-password")
     assert r.status_code == 200
 
     # lock user
     lock_resp = client.post(
-        f"/admin/users/{target.id}/lock",
+        f"/api/admin/users/{target.id}/lock",
         json={"until": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()},
     )
     assert lock_resp.status_code == 200
 
     # unlock
-    u = client.post(f"/admin/users/{target.id}/unlock")
+    u = client.post(f"/api/admin/users/{target.id}/unlock")
     assert u.status_code == 200
 
     # create refresh token and then invalidate sessions
@@ -178,11 +178,11 @@ def test_admin_patch_lock_unlock_invalidate_delete(client):
 
     raw, rt = services.create_refresh_token_for_user(target)
     assert rt is not None
-    inv = client.post(f"/admin/users/{target.id}/invalidate-sessions")
+    inv = client.post(f"/api/admin/users/{target.id}/invalidate-sessions")
     assert inv.status_code == 200
 
     # delete (soft-delete)
-    d = client.delete(f"/admin/users/{target.id}")
+    d = client.delete(f"/api/admin/users/{target.id}")
     assert d.status_code == 200
 
     with get_session() as session:
@@ -197,7 +197,7 @@ def test_rbac_enforced_for_non_admin(client):
     assert r.status_code in (200, 303, 204)
 
     # non-admin should be forbidden to access admin endpoints
-    r = client.get("/admin/users")
+    r = client.get("/api/admin/users")
     assert r.status_code in (401, 403)
 
 
@@ -215,7 +215,7 @@ def test_list_users_default_active_only(client):
         u.is_active = False
 
     # Default list should only show active users
-    r = client.get("/admin/users")
+    r = client.get("/api/admin/users")
     assert r.status_code == 200
     usernames = [u["username"] for u in r.json["items"]]
     assert "active_user" in usernames
@@ -236,7 +236,7 @@ def test_list_users_with_include_inactive(client):
         u.is_active = False
 
     # With include_inactive, both should be visible
-    r = client.get("/admin/users?include_inactive=1")
+    r = client.get("/api/admin/users?include_inactive=1")
     assert r.status_code == 200
     usernames = [u["username"] for u in r.json["items"]]
     assert "active2" in usernames
@@ -249,7 +249,7 @@ def test_patch_user_email(client):
     target = create_user("target_email", role="user")
 
     # Update email
-    r = client.patch(f"/admin/users/{target.id}", json={"email": "new@example.org"})
+    r = client.patch(f"/api/admin/users/{target.id}", json={"email": "new@example.org"})
     assert r.status_code == 200
     assert r.json.get("ok") is True
 
@@ -265,7 +265,7 @@ def test_patch_user_invalid_email(client):
     target = create_user("target_email_invalid", role="user")
 
     # Try to set invalid email
-    r = client.patch(f"/admin/users/{target.id}", json={"email": "not-an-email"})
+    r = client.patch(f"/api/admin/users/{target.id}", json={"email": "not-an-email"})
     assert r.status_code == 400
     assert r.json.get("error") == "invalid_email"
 
@@ -276,7 +276,7 @@ def test_patch_user_invalid_role(client):
     target = create_user("target_role_invalid", role="user")
 
     # Try to set invalid role
-    r = client.patch(f"/admin/users/{target.id}", json={"role": "superadmin"})
+    r = client.patch(f"/api/admin/users/{target.id}", json={"role": "superadmin"})
     assert r.status_code == 400
     assert r.json.get("error") == "invalid_role"
 
@@ -289,7 +289,7 @@ def test_last_admin_protection_role_change(client):
     # (the fixture creates only one admin)
 
     # Try to demote the last admin
-    r = client.patch(f"/admin/users/{admin.id}", json={"role": "user"})
+    r = client.patch(f"/api/admin/users/{admin.id}", json={"role": "user"})
     assert r.status_code == 400
     assert r.json.get("error") == "last_admin"
 
@@ -299,7 +299,7 @@ def test_last_admin_protection_deactivate(client):
     admin = make_admin_and_login(client)
 
     # Try to deactivate the last admin
-    r = client.patch(f"/admin/users/{admin.id}", json={"is_active": False})
+    r = client.patch(f"/api/admin/users/{admin.id}", json={"is_active": False})
     assert r.status_code == 400
     assert r.json.get("error") == "last_admin"
 
@@ -312,7 +312,7 @@ def test_admin_can_be_demoted_if_others_exist(client):
     create_user("admin2", role="admin")
 
     # Now the first admin can be demoted
-    r = client.patch(f"/admin/users/{admin.id}", json={"role": "editor"})
+    r = client.patch(f"/api/admin/users/{admin.id}", json={"role": "editor"})
     assert r.status_code == 200
     assert r.json.get("ok") is True
 
@@ -320,3 +320,4 @@ def test_admin_can_be_demoted_if_others_exist(client):
     with get_session() as session:
         u = session.query(User).filter(User.id == admin.id).first()
         assert u.role == "editor"
+

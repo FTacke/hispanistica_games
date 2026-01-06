@@ -1,0 +1,24 @@
+# Dependency Constraints für hispanistica_games
+#
+# Dieses File definiert harte Versionsconstraints für kritische Dependencies,
+# die Kompatibilitätsprobleme verursachen können.
+#
+# Verwendung in allen pip-install-Kommandos:
+#   pip install -r requirements.txt -c requirements/constraints.txt
+#
+# CRITICAL: passlib 1.7.4 + bcrypt Kompatibilität
+# ------------------------------------------------
+# passlib 1.7.4 ist EOL (End of Life) und wird nicht mehr aktualisiert.
+# passlib 1.7.4 erwartet bcrypt.__about__.__version__, welches in bcrypt 4.0+ entfernt wurde.
+# 
+# Lösung: bcrypt <4 pinnen für passlib-Kompatibilität.
+# 
+# Referenzen:
+# - https://github.com/pyca/bcrypt/issues/684
+# - passlib Issue Tracker (diverse Reports zu bcrypt 4.x)
+#
+# Sobald passlib auf eine modernere Alternative migriert wird (z.B. argon2-cffi only),
+# kann dieser Pin entfernt werden.
+
+passlib==1.7.4
+bcrypt<4

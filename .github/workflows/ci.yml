@@ -10,6 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.12"]
         auth-hash-algo: ["bcrypt", "argon2"]
@@ -25,10 +26,25 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt -c requirements/constraints.txt
         # ensure argon2 support is available for tests when using argon2
         if [ "${{ matrix.auth-hash-algo }}" = "argon2" ]; then pip install argon2_cffi; fi
         pip install pytest pytest-dotenv ruff
+
+    - name: Debug - Verify dependency versions
+      run: |
+        echo "=== Python & Pip Versions ==="
+        python -V
+        pip --version
+        echo ""
+        echo "=== Critical Dependencies ==="
+        pip freeze | grep -E "(passlib|bcrypt|argon2|cffi|cryptography)" || true
+        echo ""
+        echo "=== bcrypt Details ==="
+        python -c "import bcrypt; print(f'bcrypt version: {bcrypt.__version__}'); print(f'bcrypt location: {bcrypt.__file__}')"
+        echo ""
+        echo "=== passlib Details ==="
+        python -c "import passlib; print(f'passlib version: {passlib.__version__}')"
 
     - name: Run md3 forms/auth guard
       run: |
@@ -80,7 +96,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -c requirements/constraints.txt
           pip install argon2_cffi psycopg[binary] pytest pytest-dotenv
 
       - name: Wait for Postgres
@@ -119,7 +135,7 @@ jobs:
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -c requirements/constraints.txt
 
       - name: Seed test auth DB
         env:

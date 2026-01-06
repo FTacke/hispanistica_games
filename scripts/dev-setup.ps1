@@ -93,7 +93,7 @@ if (-not $SkipInstall) {
     Write-Host "  Installing Python requirements..." -ForegroundColor Gray
     try {
         & python -m pip install --quiet --upgrade pip
-        & python -m pip install --quiet -r requirements.txt
+        & python -m pip install --quiet -r requirements.txt -c requirements/constraints.txt
         & python -m pip install --quiet argon2_cffi psycopg[binary]
         Write-Host "  Python requirements installed." -ForegroundColor Green
     } catch {
