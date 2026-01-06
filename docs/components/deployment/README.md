@@ -51,12 +51,17 @@
 
 ### Docker
 
-| Setting | Value |
-|---------|-------|
-| Container name | `games-webapp` |
-| Image name | `games-webapp:latest` |
-| Network | `games-network` |
-| Subnet | `172.19.0.0/16` |
+| Setting | Value | Notes |
+|---------|-------|-------|
+| Container name | `games-webapp` | |
+| Image name | `games-webapp:latest` | |
+| Network | `corapan-network` (prod)<br>`games-network` (dev) | **Configurable via `DOCKER_NETWORK` env variable** |
+| Subnet | `172.19.0.0/16` | Default for games-network |
+
+**Network Configuration:**
+- **Development:** Uses `games-network` (default)
+- **Production:** Uses existing `corapan-network` (shared with corapan infrastructure)
+- **Override:** Set `DOCKER_NETWORK=your-network-name` in `.env.prod` or `passwords.env`
 
 ### PostgreSQL
 
@@ -69,6 +74,9 @@
 ### Environment Variables (passwords.env)
 
 ```bash
+# Docker Configuration
+DOCKER_NETWORK=corapan-network  # Production: use existing network
+
 # Required
 FLASK_SECRET_KEY=<random-hex-64>
 JWT_SECRET_KEY=<random-hex-64>
@@ -82,6 +90,8 @@ START_ADMIN_USERNAME=admin
 START_ADMIN_PASSWORD=<secure-password>
 START_ADMIN_EMAIL=admin@games.hispanistica.com
 ```
+
+**Note:** Production deployment shares the `corapan-network` Docker network with the main corapan infrastructure. This allows inter-container communication and avoids network conflicts.
 
 ### Nginx
 

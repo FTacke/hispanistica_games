@@ -26,7 +26,10 @@ set -euo pipefail
 # Configuration (from app_identity)
 APP_SLUG="games_hispanistica"
 CONTAINER_NAME="games-webapp"
-DOCKER_NETWORK="games-network"
+
+# Docker network (configurable via env, default: games-network)
+# To use existing network: export DOCKER_NETWORK=corapan-network before running
+DOCKER_NETWORK="${DOCKER_NETWORK:-games-network}"
 DOCKER_SUBNET="172.19.0.0/16"
 HOST_PORT=7000
 CONTAINER_PORT=5000
@@ -114,11 +117,14 @@ echo ""
 # -----------------------------------------------------------------------------
 # Step 3: Set up Docker network
 # -----------------------------------------------------------------------------
-log_info "Ensuring Docker network exists..."
+log_info "Checking Docker network: ${DOCKER_NETWORK}..."
 
 if docker network inspect "${DOCKER_NETWORK}" &> /dev/null; then
-    log_info "Docker network '${DOCKER_NETWORK}' already exists"
+    NETWORK_SUBNET=$(docker network inspect "${DOCKER_NETWORK}" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
+    log_success "Docker network '${DOCKER_NETWORK}' already exists (subnet: ${NETWORK_SUBNET})"
+    log_info "Using existing network (no changes needed)"
 else
+    log_info "Creating Docker network '${DOCKER_NETWORK}' with subnet ${DOCKER_SUBNET}..."
     docker network create --subnet="${DOCKER_SUBNET}" "${DOCKER_NETWORK}"
     log_success "Created Docker network: ${DOCKER_NETWORK} (${DOCKER_SUBNET})"
 fi

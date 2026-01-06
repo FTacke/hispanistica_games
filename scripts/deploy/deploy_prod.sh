@@ -18,7 +18,8 @@
 #   - Docker installed and running
 #   - Git repository cloned to /srv/webapps/games_hispanistica/app
 #   - passwords.env configured in /srv/webapps/games_hispanistica/config/
-#   - Docker network 'games-network' exists (run server_bootstrap.sh first)
+#   - Docker network exists (set via DOCKER_NETWORK env, default: games-network)
+#     Production: export DOCKER_NETWORK=corapan-network in passwords.env
 #
 # Usage:
 #   cd /srv/webapps/games_hispanistica/app
@@ -33,7 +34,10 @@ CONTAINER_NAME="games-webapp"
 IMAGE_NAME="games-webapp"
 HOST_PORT=7000
 CONTAINER_PORT=5000
-DOCKER_NETWORK="games-network"
+
+# Docker network (configurable via env, default: games-network)
+# Production: set DOCKER_NETWORK=corapan-network in .env.prod or passwords.env
+DOCKER_NETWORK="${DOCKER_NETWORK:-games-network}"
 
 # Paths (on the host)
 BASE_DIR="/srv/webapps/games_hispanistica"
@@ -94,11 +98,78 @@ if [ ! -f "${CONFIG_DIR}/passwords.env" ]; then
     exit 1
 fi
 
-# Verify Docker network exists
-if ! docker network inspect "${DOCKER_NETWORK}" &> /dev/null; then
-    log_error "Docker network '${DOCKER_NETWORK}' does not exist"
-    log_error "Run server_bootstrap.sh first"
+# Docker access diagnostics
+log_info "Docker diagnostics:"
+echo "  User: $(whoami) (UID: $(id -u), GID: $(id -g))"
+echo "  Groups: $(groups)"
+
+# Check docker socket
+if [ -e /var/run/docker.sock ]; then
+    echo "  Socket: /var/run/docker.sock ($(ls -l /var/run/docker.sock | awk '{print $1, $3, $4}'))"
+else
+    echo "  Socket: /var/run/docker.sock NOT FOUND"
+fi
+
+# Check docker context
+if command -v docker &> /dev/null; then
+    DOCKER_CONTEXT=$(docker context show 2>/dev/null || echo "default")
+    echo "  Context: ${DOCKER_CONTEXT}"
+else
+    log_error "Docker command not found in PATH"
     exit 1
+fi
+
+# Test docker daemon access
+log_info "Testing Docker daemon access..."
+if docker info > /dev/null 2>&1; then
+    DOCKER_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "unknown")
+    log_success "Docker daemon accessible (Server version: ${DOCKER_VERSION})"
+else
+    DOCKER_EXIT_CODE=$?
+    log_error "Docker daemon NOT accessible (exit code: ${DOCKER_EXIT_CODE})"
+    echo ""
+    log_error "Possible causes:"
+    log_error "  1. Docker daemon not running"
+    log_error "  2. User '$(whoami)' lacks permission to access /var/run/docker.sock"
+    log_error "  3. Docker running in rootless mode with different socket"
+    log_error "  4. Wrong docker context (current: ${DOCKER_CONTEXT})"
+    echo ""
+    log_error "Solutions:"
+    log_error "  • Add user to docker group: sudo usermod -aG docker $(whoami)"
+    log_error "  • Or run as root: sudo bash ${BASH_SOURCE[0]}"
+    log_error "  • Or check: systemctl status docker"
+    exit 2
+fi
+
+# Verify Docker network exists (or auto-create)
+log_info "Checking Docker network: ${DOCKER_NETWORK}..."
+if docker network inspect "${DOCKER_NETWORK}" &> /dev/null; then
+    NETWORK_SUBNET=$(docker network inspect "${DOCKER_NETWORK}" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
+    log_success "Network '${DOCKER_NETWORK}' exists (subnet: ${NETWORK_SUBNET})"
+else
+    log_warn "Network '${DOCKER_NETWORK}' does not exist"
+    log_info "Creating network '${DOCKER_NETWORK}' with subnet 172.19.0.0/16..."
+    
+    if docker network create \
+        --driver bridge \
+        --subnet=172.19.0.0/16 \
+        "${DOCKER_NETWORK}" > /dev/null 2>&1; then
+        log_success "Network '${DOCKER_NETWORK}' created successfully"
+    else
+        NETWORK_EXIT_CODE=$?
+        log_error "Failed to create network '${DOCKER_NETWORK}' (exit code: ${NETWORK_EXIT_CODE})"
+        echo ""
+        log_error "Possible causes:"
+        log_error "  1. Subnet 172.19.0.0/16 already in use by another network"
+        log_error "  2. Insufficient Docker permissions"
+        echo ""
+        log_error "Check existing networks:"
+        docker network ls
+        echo ""
+        log_error "If subnet conflict, run: docker network inspect <conflicting-network>"
+        log_error "Then either remove conflict or run server_bootstrap.sh manually"
+        exit 3
+    fi
 fi
 
 log_success "Pre-flight checks passed"

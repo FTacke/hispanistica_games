@@ -43,7 +43,8 @@ IMAGE_NAME = "games-webapp"
 IMAGE_TAG = "latest"
 
 # Docker network
-DOCKER_NETWORK_NAME = "games-network"
+# Docker network name (configurable via env)
+DOCKER_NETWORK_NAME = os.getenv("DOCKER_NETWORK", "games-network")
 DOCKER_NETWORK_SUBNET = "172.19.0.0/16"
 
 # =============================================================================
