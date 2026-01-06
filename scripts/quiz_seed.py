@@ -231,7 +231,7 @@ def main():
             logger.error(f"Topics directory not found: {topics_dir}")
             sys.exit(1)
         
-        logger.info(f"Quiz Seed Pipeline starting...")
+        logger.info("Quiz Seed Pipeline starting...")
         logger.info(f"Topics directory: {topics_dir}")
         
         # Step 1: Normalize (optional)

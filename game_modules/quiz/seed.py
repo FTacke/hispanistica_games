@@ -28,7 +28,6 @@ from .validation import (
     validate_quiz_unit,
     ValidationError,
     QuizUnitSchema,
-    UnitMediaSchema,
 )
 
 logger = logging.getLogger(__name__)

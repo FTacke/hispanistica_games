@@ -8,9 +8,9 @@ sys.path.insert(0, str(repo_root))
 
 os.environ["AUTH_DATABASE_URL"] = "sqlite:///data/db/auth.db"
 
-from src.app.extensions.sqlalchemy_ext import init_engine, get_engine
-from src.app.auth.models import User
-from sqlalchemy.orm import Session
+from src.app.extensions.sqlalchemy_ext import init_engine, get_engine  # noqa: E402
+from src.app.auth.models import User  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
 
 
 class FakeApp:

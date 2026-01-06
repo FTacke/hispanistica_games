@@ -22,16 +22,14 @@ API routes:
 
 from __future__ import annotations
 
-import json
 import logging
 from functools import wraps
-from typing import Optional, Callable, Any
+from typing import Callable, Any
 import os
 import time
 
 from flask import (
     Blueprint,
-    Response,
     jsonify,
     make_response,
     render_template,
@@ -41,7 +39,6 @@ from flask import (
 
 from src.app.extensions.sqlalchemy_ext import get_session
 from . import services
-from .models import QuizPlayer
 
 logger = logging.getLogger(__name__)
 
@@ -908,19 +905,11 @@ def webapp_admin_required(f: Callable) -> Callable:
     """
     @wraps(f)
     def decorated(*args: Any, **kwargs: Any) -> Any:
-        # Try to use webapp's role-based auth if available
-        try:
-            from src.app.auth.decorators import require_role
-            from src.app.auth import Role
-            
-            # Check if user has admin role via webapp auth
-            role = getattr(g, "role", None)
-            if role is None:
-                return jsonify({
-                    "error": "Admin authentication required",
-                    "code": "ADMIN_AUTH_REQUIRED"
-                }), 401
-            
+        # Check if user has admin role via webapp auth (set by JWT middleware)
+        role = getattr(g, "role", None)
+        
+        if role is not None:
+            # Webapp auth is available
             # ROLE_ORDER is ["admin", "editor", "user", "guest"]
             # Admin is index 0, so we need role to be "admin"
             if role != "admin":
@@ -928,9 +917,8 @@ def webapp_admin_required(f: Callable) -> Callable:
                     "error": "Admin role required",
                     "code": "ADMIN_ROLE_REQUIRED"
                 }), 403
-                
-        except ImportError:
-            # Auth module not available, fall back to header-based auth
+        else:
+            # Webapp auth not available, fall back to header-based auth
             # This is a placeholder for development/testing
             admin_key = request.headers.get("X-Admin-Key")
             import os
@@ -938,7 +926,7 @@ def webapp_admin_required(f: Callable) -> Callable:
             
             if not expected_key:
                 return jsonify({
-                    "error": "Admin import not configured",
+                    "error": "Admin auth not configured",
                     "code": "ADMIN_NOT_CONFIGURED"
                 }), 503
             
@@ -976,7 +964,7 @@ def api_admin_reset_highscores(topic_id: str):
     """
     with get_session() as session:
         from .models import QuizScore
-        from sqlalchemy import and_, delete
+        from sqlalchemy import delete
         
         # Verify topic exists
         topic = services.get_topic(session, topic_id)

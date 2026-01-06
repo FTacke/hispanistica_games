@@ -6,7 +6,6 @@ Verifies that:
 - /quiz properly loads the quiz module
 """
 
-import pytest
 
 
 def test_quiz_index_route_accessible(quiz_app):

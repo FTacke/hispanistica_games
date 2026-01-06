@@ -156,22 +156,82 @@ git pull origin main || git pull origin master || {
 log_success "Code aktualisiert"
 
 # =============================================================================
-# 3. Docker Compose Build & Deploy
+# 3. Pre-Flight Database Check
+# =============================================================================
+
+log_info "🔍 Pre-flight database check..."
+
+# Determine compose file (production or development)
+COMPOSE_FILE="docker-compose.yml"
+if [ -f "infra/docker-compose.prod.yml" ]; then
+    COMPOSE_FILE="infra/docker-compose.prod.yml"
+    log_info "Using production compose file"
+fi
+
+# Check if database container is running
+DB_CONTAINER=$(docker compose -f "$COMPOSE_FILE" ps -q db 2>/dev/null || echo "")
+
+if [ -n "$DB_CONTAINER" ]; then
+    log_info "Database container found: $DB_CONTAINER"
+    
+    # Check database readiness
+    if docker exec "$DB_CONTAINER" pg_isready -U corapan_app -d corapan_auth >/dev/null 2>&1; then
+        log_success "Database is healthy and ready"
+    else
+        log_warning "Database container is running but not ready yet"
+        log_info "Waiting 10 seconds for database to become ready..."
+        sleep 10
+        
+        if docker exec "$DB_CONTAINER" pg_isready -U corapan_app -d corapan_auth >/dev/null 2>&1; then
+            log_success "Database is now ready"
+        else
+            log_error "Database is not responding. Check database logs:"
+            log_error "  docker logs $DB_CONTAINER"
+            exit 1
+        fi
+    fi
+    
+    # Check Docker network
+    DB_NETWORKS=$(docker inspect "$DB_CONTAINER" -f '{{range $net := .NetworkSettings.Networks}}{{$net.NetworkID}} {{end}}' | tr ' ' '\n')
+    log_info "Database networks: $(echo $DB_NETWORKS | tr '\n' ' ')"
+else
+    log_warning "Database container not found or not running"
+    log_info "This is OK for SQLite-based deployments"
+fi
+
+echo ""
+
+# =============================================================================
+# 4. Docker Compose Build & Deploy
 # =============================================================================
 
 log_info "🐋 Building and deploying Docker container..."
 
 if [ "$FORCE_REBUILD" = true ]; then
   log_info "Force rebuild (--no-cache)..."
-  docker compose build --no-cache
+  docker compose -f "$COMPOSE_FILE" build --no-cache
 else
-  docker compose build
+  docker compose -f "$COMPOSE_FILE" build
 fi
 
 log_info "Starting container..."
-docker compose up -d
+docker compose -f "$COMPOSE_FILE" up -d
 
 log_success "Container gestartet"
+
+# Verify web container started and is connecting to database
+sleep 3
+WEB_CONTAINER=$(docker compose -f "$COMPOSE_FILE" ps -q web 2>/dev/null || echo "")
+if [ -n "$WEB_CONTAINER" ]; then
+    # Check if web container is still running (didn't crash during DB wait)
+    if docker ps -q --filter "id=$WEB_CONTAINER" | grep -q .; then
+        log_success "Web container is running"
+    else
+        log_error "Web container crashed during startup. Check logs:"
+        docker logs "$WEB_CONTAINER" --tail=50
+        exit 1
+    fi
+fi
 
 # =============================================================================
 # 4. Health Check

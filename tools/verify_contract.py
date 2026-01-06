@@ -6,14 +6,12 @@ import os
 os.environ["FLASK_SECRET_KEY"] = "test-secret"
 os.environ["FLASK_JWT_SECRET_KEY"] = "test-secret"
 
-from flask import Flask
 
 # Add project root to path
 sys.path.append(os.getcwd())
 
 from src.app import create_app
-from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
-from game_modules.quiz.models import QuizBase
+from src.app.extensions.sqlalchemy_ext import init_engine, get_session
 
 def print_json(label, data):
     print(f"\n--- {label} ---")

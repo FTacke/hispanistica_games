@@ -46,7 +46,7 @@ def main():
         print("       Expected: postgresql://, postgres://, or postgresql+<driver>://")
         sys.exit(1)
 
-    from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
+    from src.app.extensions.sqlalchemy_ext import init_engine, get_engine
     from game_modules.quiz.models import QuizBase
 
     class FakeApp:
@@ -55,7 +55,7 @@ def main():
                 'AUTH_DATABASE_URL': db_url
             }
 
-    print(f"Initializing Quiz database (PostgreSQL)...")
+    print("Initializing Quiz database (PostgreSQL)...")
     print(f"URL: {db_url.split('@')[1] if '@' in db_url else db_url}")  # Hide credentials
 
     app = FakeApp()

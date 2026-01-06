@@ -28,10 +28,8 @@ Exit Codes:
 """
 
 import argparse
-import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Add parent directory to path to import the service module directly
@@ -58,8 +56,8 @@ create_remote_releases_dir = content_release.create_remote_releases_dir
 
 
 # Configure logging with UTF-8 encoding for Windows compatibility
-import sys
-import io
+import sys  # noqa: E402
+import io  # noqa: E402
 
 # Ensure stdout uses UTF-8 encoding on Windows
 if sys.platform == "win32":

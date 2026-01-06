@@ -7,13 +7,10 @@ Tests for admin-only highscore management:
 - IDOR prevention
 """
 
-import pytest
-from flask import Flask
 from flask.testing import FlaskClient
 from sqlalchemy.orm import Session
 
 from game_modules.quiz.models import QuizScore, QuizPlayer, QuizRun, QuizTopic
-from game_modules.quiz import services
 
 
 def test_admin_reset_highscores_success(client: FlaskClient, db_session: Session):
@@ -65,7 +62,7 @@ def test_admin_reset_highscores_success(client: FlaskClient, db_session: Session
     # For now, we test the endpoint logic
     
     # Action: Reset highscores
-    response = client.post(
+    client.post(
         f'/api/quiz/admin/topics/{topic.id}/highscores/reset',
         headers={'Authorization': 'Bearer MOCK_ADMIN_TOKEN'}  # Mock
     )

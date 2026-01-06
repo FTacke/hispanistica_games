@@ -23,7 +23,7 @@ from typing import Optional, List, Tuple, Dict, Any
 
 from flask import current_app
 from passlib.hash import argon2
-from sqlalchemy import select, and_, or_, desc, asc, func
+from sqlalchemy import select, and_, desc, asc, func
 from sqlalchemy.orm import Session
 
 from .models import (
@@ -206,7 +206,7 @@ def register_player(session: Session, name: str, pin: Optional[str], anonymous: 
     """
     if anonymous:
         # Find or create the shared anonymous player
-        stmt = select(QuizPlayer).where(QuizPlayer.is_anonymous == True)
+        stmt = select(QuizPlayer).where(QuizPlayer.is_anonymous)
         player = session.execute(stmt).scalar_one_or_none()
         
         if not player:
@@ -290,7 +290,7 @@ def login_player(session: Session, name: str, pin: str) -> AuthResult:
     stmt = select(QuizPlayer).where(
         and_(
             QuizPlayer.normalized_name == norm_name,
-            QuizPlayer.is_anonymous == False
+            ~QuizPlayer.is_anonymous
         )
     )
     player = session.execute(stmt).scalar_one_or_none()
@@ -355,7 +355,7 @@ def auth_name_pin(session: Session, name: str, pin: str) -> AuthResult:
     stmt = select(QuizPlayer).where(
         and_(
             QuizPlayer.normalized_name == norm_name,
-            QuizPlayer.is_anonymous == False
+            ~QuizPlayer.is_anonymous
         )
     )
     existing = session.execute(stmt).scalar_one_or_none()
@@ -466,7 +466,7 @@ def logout_player(session: Session, token: str) -> bool:
 
 def get_active_topics(session: Session) -> List[QuizTopic]:
     """Get all active quiz topics ordered by order_index."""
-    stmt = select(QuizTopic).where(QuizTopic.is_active == True).order_by(QuizTopic.order_index)
+    stmt = select(QuizTopic).where(QuizTopic.is_active).order_by(QuizTopic.order_index)
     return list(session.execute(stmt).scalars().all())
 
 
@@ -632,7 +632,7 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     stmt = select(QuizQuestion).where(
         and_(
             QuizQuestion.topic_id == topic_id,
-            QuizQuestion.is_active == True
+            QuizQuestion.is_active
         )
     )
     all_questions = list(session.execute(stmt).scalars().all())
@@ -1222,7 +1222,7 @@ def get_leaderboard(session: Session, topic_id: str, limit: int = 30) -> List[Di
         .where(
             and_(
                 QuizScore.topic_id == topic_id,
-                QuizPlayer.is_anonymous == False,
+                ~QuizPlayer.is_anonymous,
                 # Legacy backup: also exclude known anonymous name patterns
                 ~func.lower(QuizPlayer.name).in_(ANONYMOUS_NAME_PATTERNS)
             )

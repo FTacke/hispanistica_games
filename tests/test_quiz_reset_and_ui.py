@@ -3,7 +3,7 @@
 import pytest
 import re
 from pathlib import Path
-from sqlalchemy import select, text, create_engine
+from sqlalchemy import select, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from game_modules.quiz.models import QuizTopic, QuizQuestion

@@ -451,8 +451,6 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         errors.append(f"Invalid schema_version{context}: expected one of {SUPPORTED_SCHEMA_VERSIONS}, got '{schema_version}'")
     
-    is_v2 = (schema_version == "quiz_unit_v2")
-    
     # Validate slug
     slug = data.get("slug", "")
     if not slug:

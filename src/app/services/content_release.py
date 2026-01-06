@@ -22,8 +22,6 @@ Usage:
 import json
 import logging
 import subprocess
-import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -324,10 +322,6 @@ def set_remote_current(ssh_host: str, media_root: str, release_name: str) -> Non
     Raises:
         subprocess.CalledProcessError: If command fails
     """
-    releases_dir = f"{media_root}/releases"
-    current_link = f"{media_root}/current"
-    release_path = f"{releases_dir}/{release_name}"
-    
     # Use atomic symlink update: ln -sfn
     cmd = [
         "ssh",
@@ -338,7 +332,7 @@ def set_remote_current(ssh_host: str, media_root: str, release_name: str) -> Non
     logger.info(f"Setting current -> {release_name}")
     
     try:
-        result = subprocess.run(
+        subprocess.run(
             cmd,
             capture_output=True,
             text=True,

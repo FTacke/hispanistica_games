@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime
 from game_modules.quiz import services
 from game_modules.quiz.models import QuizRun, QuizScore

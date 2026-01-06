@@ -13,6 +13,7 @@ resolved at runtime via environment variables or volumes.
 """
 
 from __future__ import annotations
+import os
 
 # =============================================================================
 # Application Identity

@@ -513,7 +513,7 @@ def list_users(
 
         # Filter by active status
         if not include_inactive:
-            stmt = stmt.where(User.is_active == True)
+            stmt = stmt.where(User.is_active)
 
         # Search filter
         if search_query:

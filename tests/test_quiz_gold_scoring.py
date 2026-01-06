@@ -1,13 +1,10 @@
 
 import pytest
-from flask import Flask
-from sqlalchemy import select
 from src.app.extensions.sqlalchemy_ext import get_session
 from game_modules.quiz import services
-from game_modules.quiz.models import QuizTopic, QuizQuestion, QuizRun
+from game_modules.quiz.models import QuizTopic, QuizQuestion
 
 # Use the fixture from test_quiz_module
-from tests.test_quiz_module import quiz_app
 
 @pytest.fixture
 def seeded_quiz_app(quiz_app):

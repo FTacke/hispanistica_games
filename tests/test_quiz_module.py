@@ -13,8 +13,7 @@ NOTE: Quiz module uses JSONB columns which require PostgreSQL.
 """
 
 import os
-import secrets
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Generator
 
 import pytest
@@ -781,7 +780,7 @@ class TestUnifiedAuth:
         assert response.status_code == 200
         data = response.get_json()
         assert data.get("status") == "ok"
-        assert data.get("is_new_user") == True
+        assert data.get("is_new_user")
         assert data.get("player_name") == "NewPlayer"
         assert "user_id" in data
     
@@ -805,7 +804,7 @@ class TestUnifiedAuth:
         assert response.status_code == 200
         data = response.get_json()
         assert data.get("status") == "ok"
-        assert data.get("is_new_user") == False
+        assert not data.get("is_new_user")
         assert data.get("player_name") == "ExistingPlayer"
     
     def test_auth_login_wrong_pin(self, quiz_client, seeded_quiz_db):
@@ -849,7 +848,7 @@ class TestUnifiedAuth:
         
         assert response.status_code == 200
         data = response.get_json()
-        assert data.get("is_new_user") == False
+        assert not data.get("is_new_user")
     
     def test_auth_invalid_pin_length(self, quiz_client, seeded_quiz_db):
         """PIN must be exactly 4 characters."""
@@ -960,7 +959,6 @@ class TestFiftyFiftyJoker:
         from game_modules.quiz.models import QuizRun, QuizQuestion, QuizPlayer
         from src.app.extensions.sqlalchemy_ext import get_session
         from sqlalchemy import select
-        from datetime import datetime, timezone
         
         with get_session() as session:
             # Get a test question
@@ -1010,7 +1008,7 @@ class TestFiftyFiftyJoker:
             # Use joker
             success, disabled_ids, error = use_joker(session, run, 0)
             
-            assert success == True
+            assert success
             assert len(disabled_ids) == 2
             # CRITICAL: correct answer must NOT be in disabled list
             assert correct_id not in disabled_ids
@@ -1021,7 +1019,6 @@ class TestFiftyFiftyJoker:
         from game_modules.quiz.models import QuizRun, QuizQuestion, QuizPlayer
         from src.app.extensions.sqlalchemy_ext import get_session
         from sqlalchemy import select
-        from datetime import datetime, timezone
         
         with get_session() as session:
             # Get a test question

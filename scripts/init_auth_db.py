@@ -13,8 +13,8 @@ if "AUTH_DATABASE_URL" not in os.environ:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     os.environ["AUTH_DATABASE_URL"] = f"sqlite:///{db_path}"
 
-from src.app.extensions.sqlalchemy_ext import init_engine, get_engine
-from src.app.auth.models import Base
+from src.app.extensions.sqlalchemy_ext import init_engine, get_engine  # noqa: E402
+from src.app.auth.models import Base  # noqa: E402
 
 
 class FakeApp:
@@ -27,7 +27,7 @@ class FakeApp:
 
 def main():
     """Initialize database tables."""
-    print(f"Initializing auth database...")
+    print("Initializing auth database...")
     print(f"URL: {os.environ.get('AUTH_DATABASE_URL')}")
     
     app = FakeApp()

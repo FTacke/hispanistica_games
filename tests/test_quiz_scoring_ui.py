@@ -5,8 +5,6 @@ Tests verify:
 - POINTS_PER_DIFFICULTY values are correct
 """
 
-import pytest
-from dataclasses import asdict
 
 from game_modules.quiz.services import (
     AnswerResult,
