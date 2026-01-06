@@ -99,6 +99,65 @@ if [ ! -f "${CONFIG_DIR}/passwords.env" ]; then
     exit 1
 fi
 
+# Parse AUTH_DATABASE_URL from passwords.env for preflight checks
+log_info "Parsing database configuration from passwords.env..."
+if ! AUTH_DATABASE_URL=$(grep '^AUTH_DATABASE_URL=' "${CONFIG_DIR}/passwords.env" | cut -d= -f2- | tr -d '"' | tr -d "'"); then
+    log_error "Failed to extract AUTH_DATABASE_URL from passwords.env"
+    exit 1
+fi
+
+if [ -z "$AUTH_DATABASE_URL" ]; then
+    log_error "AUTH_DATABASE_URL is empty in passwords.env"
+    exit 1
+fi
+
+# Parse database connection details using Python (never log password)
+DB_PARSE_RESULT=$(python3 -c "
+from urllib.parse import urlparse
+import sys
+
+try:
+    url = '${AUTH_DATABASE_URL}'
+    parsed = urlparse(url)
+    
+    # Extract components
+    host = parsed.hostname or 'localhost'
+    port = parsed.port or 5432
+    user = parsed.username or 'postgres'
+    dbname = parsed.path.lstrip('/') or 'postgres'
+    
+    # Output format: host|port|user|dbname (no password)
+    print(f'{host}|{port}|{user}|{dbname}')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>&1)
+
+if [ $? -ne 0 ]; then
+    log_error "Failed to parse AUTH_DATABASE_URL: ${DB_PARSE_RESULT}"
+    exit 1
+fi
+
+# Split parsed result
+IFS='|' read -r DB_HOST DB_PORT DB_USER DB_NAME <<< "$DB_PARSE_RESULT"
+
+log_success "Database config parsed: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+
+# Preflight: Test PostgreSQL connectivity from within Docker network
+log_info "Preflight: Testing PostgreSQL connectivity via Docker network..."
+if docker run --rm --network "${DOCKER_NETWORK}" postgres:16-alpine \
+    pg_isready -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" > /dev/null 2>&1; then
+    log_success "PostgreSQL is reachable from Docker network '${DOCKER_NETWORK}'"
+else
+    log_error "PostgreSQL preflight check failed!"
+    log_error "Cannot reach ${DB_HOST}:${DB_PORT} from Docker network '${DOCKER_NETWORK}'"
+    log_error "Verify:"
+    log_error "  1. PostgreSQL is running and accessible"
+    log_error "  2. AUTH_DATABASE_URL in passwords.env is correct"
+    log_error "  3. Network '${DOCKER_NETWORK}' can reach the database host"
+    exit 1
+fi
+
 # Docker access diagnostics
 log_info "Docker diagnostics:"
 echo "  User: $(whoami) (UID: $(id -u), GID: $(id -g))"
@@ -288,14 +347,14 @@ echo ""
 # -----------------------------------------------------------------------------
 log_info "Starting new container: ${CONTAINER_NAME}..."
 
-# CRITICAL: --add-host=host.docker.internal:host-gateway enables robust DB connection
-# Container connects to host PostgreSQL via host.docker.internal (not hardcoded gateway IP)
-# This makes deployment resilient to Docker network gateway changes (172.18.0.1 vs 172.19.0.1)
+# Always remove any leftover container before starting (idempotent)
+docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+
+# Run container - must succeed or script aborts
 docker run -d \
     --name "${CONTAINER_NAME}" \
     --restart unless-stopped \
     --network "${DOCKER_NETWORK}" \
-    --add-host=host.docker.internal:host-gateway \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
     -v "${DATA_DIR}:/app/data" \
     -v "${MEDIA_DIR}:/app/media:ro" \
@@ -305,7 +364,16 @@ docker run -d \
     -e "GIT_COMMIT=${GIT_SHA}" \
     "${IMAGE_TAG_LATEST}"
 
-log_success "Container started"
+# Verify container is actually running after docker run
+if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    DEPLOYMENT_FAILED=1
+    log_error "Container '${CONTAINER_NAME}' is not running after docker run!"
+    log_error "Showing container logs:"
+    docker logs "${CONTAINER_NAME}" 2>&1 | tail -50 || true
+    exit 1
+fi
+
+log_success "Container started and verified running"
 echo ""
 
 # -----------------------------------------------------------------------------
@@ -325,14 +393,77 @@ for i in $(seq 1 $WAIT_SECONDS); do
     sleep 1
 done
 
-# Verify container is running
+# Verify container is still running
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     DEPLOYMENT_FAILED=1
-    log_error "Container failed to start!"
+    log_error "Container failed to stay running!"
     exit 1
 fi
 
-log_success "Container is running"
+log_success "Container is ready"
+echo ""
+
+# -----------------------------------------------------------------------------
+# Postdeploy Assertions
+# -----------------------------------------------------------------------------
+log_info "Running postdeploy assertions..."
+
+# Assert 1: Verify container is on correct Docker network
+CONTAINER_NETWORK=$(docker inspect "${CONTAINER_NAME}" --format='{{.HostConfig.NetworkMode}}' 2>/dev/null || echo "")
+if [ "$CONTAINER_NETWORK" != "${DOCKER_NETWORK}" ]; then
+    DEPLOYMENT_FAILED=1
+    log_error "Postdeploy assertion failed: Container network mismatch!"
+    log_error "  Expected: ${DOCKER_NETWORK}"
+    log_error "  Actual:   ${CONTAINER_NETWORK}"
+    exit 1
+fi
+log_success "✓ Container on correct network: ${DOCKER_NETWORK}"
+
+# Assert 2: Verify AUTH_DATABASE_URL in container matches expected configuration
+CONTAINER_DB_URL=$(docker inspect "${CONTAINER_NAME}" --format='{{range .Config.Env}}{{println .}}{{end}}' | grep '^AUTH_DATABASE_URL=' | cut -d= -f2-)
+
+# Parse container's AUTH_DATABASE_URL
+CONTAINER_DB_PARSE=$(python3 -c "
+from urllib.parse import urlparse
+import sys
+
+try:
+    url = '${CONTAINER_DB_URL}'
+    parsed = urlparse(url)
+    
+    host = parsed.hostname or 'localhost'
+    port = parsed.port or 5432
+    user = parsed.username or 'postgres'
+    dbname = parsed.path.lstrip('/') or 'postgres'
+    
+    print(f'{host}|{port}|{user}|{dbname}')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>&1)
+
+if [ $? -ne 0 ]; then
+    DEPLOYMENT_FAILED=1
+    log_error "Failed to parse container's AUTH_DATABASE_URL"
+    exit 1
+fi
+
+IFS='|' read -r CONT_DB_HOST CONT_DB_PORT CONT_DB_USER CONT_DB_NAME <<< "$CONTAINER_DB_PARSE"
+
+# Compare database config (without password)
+if [ "$CONT_DB_HOST" != "$DB_HOST" ] || \
+   [ "$CONT_DB_PORT" != "$DB_PORT" ] || \
+   [ "$CONT_DB_USER" != "$DB_USER" ] || \
+   [ "$CONT_DB_NAME" != "$DB_NAME" ]; then
+    DEPLOYMENT_FAILED=1
+    log_error "Postdeploy assertion failed: Database config mismatch!"
+    log_error "  Expected: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+    log_error "  Container: ${CONT_DB_USER}@${CONT_DB_HOST}:${CONT_DB_PORT}/${CONT_DB_NAME}"
+    exit 1
+fi
+log_success "✓ Container database config matches: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+
+log_success "All postdeploy assertions passed"
 echo ""
 
 # -----------------------------------------------------------------------------
