@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-Quiz Units Normalize Script
+Quiz Units Normalize Script (DEV + Production Pre-Processing)
 
-Ensures all quiz unit JSON files have:
+⚠️  DEV-USAGE: Can be run locally to prepare content before upload
+📦  PRODUCTION: Run on content BEFORE rsync upload to server
+
+This script ensures all quiz unit JSON files have:
 1. Stable ULID-based question IDs (never overwrites existing IDs)
 2. Correct questions_statistics object
 3. Deterministic formatting (sorted keys, indent=2)
@@ -15,6 +18,16 @@ Usage:
   python scripts/quiz_units_normalize.py --write                    # Write changes back to files
   python scripts/quiz_units_normalize.py --check --verbose          # Show detailed report
   python scripts/quiz_units_normalize.py --topics-dir custom/path   # Use custom topics directory
+  
+Production Workflow:
+  # 1. Normalize content locally BEFORE upload
+  python scripts/quiz_units_normalize.py --write --topics-dir C:\content\games_hispanistica\2026-01-06_1430\units
+  
+  # 2. Upload to server
+  rsync -avz C:\content\games_hispanistica\2026-01-06_1430\ user@server:/srv/webapps/games_hispanistica/media/releases/2026-01-06_1430/
+  
+  # 3. Import on server
+  ./manage import-content --release 2026-01-06_1430
 """
 
 import argparse

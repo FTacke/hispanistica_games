@@ -1,8 +1,21 @@
 #!/usr/bin/env python3
 """
-Quiz Seed CLI
+Quiz Seed CLI (DEV-ONLY)
 
-Orchestrates the complete quiz content pipeline:
+⚠️  DEV-ONLY SCRIPT - NOT FOR PRODUCTION USE
+This script is designed for local development workflows only.
+
+In Production:
+- Content is uploaded via rsync to media/releases/<release_id>/
+- Import via CLI: ./manage import-content --release <release_id>
+- Publish via CLI: ./manage publish-release --release <release_id>
+- Or use Admin Dashboard (same import logic)
+
+See: games_hispanistica_production.md for Production workflows
+
+---
+
+Orchestrates the complete quiz content pipeline (DEV):
 1. Normalizes JSON units (IDs + statistics)
 2. Seeds database (idempotent upsert)
 3. Prunes removed topics (soft: is_active=false, hard: DELETE)

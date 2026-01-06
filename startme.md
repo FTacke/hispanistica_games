@@ -1,5 +1,9 @@
 ﻿# Hispanistica Games - Quick Start
 
+> **⚠️ DEV-ONLY DOCUMENT** – Dieses Dokument beschreibt die **lokale Entwicklungsumgebung**.
+> Für Production-Workflows (rsync, Import-CLI, Content-Releases) siehe:
+> **[games_hispanistica_production.md](games_hispanistica_production.md)**
+
 ## 🚀 Dev-Setup (PostgreSQL + Quiz Module)
 
 **Ein Befehl startet alles:** Docker PostgreSQL, Virtualenv, Dependencies, Auth-DB, Quiz-DB, Dev-Server.
@@ -40,9 +44,17 @@ Startet PostgreSQL (falls gestoppt) + Dev-Server mit existierender Konfiguration
 
 Quiz-Inhalte in `content/quiz/topics/*.json` werden automatisch synchronisiert.
 
+> **⚠️ DEV-ONLY:** Diese automatischen Seeds laufen NUR in der lokalen Entwicklung.
+> In Production werden Inhalte per rsync hochgeladen und über Import-CLI oder
+> Admin-Dashboard importiert. Siehe [games_hispanistica_production.md](games_hispanistica_production.md).
+
 ---
 
-## Quiz Content Management (Manuell)
+## Quiz Content Management (Manuell – DEV-only)
+
+> **⚠️ DEV-ONLY SECTION** – Diese Befehle sind NUR für lokale Entwicklung.
+> In Production wird Content per rsync hochgeladen und über `./manage import-content`
+> oder das Admin-Dashboard importiert.
 
 ### Quiz-Inhalte normalisieren
 
@@ -65,6 +77,13 @@ python scripts/quiz_seed.py --prune-hard
 ```
 
 **Hinweis:** Player-Daten (Runs, Scores) werden nie gelöscht.
+
+**Production-Alternative:**
+```bash
+# Production: Import via CLI (nach rsync-Upload)
+./manage import-content --units-path media/current/units --audio-path media/current/audio --release 2026-01-06_1430
+./manage publish-release --release 2026-01-06_1430
+```
 
 ---
 

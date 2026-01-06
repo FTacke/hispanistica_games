@@ -121,6 +121,14 @@ static/quiz-media/**/*.mp3
 static/quiz-media/**/*.wav
 static/quiz-media/**/*.ogg
 
+# Production media releases (uploaded via rsync, not Git)
+media/releases/*
+!media/releases/README.md
+media/current
+
+# Import logs (production-generated)
+data/import_logs/*.log
+
 # All audio/video media files
 *.mp3
 *.wav

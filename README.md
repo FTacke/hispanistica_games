@@ -10,7 +10,14 @@
 - **Quiz**: Test and expand your language knowledge with quiz modules
 - **Admin Panel**: User management with authentication & authorization
 
-## Quick Start
+## Documentation
+
+- **[startme.md](startme.md)** - Local development setup (DEV-only)
+- **[games_hispanistica_production.md](games_hispanistica_production.md)** - **Production documentation** (Server setup, Content pipeline, Deployment)
+- **[docs/QUICKSTART.md](docs/QUICKSTART.md)** - Detailed setup instructions
+- **[docs/components/quiz/ARCHITECTURE.md](docs/components/quiz/ARCHITECTURE.md)** - Quiz module architecture
+
+## Quick Start (Local Development)
 
 **For detailed setup instructions, see [docs/QUICKSTART.md](docs/QUICKSTART.md) or [startme.md](startme.md).**
 
