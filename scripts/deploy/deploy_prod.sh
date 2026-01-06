@@ -33,7 +33,7 @@ CONTAINER_NAME="games-webapp"
 IMAGE_NAME="games-webapp"
 HOST_PORT=7000
 CONTAINER_PORT=5000
-DOCKER_NETWORK="games-network"
+DOCKER_NETWORK="corapan-network"
 
 # Paths (on the host)
 BASE_DIR="/srv/webapps/games_hispanistica"
