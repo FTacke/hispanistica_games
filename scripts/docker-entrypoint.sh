@@ -9,6 +9,10 @@ echo "=== games.hispanistica Container Startup ==="
 # Configuration: Database wait timeout (seconds)
 DB_WAIT_SECONDS=${DB_WAIT_SECONDS:-60}
 
+# Default database host (robust against Docker network gateway changes)
+# host.docker.internal is mapped via --add-host=host.docker.internal:host-gateway in docker run
+DEFAULT_DB_HOST="host.docker.internal"
+
 # Wait for database to be ready (if AUTH_DATABASE_URL or DATABASE_URL points to PostgreSQL)
 DB_URL="${AUTH_DATABASE_URL:-${DATABASE_URL:-}}"
 
@@ -17,25 +21,28 @@ if [[ "$DB_URL" == *"postgresql"* ]]; then
     
     # Parse database URL using Python (robust, handles all edge cases)
     # Extract host, port, database name for diagnostics
+    # Use host.docker.internal as default if parsing fails
     read -r DB_HOST DB_PORT DB_NAME DB_USER <<< $(python3 - <<'PY'
 import sys
 from urllib.parse import urlparse
 import os
 
 db_url = os.environ.get('AUTH_DATABASE_URL') or os.environ.get('DATABASE_URL', '')
+default_host = os.environ.get('DEFAULT_DB_HOST', 'host.docker.internal')
+
 if not db_url:
-    print("db 5432 unknown unknown", file=sys.stderr)
+    print(f"{default_host} 5432 unknown unknown", file=sys.stderr)
     sys.exit(1)
 
 try:
     parsed = urlparse(db_url)
-    host = parsed.hostname or 'db'
+    host = parsed.hostname or default_host
     port = parsed.port or 5432
     dbname = parsed.path.lstrip('/') if parsed.path else 'unknown'
     user = parsed.username or 'unknown'
     print(f"{host} {port} {dbname} {user}")
 except Exception as e:
-    print(f"db 5432 unknown unknown", file=sys.stderr)
+    print(f"{default_host} 5432 unknown unknown", file=sys.stderr)
     sys.exit(1)
 PY
 )
@@ -78,6 +85,11 @@ PY
             echo "  Host: $DB_HOST"
             echo "  Port: $DB_PORT"
             echo "  User: $DB_USER"
+            echo "  Database: $DB_NAME"
+            echo ""
+            echo "IMPORTANT: Verify AUTH_DATABASE_URL uses 'host.docker.internal' as hostname"
+            echo "  Example: postgresql://user:pass@host.docker.internal:5432/dbname"
+            echo "  NOT: postgresql://user:pass@172.18.0.1:5432/dbname (fragile!)"
             echo ""
             echo "DNS check:"
             getent hosts "$DB_HOST" || echo "  ✗ Cannot resolve hostname"
@@ -86,10 +98,12 @@ PY
             pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" 2>&1 || true
             echo ""
             echo "Troubleshooting:"
-            echo "  1. Verify database container is running: docker ps"
-            echo "  2. Check Docker network: docker network inspect <network>"
-            echo "  3. Verify AUTH_DATABASE_URL environment variable"
-            echo "  4. Check database logs: docker logs <db-container>"
+            echo "  1. Verify host PostgreSQL is running:"
+            echo "       systemctl status postgresql"
+            echo "  2. Verify container has host.docker.internal mapping:"
+            echo "       docker run must include: --add-host=host.docker.internal:host-gateway"
+            echo "  3. Test from host: pg_isready -h 172.18.0.1 -p 5432"
+            echo "  4. Check PostgreSQL listens on Docker network (pg_hba.conf, listen_addresses)"
             echo ""
             exit 1
         fi

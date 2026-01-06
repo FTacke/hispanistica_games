@@ -35,9 +35,10 @@ IMAGE_NAME="games-webapp"
 HOST_PORT=7000
 CONTAINER_PORT=5000
 
-# Docker network (configurable via env, default: games-network)
-# Production: set DOCKER_NETWORK=corapan-network in .env.prod or passwords.env
-DOCKER_NETWORK="${DOCKER_NETWORK:-games-network}"
+# Docker network (configurable via env, default: corapan-network)
+# Production: MUST use corapan-network for compatibility with host PostgreSQL
+# Containers connect to host PostgreSQL via host.docker.internal (host-gateway mapping)
+DOCKER_NETWORK="${DOCKER_NETWORK:-corapan-network}"
 
 # Paths (on the host)
 BASE_DIR="/srv/webapps/games_hispanistica"
@@ -148,11 +149,12 @@ if docker network inspect "${DOCKER_NETWORK}" &> /dev/null; then
     log_success "Network '${DOCKER_NETWORK}' exists (subnet: ${NETWORK_SUBNET})"
 else
     log_warn "Network '${DOCKER_NETWORK}' does not exist"
-    log_info "Creating network '${DOCKER_NETWORK}' with subnet 172.19.0.0/16..."
+    log_info "Creating network '${DOCKER_NETWORK}' with subnet 172.18.0.0/16 (corapan standard)..."
     
     if docker network create \
         --driver bridge \
-        --subnet=172.19.0.0/16 \
+        --subnet=172.18.0.0/16 \
+        --gateway=172.18.0.1 \
         "${DOCKER_NETWORK}" > /dev/null 2>&1; then
         log_success "Network '${DOCKER_NETWORK}' created successfully"
     else
@@ -160,7 +162,7 @@ else
         log_error "Failed to create network '${DOCKER_NETWORK}' (exit code: ${NETWORK_EXIT_CODE})"
         echo ""
         log_error "Possible causes:"
-        log_error "  1. Subnet 172.19.0.0/16 already in use by another network"
+        log_error "  1. Subnet 172.18.0.0/16 already in use by another network"
         log_error "  2. Insufficient Docker permissions"
         echo ""
         log_error "Check existing networks:"
@@ -170,6 +172,66 @@ else
         log_error "Then either remove conflict or run server_bootstrap.sh manually"
         exit 3
     fi
+fi
+
+# -----------------------------------------------------------------------------
+# Step 0.5: Verify Host PostgreSQL Reachability (from Docker context)
+# -----------------------------------------------------------------------------
+log_info "Verifying host PostgreSQL is reachable from Docker context..."
+
+# Check if PostgreSQL is running on host (if available)
+if command -v pg_isready &> /dev/null; then
+    if pg_isready -h 127.0.0.1 -p 5432 -q 2>/dev/null; then
+        log_success "PostgreSQL service running on host (127.0.0.1:5432)"
+    else
+        log_warn "pg_isready failed for host PostgreSQL (may be normal if pg_isready not configured)"
+    fi
+fi
+
+# CRITICAL: Test DB connectivity from Docker container context using host.docker.internal
+log_info "Testing PostgreSQL connectivity from Docker container (host.docker.internal)..."
+
+# Source passwords.env to get DB credentials (without exposing in process list)
+if [ -f "${CONFIG_DIR}/passwords.env" ]; then
+    # Extract DB_USER and DB_NAME from AUTH_DATABASE_URL (if present)
+    # Format: postgresql://user:pass@host:port/dbname
+    DB_TEST_USER=$(grep -E '^AUTH_DATABASE_URL=' "${CONFIG_DIR}/passwords.env" | sed -E 's/.*:\/\/([^:]+):.*/\1/' || echo "postgres")
+    DB_TEST_NAME=$(grep -E '^AUTH_DATABASE_URL=' "${CONFIG_DIR}/passwords.env" | sed -E 's/.*\/([^?]+).*/\1/' || echo "postgres")
+else
+    DB_TEST_USER="postgres"
+    DB_TEST_NAME="postgres"
+fi
+
+log_info "  Testing with: user=${DB_TEST_USER}, db=${DB_TEST_NAME}"
+
+# Run temporary container to test DB connectivity
+if docker run --rm \
+    --network "${DOCKER_NETWORK}" \
+    --add-host=host.docker.internal:host-gateway \
+    postgres:16-alpine \
+    pg_isready -h host.docker.internal -p 5432 -U "${DB_TEST_USER}" -d "${DB_TEST_NAME}" -q 2>&1; then
+    log_success "✓ PostgreSQL reachable from Docker via host.docker.internal"
+else
+    log_error "✗ PostgreSQL NOT reachable from Docker container!"
+    echo ""
+    log_error "This is a CRITICAL failure. Container will not be able to connect to database."
+    log_error ""
+    log_error "Root cause: Host PostgreSQL not accessible via host.docker.internal"
+    log_error ""
+    log_error "Troubleshooting steps:"
+    log_error "  1. Verify PostgreSQL is running on host:"
+    log_error "       systemctl status postgresql@14-main"
+    log_error "       ss -tlnp | grep 5432"
+    log_error "  2. Check PostgreSQL listens on Docker bridge:"
+    log_error "       grep 'listen_addresses' /etc/postgresql/*/main/postgresql.conf"
+    log_error "       (should include '172.18.0.1' or '0.0.0.0')"
+    log_error "  3. Check pg_hba.conf allows Docker network:"
+    log_error "       grep '172.18' /etc/postgresql/*/main/pg_hba.conf"
+    log_error "  4. Test from host:"
+    log_error "       pg_isready -h 172.18.0.1 -p 5432"
+    echo ""
+    log_error "Deploy ABORTED. Fix database connectivity first."
+    exit 10
 fi
 
 log_success "Pre-flight checks passed"
@@ -226,10 +288,14 @@ echo ""
 # -----------------------------------------------------------------------------
 log_info "Starting new container: ${CONTAINER_NAME}..."
 
+# CRITICAL: --add-host=host.docker.internal:host-gateway enables robust DB connection
+# Container connects to host PostgreSQL via host.docker.internal (not hardcoded gateway IP)
+# This makes deployment resilient to Docker network gateway changes (172.18.0.1 vs 172.19.0.1)
 docker run -d \
     --name "${CONTAINER_NAME}" \
     --restart unless-stopped \
     --network "${DOCKER_NETWORK}" \
+    --add-host=host.docker.internal:host-gateway \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
     -v "${DATA_DIR}:/app/data" \
     -v "${MEDIA_DIR}:/app/media:ro" \
