@@ -84,7 +84,28 @@ const DOM = {
  */
 function getCsrfToken() {
   const match = document.cookie.match(/csrf_access_token=([^;]+)/);
-  return match ? match[1] : '';
+  const token = match ? match[1] : '';
+  
+  // DEBUG: Log CSRF token availability (only in dev)
+  if (!token && console && console.warn) {
+    console.warn('[CSRF Debug] csrf_access_token cookie not found! Available cookies:', 
+      document.cookie.split(';').map(c => c.trim().split('=')[0]).join(', '));
+  }
+  
+  return token;
+}
+
+/**
+ * Debug log for mutating requests (only in dev).
+ * Helps diagnose missing CSRF tokens.
+ */
+function debugLogRequest(method, url, headers) {
+  if (!console || !console.log) return;
+  
+  const hasCsrf = headers && headers['X-CSRF-TOKEN'];
+  const csrfValue = hasCsrf ? headers['X-CSRF-TOKEN'].substring(0, 20) + '...' : 'MISSING';
+  
+  console.log(`[Admin API] ${method} ${url} | X-CSRF-TOKEN: ${hasCsrf ? '✓' : '✗'} (${csrfValue})`);
 }
 
 const API = {
@@ -145,13 +166,17 @@ const API = {
   },
 
   async post(endpoint, data = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': getCsrfToken(),
+    };
+    
+    debugLogRequest('POST', `${this.baseUrl}${endpoint}`, headers);
+    
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': getCsrfToken(),
-      },
+      headers,
       credentials: 'same-origin',
       body: JSON.stringify(data),
     });
@@ -159,13 +184,17 @@ const API = {
   },
 
   async patch(endpoint, data = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': getCsrfToken(),
+    };
+    
+    debugLogRequest('PATCH', `${this.baseUrl}${endpoint}`, headers);
+    
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': getCsrfToken(),
-      },
+      headers,
       credentials: 'same-origin',
       body: JSON.stringify(data),
     });
@@ -173,24 +202,32 @@ const API = {
   },
 
   async delete(endpoint) {
+    const headers = {
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': getCsrfToken(),
+    };
+    
+    debugLogRequest('DELETE', `${this.baseUrl}${endpoint}`, headers);
+    
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': getCsrfToken(),
-      },
+      headers,
       credentials: 'same-origin',
     });
     return this._handleResponse(response);
   },
 
   async upload(formData) {
+    const headers = {
+      'X-CSRF-TOKEN': getCsrfToken(),
+      // NOTE: Do NOT set Content-Type for FormData - browser sets it with boundary
+    };
+    
+    debugLogRequest('POST', `${this.baseUrl}/upload-unit`, headers);
+    
     const response = await fetch(`${this.baseUrl}/upload-unit`, {
       method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': getCsrfToken(),
-        // NOTE: Do NOT set Content-Type for FormData - browser sets it with boundary
-      },
+      headers,
       credentials: 'same-origin',
       body: formData,
     });
