@@ -312,6 +312,74 @@ class TestReleasesAPI:
 
 
 # ============================================================================
+# Release Import Authentication Tests
+# ============================================================================
+
+class TestReleaseImportAuth:
+    """Test authenticated release import endpoint."""
+
+    def test_import_requires_admin_auth(self, admin_client):
+        """Import endpoint requires admin authentication."""
+        response = admin_client.post(
+            "/quiz-admin/api/releases/test_release_001/import",
+            headers={"Accept": "application/json"}
+        )
+        assert response.status_code == 401
+        data = response.get_json()
+        assert data["error"] == "unauthorized"
+
+    def test_import_requires_admin_role(self, admin_client, user_token):
+        """Import endpoint requires admin role."""
+        response = admin_client.post(
+            "/quiz-admin/api/releases/test_release_001/import",
+            headers={
+                "Authorization": f"Bearer {user_token}",
+                "Accept": "application/json"
+            }
+        )
+        assert response.status_code == 403
+
+    def test_import_with_valid_admin_token(self, admin_client, admin_token, seeded_releases, tmp_path):
+        """Import with valid admin token should succeed (or return 404 for missing files)."""
+        # NOTE: This will fail with 404 if media files don't exist, but that's expected
+        # The important part is that authentication works (not 401/403)
+        response = admin_client.post(
+            "/quiz-admin/api/releases/test_release_001/import",
+            headers={
+                "Authorization": f"Bearer {admin_token}",
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # Should NOT be 401 (unauthorized) or 403 (forbidden)
+        # May be 404 (release files not found) or 500 (import error) - both are OK for this test
+        assert response.status_code not in [401, 403], \
+            f"Import should not fail with auth error, got {response.status_code}: {response.get_json()}"
+
+    def test_import_with_cookie_auth(self, admin_client, admin_token, seeded_releases):
+        """Import with JWT cookie should work (same-origin credentials)."""
+        # Set JWT cookie
+        admin_client.set_cookie(
+            server_name="localhost",
+            key="jwt_access_token",
+            value=admin_token
+        )
+        
+        response = admin_client.post(
+            "/quiz-admin/api/releases/test_release_001/import",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # Should NOT be 401 (unauthorized) or 403 (forbidden)
+        assert response.status_code not in [401, 403], \
+            f"Import with cookie should not fail with auth error, got {response.status_code}"
+
+
+# ============================================================================
 # Units API Tests
 # ============================================================================
 

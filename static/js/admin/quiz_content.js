@@ -81,6 +81,50 @@ const DOM = {
 const API = {
   baseUrl: '/quiz-admin/api',
 
+  /**
+   * Parse JSON response with proper error handling.
+   * Throws descriptive error if response is not OK or not JSON.
+   */
+  async _handleResponse(response) {
+    // Handle 204 No Content (successful empty response)
+    if (response.status === 204) {
+      return { ok: true };
+    }
+
+    // Check HTTP status first
+    if (!response.ok) {
+      // For non-JSON responses (e.g., 401 redirects), extract text
+      const contentType = response.headers.get('Content-Type') || '';
+      if (!contentType.includes('application/json')) {
+        // Debug: Log first 500 chars of response for diagnosis
+        try {
+          const text = await response.text();
+          const preview = text.substring(0, 500);
+          console.error(`[Auth Debug] HTTP ${response.status} non-JSON response preview:`, preview);
+        } catch (e) {
+          console.error(`[Auth Debug] HTTP ${response.status} - could not read response body`);
+        }
+        throw new Error(`HTTP ${response.status}: Server returned non-JSON response (likely authentication redirect)`);
+      }
+      
+      // Try to parse JSON error response
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+      } catch (jsonError) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    // Verify Content-Type for successful responses
+    const contentType = response.headers.get('Content-Type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Expected JSON but received ${contentType}`);
+    }
+
+    return response.json();
+  },
+
   async get(endpoint) {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       headers: {
@@ -88,7 +132,7 @@ const API = {
       },
       credentials: 'same-origin',
     });
-    return response.json();
+    return this._handleResponse(response);
   },
 
   async post(endpoint, data = {}) {
@@ -101,7 +145,7 @@ const API = {
       credentials: 'same-origin',
       body: JSON.stringify(data),
     });
-    return response.json();
+    return this._handleResponse(response);
   },
 
   async patch(endpoint, data = {}) {
@@ -114,7 +158,7 @@ const API = {
       credentials: 'same-origin',
       body: JSON.stringify(data),
     });
-    return response.json();
+    return this._handleResponse(response);
   },
 
   async delete(endpoint) {
@@ -125,7 +169,7 @@ const API = {
       },
       credentials: 'same-origin',
     });
-    return response.json();
+    return this._handleResponse(response);
   },
 
   async upload(formData) {
@@ -134,7 +178,7 @@ const API = {
       credentials: 'same-origin',
       body: formData,
     });
-    return response.json();
+    return this._handleResponse(response);
   },
 };
 

@@ -11,6 +11,48 @@ document.addEventListener('DOMContentLoaded', function () {
     return match ? match[1] : '';
   }
 
+  /**
+   * Parse JSON response with proper error handling.
+   * Throws descriptive error if response is not OK or not JSON.
+   */
+  async function handleJsonResponse(response) {
+    // Handle 204 No Content (successful empty response)
+    if (response.status === 204) {
+      return { ok: true };
+    }
+
+    // Check HTTP status first
+    if (!response.ok) {
+      const contentType = response.headers.get('Content-Type') || '';
+      if (!contentType.includes('application/json')) {
+        // Debug: Log first 500 chars of response for diagnosis
+        try {
+          const text = await response.text();
+          const preview = text.substring(0, 500);
+          console.error(`[Auth Debug] HTTP ${response.status} non-JSON response preview:`, preview);
+        } catch (e) {
+          console.error(`[Auth Debug] HTTP ${response.status} - could not read response body`);
+        }
+        throw new Error(`HTTP ${response.status}: Server returned non-JSON (likely auth redirect)`);
+      }
+      
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+      } catch (jsonError) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    // Verify Content-Type for successful responses
+    const contentType = response.headers.get('Content-Type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Expected JSON but received ${contentType}`);
+    }
+
+    return response.json();
+  }
+
   // DOM Elements - List
   const listBody = document.getElementById('list-body');
   const refreshBtn = document.getElementById('refresh');
@@ -126,10 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const url = '/api/admin/users' + (params.toString() ? '?' + params.toString() : '');
     
     fetch(url, { credentials: 'same-origin' })
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to load users');
-        return r.json();
-      })
+      .then(handleJsonResponse)
       .then((data) => {
         listBody.innerHTML = '';
         if (!data.items || data.items.length === 0) {
@@ -176,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Fetch user data
     fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { credentials: 'same-origin' })
-      .then(r => r.json())
+      .then(handleJsonResponse)
       .then(data => {
         if (data.error) {
           throw new Error(data.error);
@@ -259,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
         is_active: isActive
       })
     })
-    .then(r => r.json())
+    .then(handleJsonResponse)
     .then(resp => {
       if (saveEditBtn) {
         saveEditBtn.disabled = false;
@@ -315,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       credentials: 'same-origin'
     })
-    .then(r => r.json())
+    .then(handleJsonResponse)
     .then(resp => {
       if (editResetPasswordBtn) {
         editResetPasswordBtn.disabled = false;
@@ -470,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
         credentials: 'same-origin',
         body: JSON.stringify(data),
       })
-      .then(r => r.json())
+      .then(handleJsonResponse)
       .then(resp => {
         if (resp.ok) {
           createDialog.close();
