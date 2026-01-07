@@ -4,8 +4,6 @@
    Application-specific design tokens that extend the MD3 system.
    These are NOT brand-specific and generally don't need changing
    when adapting the template for a new project.
-   
-   For brand colors (primary, secondary, etc.), see branding.css
    ================================================================= */
 
 :root {
@@ -22,7 +20,6 @@
      APP: Page Backgrounds
      ----------------------------------------------------------------- */
   --app-color-login-bg: #D4DFE4;  /* Konsistent mit background */
-  /* Note: --app-background is overridden in branding.css to use --brand-background */
   --app-background: var(--md-sys-color-background);
   
   /* -----------------------------------------------------------------
