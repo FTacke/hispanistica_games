@@ -495,6 +495,7 @@ class QuizImportService:
             
         except Exception as e:
             logger.error(f"Import failed with exception: {e}", exc_info=True)
+            session.rollback()  # Clean up transaction on unexpected errors
             result = ImportResult(
                 success=False,
                 release_id=release_id,

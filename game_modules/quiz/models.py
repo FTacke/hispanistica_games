@@ -84,8 +84,8 @@ class QuizTopic(QuizBase):
     __tablename__ = "quiz_topics"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # topic_id e.g. "demo_topic"
-    title_key: Mapped[str] = mapped_column(String(100), nullable=False)  # i18n key for title (or plaintext)
-    description_key: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # i18n key for description (or plaintext)
+    title_key: Mapped[str] = mapped_column(Text, nullable=False)  # i18n key for title (or plaintext)
+    description_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # i18n key for description (or plaintext)
     authors: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True, server_default='{}')  # List of author names
     based_on: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)  # Source information: {chapter_title, chapter_url, course_title, course_url}
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -109,12 +109,12 @@ class QuizQuestion(QuizBase):
     """
     __tablename__ = "quiz_questions"
 
-    id: Mapped[str] = mapped_column(String(100), primary_key=True)  # stable question id e.g. "topic_slug_q_<ULID>"
+    id: Mapped[str] = mapped_column(Text, primary_key=True)  # stable question id e.g. "topic_slug_q_<ULID>"
     topic_id: Mapped[str] = mapped_column(String(50), ForeignKey("quiz_topics.id", ondelete="CASCADE"), nullable=False)
     difficulty: Mapped[int] = mapped_column(Integer, nullable=False)  # 1-5
     type: Mapped[str] = mapped_column(String(20), nullable=False, default="single_choice")
-    prompt_key: Mapped[str] = mapped_column(String(100), nullable=False)  # i18n key
-    explanation_key: Mapped[str] = mapped_column(String(100), nullable=False)  # i18n key - REQUIRED per spec 3.4
+    prompt_key: Mapped[str] = mapped_column(Text, nullable=False)  # i18n key
+    explanation_key: Mapped[str] = mapped_column(Text, nullable=False)  # i18n key - REQUIRED per spec 3.4
     answers: Mapped[dict] = mapped_column(JSONB, nullable=False)  # [{id, text_key, correct}, ...]
     media: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     sources: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
