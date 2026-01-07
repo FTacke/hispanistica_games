@@ -21,11 +21,11 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     exit 1
 fi
 
-DB_URL=$(docker exec "${CONTAINER_NAME}" bash -lc 'echo "$DATABASE_URL"' 2>/dev/null || echo "")
+DB_URL=$(docker exec "${CONTAINER_NAME}" bash -lc 'echo "${DATABASE_URL:-$AUTH_DATABASE_URL}"' 2>/dev/null || echo "")
 
 if [ -z "$DB_URL" ]; then
-    echo "ERROR: Could not extract DATABASE_URL from container"
-    echo "Try: docker exec -it ${CONTAINER_NAME} bash -lc 'echo \$DATABASE_URL'"
+    echo "ERROR: Could not extract DATABASE_URL or AUTH_DATABASE_URL from container"
+    echo "Try: docker exec -it ${CONTAINER_NAME} bash -lc 'echo \${DATABASE_URL:-\$AUTH_DATABASE_URL}'"
     exit 1
 fi
 

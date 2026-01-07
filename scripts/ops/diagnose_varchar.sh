@@ -9,16 +9,17 @@ echo "DIAGNOSE: Which columns are varchar(100)?"
 echo "=============================================="
 echo ""
 
-# Get DATABASE_URL
+# Get DATABASE_URL (with AUTH_DATABASE_URL fallback)
 echo "[1] DATABASE_URL from container:"
-docker exec "${CONTAINER_NAME}" bash -lc 'DB_URL="$DATABASE_URL"; echo "${DB_URL%@*}@<redacted>"' 2>/dev/null || echo "ERROR: Could not get DATABASE_URL"
+docker exec "${CONTAINER_NAME}" bash -lc 'DB_URL="${DATABASE_URL:-$AUTH_DATABASE_URL}"; echo "${DB_URL%@*}@<redacted>"' 2>/dev/null || echo "ERROR: Could not get DATABASE_URL or AUTH_DATABASE_URL"
 echo ""
 
 # Query column types
 echo "[2] Column types in quiz_questions:"
 echo "=========================================="
 docker exec "${CONTAINER_NAME}" bash -lc '
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "
+DB_URL="${DATABASE_URL:-$AUTH_DATABASE_URL}"
+psql "$DB_URL" -v ON_ERROR_STOP=1 -c "
 SELECT 
   column_name,
   data_type,
