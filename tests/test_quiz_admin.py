@@ -380,6 +380,196 @@ class TestReleaseImportAuth:
 
 
 # ============================================================================
+# CSRF Protection Tests
+# ============================================================================
+
+class TestCSRFProtection:
+    """Test CSRF token requirement for mutating requests with JWT-in-cookies."""
+
+    @pytest.fixture
+    def csrf_app(self) -> Generator[Flask, None, None]:
+        """Create Flask app with CSRF protection enabled."""
+        project_root = Path(__file__).resolve().parents[1]
+        template_dir = project_root / "templates"
+        static_dir = project_root / "static"
+        
+        app = Flask(
+            __name__, 
+            template_folder=str(template_dir), 
+            static_folder=str(static_dir)
+        )
+        app.config["AUTH_DATABASE_URL"] = QUIZ_TEST_DB_URL
+        app.config["TESTING"] = True
+        app.config["SECRET_KEY"] = "test-secret"
+        app.config["JWT_SECRET_KEY"] = "test-secret"
+        app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+        app.config["JWT_COOKIE_SECURE"] = False
+        app.config["JWT_COOKIE_CSRF_PROTECT"] = True  # ENABLE CSRF!
+        
+        from flask import g
+        from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
+        from src.app.extensions import register_extensions
+        from src.app.auth import Role
+        
+        register_extensions(app)
+        
+        @app.before_request
+        def set_auth_context():
+            try:
+                verify_jwt_in_request(optional=True, locations=["cookies"])
+                identity = get_jwt_identity()
+                token = get_jwt() or {}
+                g.user = token.get("username") or identity
+                role_value = token.get("role")
+                try:
+                    g.role = Role(role_value) if role_value else None
+                except (ValueError, KeyError):
+                    g.role = None
+            except Exception:
+                g.user = None
+                g.role = None
+        
+        init_engine(app)
+        
+        from game_modules.quiz.models import QuizBase
+        from game_modules.quiz.release_model import QuizContentRelease
+        engine = get_engine()
+        QuizBase.metadata.create_all(bind=engine)
+        
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE quiz_topics ADD COLUMN IF NOT EXISTS release_id VARCHAR(50)"))
+            conn.execute(text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS release_id VARCHAR(50)"))
+            conn.commit()
+        
+        from src.app.routes.quiz_admin import blueprint as quiz_admin_blueprint
+        app.register_blueprint(quiz_admin_blueprint)
+        
+        ctx = app.app_context()
+        ctx.push()
+        yield app
+        
+        _cleanup_admin_test_data()
+        ctx.pop()
+
+    @pytest.fixture
+    def csrf_client(self, csrf_app):
+        """Test client with CSRF protection enabled."""
+        return csrf_app.test_client()
+
+    @pytest.fixture
+    def admin_csrf_tokens(self, csrf_app):
+        """Generate JWT access token and CSRF token for admin."""
+        with csrf_app.app_context():
+            from flask_jwt_extended import create_access_token
+            
+            access_token = create_access_token(
+                identity="admin_user",
+                additional_claims={"role": "admin", "username": "admin_user"}
+            )
+            
+            # Simulate CSRF token (same value as access_token for testing)
+            # In production, flask-jwt-extended sets this automatically
+            csrf_token = access_token
+            
+            return {
+                "access_token": access_token,
+                "csrf_token": csrf_token
+            }
+
+    def test_patch_units_without_csrf_fails(self, csrf_client, admin_csrf_tokens, seeded_units):
+        """PATCH request with JWT cookie but NO CSRF token should fail with 401."""
+        # Set JWT cookie
+        csrf_client.set_cookie(
+            server_name="localhost",
+            key="jwt_access_token",
+            value=admin_csrf_tokens["access_token"]
+        )
+        
+        # Make PATCH request WITHOUT X-CSRF-TOKEN header
+        response = csrf_client.patch(
+            "/quiz-admin/api/units",
+            json={"updates": [{"slug": "test_unit_1", "is_active": False}]},
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # Should fail with 401 (missing CSRF token)
+        assert response.status_code == 401, \
+            f"Expected 401 without CSRF token, got {response.status_code}"
+
+    def test_patch_units_with_csrf_succeeds(self, csrf_client, admin_csrf_tokens, seeded_units):
+        """PATCH request with JWT cookie AND CSRF token should succeed."""
+        # Set JWT cookie
+        csrf_client.set_cookie(
+            server_name="localhost",
+            key="jwt_access_token",
+            value=admin_csrf_tokens["access_token"]
+        )
+        
+        # Make PATCH request WITH X-CSRF-TOKEN header
+        response = csrf_client.patch(
+            "/quiz-admin/api/units",
+            json={"updates": [{"slug": "test_unit_1", "is_active": False}]},
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": admin_csrf_tokens["csrf_token"]
+            }
+        )
+        
+        # Should succeed (200)
+        assert response.status_code == 200, \
+            f"Expected 200 with CSRF token, got {response.status_code}: {response.get_json()}"
+        
+        data = response.get_json()
+        assert data["ok"] is True
+
+    def test_post_import_without_csrf_fails(self, csrf_client, admin_csrf_tokens, seeded_releases):
+        """POST import request without CSRF token should fail."""
+        csrf_client.set_cookie(
+            server_name="localhost",
+            key="jwt_access_token",
+            value=admin_csrf_tokens["access_token"]
+        )
+        
+        response = csrf_client.post(
+            "/quiz-admin/api/releases/test_release_001/import",
+            json={},
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        assert response.status_code == 401, \
+            f"Expected 401 without CSRF token, got {response.status_code}"
+
+    def test_post_import_with_csrf_succeeds(self, csrf_client, admin_csrf_tokens, seeded_releases):
+        """POST import request with CSRF token should not fail with 401 (may fail with 404/500 for missing files)."""
+        csrf_client.set_cookie(
+            server_name="localhost",
+            key="jwt_access_token",
+            value=admin_csrf_tokens["access_token"]
+        )
+        
+        response = csrf_client.post(
+            "/quiz-admin/api/releases/test_release_001/import",
+            json={},
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": admin_csrf_tokens["csrf_token"]
+            }
+        )
+        
+        # Should NOT be 401 (CSRF is OK, may be other error like 404)
+        assert response.status_code != 401, \
+            f"Should not fail with CSRF error, got {response.status_code}"
+
+
+# ============================================================================
 # Units API Tests
 # ============================================================================
 

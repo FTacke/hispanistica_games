@@ -78,6 +78,15 @@ const DOM = {
 // API Functions
 // =============================================================================
 
+/**
+ * Get CSRF token from cookie.
+ * Required for POST/PATCH/PUT/DELETE requests with JWT-in-cookies.
+ */
+function getCsrfToken() {
+  const match = document.cookie.match(/csrf_access_token=([^;]+)/);
+  return match ? match[1] : '';
+}
+
 const API = {
   baseUrl: '/quiz-admin/api',
 
@@ -141,6 +150,7 @@ const API = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
       },
       credentials: 'same-origin',
       body: JSON.stringify(data),
@@ -154,6 +164,7 @@ const API = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
       },
       credentials: 'same-origin',
       body: JSON.stringify(data),
@@ -166,6 +177,7 @@ const API = {
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
       },
       credentials: 'same-origin',
     });
@@ -175,6 +187,10 @@ const API = {
   async upload(formData) {
     const response = await fetch(`${this.baseUrl}/upload-unit`, {
       method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': getCsrfToken(),
+        // NOTE: Do NOT set Content-Type for FormData - browser sets it with boundary
+      },
       credentials: 'same-origin',
       body: formData,
     });
