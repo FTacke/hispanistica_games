@@ -295,8 +295,8 @@ docker run -d \
     --restart unless-stopped \
     --network "${DOCKER_NETWORK}" \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
-    -v "${DATA_DIR}:/app/data" \
-    -v "${MEDIA_DIR}:/app/media:ro" \
+    -v "${DATA_DIR}:/app/data:rw" \
+    -v "${MEDIA_DIR}:/app/media:rw" \
     -v "${LOGS_DIR}:/app/logs" \
     --env-file "${CONFIG_DIR}/passwords.env" \
     -e "FLASK_ENV=production" \
