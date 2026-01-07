@@ -334,12 +334,13 @@ class QuizImportService:
                     topic = session.query(QuizTopic).filter(QuizTopic.id == unit.slug).first()
                     
                     if topic:
-                        # Update existing
+                        # Update existing (preserve is_active if manually set to false)
                         topic.title_key = unit.title
                         topic.description_key = unit.description
                         topic.authors = unit.authors or []
                         topic.based_on = unit.based_on
-                        topic.is_active = True
+                        # Do NOT override is_active if set to false (soft-delete semantics)
+                        # topic.is_active = True  # ← REMOVED: Admin decision has priority
                         topic.release_id = release_id
                         logger.debug(f"Updated topic: {unit.slug}")
                     else:

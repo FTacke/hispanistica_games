@@ -173,16 +173,16 @@
   display: block;
 }
 
-/* School Button - Sonderfarbe #3a4f7a */
+/* School Button - Sonderfarbe #2B4460 */
 .md3-button--school {
   /* NEEDS_HARDCODED: School brand color */
-  background-color: #3a4f7a !important;
+  background-color: #2B4460 !important;
   color: #ffffff !important;
 }
 
 .md3-button--school:hover {
   /* NEEDS_HARDCODED: School brand color hover */
-  background-color: #2d3e5f !important;
+  background-color: #35557A !important;
 }
 
 /* ============================================

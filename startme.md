@@ -50,6 +50,218 @@ Quiz-Inhalte in `content/quiz/topics/*.json` werden automatisch synchronisiert.
 
 ---
 
+## 📦 Production Content Release (Upload & Publish)
+
+> **PRODUCTION-ONLY SECTION** – Diese Sektion beschreibt die Production-Content-Pipeline:
+> Vorbereitung → rsync-Upload → Import → Publish
+
+### Schritt 1: Release-Ordner vorbereiten
+
+Erstelle einen Release-Ordner mit dieser **exakten Struktur**:
+
+```
+C:\content\quiz_releases\release_YYYYMMDD_HHMM\
+├── units\
+│   ├── topic_001.json
+│   ├── topic_002.json
+│   └── ...
+└── audio\
+    ├── audio_001.mp3
+    ├── audio_002.mp3
+    └── ...
+```
+
+**Beispiel deiner aktuellen Structure:**
+```
+C:\dev\games_hispanistica\content\quiz_releases\release_20260106_2200\
+├── units\               <- JSON-Dateien (quiz-units)
+├── audio\               <- MP3-Dateien (Audio-Ref aus JSON)
+```
+
+**JSON-Format (units/*.json):**
+```json
+{
+  "slug": "topic_001",
+  "title": "topic.001.title",
+  "description": "topic.001.description",
+  "authors": ["Author Name"],
+  "based_on": null,
+  "questions": [
+    {
+      "id": "q_001",
+      "type": "multiple-choice",
+      "difficulty": 1,
+      "prompt": "question.prompt.key",
+      "explanation": "question.explanation.key",
+      "answers": [
+        {"id": "a1", "text": "Answer Text", "correct": true, "media": []},
+        {"id": "a2", "text": "Wrong Answer", "correct": false, "media": []}
+      ],
+      "media": [],
+      "sources": [],
+      "meta": {}
+    }
+  ]
+}
+```
+
+### Schritt 2: Local Upload-Test (Dry-Run)
+
+Vor dem echten Upload: **Immer einen Dry-Run machen!**
+
+```powershell
+# Variable setzen
+$ReleaseId = "release_20260106_2200"
+$LocalPath = "C:\dev\games_hispanistica\content\quiz_releases\release_20260106_2200"
+$ServerUser = "root"
+$ServerHost = "games.hispanistica.com"
+
+# Dry-Run (zeigt was hochgeladen würde, ändert nichts)
+.\scripts\content_release\sync_release.ps1 `
+  -ReleaseId $ReleaseId `
+  -LocalPath $LocalPath `
+  -ServerUser $ServerUser `
+  -ServerHost $ServerHost
+```
+
+**Output sollte zeigen:**
+- Lokale Struktur: units/ + audio/
+- Datei-Count
+- Keine Fehler
+
+### Schritt 3: Echten Upload durchführen
+
+Wenn der Dry-Run OK ist:
+
+```powershell
+# Mit -Execute Flag
+.\scripts\content_release\sync_release.ps1 `
+  -ReleaseId $ReleaseId `
+  -LocalPath $LocalPath `
+  -ServerUser $ServerUser `
+  -ServerHost $ServerHost `
+  -Execute
+```
+
+**Bestätigung:** Der Upload wird am Ende zusammengefasst:
+```
+✓ Upload completed successfully
+
+Next steps (on server):
+  1. SSH into server: ssh root@games.hispanistica.com
+  2. Set symlink: cd /srv/webapps/games_hispanistica/media && ln -sfn releases/release_20260106_2200 current
+  3. Import: ./manage import-content --release release_20260106_2200
+  4. Publish: ./manage publish-release --release release_20260106_2200
+```
+
+### Schritt 4: Auf dem Server - Import durchführen
+
+SSH in den Server:
+
+```bash
+ssh root@games.hispanistica.com
+
+# Zum richtigen Verzeichnis
+cd /srv/webapps/games_hispanistica/app
+
+# Symlink setzen
+cd ../media
+ln -sfn releases/release_20260106_2200 current
+cd ../app
+
+# Import (Content als Draft, nicht sichtbar)
+python manage.py import-content \
+  --units-path media/current/units \
+  --audio-path media/current/audio \
+  --release release_20260106_2200
+
+# Output sollte zeigen: "✓ Import successful"
+```
+
+### Schritt 5: Auf dem Server - Publish durchführen
+
+```bash
+# Nur ein Release kann published sein - dieses hier aktivieren
+python manage.py publish-release --release release_20260106_2200
+
+# Output: "✓ Release 'release_20260106_2200' published"
+```
+
+**Das wars!** Content ist jetzt sichtbar im Frontend.
+
+### Rollback (falls nötig)
+
+```bash
+# Unpublish aktuelles Release
+python manage.py unpublish-release --release release_20260106_2200
+
+# Vorheriges Release wieder publishen (falls vorhanden)
+python manage.py list-releases
+python manage.py publish-release --release <previous_release_id>
+```
+
+### Troubleshooting
+
+**Problem: SSH funktioniert nicht**
+```
+ssh: permission denied (publickey)
+```
+→ SSH-Key nicht konfiguriert. Siehe [games_hispanistica_production.md § A3](games_hispanistica_production.md#a3-ssh-setup)
+
+**Problem: rsync nicht gefunden**
+```
+rsync : The term 'rsync' is not recognized
+```
+→ Installiere rsync via WSL, Cygwin, oder native Windows-Binary. Siehe Dokumentation.
+
+**Problem: Dry-Run zeigt Fehler**
+```
+ERROR: Validation failed for ... (invalid JSON)
+```
+→ Check deine JSON-Dateien in `units/`:
+```powershell
+python scripts/quiz_units_normalize.py --write
+```
+
+**Problem: Import war erfolgreich aber Content nicht sichtbar**
+- Check ob `publish-release` aufgerufen wurde
+- Verifizieren: `python manage.py list-releases`
+- Content ist nur nach Publish sichtbar, nicht nach Import
+
+---
+
+## 📋 Quick Reference: Complete Release Workflow
+
+**Lokal:**
+```powershell
+# Dry-Run
+.\scripts\content_release\sync_release.ps1 -ReleaseId release_20260106_2200 -LocalPath "C:\..." -ServerUser root -ServerHost games.hispanistica.com
+
+# Real Upload
+.\scripts\content_release\sync_release.ps1 -ReleaseId release_20260106_2200 -LocalPath "C:\..." -ServerUser root -ServerHost games.hispanistica.com -Execute
+```
+
+**Server:**
+```bash
+# Prepare
+cd /srv/webapps/games_hispanistica/media
+ln -sfn releases/release_20260106_2200 current
+cd ../app
+
+# Import (Draft)
+python manage.py import-content --units-path media/current/units --audio-path media/current/audio --release release_20260106_2200
+
+# Publish (Visible)
+python manage.py publish-release --release release_20260106_2200
+
+# Verify
+python manage.py list-releases
+```
+
+---
+
+---
+
 ## Quiz Content Management (Manuell – DEV-only)
 
 > **⚠️ DEV-ONLY SECTION** – Diese Befehle sind NUR für lokale Entwicklung.

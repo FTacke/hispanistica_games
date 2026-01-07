@@ -72,7 +72,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [ValidatePattern('^\d{4}-\d{2}-\d{2}_\d{4}$')]
+    [ValidatePattern('^(\d{4}-\d{2}-\d{2}_\d{4}|\d{8}_\d{4})$')]
     [string]$ReleaseId,
 
     [Parameter(Mandatory=$true)]
@@ -98,6 +98,32 @@ param(
 # --- Script Configuration ---
 $ErrorActionPreference = "Stop"
 
+# --- Determine rsync command (native or WSL) ---
+$RsyncCmd = "rsync"
+try {
+    $null = Get-Command rsync -ErrorAction Stop
+    Write-Verbose "Using native rsync"
+}
+catch {
+    # Fallback to WSL
+    try {
+        $null = Get-Command wsl -ErrorAction Stop
+        $testWslRsync = wsl rsync --version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $RsyncCmd = "wsl", "rsync"
+            Write-Verbose "Using WSL rsync"
+        }
+        else {
+            Write-Error "rsync not found in WSL"
+            exit 1
+        }
+    }
+    catch {
+        Write-Error "rsync not found (native or WSL)"
+        exit 1
+    }
+}
+
 # --- Helper Functions ---
 function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
@@ -112,13 +138,9 @@ function Write-Log {
 }
 
 function Test-RsyncAvailable {
-    try {
-        $null = Get-Command rsync -ErrorAction Stop
-        return $true
-    }
-    catch {
-        return $false
-    }
+    # Rsync availability is checked at script start
+    # This function kept for backwards compatibility
+    return $true
 }
 
 function Test-ReleaseStructure {
@@ -149,11 +171,8 @@ Write-Log "Local Path: $LocalPath"
 Write-Log "Server: $ServerUser@$ServerHost"
 Write-Log "Mode: $(if ($Execute) { 'EXECUTE' } else { 'DRY-RUN' })"
 
-# Check rsync availability
-if (-not (Test-RsyncAvailable)) {
-    Write-Log "rsync not found. Please install rsync (via WSL, Cygwin, or native Windows)" -Level "ERROR"
-    exit 1
-}
+# rsync command was determined at script start
+Write-Log "Using rsync: $(if ($RsyncCmd -is [array]) { $RsyncCmd -join ' ' } else { $RsyncCmd })"
 
 # Validate local structure
 Write-Log "Validating local release structure..."
@@ -165,10 +184,27 @@ if (-not (Test-ReleaseStructure -Path $LocalPath)) {
 Write-Log "Release structure valid" -Level "SUCCESS"
 
 # --- Build rsync Command ---
-$targetPath = "$ServerUser@${ServerHost}:$ServerBasePath/$ReleaseId/"
+# Ensure releases/ subdirectory in path
+if ($ServerBasePath.EndsWith('/releases')) {
+    $targetPath = "$ServerUser@${ServerHost}:$ServerBasePath/$ReleaseId/"
+}
+else {
+    $targetPath = "$ServerUser@${ServerHost}:$ServerBasePath/releases/$ReleaseId/"
+}
 
 # Convert Windows path to Unix-style for rsync (handle backslashes)
 $localPathUnix = $LocalPath -replace '\\', '/'
+
+# If using WSL rsync, convert Windows path to WSL path format
+if ($RsyncCmd -is [array] -and $RsyncCmd[0] -eq "wsl") {
+    # Convert C:/path to /mnt/c/path for WSL
+    if ($localPathUnix -match '^([A-Za-z]):(.+)$') {
+        $drive = $matches[1].ToLower()
+        $path = $matches[2]
+        $localPathUnix = "/mnt/$drive$path"
+    }
+}
+
 # Ensure trailing slash (important for rsync behavior)
 if (-not $localPathUnix.EndsWith('/')) {
     $localPathUnix += '/'
@@ -194,7 +230,8 @@ $rsyncArgs += $targetPath
 
 # --- Display Command ---
 Write-Log "rsync command:"
-Write-Host "  rsync $($rsyncArgs -join ' ')" -ForegroundColor Cyan
+$displayCmd = if ($RsyncCmd -is [array]) { $RsyncCmd -join ' ' } else { $RsyncCmd }
+Write-Host "  $displayCmd $($rsyncArgs -join ' ')" -ForegroundColor Cyan
 
 # --- Confirmation for Execute ---
 if ($Execute -and -not $Delete) {
@@ -215,17 +252,26 @@ elseif ($Execute -and $Delete) {
 # --- Execute rsync ---
 Write-Log "Starting rsync..."
 try {
-    & rsync @rsyncArgs
+    if ($RsyncCmd -is [array]) {
+        # WSL rsync - need to handle array
+        & $RsyncCmd[0] $RsyncCmd[1] @rsyncArgs
+    }
+    else {
+        # Native rsync
+        & $RsyncCmd @rsyncArgs
+    }
     
     if ($LASTEXITCODE -eq 0) {
         if ($Execute) {
             Write-Log "✓ Upload completed successfully" -Level "SUCCESS"
             Write-Log ""
-            Write-Log "Next steps (on server):" -Level "SUCCESS"
-            Write-Log "  1. SSH into server: ssh $ServerUser@$ServerHost"
-            Write-Log "  2. Set symlink: cd /srv/webapps/games_hispanistica/media && ln -sfn releases/$ReleaseId current"
-            Write-Log "  3. Import: ./manage import-content --release $ReleaseId"
-            Write-Log "  4. Publish: ./manage publish-release --release $ReleaseId"
+            Write-Log "Next steps - server-side:" -Level "SUCCESS"
+            Write-Host "  1. SSH into server: ssh $ServerUser@$ServerHost"
+            Write-Host "  2. Set symlink:"
+            Write-Host "     cd /srv/webapps/games_hispanistica/media"
+            Write-Host "     ln -sfn releases/$ReleaseId current"
+            Write-Host "  3. Import: ./manage import-content --release $ReleaseId"
+            Write-Host "  4. Publish: ./manage publish-release --release $ReleaseId"
         }
         else {
             Write-Log "✓ Dry-run completed successfully" -Level "SUCCESS"

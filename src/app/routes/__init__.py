@@ -8,6 +8,7 @@ from . import (
     admin,
     auth,
     public,
+    quiz_admin,
 )
 
 # Import game modules
@@ -18,6 +19,7 @@ BLUEPRINTS = [
     public.blueprint,
     auth.blueprint,
     admin.blueprint,
+    quiz_admin.blueprint,  # Quiz Admin Dashboard
     quiz_blueprint,  # Quiz game module
 ]
 

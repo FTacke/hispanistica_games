@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% set page_section = 'Admin' %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/search-ui.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/quiz_content.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="md3-page">
+  <!-- Canonical Hero -->
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">quiz</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">Admin</p>
+        <h1 class="md3-headline-medium md3-hero__title">Quiz Content</h1>
+        <p class="md3-hero__intro">Verwalte Quiz-Units, Releases und Import-Operationen.</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="md3-tabs" role="tablist">
+    <button role="tab" aria-selected="true" aria-controls="tab-content" id="tab-quiz" class="md3-tab md3-tab--active">
+      <span class="material-symbols-rounded">quiz</span>
+      Quiz Content
+    </button>
+    <button role="tab" aria-selected="false" class="md3-tab" disabled aria-disabled="true">
+      <span class="material-symbols-rounded">bar_chart</span>
+      Statistics
+      <span class="md3-badge md3-badge--small md3-badge--info">Coming Soon</span>
+    </button>
+  </nav>
+
+  <main class="md3-page__main" id="tab-content" role="tabpanel" aria-labelledby="tab-quiz">
+    <div class="md3-page__section md3-stack--page">
+
+      <!-- ═══════════════ CONTENT PIPELINE ═══════════════ -->
+      <div class="md3-section-header">
+        <span class="material-symbols-rounded md3-section-header__icon">cloud_upload</span>
+        <span class="md3-title-small">Content Pipeline</span>
+      </div>
+
+      <!-- Section 1: Upload Unit -->
+      <section class="md3-card md3-card--outlined" id="upload-section">
+        <header class="md3-card__header">
+          <h2 class="md3-title-medium">
+            <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
+            Upload Unit
+          </h2>
+        </header>
+        <div class="md3-card__content md3-stack--section">
+          <form id="upload-form" class="md3-form" enctype="multipart/form-data">
+            <div class="md3-row md3-row--wrap">
+              <!-- JSON File Input -->
+              <div class="form-field form-field--file">
+                <label for="unit-json">JSON-Datei (erforderlich)</label>
+                <input type="file" id="unit-json" name="unit_json" accept=".json" required aria-describedby="json-help">
+                <p id="json-help" class="md3-helper-text">Eine Quiz-Unit JSON-Datei mit slug, title, questions.</p>
+              </div>
+
+              <!-- Media Files Input -->
+              <div class="form-field form-field--file">
+                <label for="media-files">Audio-Dateien (optional)</label>
+                <input type="file" id="media-files" name="media_files[]" accept=".mp3,.ogg,.wav" multiple aria-describedby="media-help">
+                <p id="media-help" class="md3-helper-text">MP3, OGG oder WAV Dateien für Fragen.</p>
+              </div>
+            </div>
+
+            <!-- JSON Preview (appears after file selection) -->
+            <div id="json-preview" class="md3-info-card" style="display: none;">
+              <h3 class="md3-title-small">Vorschau</h3>
+              <dl class="md3-preview-grid">
+                <dt>Slug:</dt>
+                <dd id="preview-slug">-</dd>
+                <dt>Titel:</dt>
+                <dd id="preview-title">-</dd>
+                <dt>Fragen:</dt>
+                <dd id="preview-questions">-</dd>
+              </dl>
+              <div id="media-refs" class="md3-media-refs" style="display: none;">
+                <h4 class="md3-label-medium">Audio-Referenzen:</h4>
+                <ul id="media-refs-list" class="md3-media-ref-list"></ul>
+              </div>
+            </div>
+
+            <!-- Validation Errors -->
+            <div id="upload-errors" class="md3-alert md3-alert--error" role="alert" style="display: none;">
+              <span class="material-symbols-rounded">error</span>
+              <div class="md3-alert__content">
+                <strong>Validierungsfehler:</strong>
+                <span id="upload-error-message"></span>
+              </div>
+            </div>
+
+            <!-- Upload Actions -->
+            <div class="md3-toolbar md3-toolbar--end">
+              <button type="button" id="reset-upload" class="md3-button md3-button--text" disabled>
+                Zurücksetzen
+              </button>
+              <button type="submit" id="submit-upload" class="md3-button md3-button--filled" disabled>
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">cloud_upload</span>
+                Upload speichern
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Section 2: Release Actions -->
+      <section class="md3-card md3-card--outlined" id="releases-section">
+        <header class="md3-card__header">
+          <h2 class="md3-title-medium">
+            <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+            Releases
+          </h2>
+        </header>
+        <div class="md3-card__content md3-stack--section">
+          <!-- Release Selection -->
+          <div class="md3-row md3-row--between md3-row--wrap">
+            <div class="form-field form-field--select">
+              <label for="release-select">Release auswählen</label>
+              <select id="release-select" aria-label="Release auswählen">
+                <option value="">-- Laden... --</option>
+              </select>
+            </div>
+
+            <div class="md3-toolbar">
+              <button id="refresh-releases" class="md3-button md3-button--outlined" type="button">
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">refresh</span>
+                Aktualisieren
+              </button>
+            </div>
+          </div>
+
+          <!-- Release Info -->
+          <div id="release-info" class="md3-release-status" style="display: none;">
+            <div class="md3-release-status__header">
+              <span id="release-id-display" class="md3-label-large">-</span>
+              <span id="release-status-badge" class="md3-badge md3-badge--status-draft">Draft</span>
+            </div>
+            <div class="md3-release-status__meta">
+              <span><strong>Units:</strong> <span id="release-units-count">0</span></span>
+              <span><strong>Fragen:</strong> <span id="release-questions-count">0</span></span>
+              <span><strong>Audio:</strong> <span id="release-audio-count">0</span></span>
+            </div>
+            <div class="md3-release-status__timestamps">
+              <span id="release-imported-at"></span>
+              <span id="release-published-at"></span>
+            </div>
+          </div>
+
+          <!-- Action Result -->
+          <div id="release-action-result" class="md3-action-result" style="display: none;"></div>
+
+          <!-- Release Actions -->
+          <div class="md3-toolbar md3-toolbar--actions">
+            <button id="btn-import" class="md3-button md3-button--tonal" type="button" disabled>
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">download</span>
+              Import (Draft)
+            </button>
+            <div class="md3-button-with-helper">
+              <button id="btn-publish" class="md3-button md3-button--filled" type="button" disabled>
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">publish</span>
+                Publish
+              </button>
+              <p class="md3-helper-text md3-helper-text--warning">
+                <span class="material-symbols-rounded">warning</span>
+                Ersetzt den aktuell veröffentlichten Content.
+              </p>
+            </div>
+            <button id="btn-unpublish" class="md3-button md3-button--outlined" type="button" disabled>
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">unpublished</span>
+              Unpublish
+            </button>
+          </div>
+
+          <!-- Log Viewer -->
+          <details id="log-viewer" class="md3-log-viewer">
+            <summary class="md3-log-viewer__summary">
+              <span class="material-symbols-rounded">terminal</span>
+              Import-Log anzeigen
+            </summary>
+            <pre id="log-content" class="md3-log-viewer__content">Kein Log vorhanden.</pre>
+          </details>
+        </div>
+      </section>
+
+      <!-- ═══════════════ RUNTIME CONFIGURATION ═══════════════ -->
+      <div class="md3-section-header">
+        <span class="material-symbols-rounded md3-section-header__icon">tune</span>
+        <span class="md3-title-small">Runtime Configuration</span>
+      </div>
+
+      <!-- Section 3: Units List -->
+      <section class="md3-card md3-card--outlined" id="units-section">
+        <header class="md3-card__header">
+          <h2 class="md3-title-medium">
+            <span class="material-symbols-rounded" aria-hidden="true">list_alt</span>
+            Units
+          </h2>
+        </header>
+        <div class="md3-card__content md3-stack--section">
+          <!-- Search and Toolbar -->
+          <div class="md3-row--between align-items-center">
+            <div class="md3-row md3-fill-max max-w-400">
+              <div class="form-field form-field--compact form-field--no-margin">
+                <input id="units-search" type="search" aria-label="Units suchen" placeholder="Units suchen...">
+              </div>
+            </div>
+            <div class="md3-toolbar">
+              <button id="refresh-units" class="md3-button md3-button--outlined" type="button">
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">refresh</span>
+                Aktualisieren
+              </button>
+              <button id="save-units" class="md3-button md3-button--filled" type="button" disabled>
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">save</span>
+                Änderungen speichern
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Chips -->
+          <div class="md3-filter-chips" role="group" aria-label="Filteroptionen">
+            <button type="button" id="filter-inactive" class="md3-chip" aria-pressed="false">
+              <span class="material-symbols-rounded md3-chip__icon" aria-hidden="true">visibility_off</span>
+              <span class="md3-chip__label">Inaktive anzeigen</span>
+            </button>
+          </div>
+
+          <!-- Units Save Result -->
+          <div id="units-action-result" class="md3-action-result" style="display: none;"></div>
+
+          <!-- Units Table -->
+          <div class="md3-table-container">
+            <table class="md3-table" id="units-table">
+              <thead>
+                <tr>
+                  <th class="col-w-15">Slug</th>
+                  <th class="col-w-25">Titel</th>
+                  <th class="col-w-10">Status</th>
+                  <th class="col-w-10">Aktiv</th>
+                  <th class="col-w-10">Reihenfolge</th>
+                  <th class="col-w-15 md3-hide-mobile">Release</th>
+                  <th class="col-w-15">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody id="units-body">
+                <!-- Populated by JS -->
+                <tr class="md3-table__loading">
+                  <td colspan="7">
+                    <span class="material-symbols-rounded md3-spinner">progress_activity</span>
+                    Laden...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Confirmation Dialog -->
+<dialog id="confirm-dialog" class="md3-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="md3-dialog__container">
+    <div class="md3-dialog__surface">
+      <header class="md3-dialog__header">
+        <h2 id="confirm-title" class="md3-title-large md3-dialog__title">Bestätigen</h2>
+      </header>
+      <div class="md3-dialog__content">
+        <p id="confirm-message" class="md3-body-medium">Sind Sie sicher?</p>
+      </div>
+      <div class="md3-dialog__actions">
+        <button type="button" class="md3-button md3-button--text" id="confirm-cancel">Abbrechen</button>
+        <button type="button" class="md3-button md3-button--filled md3-button--danger" id="confirm-ok">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin/quiz_content.js') }}" type="module"></script>
+{% endblock %}

@@ -1,0 +1,460 @@
+/**
+ * Quiz Content Admin Dashboard Styles
+ * 
+ * Uses MD3 design tokens from the existing system.
+ * Follows patterns from admin_users.html.
+ */
+
+/* =============================================================================
+   Section Headers
+   ============================================================================= */
+
+.md3-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  margin-block-start: var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-section-header__icon {
+  font-size: 1.25rem;
+}
+
+/* =============================================================================
+   Tabs
+   ============================================================================= */
+
+.md3-tabs {
+  display: flex;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.md3-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-m);
+  color: var(--md-sys-color-on-surface-variant);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.md3-tab:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container);
+}
+
+.md3-tab--active {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md3-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================================================================
+   Preview Grid
+   ============================================================================= */
+
+.md3-preview-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+
+.md3-preview-grid dt {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-preview-grid dd {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+}
+
+/* =============================================================================
+   Info Card (Preview Box)
+   ============================================================================= */
+
+.md3-info-card {
+  padding: var(--space-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-info-card h3 {
+  margin-block-end: var(--space-3);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* =============================================================================
+   Media References
+   ============================================================================= */
+
+.md3-media-refs {
+  margin-block-start: var(--space-4);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-media-ref-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.md3-media-ref {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--md-sys-color-surface);
+  border-radius: var(--radius-s);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+}
+
+.md3-media-ref--found {
+  border-left: 3px solid var(--md-sys-color-success);
+}
+
+.md3-media-ref--missing {
+  border-left: 3px solid var(--md-sys-color-warning);
+}
+
+.md3-media-ref .material-symbols-rounded {
+  font-size: 1rem;
+}
+
+.md3-media-ref--found .material-symbols-rounded {
+  color: var(--md-sys-color-success);
+}
+
+.md3-media-ref--missing .material-symbols-rounded {
+  color: var(--md-sys-color-warning);
+}
+
+/* =============================================================================
+   Release Status
+   ============================================================================= */
+
+.md3-release-status {
+  padding: var(--space-4);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-release-status__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-3);
+}
+
+.md3-release-status__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.md3-release-status__timestamps {
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8125rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+/* =============================================================================
+   Status Badges
+   ============================================================================= */
+
+.md3-badge--status-draft {
+  background: color-mix(in srgb, var(--md-sys-color-warning, #f59e0b) 16%, transparent);
+  color: var(--md-sys-color-on-warning-container, #92400e);
+}
+
+.md3-badge--status-published {
+  background: color-mix(in srgb, var(--md-sys-color-success, #22c55e) 16%, transparent);
+  color: var(--md-sys-color-success, #22c55e);
+}
+
+.md3-badge--status-unpublished {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 16%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-badge--info {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent);
+  color: var(--md-sys-color-primary);
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+}
+
+/* =============================================================================
+   Log Viewer
+   ============================================================================= */
+
+.md3-log-viewer {
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+
+.md3-log-viewer__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--md-sys-color-surface-container);
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+}
+
+.md3-log-viewer__summary:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.md3-log-viewer[open] .md3-log-viewer__summary {
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md3-log-viewer__content {
+  margin: 0;
+  padding: var(--space-4);
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* =============================================================================
+   Action Result Feedback
+   ============================================================================= */
+
+.md3-action-result {
+  margin-block: var(--space-4);
+}
+
+.md3-action-result--success {
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--md-sys-color-success, #22c55e) 10%, transparent);
+  border: 1px solid var(--md-sys-color-success, #22c55e);
+  border-radius: var(--radius-m);
+  color: var(--md-sys-color-success, #22c55e);
+}
+
+.md3-action-result--error {
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  border: 1px solid var(--md-sys-color-error);
+  border-radius: var(--radius-m);
+  color: var(--md-sys-color-error);
+}
+
+/* =============================================================================
+   Button with Helper Text
+   ============================================================================= */
+
+.md3-button-with-helper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.md3-helper-text--warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--md-sys-color-warning, #f59e0b);
+}
+
+.md3-helper-text--warning .material-symbols-rounded {
+  font-size: 0.875rem;
+}
+
+/* =============================================================================
+   Toolbar Actions
+   ============================================================================= */
+
+.md3-toolbar--actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* =============================================================================
+   File Input Styling
+   ============================================================================= */
+
+.form-field--file input[type="file"] {
+  padding: var(--space-3);
+  border: 2px dashed var(--md-sys-color-outline);
+  border-radius: var(--radius-m);
+  background: var(--md-sys-color-surface-container-low);
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.form-field--file input[type="file"]:hover {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container);
+}
+
+.form-field--file input[type="file"]:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+}
+
+/* =============================================================================
+   Table Enhancements
+   ============================================================================= */
+
+.md3-table__row--inactive {
+  opacity: 0.6;
+}
+
+.md3-table__row--inactive td {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-table__loading td {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-table .md3-input--small {
+  width: 60px;
+  padding: var(--space-2);
+  font-size: 0.875rem;
+  text-align: center;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--radius-s);
+  background: var(--md-sys-color-surface);
+}
+
+.md3-table .md3-input--small:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+}
+
+.md3-table .md3-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* =============================================================================
+   Danger Button
+   ============================================================================= */
+
+.md3-button--danger {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
+.md3-button--danger:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 90%, black);
+}
+
+/* =============================================================================
+   Spinner Animation
+   ============================================================================= */
+
+.md3-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =============================================================================
+   Select Field Enhancement
+   ============================================================================= */
+
+.form-field--select select {
+  min-width: 250px;
+  padding: var(--space-3);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--radius-m);
+  background: var(--md-sys-color-surface);
+  font: inherit;
+  cursor: pointer;
+}
+
+.form-field--select select:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+}
+
+/* =============================================================================
+   Responsive
+   ============================================================================= */
+
+@media (max-width: 840px) {
+  .md3-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md3-toolbar--actions {
+    flex-direction: column;
+  }
+
+  .md3-toolbar--actions .md3-button {
+    width: 100%;
+  }
+
+  .md3-release-status__meta {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .md3-hide-mobile {
+    display: none;
+  }
+
+  .md3-row--wrap {
+    flex-direction: column;
+  }
+}
