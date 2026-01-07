@@ -276,3 +276,39 @@ def test_dry_run_does_not_write(in_memory_db, test_fixtures_path):
     
     assert topics == 0
     assert questions == 0
+
+
+def test_to_jsonable_converts_based_on_schema():
+    """Test that to_jsonable() properly serializes BasedOnSchema dataclass.
+    
+    Regression test for: TypeError: Object of type BasedOnSchema is not JSON serializable
+    """
+    from game_modules.quiz.validation import BasedOnSchema
+    from game_modules.quiz.import_service import to_jsonable
+    
+    # Test to_jsonable helper with BasedOnSchema
+    based_on_obj = BasedOnSchema(
+        chapter_title="Test Chapter",
+        chapter_url="https://example.com/chapter",
+        course_title="Test Course",
+        course_url="https://example.com/course"
+    )
+    
+    # Verify to_jsonable converts dataclass to dict
+    based_on_dict = to_jsonable(based_on_obj)
+    assert isinstance(based_on_dict, dict)
+    assert based_on_dict['chapter_title'] == "Test Chapter"
+    assert based_on_dict['chapter_url'] == "https://example.com/chapter"
+    assert based_on_dict['course_title'] == "Test Course"
+    assert based_on_dict['course_url'] == "https://example.com/course"
+    
+    # Test with None
+    assert to_jsonable(None) is None
+    
+    # Test with already JSON-serializable types
+    assert to_jsonable({"key": "value"}) == {"key": "value"}
+    assert to_jsonable([1, 2, 3]) == [1, 2, 3]
+    assert to_jsonable("string") == "string"
+    assert to_jsonable(42) == 42
+    assert to_jsonable(3.14) == 3.14
+    assert to_jsonable(True) is True

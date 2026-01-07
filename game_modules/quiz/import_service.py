@@ -31,6 +31,46 @@ from .release_model import QuizContentRelease
 from .validation import validate_quiz_unit, ValidationError, QuizUnitSchema
 
 
+def to_jsonable(obj: Any) -> Any:
+    """Convert an object to JSON-serializable format.
+    
+    Handles:
+    - None -> None
+    - Pydantic v2: obj.model_dump(mode="json")
+    - Pydantic v1: obj.dict()
+    - dataclass: dataclasses.asdict(obj)
+    - dict/list/primitives: return as-is
+    
+    Args:
+        obj: Object to convert
+        
+    Returns:
+        JSON-serializable version (dict, list, None, or primitive)
+    """
+    if obj is None:
+        return None
+    
+    # Already JSON-serializable
+    if isinstance(obj, (dict, list, str, int, float, bool)):
+        return obj
+    
+    # Pydantic v2
+    if hasattr(obj, 'model_dump'):
+        return obj.model_dump(mode='json')
+    
+    # Pydantic v1
+    if hasattr(obj, 'dict'):
+        return obj.dict()
+    
+    # Dataclass
+    if hasattr(obj, '__dataclass_fields__'):
+        from dataclasses import asdict
+        return asdict(obj)
+    
+    # Fallback: return as-is (may fail at DB insert, but better than silent corruption)
+    return obj
+
+
 # Configure module logger
 logger = logging.getLogger(__name__)
 
@@ -338,7 +378,7 @@ class QuizImportService:
                         topic.title_key = unit.title
                         topic.description_key = unit.description
                         topic.authors = unit.authors or []
-                        topic.based_on = unit.based_on
+                        topic.based_on = to_jsonable(unit.based_on)
                         # Do NOT override is_active if set to false (soft-delete semantics)
                         # topic.is_active = True  # ← REMOVED: Admin decision has priority
                         topic.release_id = release_id
@@ -350,7 +390,7 @@ class QuizImportService:
                             title_key=unit.title,
                             description_key=unit.description,
                             authors=unit.authors or [],
-                            based_on=unit.based_on,
+                            based_on=to_jsonable(unit.based_on),
                             is_active=True,
                             release_id=release_id,
                             created_at=datetime.now(timezone.utc)

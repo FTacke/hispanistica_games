@@ -185,6 +185,13 @@ def import_release(release_id: str) -> Response:
         }), 200 if result.success else 400
     except Exception as e:
         current_app.logger.error(f"Import failed: {e}", exc_info=True)
+        # Rollback session to prevent cascading errors
+        from src.app.extensions.sqlalchemy_ext import get_session
+        try:
+            with get_session() as session:
+                session.rollback()
+        except Exception:
+            pass  # Best effort rollback
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
