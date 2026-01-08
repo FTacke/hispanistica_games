@@ -3709,7 +3709,7 @@
     padding: var(--space-3) var(--space-4);
   }
   
-  /* ===== 6. LEVEL-UP: KPI 1-Column auf sehr kleinen Geräten ===== */
+  /* ===== 6. LEVEL-UP: KPI 1-Column auf Mobile ===== */
   
   .game-shell[data-game="quiz"] .quiz-level-up-container {
     padding: var(--space-4);
@@ -3719,7 +3719,9 @@
     padding: var(--space-4);
   }
   
+  /* KPI-Boxen untereinander auf Mobile */
   .game-shell[data-game="quiz"] .quiz-level-up__points-grid {
+    grid-template-columns: 1fr;
     gap: var(--space-3);
   }
   
@@ -3754,9 +3756,8 @@
     font-size: 0.75rem;
   }
   
-  /* Level-Up KPI: 1 Spalte */
+  /* Level-Up KPI: engerer gap auf sehr kleinen Geräten */
   .game-shell[data-game="quiz"] .quiz-level-up__points-grid {
-    grid-template-columns: 1fr;
     gap: var(--space-2);
   }
   
