@@ -1123,6 +1123,17 @@
         promptEl.focus({ preventScroll: true });
         // Sofort blur um Ring zu entfernen, Screen-Reader hat schon fokussiert
         promptEl.blur();
+        
+        // ✅ MOBILE: Scroll to question on mobile to ensure visibility
+        if (window.innerWidth <= 600) {
+          const questionContainer = document.getElementById('quiz-question-container');
+          if (questionContainer) {
+            // Smooth scroll to question with offset for HUD
+            const yOffset = -80; // Account for sticky HUD
+            const y = questionContainer.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }
       });
     }
     
