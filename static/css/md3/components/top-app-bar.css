@@ -145,12 +145,24 @@ body[data-scrolled="true"] .md3-top-app-bar {
    Scroll Transition: Site raus, Page rein
    ============================================ */
 
+/* Default collapsed: Site-Titel bleibt sichtbar (wenn kein Page-Title gesetzt) */
 body[data-scrolled="true"] .md3-top-app-bar__title-site {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+body[data-scrolled="true"] .md3-top-app-bar__title-page {
+  opacity: 0;
+  transform: translateY(-50%) translateX(24px);
+}
+
+/* Nur wenn Page-Title gesetzt ist: Übergang Site → Page */
+body[data-scrolled="true"] .md3-top-app-bar__title[data-has-page-title="1"] .md3-top-app-bar__title-site {
   opacity: 0;
   transform: translateY(-50%) translateX(-24px); /* Gleitet nach links raus */
 }
 
-body[data-scrolled="true"] .md3-top-app-bar__title-page {
+body[data-scrolled="true"] .md3-top-app-bar__title[data-has-page-title="1"] .md3-top-app-bar__title-page {
   opacity: 1;
   transform: translateY(-50%) translateX(0); /* Gleitet von rechts rein */
 }

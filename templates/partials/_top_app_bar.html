@@ -25,9 +25,9 @@
     </button>
 
     {# Center: Adaptive Title (Site → Page beim Scrollen) #}
-    <div class="md3-top-app-bar__title" aria-live="polite" aria-atomic="true">
-      <span class="md3-top-app-bar__title-site" id="siteTitle" data-site-title>games.hispanistica</span>
-      <span class="md3-top-app-bar__title-page" id="pageTitle" data-page-title-el></span>
+    <div class="md3-top-app-bar__title" aria-live="polite" aria-atomic="true" data-has-page-title="{{ '1' if page_section is defined and page_section else '0' }}">
+      <span class="md3-top-app-bar__title-site" id="siteTitle" data-site-title>Games.Hispanistica</span>
+      <span class="md3-top-app-bar__title-page" id="pageTitle" data-page-title-el>{{ page_section if page_section is defined and page_section else '' }}</span>
     </div>
 
     {# Right: Login/Account Actions #}

@@ -1353,8 +1353,8 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__status {
-  background: var(--md-sys-color-primary-container, var(--quiz-primary-container));
-  color: var(--md-sys-color-on-primary-container, var(--quiz-on-primary-container));
+  background: var(--md-sys-color-success-container, var(--quiz-success-container));
+  color: var(--md-sys-color-on-success-container, var(--quiz-on-success-container));
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__title {

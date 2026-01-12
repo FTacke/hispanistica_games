@@ -1,0 +1,89 @@
+/* ============================================
+   TopAppBar Title Logic Test Stylesheet
+   ============================================
+   Diese CSS-Datei kann temporär eingebunden werden,
+   um die Titel-Logik visuell zu debuggen.
+   ============================================ */
+
+/* Debug-Hilfe: Zeigt data-has-page-title Wert an */
+.md3-top-app-bar__title::before {
+  content: "data-has-page-title=" attr(data-has-page-title);
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: red;
+  background: yellow;
+  padding: 2px 4px;
+  border-radius: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  display: none; /* Aktivieren zum Debuggen */
+}
+
+/* Debug-Modus aktivieren (zum Testen) */
+.md3-top-app-bar[data-debug="true"] .md3-top-app-bar__title::before {
+  display: block;
+}
+
+/* Zeigt beide Titel mit farblichen Borders zum Debuggen */
+.md3-top-app-bar[data-debug="true"] .md3-top-app-bar__title-site {
+  border: 2px solid blue !important;
+  background: rgba(0, 0, 255, 0.1) !important;
+}
+
+.md3-top-app-bar[data-debug="true"] .md3-top-app-bar__title-page {
+  border: 2px solid green !important;
+  background: rgba(0, 255, 0, 0.1) !important;
+}
+
+/* ============================================
+   Test Cases Visual Reference
+   ============================================ */
+
+/*
+TEST 1: Startseite (data-has-page-title="0")
+=========================================
+Expanded:
+  ┌──────────────────────────────┐
+  │ [☰] Games.Hispanistica  [⚙︎] │ ← Site-Titel blau
+  └──────────────────────────────┘
+
+Collapsed (nach Scroll):
+  ┌──────────────────────────────┐
+  │ [☰] Games.Hispanistica  [⚙︎] │ ← Site-Titel bleibt
+  └──────────────────────────────┘
+  
+pageTitle ist leer und bleibt hidden (opacity: 0)
+
+
+TEST 2: Datenschutz-Seite (data-has-page-title="1")
+================================================
+Expanded:
+  ┌──────────────────────────────┐
+  │ [☰] Games.Hispanistica  [⚙︎] │ ← Site-Titel blau
+  └──────────────────────────────┘
+
+Collapsed (nach Scroll):
+  ┌──────────────────────────────┐
+  │ [☰] Datenschutz         [⚙︎] │ ← Page-Titel grün
+  └──────────────────────────────┘
+  
+Site-Titel gleitet nach links raus (opacity: 0, translateX(-24px))
+Page-Titel gleitet von rechts rein (opacity: 1, translateX(0))
+
+
+TEST 3: Quiz-Seite (data-has-page-title="1")
+=========================================
+Expanded:
+  ┌──────────────────────────────┐
+  │ [☰] Games.Hispanistica  [⚙︎] │ ← Site-Titel blau
+  └──────────────────────────────┘
+
+Collapsed (nach Scroll):
+  ┌──────────────────────────────┐
+  │ [☰] Quiz                [⚙︎] │ ← Page-Titel grün
+  └──────────────────────────────┘
+
+*/
