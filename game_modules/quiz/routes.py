@@ -38,6 +38,7 @@ from flask import (
     request,
     g,
 )
+from sqlalchemy.exc import IntegrityError
 
 from src.app.extensions.sqlalchemy_ext import get_session
 from . import services
@@ -64,6 +65,71 @@ def _quiz_debug_log(event: str, **fields: Any) -> None:
         {"ts_ms": int(time.time() * 1000), **{k: v for k, v in fields.items() if v is not None}},
     )
 
+
+# ============================================================================
+# Structured Logging & Tracing
+# ============================================================================
+
+def get_trace_id() -> str:
+    """Get or create trace_id for current request.
+    
+    Checks for X-Request-ID or X-Trace-ID header, otherwise generates new one.
+    Stores in g.quiz_trace_id for reuse within request.
+    """
+    if hasattr(g, 'quiz_trace_id'):
+        return g.quiz_trace_id
+    
+    # Check headers
+    trace_id = request.headers.get('X-Request-ID') or request.headers.get('X-Trace-ID')
+    
+    if not trace_id:
+        # Generate short trace_id (8 chars from uuid4)
+        trace_id = str(uuid.uuid4())[:8]
+    
+    g.quiz_trace_id = trace_id
+    return trace_id
+
+
+def quiz_log(event: str, level: str = "info", **fields: Any) -> None:
+    """Structured logging for quiz events.
+    
+    Args:
+        event: Event name (e.g., QUIZ_RUN_START)
+        level: Log level (info, warn, error, debug)
+        **fields: Additional context fields
+    
+    Standard fields automatically added:
+        - event: Event name
+        - trace_id: Request correlation ID
+        - path: Request path
+        - method: HTTP method
+        - player_id: If available in g
+        - anonymous: If available in g
+    
+    NEVER log sensitive data (cookies, tokens, PINs).
+    """
+    # Build log entry
+    log_data = {
+        "event": event,
+        "trace_id": get_trace_id(),
+        "path": request.path,
+        "method": request.method,
+    }
+    
+    # Add player context if available
+    if hasattr(g, 'quiz_player_id') and g.quiz_player_id:
+        log_data["player_id"] = g.quiz_player_id
+    if hasattr(g, 'quiz_player_anonymous'):
+        log_data["anonymous"] = g.quiz_player_anonymous
+    
+    # Add provided fields (filter None values)
+    log_data.update({k: v for k, v in fields.items() if v is not None})
+    
+    # Log at appropriate level
+    log_func = getattr(logger, level.lower(), logger.info)
+    log_func("[quiz] %s", log_data)
+
+
 # Blueprint with dual prefix for pages and API
 blueprint = Blueprint("quiz", __name__)
 
@@ -71,27 +137,83 @@ blueprint = Blueprint("quiz", __name__)
 QUIZ_SESSION_COOKIE = "quiz_session"
 
 
+@blueprint.after_request
+def add_trace_id_header(response):
+    """Add X-Trace-ID header to response for client correlation."""
+    if hasattr(g, 'quiz_trace_id'):
+        response.headers['X-Trace-ID'] = g.quiz_trace_id
+    return response
+
+
+# ============================================================================
+# Session Management
+# ============================================================================
+
+def ensure_quiz_session() -> str:
+    """Ensure a quiz session cookie exists (create if missing).
+    
+    Returns:
+        Session token (existing or newly created)
+    
+    This function should ONLY be called from HTML routes that need to
+    establish a session before the user interacts with the API.
+    """
+    token = request.cookies.get(QUIZ_SESSION_COOKIE)
+    
+    if token:
+        # Verify existing token
+        with get_session() as session:
+            player = services.verify_session(session, token)
+            if player:
+                return token
+    
+    # No valid token → create anonymous session
+    with get_session() as session:
+        result = services.register_player(session, name="", pin=None, anonymous=True)
+        if not result.success:
+            raise RuntimeError("Failed to create anonymous session")
+        
+        quiz_log("QUIZ_SESSION_CREATED", level="info", 
+                 player_id=result.player_id, anonymous=True)
+        
+        return result.session_token
+
+
 # ============================================================================
 # Authentication Decorator
 # ============================================================================
 
 def quiz_auth_required(f: Callable) -> Callable:
-    """Decorator to require quiz player authentication."""
+    """Decorator to require quiz player authentication.
+    
+    AUTH-SEMANTIK: Zwei Modi, EINE Session-Infrastruktur:
+    - Anonym: Session ohne Username/PIN (anonymous=True)
+    - Username: Session mit Username/PIN (anonymous=False)
+    
+    Returns 401 if no valid session exists. HTML routes must call
+    ensure_quiz_session() first to establish the session.
+    """
     @wraps(f)
     def decorated(*args: Any, **kwargs: Any) -> Any:
         token = request.cookies.get(QUIZ_SESSION_COOKIE)
+        
         if not token:
-            return jsonify({"error": "Authentication required", "code": "AUTH_REQUIRED"}), 401
+            quiz_log("QUIZ_AUTH_NO_SESSION", level="warn", code="NO_SESSION")
+            return jsonify({"error": "No session", "code": "NO_SESSION"}), 401
         
         with get_session() as session:
             player = services.verify_session(session, token)
             if not player:
-                return jsonify({"error": "Invalid or expired session", "code": "SESSION_INVALID"}), 401
+                quiz_log("QUIZ_AUTH_INVALID_SESSION", level="warn", code="INVALID_SESSION")
+                return jsonify({"error": "Invalid session", "code": "INVALID_SESSION"}), 401
             
-            # Store player info in g for use in route
+            # Store in g for use in route
             g.quiz_player_id = player.id
             g.quiz_player_name = player.name
             g.quiz_player_anonymous = player.is_anonymous
+            
+            quiz_log("QUIZ_AUTH_OK", level="debug", 
+                     player_id=player.id, anonymous=player.is_anonymous)
         
         return f(*args, **kwargs)
     return decorated
@@ -163,21 +285,49 @@ def quiz_topic_entry(topic_id: str):
 
 
 @blueprint.route("/quiz/<topic_id>/play")
-@quiz_auth_required
 def quiz_play(topic_id: str):
-    """Quiz gameplay page (canonical: /quiz/<topic_id>/play)."""
+    """Quiz gameplay page (canonical: /quiz/<topic_id>/play).
+    
+    Ensures session exists before rendering page (HTML-only route).
+    """
+    quiz_log("QUIZ_PLAY_HTML_ENTER", level="info", topic_id=topic_id)
+    
+    # Ensure session cookie exists (create anonymous if needed)
+    session_token = ensure_quiz_session()
+    
     with get_session() as session:
         topic = services.get_topic(session, topic_id)
         if not topic or not topic.is_active:
             return render_template("errors/404.html"), 404
         
-        return render_template(
-            "games/quiz/play.html",
-            page_name="quiz",
-            topic_id=topic_id,
-            topic_title_key=topic.title_key,
-            player_name=g.quiz_player_name,
+        # Verify session for player info
+        player = services.verify_session(session, session_token)
+        player_name = player.name if player else None
+        
+        response = make_response(
+            render_template(
+                "games/quiz/play.html",
+                page_name="quiz",
+                topic_id=topic_id,
+                topic_title_key=topic.title_key,
+                player_name=player_name,
+            )
         )
+        
+        # Set cookie in response
+        response.set_cookie(
+            QUIZ_SESSION_COOKIE,
+            session_token,
+            httponly=True,
+            secure=request.is_secure,
+            samesite="Lax",
+            max_age=30 * 24 * 60 * 60,
+        )
+        
+        quiz_log("QUIZ_SESSION_COOKIE_SET", level="info", 
+                 cookie_set=True, topic_id=topic_id)
+        
+        return response
 
 
 # LEGACY REDIRECTS: /games/quiz/* → /quiz/*
@@ -432,20 +582,20 @@ def api_start_run(topic_id: str):
     data = request.get_json() or {}
     force_new = data.get("force_new", False)
 
-    _quiz_debug_log(
-        "api_start_run",
-        player_id=getattr(g, "quiz_player_id", None),
-        topic_id=topic_id,
-        force_new=force_new,
-    )
+    quiz_log("QUIZ_RUN_START", level="info", topic_id=topic_id, force_new=force_new)
     
     with get_session() as session:
         topic = services.get_topic(session, topic_id)
         if not topic or not topic.is_active:
+            quiz_log("QUIZ_RUN_START_FAIL", level="warn", topic_id=topic_id, reason="TOPIC_NOT_FOUND")
             return jsonify({"error": "Topic not found", "code": "TOPIC_NOT_FOUND"}), 404
         
         run, is_new = services.start_run(session, g.quiz_player_id, topic_id, force_new)
         state = services.get_run_state(session, run)
+        
+        quiz_log("QUIZ_RUN_START_OK", level="info", 
+                 run_id=state.run_id, topic_id=topic_id, is_new=is_new,
+                 status=state.status, current_index=state.current_index)
         
         return jsonify({
             "success": True,
@@ -551,7 +701,13 @@ def api_start_question(run_id: str):
     started_at_ms = data.get("started_at_ms")  # DEPRECATED - ignored
     time_limit_seconds = data.get("time_limit_seconds")  # Optional custom time limit
     
+    quiz_log("QUIZ_TIMER_START_REQUEST", level="info", 
+             run_id=run_id, question_index=question_index, 
+             time_limit_seconds=time_limit_seconds)
+    
     if question_index is None:
+        quiz_log("QUIZ_TIMER_START_FAIL", level="warn", 
+                 run_id=run_id, reason="MISSING_QUESTION_INDEX")
         return jsonify({"error": "question_index required"}), 400
     
     with get_session() as session:
@@ -567,13 +723,32 @@ def api_start_question(run_id: str):
         run = session.execute(stmt).scalar_one_or_none()
         
         if not run:
+            quiz_log("QUIZ_OWNERSHIP_DENY", level="warn", 
+                     run_id=run_id, reason="RUN_NOT_FOUND_OR_NOT_OWNED")
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
         
         # Start question timer (server decides start time)
         success = services.start_question(session, run, question_index, started_at_ms, time_limit_seconds)
         
+        # ✅ FAIL-FAST: Verify timer was actually set
+        if not success or not run.expires_at:
+            quiz_log("QUIZ_TIMER_START_FAIL", level="error", 
+                     run_id=run_id, question_index=question_index, 
+                     reason="TIMER_NOT_SET", success=success, 
+                     has_expires_at=run.expires_at is not None)
+            return jsonify({
+                "error": "Timer could not be started",
+                "code": "TIMER_NOT_STARTED",
+                "success": False
+            }), 409
+        
         # Calculate remaining time from server perspective
         remaining_seconds = services.get_remaining_seconds(run)
+        
+        quiz_log("QUIZ_TIMER_START_OK", level="info", 
+                 run_id=run_id, question_index=question_index,
+                 remaining_seconds=remaining_seconds,
+                 expires_at_ms=int(run.expires_at.timestamp() * 1000) if run.expires_at else None)
         
         # Return both new fields and legacy fields for compatibility
         return jsonify({
@@ -601,17 +776,13 @@ def api_submit_answer(run_id: str):
     answered_at_ms = data.get("answered_at_ms")
     used_joker = data.get("used_joker", False)
 
-    _quiz_debug_log(
-        "api_submit_answer.request",
-        run_id=run_id,
-        player_id=getattr(g, "quiz_player_id", None),
-        question_index=question_index,
-        selected_answer_id=selected_answer_id,
-        answered_at_ms=answered_at_ms,
-        used_joker=used_joker,
-    )
+    quiz_log("QUIZ_ANSWER_SUBMIT", level="info", 
+             run_id=run_id, question_index=question_index, 
+             selected_answer_id=selected_answer_id, used_joker=used_joker)
     
     if question_index is None or answered_at_ms is None:
+        quiz_log("QUIZ_ANSWER_SUBMIT_FAIL", level="warn", 
+                 run_id=run_id, reason="MISSING_FIELDS")
         return jsonify({"error": "question_index and answered_at_ms required"}), 400
     
     with get_session() as session:
@@ -627,6 +798,8 @@ def api_submit_answer(run_id: str):
         run = session.execute(stmt).scalar_one_or_none()
         
         if not run:
+            quiz_log("QUIZ_OWNERSHIP_DENY", level="warn", 
+                     run_id=run_id, reason="RUN_NOT_FOUND_OR_NOT_OWNED")
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
         
         result = services.submit_answer(
@@ -634,10 +807,20 @@ def api_submit_answer(run_id: str):
         )
         
         if not result.success:
+            quiz_log("QUIZ_ANSWER_SUBMIT_FAIL", level="warn", 
+                     run_id=run_id, question_index=question_index,
+                     error_code=result.error_code, error=result.error_message)
             return jsonify({
                 "error": result.error_message,
                 "code": result.error_code,
             }), 400
+        
+        quiz_log("QUIZ_ANSWER_SUBMIT_OK", level="info", 
+                 run_id=run_id, question_index=question_index,
+                 outcome=result.result, is_correct=(result.result == "correct"),
+                 earned_points=result.earned_points, running_score=result.running_score,
+                 level_completed=result.level_completed, level_perfect=result.level_perfect,
+                 finished=result.finished)
         
         return jsonify({
             "success": True,
@@ -760,12 +943,6 @@ def api_get_run_state(run_id: str):
         from sqlalchemy import select, and_
         from datetime import datetime, timezone
 
-        _quiz_debug_log(
-            "api_get_run_state.request",
-            run_id=run_id,
-            player_id=getattr(g, "quiz_player_id", None),
-        )
-
         stmt = select(QuizRun).where(
             and_(
                 QuizRun.id == run_id,
@@ -775,6 +952,8 @@ def api_get_run_state(run_id: str):
         run = session.execute(stmt).scalar_one_or_none()
 
         if not run:
+            quiz_log("QUIZ_OWNERSHIP_DENY", level="warn", 
+                     run_id=run_id, reason="RUN_NOT_FOUND_OR_NOT_OWNED")
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
 
         # Get server time
@@ -797,45 +976,87 @@ def api_get_run_state(run_id: str):
             existing_answer = session.execute(stmt_check).scalar_one_or_none()
             
             if not existing_answer:
-                # Create timeout answer record (idempotent server-side timeout)
-                _quiz_debug_log(
-                    "api_get_run_state.auto_timeout",
-                    run_id=run.id,
-                    player_id=g.quiz_player_id,
-                    question_index=run.current_index,
+                # Re-check within same transaction to prevent race conditions
+                session.flush()
+                stmt_recheck = select(QuizRunAnswer).where(
+                    and_(
+                        QuizRunAnswer.run_id == run.id,
+                        QuizRunAnswer.question_index == run.current_index
+                    )
                 )
-                question_config = run.run_questions[run.current_index]
-                timeout_answer = QuizRunAnswer(
-                    id=str(uuid.uuid4()),
-                    run_id=run.id,
-                    question_id=question_config["question_id"],
-                    question_index=run.current_index,
-                    selected_answer_id=None,
-                    result="timeout",
-                    answered_at_ms=int(run.expires_at.timestamp() * 1000),
-                    used_joker=False,
-                    created_at=server_now,
-                )
-                session.add(timeout_answer)
+                recheck_answer = session.execute(stmt_recheck).scalar_one_or_none()
                 
-                # Advance to next question and clear timer state
-                run.current_index += 1
-                run.question_started_at = None
-                run.expires_at = None
-                run.time_limit_seconds = services.TIMER_SECONDS
-                run.question_started_at_ms = None
-                run.deadline_at_ms = None
-                
-                session.flush()  # Persist changes for score calculation
+                if not recheck_answer:
+                    try:
+                        # Create timeout answer record (idempotent server-side timeout)
+                        quiz_log("QUIZ_AUTO_TIMEOUT_APPLIED", level="warn", 
+                                 run_id=run.id, question_index=run.current_index)
+                        
+                        question_config = run.run_questions[run.current_index]
+                        timeout_answer = QuizRunAnswer(
+                            id=str(uuid.uuid4()),
+                            run_id=run.id,
+                            question_id=question_config["question_id"],
+                            question_index=run.current_index,
+                            selected_answer_id=None,
+                            result="timeout",
+                            answered_at_ms=int(run.expires_at.timestamp() * 1000),
+                            used_joker=False,
+                            created_at=server_now,
+                        )
+                        session.add(timeout_answer)
+                        
+                        # Advance to next question and clear timer state
+                        run.current_index += 1
+                        run.question_started_at = None
+                        run.expires_at = None
+                        run.time_limit_seconds = services.TIMER_SECONDS
+                        run.question_started_at_ms = None
+                        run.deadline_at_ms = None
+                        
+                        session.flush()  # Persist changes - may raise IntegrityError
+                        
+                    except IntegrityError:
+                        # Uniqueness violation - another request already created timeout answer
+                        # Rollback this transaction and reload existing answer
+                        session.rollback()
+                        quiz_log("QUIZ_AUTO_TIMEOUT_DUPLICATE_PREVENTED", level="info", 
+                                 run_id=run.id, question_index=run.current_index)
+                        
+                        # Reload run and answer state after rollback
+                        session.expire_all()
+                        stmt_reload = select(QuizRun).where(
+                            and_(
+                                QuizRun.id == run_id,
+                                QuizRun.player_id == g.quiz_player_id,
+                            )
+                        )
+                        run = session.execute(stmt_reload).scalar_one()
+                        # Continue with reloaded state
         
-        # Determine phase based on timer state
-        phase = "ANSWERING"
-        if remaining_seconds is None:
-            # No timer active - either not started or already answered
+        # Determine phase based on timer and answer state
+        # Check if current question has been answered
+        stmt_current_answer = select(QuizRunAnswer).where(
+            and_(
+                QuizRunAnswer.run_id == run.id,
+                QuizRunAnswer.question_index == run.current_index
+            )
+        )
+        current_answer = session.execute(stmt_current_answer).scalar_one_or_none()
+        
+        # Phase logic:
+        # - POST_ANSWER: Answer exists for current question (or timeout occurred)
+        # - ANSWERING: Timer running (has expires_at)
+        # - NOT_STARTED: No answer and no timer
+        if current_answer:
             phase = "POST_ANSWER"
-        elif is_expired:
-            # Timer expired and timeout recorded, now POST_ANSWER
-            phase = "POST_ANSWER"
+        elif run.expires_at:
+            phase = "ANSWERING"
+        else:
+            phase = "NOT_STARTED"
+        
+        # Timer started flag for frontend
+        timer_started = run.expires_at is not None
         
         # Calculate current score
         stmt_answers = select(QuizRunAnswer).where(
@@ -875,6 +1096,7 @@ def api_get_run_state(run_id: str):
             "remaining_seconds": max(0, remaining_seconds) if remaining_seconds is not None else None,
             "is_expired": is_expired,
             "phase": phase,
+            "timer_started": timer_started,
             # Score and progress
             "running_score": running_score,
             "next_question_index": (current_index if not is_run_finished else None),
@@ -896,15 +1118,30 @@ def api_get_run_state(run_id: str):
             "deadline_at_ms": run.deadline_at_ms,
         }
 
-        _quiz_debug_log(
-            "api_get_run_state.response",
-            run_id=run.id,
-            player_id=getattr(g, "quiz_player_id", None),
-            current_index=current_index,
-            phase=phase,
-            remaining_seconds=remaining_seconds,
-            is_expired=is_expired,
-            running_score=running_score,
+        # Noise management: Only log on significant events to avoid log spam
+        # Store last_phase in g to detect changes (survives only during request)
+        should_log = False
+        debug_flag = request.args.get("debug") == "1"
+        
+        if debug_flag:
+            should_log = True  # Debug mode: always log
+        elif is_expired and phase == "ANSWERING":
+            should_log = True  # Timer expired (important event)
+        elif not hasattr(g, 'quiz_last_phase') or not hasattr(g, 'quiz_last_run_id'):
+            should_log = True  # First /state call in this request
+            g.quiz_last_phase = phase
+            g.quiz_last_run_id = run_id
+        elif g.quiz_last_run_id != run_id or g.quiz_last_phase != phase:
+            should_log = True  # Phase changed or different run
+            g.quiz_last_phase = phase
+            g.quiz_last_run_id = run_id
+        
+        if should_log:
+            quiz_log("QUIZ_STATE", level="info" if is_expired or debug_flag else "debug",
+                     run_id=run.id, phase=phase, current_index=current_index,
+                     timer_started=timer_started, remaining_seconds=remaining_seconds,
+                     is_expired=is_expired, running_score=running_score,
+                     debug=debug_flag)
         )
 
         return jsonify(payload)
@@ -917,7 +1154,10 @@ def api_use_joker(run_id: str):
     data = request.get_json() or {}
     question_index = data.get("question_index")
     
+    quiz_log("QUIZ_JOKER_USE", level="info", run_id=run_id, question_index=question_index)
+    
     if question_index is None:
+        quiz_log("QUIZ_JOKER_USE_FAIL", level="warn", run_id=run_id, reason="MISSING_QUESTION_INDEX")
         return jsonify({"error": "question_index required"}), 400
     
     with get_session() as session:
@@ -933,11 +1173,16 @@ def api_use_joker(run_id: str):
         run = session.execute(stmt).scalar_one_or_none()
         
         if not run:
+            quiz_log("QUIZ_OWNERSHIP_DENY", level="warn", 
+                     run_id=run_id, reason="RUN_NOT_FOUND_OR_NOT_OWNED")
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
         
         success, disabled_ids, error_code = services.use_joker(session, run, question_index)
         
         if not success:
+            quiz_log("QUIZ_JOKER_USE_FAIL", level="warn", 
+                     run_id=run_id, question_index=question_index, 
+                     error_code=error_code)
             error_messages = {
                 "LIMIT_REACHED": "50/50 limit reached (max 2 per run)",
                 "INVALID_INDEX": "Cannot use joker on this question",
@@ -949,6 +1194,10 @@ def api_use_joker(run_id: str):
                 "error": error_messages.get(error_code, "Cannot use joker"),
                 "code": error_code or "JOKER_UNAVAILABLE",
             }), 400
+        
+        quiz_log("QUIZ_JOKER_USE_OK", level="info", 
+                 run_id=run_id, question_index=question_index,
+                 disabled_count=len(disabled_ids), joker_remaining=run.joker_remaining)
         
         return jsonify({
             "success": True,
@@ -964,6 +1213,8 @@ def api_use_joker(run_id: str):
 @quiz_auth_required
 def api_finish_run(run_id: str):
     """Finish run and get final score with highscore rank."""
+    quiz_log("QUIZ_RUN_FINISH", level="info", run_id=run_id)
+    
     with get_session() as session:
         from .models import QuizRun
         from sqlalchemy import select, and_
@@ -977,9 +1228,13 @@ def api_finish_run(run_id: str):
         run = session.execute(stmt).scalar_one_or_none()
         
         if not run:
+            quiz_log("QUIZ_OWNERSHIP_DENY", level="warn", 
+                     run_id=run_id, reason="RUN_NOT_FOUND_OR_NOT_OWNED")
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
         
         if run.status != "in_progress":
+            quiz_log("QUIZ_RUN_FINISH_FAIL", level="warn", 
+                     run_id=run_id, reason="ALREADY_FINISHED", status=run.status)
             return jsonify({"error": "Run already finished", "code": "RUN_FINISHED"}), 400
         
         result = services.finish_run(session, run)
@@ -999,6 +1254,10 @@ def api_finish_run(run_id: str):
         if player_rank is None:
             # Player didn't make top 30
             player_rank = leaderboard_size + 1
+        
+        quiz_log("QUIZ_RUN_FINISH_OK", level="info", 
+                 run_id=run_id, total_score=result.total_score, 
+                 tokens_count=result.tokens_count, player_rank=player_rank)
         
         return jsonify({
             "success": True,

@@ -22,6 +22,20 @@
   'use strict';
   
   // ============================================================================
+  // TRACE ID for request correlation
+  // ============================================================================
+  const TRACE_ID = generateTraceId();
+  
+  function generateTraceId() {
+    // Generate 8-char random hex string for trace correlation
+    return Array.from(crypto.getRandomValues(new Uint8Array(4)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  
+  console.log('[QUIZ] trace_id:', TRACE_ID);
+  
+  // ============================================================================
   // API RESPONSE MAPPERS (inline für non-module Kontext)
   // ============================================================================
   
@@ -187,6 +201,15 @@
   const DEBUG = new URLSearchParams(window.location.search).has('quizDebug') ||
     window.localStorage.getItem('quizDebug') === '1';
   let debugCallCounter = 0;
+  
+  /**
+   * Fetch helper with X-Trace-ID header for request correlation
+   */
+  function quizFetch(url, options = {}) {
+    const headers = new Headers(options.headers || {});
+    headers.set('X-Trace-ID', TRACE_ID);
+    return fetch(url, { ...options, headers });
+  }
 
   function debugLog(fnName, data) {
     if (!DEBUG) return;
@@ -257,6 +280,7 @@
 
   // Question phase substates
   const PHASE = {
+    NOT_STARTED: 'NOT_STARTED',    // Question loaded but timer not started yet
     ANSWERING: 'ANSWERING',        // Question active, timer running, answer buttons enabled
     POST_ANSWER: 'POST_ANSWER'     // Answer submitted, explanation shown, waiting for "Weiter"
   };
@@ -393,8 +417,12 @@
         // Need to show post-answer UI, not start new question
         debugLog('init', { action: 'server phase is POST_ANSWER, showing post-answer UI' });
         await loadCurrentQuestionForPostAnswer();
+      } else if (state.phase === PHASE.NOT_STARTED) {
+        // Timer not started - need to start it
+        await loadCurrentQuestion(); // This will call startQuestionTimer
+        debugLog('init', { action: 'phase NOT_STARTED, starting question timer' });
       } else {
-        // Normal case: load current question and start timer
+        // Normal case: ANSWERING phase with active timer
         await loadCurrentQuestion();
       }
       
@@ -492,7 +520,7 @@
     debugLog('loadStateForResume', { action: 'start', runId: state.runId });
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/state`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/state`, {
         credentials: 'same-origin'
       });
       
@@ -538,12 +566,16 @@
         state.questionStartedAtMs = null;
       }
       
-      // Update phase from server (ANSWERING or POST_ANSWER)
+      // Update phase from server (NOT_STARTED, ANSWERING or POST_ANSWER)
       if (stateData.phase === 'POST_ANSWER' || stateData.is_expired) {
         state.phase = PHASE.POST_ANSWER;
         state.isAnswered = true;  // ✅ FIX: Mark as answered
         state.lastOutcome = stateData.last_answer_result || 'timeout';  // ✅ FIX: Store last result
         debugLog('loadStateForResume', { action: 'restored POST_ANSWER phase from server', lastOutcome: state.lastOutcome });
+      } else if (stateData.phase === 'NOT_STARTED' || !stateData.timer_started) {
+        // Timer not started yet - need to call /question/start
+        state.phase = PHASE.NOT_STARTED;
+        debugLog('loadStateForResume', { action: 'phase NOT_STARTED, will need to start timer' });
       } else {
         state.phase = PHASE.ANSWERING;
       }
@@ -575,7 +607,7 @@
     debugLog('restoreRunningScore', { action: 'start' });
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/status`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/status`, {
         credentials: 'same-origin'
       });
       
@@ -670,7 +702,7 @@
     debugLog('fetchStatusAndApply', { action: 'fetching /status as fallback' });
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/status`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/status`, {
         credentials: 'same-origin'
       });
       
@@ -1143,6 +1175,117 @@
   }
 
   /**
+   * Show inline error for timer start failures with retry button
+   */
+  function showTimerStartError(errorCode, errorMessage) {
+    const container = document.getElementById('quiz-question-container');
+    if (!container) return;
+    
+    const errorHtml = `
+      <div id="timer-error-card" class="md3-card md3-card--elevated" style="padding: 24px; margin: 16px 0; text-align: center;">
+        <div class="md3-headline-small" style="color: var(--md-sys-color-error); margin-bottom: 12px;">
+          ⚠️ Timer-Fehler
+        </div>
+        <div id="timer-error-message" class="md3-body-medium" style="margin-bottom: 16px;">
+          ${errorMessage || 'Der Timer konnte nicht gestartet werden.'}
+        </div>
+        <div id="timer-error-code" class="md3-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-bottom: 16px;">
+          Fehlercode: ${errorCode}
+        </div>
+        <button 
+          id="timer-retry-btn"
+          class="md3-button md3-button--filled" 
+          onclick="retryStartTimer();"
+          style="min-width: 140px;">
+          <span class="md3-button__label">Erneut versuchen</span>
+        </button>
+      </div>
+    `;
+    
+    container.innerHTML = errorHtml;
+  }
+
+  /**
+   * Retry starting the timer without page reload
+   */
+  async function retryStartTimer() {
+    const retryBtn = document.getElementById('timer-retry-btn');
+    const errorMessage = document.getElementById('timer-error-message');
+    const errorCode = document.getElementById('timer-error-code');
+    
+    if (!retryBtn) return;
+    
+    // Disable button and show spinner
+    retryBtn.disabled = true;
+    retryBtn.innerHTML = '<span class="md3-button__label">Wird versucht...</span>';
+    
+    try {
+      // Attempt to start timer
+      const timerResult = await startQuestionTimer();
+      
+      if (timerResult.success && state.expiresAtMs) {
+        // Success! Reload state and render
+        debugLog('retryStartTimer', { action: 'success, reloading state' });
+        
+        // Load fresh state from server
+        const stateResponse = await fetch(`${API_BASE}/run/${state.runId}/state`, {
+          credentials: 'same-origin'
+        });
+        
+        if (stateResponse.ok) {
+          const stateData = await stateResponse.json();
+          
+          // Update state
+          state.phase = stateData.phase === 'POST_ANSWER' ? PHASE.POST_ANSWER : PHASE.ANSWERING;
+          state.expiresAtMs = stateData.expires_at_ms;
+          state.serverClockOffsetMs = stateData.server_now_ms - Date.now();
+          
+          // Re-render question with timer
+          state.currentView = VIEW.QUESTION;
+          renderCurrentView();
+          
+          if (state.phase === PHASE.ANSWERING && state.expiresAtMs) {
+            startTimerCountdown();
+          }
+          
+          debugLog('retryStartTimer', { action: 'complete, timer started' });
+        } else {
+          throw new Error('Failed to reload state');
+        }
+      } else {
+        // Failed again
+        debugLog('retryStartTimer', { action: 'failed', errorCode: timerResult.errorCode });
+        
+        // Update error message
+        if (errorMessage) {
+          errorMessage.textContent = timerResult.errorMessage || 'Timer konnte nicht gestartet werden.';
+        }
+        if (errorCode) {
+          errorCode.textContent = `Fehlercode: ${timerResult.errorCode || 'UNKNOWN'}`;
+        }
+        
+        // Re-enable button
+        retryBtn.disabled = false;
+        retryBtn.innerHTML = '<span class="md3-button__label">Erneut versuchen</span>';
+      }
+    } catch (error) {
+      console.error('[retryStartTimer] Error:', error);
+      
+      // Update error message
+      if (errorMessage) {
+        errorMessage.textContent = 'Fehler beim erneuten Versuch: ' + error.message;
+      }
+      if (errorCode) {
+        errorCode.textContent = 'Fehlercode: NETWORK_ERROR';
+      }
+      
+      // Re-enable button
+      retryBtn.disabled = false;
+      retryBtn.innerHTML = '<span class="md3-button__label">Erneut versuchen</span>';
+    }
+  }
+
+  /**
    * Load current question for POST_ANSWER state (resume after timeout/answer)
    * ✅ NEW: Server sagt POST_ANSWER -> keine Timer-Start, nur UI anzeigen
    */
@@ -1159,7 +1302,7 @@
     const questionId = questionConfig.question_id;
     
     // Fetch question details (need this to render the question)
-    const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+    const response = await quizFetch(`${API_BASE}/questions/${questionId}`, {
       credentials: 'same-origin'
     });
     if (!response.ok) {
@@ -1250,7 +1393,7 @@
     debugLog('loadCurrentQuestion', { questionId, difficulty: questionConfig.difficulty });
     
     // Fetch question details
-    const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+    const response = await quizFetch(`${API_BASE}/questions/${questionId}`, {
       credentials: 'same-origin'
     });
     if (!response.ok) {
@@ -1277,11 +1420,18 @@
     
     // ✅ FIX: Start timer ONLY if not already started AND we get valid server response
     if (!state.questionStartedAtMs) {
-      const timerStarted = await startQuestionTimer();
-      if (!timerStarted || !state.expiresAtMs) {
-        console.error('[TIMER] ❌ Failed to start server timer, cannot proceed safely');
-        // Don't continue with invalid timer state
-        throw new Error('Failed to start question timer on server');
+      const timerResult = await startQuestionTimer();
+      if (!timerResult.success || !state.expiresAtMs) {
+        console.error('[TIMER] ❌ Failed to start server timer:', timerResult.errorCode, timerResult.errorMessage);
+        
+        // ✅ NEW: Show inline error with retry option for timer failures
+        if (timerResult.status === 409) {
+          showTimerStartError(timerResult.errorCode, timerResult.errorMessage);
+          return; // Stop execution, wait for user to retry
+        }
+        
+        // Other errors - still throw
+        throw new Error(`Failed to start question timer on server: ${timerResult.errorCode}`);
       }
     }
     
@@ -1369,7 +1519,7 @@
     }
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/question/start`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/question/start`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -1413,14 +1563,26 @@
         state.deadlineAtMs = data.deadline_at_ms || data.expires_at_ms;
         
         // ✅ FIX: Return success only if we got valid timer data
-        return !!(state.expiresAtMs && state.questionStartedAtMs);
+        return { success: true, expiresAtMs: state.expiresAtMs };
       } else {
-        // Fallback: Cannot start timer without server
-        console.error('Failed to start question timer on server');
+        // ✅ NEW: Parse error response for better diagnostics
+        let errorCode = 'UNKNOWN';
+        let errorMessage = 'Failed to start question timer on server';
+        try {
+          const errorData = await response.json();
+          errorCode = errorData.code || 'UNKNOWN';
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Ignore JSON parse errors
+        }
+        
+        console.error(`Failed to start question timer on server (${response.status}):`, errorCode, errorMessage);
         state.expiresAtMs = null;
         state.questionStartedAtMs = null;
         state.deadlineAtMs = null;
-        return false;
+        
+        // Return error info for caller to handle
+        return { success: false, errorCode, errorMessage, status: response.status };
       }
     } catch (error) {
       console.error('Failed to start question timer:', error);
@@ -1428,7 +1590,7 @@
       state.expiresAtMs = null;
       state.questionStartedAtMs = null;
       state.deadlineAtMs = null;
-      return false;
+      return { success: false, errorCode: 'NETWORK_ERROR', errorMessage: error.message };
     }
   }
 
@@ -1811,7 +1973,7 @@
     debugLog('handleAnswerClick', { action: 'submitting answer' });
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/answer`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/answer`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -2099,7 +2261,7 @@
     const usedJoker = state.jokerUsedOn.includes(state.currentIndex);
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/answer`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/answer`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -2501,7 +2663,7 @@
       btn.disabled = true;
       
       try {
-        const response = await fetch(`${API_BASE}/run/${state.runId}/joker`, {
+        const response = await quizFetch(`${API_BASE}/run/${state.runId}/joker`, {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
@@ -2913,7 +3075,7 @@
     stopAllTimers();
     
     try {
-      const response = await fetch(`${API_BASE}/run/${state.runId}/finish`, {
+      const response = await quizFetch(`${API_BASE}/run/${state.runId}/finish`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' }
