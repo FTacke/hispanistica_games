@@ -282,6 +282,7 @@
     isAnswered: false,
     selectedAnswerId: null,
     lastAnswerResult: null,
+    lastOutcome: null, // ✅ FIX: Track last outcome (null, 'correct', 'wrong', 'timeout')
     advanceCallback: null,
     runningScore: 0,
     displayedScore: null, // Start with null to indicate "loading"
@@ -1090,6 +1091,7 @@
     state.isAnswered = false;
     state.selectedAnswerId = null;
     state.lastAnswerResult = null;
+    state.lastOutcome = null; // ✅ FIX: Reset outcome for new question
     state.pendingLevelUp = false;
     state.pendingLevelUpData = null;
     state.pendingTransition = null; // ✅ Clear pending transition
@@ -1256,6 +1258,27 @@
   }
 
   /**
+   * Reset timer UI display to initial state
+   * ✅ FIX: Prevents "blinking 0" bug after timeout
+   */
+  function resetTimerUI() {
+    const timerEl = document.getElementById('quiz-timer');
+    const timerDisplay = document.getElementById('quiz-timer-display');
+    
+    if (timerDisplay) {
+      // Calculate total time including media bonus
+      const totalTime = TIMER_SECONDS + (currentQuestionMediaBonusSeconds || 0);
+      timerDisplay.textContent = totalTime;
+    }
+    
+    if (timerEl) {
+      timerEl.classList.remove('quiz-timer--warning', 'quiz-timer--danger');
+    }
+    
+    debugLog('resetTimerUI', { totalTime: TIMER_SECONDS + (currentQuestionMediaBonusSeconds || 0) });
+  }
+
+  /**
    * Start the timer countdown display with attemptId guards
    * ✅ FIX: Verstärkte Guards + stopAllTimers() zuerst
    */
@@ -1288,6 +1311,9 @@
     }
     
     stopAllTimers(); // Stop any stale timers
+    
+    // ✅ FIX: Reset UI Display SOFORT (verhindert Blink-Bug nach Timeout)
+    resetTimerUI();
     
     state.activeTimerAttemptId = attemptId;
     console.error('[TIMER] ✅ Started for attemptId:', attemptId, 'index:', state.currentIndex);
@@ -1512,6 +1538,12 @@
       return;
     }
     
+    // ✅ FIX: Guard gegen Timeout-Zustand
+    if (state.lastOutcome === 'timeout') {
+      debugLog('handleAnswerClick', { action: 'blocked', reason: 'timeout already occurred' });
+      return;
+    }
+    
     if (state.uiState !== STATE.IDLE || state.isAnswered) {
       debugLog('handleAnswerClick', { action: 'blocked', reason: 'already answered or wrong state' });
       return;
@@ -1616,6 +1648,9 @@
       
       // Show result styling on answers (new state system)
       showAnswerResult(answerId, answer.result, answer.correctOptionId);
+      
+      // ✅ FIX: Set lastOutcome
+      state.lastOutcome = answer.result; // 'correct' or 'wrong'
       
       // CRITICAL: Validate and update score from backend (source of truth)
       const oldScore = state.runningScore;
@@ -1917,8 +1952,11 @@
         nextQuestionIndex: answer.nextQuestionIndex
       });
       
-      // Show correct answer with reveal state
-      showCorrectAnswer(answer.correctOptionId || data.correct_option_id);
+      // ✅ FIX: Apply timeout UI (locked+inactive, NO correct reveal)
+      applyTimeoutUI();
+      
+      // Set lastOutcome
+      state.lastOutcome = 'timeout';
       
       // Announce timeout
       announceA11y('Zeit abgelaufen');
@@ -2059,6 +2097,34 @@
         btn.classList.add('quiz-answer-option--inactive');
       }
     });
+  }
+
+  /**
+   * Apply timeout UI styling to all answer options
+   * ✅ FIX: Timeout zeigt KEINE richtige Antwort, alle Options locked+inactive
+   */
+  function applyTimeoutUI() {
+    document.querySelectorAll('.quiz-answer-option').forEach(btn => {
+      // Remove any selection/correctness classes
+      btn.classList.remove(
+        'quiz-answer--selected',
+        'quiz-answer--selected-correct',
+        'quiz-answer--selected-wrong',
+        'quiz-answer--correct',
+        'quiz-answer--correct-reveal',
+        'quiz-answer--wrong'
+      );
+      
+      // Add locked + inactive for all options
+      btn.classList.add('quiz-answer-option--locked');
+      btn.classList.add('quiz-answer-option--inactive');
+      
+      // Disable interaction
+      btn.setAttribute('aria-disabled', 'true');
+      btn.setAttribute('tabindex', '-1');
+    });
+    
+    debugLog('applyTimeoutUI', { action: 'all answers locked+inactive, no correct reveal' });
   }
 
   /**
