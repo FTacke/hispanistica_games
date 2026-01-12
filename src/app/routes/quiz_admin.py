@@ -199,7 +199,11 @@ def import_release(release_id: str) -> Response:
 @jwt_required()
 @require_role(Role.ADMIN)
 def publish_release(release_id: str) -> Response:
-    """Publish a release (makes it active).
+    """Mark a release as published (workflow/history tracking only).
+    
+    NOTE: This does NOT affect unit visibility in the frontend.
+    Unit visibility is controlled solely by the is_active flag on each unit.
+    Publish/unpublish are now optional workflow markers for import history.
     
     Only one release can be published at a time.
     
@@ -231,7 +235,11 @@ def publish_release(release_id: str) -> Response:
 @jwt_required()
 @require_role(Role.ADMIN)
 def unpublish_release(release_id: str) -> Response:
-    """Unpublish a release (rollback).
+    """Mark a release as unpublished (workflow/history tracking only).
+    
+    NOTE: This does NOT affect unit visibility in the frontend.
+    Unit visibility is controlled solely by the is_active flag on each unit.
+    To hide units, use the unit toggle/delete endpoints instead.
     
     Returns:
         200: {"ok": true, "units_affected": N}
