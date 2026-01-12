@@ -3751,6 +3751,12 @@
     padding: 0;
   }
   
+  .game-shell[data-game="quiz"] .quiz-finish-card {
+    max-width: none;
+    margin: 0;
+    padding: var(--space-4);
+  }
+  
   .game-shell[data-game="quiz"] .quiz-level-up__card {
     max-width: none;
     padding: var(--space-4);
@@ -3766,10 +3772,13 @@
   /* ===== 7. FINAL SCREEN: Konsistente Breite ===== */
   
   .game-shell[data-game="quiz"] .quiz-final-container {
-    padding: var(--space-4);
+    max-width: none;
+    padding: 0;
   }
   
-  .game-shell[data-game="quiz"] .quiz-final-card {
+  .game-shell[data-game="quiz"] .quiz-finish-card {
+    max-width: none;
+    margin: 0;
     padding: var(--space-4);
   }
   
