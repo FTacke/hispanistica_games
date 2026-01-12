@@ -290,6 +290,7 @@
     pendingTransition: null, // ✅ TEIL 2: What to do after POST_ANSWER "Weiter"
     currentView: VIEW.QUESTION,
     isTransitioning: false,
+    transitionInFlight: false, // ✅ FIX: Global lock gegen konkurrierende Transitions
     stageEls: null,
     finishData: null,
     // ✅ NEW: TimerController state
@@ -732,10 +733,10 @@
   async function transitionToView(newView) {
     if (state.isTransitioning) return;
     
-    // ✅ PHASE 1: Stop timer when leaving QUESTION view
+    // ✅ FIX: Stop ALL timers when leaving QUESTION view
     if (newView !== VIEW.QUESTION) {
-      stopTimer();
-      console.error('[TRANSITION] Stopped timer, transitioning to:', newView);
+      stopAllTimers();
+      console.error('[TRANSITION] Stopped all timers, transitioning to:', newView);
     }
     
     // Stop any playing audio on view transition
@@ -993,13 +994,19 @@
   }
 
   /**
-   * Start the 15-second auto-advance timer
+   * Start the auto-advance timer (simulates Weiter button click)
+   * ✅ FIX: Nutzt Weiter-Button statt eigenen Navigation-Pfad
    */
   function startAutoAdvanceTimer() {
     cancelAutoAdvanceTimer();
     state.autoAdvanceTimer = setTimeout(() => {
-      if (state.uiState === STATE.ANSWERED_LOCKED) {
-        advanceToNextQuestion('auto');
+      // Guard: nur wenn noch im richtigen Zustand
+      if (state.phase === PHASE.POST_ANSWER && !state.transitionInFlight) {
+        const weiterBtn = document.getElementById('quiz-weiter-btn');
+        if (weiterBtn && !weiterBtn.disabled && !weiterBtn.hidden) {
+          debugLog('startAutoAdvanceTimer', { action: 'auto-clicking Weiter button' });
+          weiterBtn.click();
+        }
       }
     }, AUTO_ADVANCE_DELAY_MS);
   }
@@ -1031,15 +1038,27 @@
 
   /**
    * Load current question data and display
+   * ✅ FIX: Atomisiert mit Lock, Guards, vollständigem Timer-Stop
    */
   async function loadCurrentQuestion() {
-    // ✅ PHASE 3: Render-Lock - Blockiere während LevelUp/Finish
-    if (state.currentView === VIEW.LEVEL_UP || state.currentView === VIEW.FINISH) {
-      const stack = new Error().stack;
-      console.error('[RENDER GUARD] ❌ BLOCKED loadCurrentQuestion() - currentView:', state.currentView);
-      console.error('[RENDER GUARD] Call stack:', stack);
+    // ✅ GUARD 1: Transition Lock
+    if (state.transitionInFlight) {
+      console.error('[GUARD] ❌ BLOCKED loadCurrentQuestion - transition in flight');
       return;
     }
+    
+    // ✅ GUARD 2: View Check
+    if (state.currentView !== VIEW.QUESTION) {
+      console.error('[GUARD] ❌ BLOCKED loadCurrentQuestion - currentView:', state.currentView);
+      return;
+    }
+    
+    // ✅ SET LOCK
+    state.transitionInFlight = true;
+    debugLog('loadCurrentQuestion', { action: 'set transition lock', index: state.currentIndex });
+    
+    // ✅ STOP ALL TIMERS SOFORT
+    stopAllTimers();
     
     // Stop any playing audio when loading new question
     AudioController.stopAndReset();
@@ -1079,10 +1098,6 @@
       hasMedia: !!(state.questionData.media && state.questionData.media.length),
       mediaBonus: currentQuestionMediaBonusSeconds 
     });
-    
-    // ✅ PHASE: Set to ANSWERING when loading new question
-    state.phase = PHASE.ANSWERING;
-    console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
     
     debugLog('loadCurrentQuestion', { action: 'data loaded, rendering question' });
     
@@ -1137,6 +1152,14 @@
       });
     }
     
+    // ✅ PHASE: Set to ANSWERING NUR am Ende, nach allem Setup
+    state.phase = PHASE.ANSWERING;
+    console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
+    
+    // ✅ RELEASE LOCK
+    state.transitionInFlight = false;
+    debugLog('loadCurrentQuestion', { action: 'released transition lock' });
+    
     // ✅ TIMER: Start countdown nur wenn phase = ANSWERING
     startTimerCountdown();
     
@@ -1190,43 +1213,77 @@
   }
 
   /**
-   * Stop timer completely (cleanup)
-   * ✅ CHANGE 3: Immer alle Timer-State-Variablen zurücksetzen
+   * Stop ALL timers completely (cleanup)
+   * ✅ FIX: Zentrales Timer-Management - stoppt ALLE Timer ohne Ausnahme
    */
-  function stopTimer() {
+  function stopAllTimers() {
+    // Countdown Timer
     if (state.timerInterval) {
       clearInterval(state.timerInterval);
       state.timerInterval = null;
     }
-    // ✅ CHANGE 3: Immer attemptId clearen (auch wenn kein interval lief)
     const oldAttemptId = state.activeTimerAttemptId;
     state.activeTimerAttemptId = null;
-    if (oldAttemptId) {
-      console.error('[TIMER] ✅ Stopped and cleared attemptId:', oldAttemptId);
+    if (oldAttemptId && DEBUG) {
+      debugLog('stopAllTimers', { clearedAttemptId: oldAttemptId });
+    }
+    
+    // Auto-Advance Timer
+    if (state.autoAdvanceTimer) {
+      clearTimeout(state.autoAdvanceTimer);
+      state.autoAdvanceTimer = null;
+    }
+    
+    // LevelUp Auto-Forward
+    if (state.autoForwardTimeout) {
+      clearTimeout(state.autoForwardTimeout);
+      state.autoForwardTimeout = null;
+    }
+    if (state.autoForwardInterval) {
+      clearInterval(state.autoForwardInterval);
+      state.autoForwardInterval = null;
+    }
+    
+    // Legacy LevelUp Timer
+    if (state.levelUpTimer) {
+      clearTimeout(state.levelUpTimer);
+      state.levelUpTimer = null;
     }
   }
 
   /**
    * Start the timer countdown display with attemptId guards
-   * ✅ CHANGE 3: Robuster Timer-Start - immer erst stoppen
+   * ✅ FIX: Verstärkte Guards + stopAllTimers() zuerst
    */
   function startTimerCountdown() {
-    // ✅ GUARD: Timer darf NUR laufen bei view=QUESTION und phase=ANSWERING
+    // ✅ GUARD 1: Transition Lock
+    if (state.transitionInFlight) {
+      console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - transition in flight');
+      return;
+    }
+    
+    // ✅ GUARD 2: Timer darf NUR laufen bei view=QUESTION und phase=ANSWERING
     if (state.currentView !== VIEW.QUESTION || state.phase !== PHASE.ANSWERING) {
       console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - view:', state.currentView, 'phase:', state.phase);
       return;
     }
     
-    // ✅ BUILD attemptId: eindeutige ID für diese Frage-Versuch
-    const attemptId = `${state.runId}:${state.currentIndex}:${state.questionData?.id || 'unknown'}`;
+    // ✅ GUARD 3: Question Data muss vorhanden sein
+    if (!state.questionData || !state.questionData.id) {
+      console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - no questionData');
+      return;
+    }
     
-    // ✅ GUARD: Verhindere Duplikat-Timer für dieselbe AttemptId
+    // ✅ BUILD attemptId: eindeutige ID für diese Frage-Versuch
+    const attemptId = `${state.runId}:${state.currentIndex}:${state.questionData.id}`;
+    
+    // ✅ GUARD 4: Verhindere Duplikat-Timer für dieselbe AttemptId
     if (state.activeTimerAttemptId === attemptId) {
       console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - already running for attemptId:', attemptId);
       return;
     }
     
-    stopTimer(); // Stop any stale timer
+    stopAllTimers(); // Stop any stale timers
     
     state.activeTimerAttemptId = attemptId;
     console.error('[TIMER] ✅ Started for attemptId:', attemptId, 'index:', state.currentIndex);
@@ -1445,20 +1502,25 @@
   async function handleAnswerClick(answerId) {
     debugLog('handleAnswerClick', { answerId, uiState: state.uiState, isAnswered: state.isAnswered });
     
+    // ✅ FIX: Guard gegen Transitions
+    if (state.transitionInFlight) {
+      debugLog('handleAnswerClick', { action: 'blocked', reason: 'transition in flight' });
+      return;
+    }
+    
     if (state.uiState !== STATE.IDLE || state.isAnswered) {
       debugLog('handleAnswerClick', { action: 'blocked', reason: 'already answered or wrong state' });
       return;
     }
     
+    // ✅ FIX: Set Lock während Submit
+    state.transitionInFlight = true;
+    
     state.isAnswered = true;
     state.selectedAnswerId = answerId;
     
-    // ✅ PHASE: Transition to POST_ANSWER SOFORT
-    state.phase = PHASE.POST_ANSWER;
-    console.error('[PHASE] ✅ Set to POST_ANSWER after answer submit');
-    
-    // ✅ Stop timer SOFORT
-    stopTimer();
+    // ✅ Stop ALL timers SOFORT
+    stopAllTimers();
     
     // Immediately lock UI
     setUIState(STATE.ANSWERED_LOCKED);
@@ -1499,6 +1561,13 @@
       }
       
       const data = await response.json();
+      
+      // ✅ RELEASE LOCK nach erfolgreichem Submit
+      state.transitionInFlight = false;
+      
+      // ✅ PHASE: Transition to POST_ANSWER nach Submit
+      state.phase = PHASE.POST_ANSWER;
+      console.error('[PHASE] ✅ Set to POST_ANSWER after answer submit');
       
       // ✅ INSTRUMENTATION: Log raw API response
       console.error('[ANSWER RAW]', {
@@ -1681,6 +1750,8 @@
       
     } catch (error) {
       console.error('Failed to submit answer:', error);
+      // ✅ FIX: Release Lock on error
+      state.transitionInFlight = false;
       // Allow retry
       state.isAnswered = false;
       setUIState(STATE.IDLE);
@@ -1692,57 +1763,62 @@
 
   /**
    * Handle timeout (no answer given)
+   * ✅ FIX: Verstärkte Guards, Lock während Submit
    */
   async function handleTimeout() {
+    // ✅ GUARD 1: Transition Lock (SOFORT prüfen)
+    if (state.transitionInFlight) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - transition in flight');
+      return;
+    }
+    
+    // ✅ GUARD 2: Phase Check (SOFORT prüfen)
+    if (state.phase !== PHASE.ANSWERING) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - phase is not ANSWERING, phase:', state.phase);
+      stopAllTimers();
+      return;
+    }
+    
+    // ✅ GUARD 3: Already Answered
+    if (state.isAnswered) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - already answered');
+      stopAllTimers();
+      return;
+    }
+    
+    // ✅ GUARD 4: View Check
+    if (state.currentView !== VIEW.QUESTION) {
+      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - not in QUESTION view, currentView:', state.currentView);
+      stopAllTimers();
+      return;
+    }
+    
     // ✅ BUILD attemptId für diese Timeout
     const attemptId = state.activeTimerAttemptId;
     
-    // ✅ GUARD: Prevent stale/duplicate timeout submits
+    // ✅ GUARD 5: AttemptId vorhanden
     if (!attemptId) {
       console.error('[TIMER GUARD] ❌ Blocked handleTimeout - no active attemptId');
       return;
     }
     
-    if (state.phase !== PHASE.ANSWERING) {
-      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - phase is not ANSWERING, phase:', state.phase);
-      stopTimer();
-      return;
-    }
-    
-    if (state.isAnswered) {
-      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - already answered');
-      stopTimer();
-      return;
-    }
-    
-    if (state.currentView !== VIEW.QUESTION) {
-      console.error('[TIMER GUARD] ❌ Blocked handleTimeout - not in QUESTION view, currentView:', state.currentView);
-      stopTimer();
-      return;
-    }
-    
-    // ✅ GUARD: Check if timeout already submitted for this attemptId
+    // ✅ GUARD 6: Check if timeout already submitted for this attemptId
     if (state.timeoutSubmittedForAttemptId[attemptId]) {
       console.error('[TIMER GUARD] ❌ Blocked handleTimeout - already submitted for attemptId:', attemptId);
-      stopTimer();
+      stopAllTimers();
       return;
     }
     
     console.error('[TIMER] ✅ Timeout triggered for attemptId:', attemptId, 'index:', state.currentIndex);
     
-    // ✅ MARK: Prevent duplicate timeout submissions
+    // ✅ SOFORT stoppen und markieren
+    stopAllTimers();
     state.timeoutSubmittedForAttemptId[attemptId] = true;
     state.isAnswered = true;
     
-    // ✅ PHASE: Transition to POST_ANSWER
-    state.phase = PHASE.POST_ANSWER;
-    console.error('[PHASE] ✅ Set to POST_ANSWER after timeout');
-    
-    // Stop timer
-    if (state.timerInterval) {
-      clearInterval(state.timerInterval);
-      state.timerInterval = null;
-    }
+    // ✅ SET LOCK während Submit
+    state.transitionInFlight = true;
+    debugLog('handleTimeout', { action: 'set transition lock' });
     
     // Lock UI
     setUIState(STATE.ANSWERED_LOCKED);
@@ -1808,6 +1884,13 @@
       }
       
       const data = await response.json();
+      
+      // ✅ RELEASE LOCK nach erfolgreichem Submit
+      state.transitionInFlight = false;
+      
+      // ✅ PHASE: Transition to POST_ANSWER
+      state.phase = PHASE.POST_ANSWER;
+      console.error('[PHASE] ✅ Set to POST_ANSWER after timeout submit');
       
       // ✅ MAPPER: Normalisiere Response zu AnswerModel (gleich wie bei handleAnswerClick)
       let answer;
@@ -1912,6 +1995,8 @@
       
     } catch (error) {
       console.error('Failed to submit timeout:', error);
+      // ✅ FIX: Release Lock on error
+      state.transitionInFlight = false;
     }
   }
 
@@ -1995,6 +2080,16 @@
     btn.addEventListener('click', async () => {
       if (state.uiState !== STATE.ANSWERED_LOCKED) return;
       
+      // ✅ FIX: Guard gegen doppelte Transitions
+      if (state.transitionInFlight) {
+        debugLog('setupWeiterButton', { action: 'blocked', reason: 'transition in flight' });
+        return;
+      }
+      
+      // ✅ FIX: Set Lock
+      state.transitionInFlight = true;
+      debugLog('setupWeiterButton', { action: 'set transition lock' });
+      
       // Disable button to prevent double-clicks
       btn.disabled = true;
       
@@ -2004,25 +2099,28 @@
         next: state.nextQuestionIndex
       });
       
-      cancelAutoAdvanceTimer();
+      stopAllTimers(); // ✅ FIX: Stop ALL timers before transition
       setUIState(STATE.TRANSITIONING);
       
       switch (state.pendingTransition) {
         case 'LEVEL_UP':
           // Show LevelUp screen
           console.error('[TRANSITION] -> LEVEL_UP after Weiter');
+          state.transitionInFlight = false; // Release Lock vor View-Transition
           await transitionToView(VIEW.LEVEL_UP);
           break;
           
         case 'LEVEL_UP_THEN_FINAL':
           // Show LevelUp first, then Final after continue
           console.error('[TRANSITION] -> LEVEL_UP (then FINAL) after Weiter');
+          state.transitionInFlight = false; // Release Lock vor View-Transition
           await transitionToView(VIEW.LEVEL_UP);
           break;
           
         case 'FINAL':
           // Go directly to Final (no LevelUp)
           console.error('[TRANSITION] -> FINAL after Weiter');
+          state.transitionInFlight = false; // Release Lock vor finishRun
           await finishRun();
           break;
           
@@ -2032,6 +2130,8 @@
           if (state.nextQuestionIndex === null || state.nextQuestionIndex === undefined) {
             console.error('❌ CRITICAL: nextQuestionIndex is null! Cannot proceed.');
             alert('Fehler: Nächste Frage nicht gefunden. Bitte Seite neu laden.');
+            state.transitionInFlight = false;
+            btn.disabled = false;
             return;
           }
           
@@ -2039,7 +2139,7 @@
           state.nextQuestionIndex = null;
           
           console.error('[INDEX] loading next question:', state.currentIndex);
-          // ✅ loadCurrentQuestion setzt phase=ANSWERING und startet Timer
+          // ✅ loadCurrentQuestion setzt phase=ANSWERING, startet Timer, und released Lock selbst
           await loadCurrentQuestion();
           break;
       }
@@ -2050,88 +2150,21 @@
 
   /**
    * Advance to the next question with transition animation
+   * ✅ DEPRECATED: Ersetzt durch Weiter-Button (setupWeiterButton)
+   * Diese Funktion wird nicht mehr verwendet - Auto-Advance simuliert Button-Klick
    */
   async function advanceToNextQuestion(trigger = 'button') {
-    debugLog('advanceToNextQuestion', { 
-      uiState: state.uiState,
-      trigger
-    });
+    console.error('❌ DEPRECATED: advanceToNextQuestion() called with trigger:', trigger);
+    console.error('Stack trace:', new Error().stack);
     
-    if (state.uiState !== STATE.ANSWERED_LOCKED) {
-      debugLog('advanceToNextQuestion', { action: 'blocked', reason: 'wrong uiState' });
-      return;
+    // Fallback: Simuliere Weiter-Button Klick
+    const weiterBtn = document.getElementById('quiz-weiter-btn');
+    if (weiterBtn && !weiterBtn.disabled) {
+      console.error('Fallback: Simulating Weiter button click');
+      weiterBtn.click();
+    } else {
+      console.error('Cannot fallback: Weiter button not available');
     }
-
-    if (!state.lastAnswerResult) {
-      debugLog('advanceToNextQuestion', { action: 'blocked', reason: 'missing lastAnswerResult' });
-      return;
-    }
-    
-    cancelAutoAdvanceTimer();
-    setUIState(STATE.TRANSITIONING);
-
-    const data = state.lastAnswerResult;
-    const isFinished = !!(data.is_run_finished || data.finished);
-    
-    // LevelUp Trigger: ALWAYS show when level_completed is true.
-    // Decoupled from bonus.
-    const shouldLevelUp = !!data.level_completed;
-
-    // Test hook: expose decision inputs for E2E diagnostics.
-    window.__quizPlayAdvanceDecision = {
-      trigger,
-      isFinished,
-      shouldLevelUp,
-      level_completed: data.level_completed,
-      level_perfect: data.level_perfect,
-      level_bonus: data.level_bonus,
-      bonus_applied_now: data.bonus_applied_now,
-      next_question_index: data.next_question_index,
-    };
-
-    debugLog('advanceToNextQuestion', {
-      action: 'decision',
-      isFinished,
-      shouldLevelUp,
-      next_question_index: data.next_question_index,
-      level_completed: data.level_completed,
-      level_perfect: data.level_perfect,
-      level_bonus: data.level_bonus,
-      difficulty: data.difficulty,
-    });
-    
-    const wrapper = document.getElementById('quiz-question-wrapper');
-    
-    if (wrapper) {
-      wrapper.setAttribute('data-transition-state', 'leaving');
-      debugLog('advanceToNextQuestion', { action: 'starting transition animation' });
-      await new Promise(resolve => setTimeout(resolve, TRANSITION_DURATION_MS));
-    }
-
-    // Weiter is the ONLY decision point
-    if (shouldLevelUp) {
-      state.pendingLevelUpData = {
-        difficulty: data.difficulty,
-        level_bonus: data.level_bonus || 0,
-        level_perfect: !!data.level_perfect,
-        level_completed: !!data.level_completed,
-        running_score: data.running_score, // Pass final score for visualization
-        next_question_index: data.next_question_index,
-        finished: isFinished
-      };
-
-      debugLog('advanceToNextQuestion', { action: 'transitionToView(LEVEL_UP)' });
-      transitionToView(VIEW.LEVEL_UP);
-      return;
-    }
-
-    if (isFinished) {
-      await finishRun();
-      return;
-    }
-
-    // Normal next question
-    await loadCurrentQuestion();
   }
 
   /**
@@ -2506,9 +2539,9 @@
       return;
     }
     
-    // ✅ PHASE 1: Ensure timer is stopped before transitioning
-    stopTimer();
-    console.error('[ADVANCE FROM LEVELUP] Timer stopped before loading next question');
+    // ✅ FIX: Ensure ALL timers are stopped before transitioning
+    stopAllTimers();
+    console.error('[ADVANCE FROM LEVELUP] All timers stopped before loading next question');
 
     // Check if we are finished
     const isFinished = state.pendingLevelUpData && state.pendingLevelUpData.finished;
@@ -2557,18 +2590,8 @@
   async function finishRun() {
     debugLog('finishRun', { action: 'start' });
     
-    // Stop timer
-    if (state.timerInterval) {
-      clearInterval(state.timerInterval);
-      state.timerInterval = null;
-    }
-    cancelAutoAdvanceTimer();
-    
-    // Clear level-up timer if active
-    if (state.levelUpTimer) {
-      clearTimeout(state.levelUpTimer);
-      state.levelUpTimer = null;
-    }
+    // ✅ FIX: Stop ALL timers
+    stopAllTimers();
     
     try {
       const response = await fetch(`${API_BASE}/run/${state.runId}/finish`, {
