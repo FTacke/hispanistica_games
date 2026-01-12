@@ -1317,18 +1317,39 @@
   border: 1px solid var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
   box-shadow: var(--quiz-shadow-sm);
   overflow: hidden;
+  position: relative;  /* For pseudo-element accent bar */
   /* Animation: expand + fade */
   animation: quiz-explanation-expand var(--quiz-anim-explanation) ease-out;
 }
 
 /**
- * Default (Correct) State: Primary/Secondary Farbton
- * - Dezente Akzentlinie (optional) 4px in Primary oder Tertiary
+ * Accent Bar (::before): Left visual indicator respecting border-radius
+ * Replaces border-inline-start for cleaner rounded integration
+ * Overridden by state-specific rules (--correct / --wrong)
+ */
+.game-shell[data-game="quiz"] .quiz-explanation-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;  /* Hidden by default - shown by state rules */
+  background: transparent;
+  border-radius: var(--quiz-radius-md) 0 0 var(--quiz-radius-md);  /* Match card radius */
+}
+
+/**
+ * Default (Correct) State: Secondary-Container Hintergrund
+ * - Subtile Primary-Akzentlinie via ::before (4px)
  * - Konsistent zur Wrong-Variante, aber minimal invasiv
  */
 .game-shell[data-game="quiz"] .quiz-explanation-card--correct {
-  border-inline-start: 4px solid var(--md-sys-color-primary, var(--quiz-primary));
   background: var(--md-sys-color-secondary-container, var(--quiz-secondary-container));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--correct::before {
+  width: 4px;
+  background: var(--md-sys-color-primary, var(--quiz-primary));
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__status {
@@ -1349,24 +1370,28 @@
 }
 
 /**
- * Wrong State: Klare Codierung durch roten linken Akzentstreifen
- * - 6px error-colored border-inline-start
- * - warning-container Hintergrund (nicht zu aggressiv)
+ * Wrong State: Error-Container Hintergrund (konsistent MD3)
+ * - 6px error-colored ::before accent bar
+ * - Vollständig error-container Farbschema (nicht warning)
  * - Konsistente Schrift auf allen Ebenen
  */
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong {
-  border-inline-start: 6px solid var(--md-sys-color-error, #ba1a1a);
-  background: var(--md-sys-color-warning-container, var(--quiz-warning-container));
+  background: var(--md-sys-color-error-container, var(--quiz-error-container));
   border-color: var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
 }
 
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong::before {
+  width: 6px;
+  background: var(--md-sys-color-error, #ba1a1a);
+}
+
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__status {
-  background: var(--md-sys-color-error-container, var(--quiz-error-container));
-  color: var(--md-sys-color-on-error-container, var(--quiz-on-error-container));
+  background: var(--md-sys-color-error, var(--quiz-error));
+  color: var(--md-sys-color-on-error, var(--quiz-on-error));
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title {
-  color: var(--md-sys-color-on-warning-container, var(--quiz-on-surface));
+  color: var(--md-sys-color-on-error-container, var(--quiz-on-surface));
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title .material-symbols-rounded {
@@ -1374,7 +1399,7 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__body {
-  color: var(--md-sys-color-on-warning-container, var(--quiz-on-surface));
+  color: var(--md-sys-color-on-error-container, var(--quiz-on-surface));
 }
 
 @keyframes quiz-explanation-expand {
@@ -1410,8 +1435,8 @@
   flex-direction: column;
   gap: 12px;  /* Abstand zwischen Status und Title */
   margin-bottom: 16px;  /* Trennung zum Body */
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
+  padding-bottom: 0;  /* No bottom padding - spacing via margin */
+  border-bottom: none;  /* Remove divider - spacing is enough */
 }
 
 /**
