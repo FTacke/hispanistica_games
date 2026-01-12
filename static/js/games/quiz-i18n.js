@@ -23,7 +23,7 @@
         start: "Start",
         login: "Anmelden",
         logout: "Abmelden",
-        play_anonymous: "Als Anónimo spielen",
+        play_anonymous: "Als Anonym spielen",
         register_new: "Neu registrieren",
         already_registered: "Bereits registriert?",
         error_name_taken: "Dieser Name ist bereits vergeben.",

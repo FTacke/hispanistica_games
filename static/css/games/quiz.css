@@ -3159,7 +3159,6 @@
 @media (min-width: 601px) {
   .game-shell[data-game="quiz"] .quiz-start-card__status {
     flex-wrap: nowrap;
-    align-items: flex-start;
   }
   
   .game-shell[data-game="quiz"] .quiz-start-card__action-btn {

@@ -1370,11 +1370,14 @@
       // ✅ STOP ALL TIMERS SOFORT
       stopAllTimers();
       
+      // ✅ FIX: Clear transition flag IMMEDIATELY (crucial for timer start)
+      clearTransitionInFlight();
+      
       // ✅ FIX: Clear timer state IMMEDIATELY to prevent stale values
       state.expiresAtMs = null;
       state.deadlineAtMs = null;
       state.questionStartedAtMs = null;
-      debugLog('loadCurrentQuestion', { action: 'cleared timer state for fresh start' });
+      debugLog('loadCurrentQuestion', { action: 'cleared timer state and transition flag for fresh start' });
     
     // Stop any playing audio when loading new question
     AudioController.stopAndReset();
@@ -1486,8 +1489,22 @@
       state.phase = PHASE.ANSWERING;
       console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
       
-      // ✅ TIMER: Start countdown nur wenn phase = ANSWERING und expiresAtMs vorhanden
-      startTimerCountdown();
+      // ✅ TIMER: Start countdown AFTER DOM commit to ensure rendering and transition flag clearing
+      // Use double rAF to ensure paint has completed
+      const attemptIdForStart = `${state.runId}:${state.currentIndex}:${state.questionData.id}`;
+      console.error('[TIMER] 🔄 Scheduling timer start after DOM commit for attemptId:', attemptIdForStart);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Verify we're still on the same question
+          const currentAttemptId = `${state.runId}:${state.currentIndex}:${state.questionData?.id}`;
+          if (currentAttemptId === attemptIdForStart && state.phase === PHASE.ANSWERING) {
+            console.error('[TIMER] ✅ Starting timer after DOM commit for:', currentAttemptId);
+            startTimerCountdown();
+          } else {
+            console.error('[TIMER] ⚠️ Skipping timer start - question changed or phase changed');
+          }
+        });
+      });
     } else {
       console.error('[PHASE] ❌ Cannot set ANSWERING - no valid expiresAtMs from server');
     }
@@ -1658,10 +1675,22 @@
    * Start the timer countdown display with attemptId guards
    * ✅ FIX: Verstärkte Guards + stopAllTimers() zuerst + server-time validation
    */
-  function startTimerCountdown() {
-    // ✅ GUARD 1: Transition Lock
+  function startTimerCountdown(retryCount = 0) {
+    // ✅ GUARD 1: Transition Lock with RETRY logic
     if (state.transitionInFlight) {
-      console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - transition in flight');
+      const maxRetries = 5;
+      if (retryCount < maxRetries) {
+        console.error(`[TIMER GUARD] ⚠️ BLOCKED startTimerCountdown (retry ${retryCount + 1}/${maxRetries}) - transition in flight, scheduling retry`);
+        // Retry after short delay using rAF
+        requestAnimationFrame(() => {
+          startTimerCountdown(retryCount + 1);
+        });
+      } else {
+        console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - transition in flight after max retries, forcing flag clear');
+        // Force clear the flag and start timer
+        clearTransitionInFlight();
+        startTimerCountdown(maxRetries); // Try one more time with cleared flag
+      }
       return;
     }
     
@@ -1740,6 +1769,17 @@
     
     updateTimer();
     state.timerInterval = setInterval(updateTimer, 100);
+  }
+
+  /**
+   * Clear transition flag with logging
+   * ✅ FIX: Helper to ensure transition flag is always properly reset
+   */
+  function clearTransitionInFlight() {
+    if (state.transitionInFlight) {
+      console.error('[TRANSITION FLAG] ✅ Clearing transitionInFlight flag');
+      state.transitionInFlight = false;
+    }
   }
 
   /**
