@@ -48,6 +48,8 @@
     setupShowLoginButton();
 
     // Test hook: indicates that event handlers are attached.
+    // (No user-visible behavior; used by Playwright to avoid early form submits.)
+    window.__quizEntryReady = true;
   }
 
   /**
@@ -61,9 +63,6 @@
       return parts.pop().split(';').shift();
     }
     return null;
-  }
-    // (No user-visible behavior; used by Playwright to avoid early form submits.)
-    window.__quizEntryReady = true;
   }
 
   /**
