@@ -2245,6 +2245,48 @@
   }
 
   /**
+   * Animate number count-up with reduced-motion support
+   * @param {HTMLElement} element - Target element to update textContent
+   * @param {number} start - Starting value
+   * @param {number} end - Ending value
+   * @param {number} duration - Animation duration in ms (default 800ms)
+   * @param {string} prefix - Prefix string (e.g. '+' for bonus)
+   */
+  function animateCountUp(element, start, end, duration = 800, prefix = '') {
+    if (!element) return;
+    
+    const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    // Reduced motion: show end value immediately
+    if (isReducedMotion) {
+      element.textContent = `${prefix}${end}`;
+      return;
+    }
+    
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Ease-out cubic for smooth deceleration
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(start + (end - start) * easeOut);
+      
+      element.textContent = `${prefix}${current}`;
+      
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        // Ensure we end exactly at the target value
+        element.textContent = `${prefix}${end}`;
+      }
+    }
+    
+    requestAnimationFrame(update);
+  }
+
+  /**
    * Render level-up screen dynamically in the main container
    */
   function renderLevelUpInContainer() {
@@ -2357,6 +2399,12 @@
         scoreCorrect: true,
         noDuplicates: true
       });
+      
+      // ✅ FIX 4: Bonus Count-Up Animation starten (nur wenn bonus > 0)
+      if (bonus > 0 && bonusValueEl) {
+        animateCountUp(bonusValueEl, 0, bonus, 800, '+');
+        debugLog('animateCountUp', { target: 'bonus', from: 0, to: bonus });
+      }
       
       // ✅ PHASE 1: VISIBILITY CHECK - Beweise dass Container SICHTBAR ist
       const questionContainer = document.getElementById('quiz-question-container');

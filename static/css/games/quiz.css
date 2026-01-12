@@ -472,10 +472,10 @@
 /* STATE: selected_correct - User chose correctly */
 .game-shell[data-game="quiz"] .quiz-answer--selected-correct {
   background: var(--quiz-success-container);
-  border-color: var(--quiz-success);
+  border: 4px solid var(--quiz-success);
   color: var(--quiz-on-success-container);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-success) 15%, transparent);
-  font-weight: 600;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--quiz-success) 25%, transparent), var(--elev-2);
+  font-weight: 700;
 }
 
 .game-shell[data-game="quiz"] .quiz-answer--selected-correct .quiz-answer-letter {
@@ -486,10 +486,10 @@
 /* STATE: selected_wrong - User chose incorrectly */
 .game-shell[data-game="quiz"] .quiz-answer--selected-wrong {
   background: var(--quiz-error-container);
-  border-color: var(--quiz-error);
+  border: 4px solid var(--quiz-error);
   color: var(--quiz-on-error-container);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-error) 15%, transparent);
-  font-weight: 600;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--quiz-error) 25%, transparent), var(--elev-2);
+  font-weight: 700;
 }
 
 .game-shell[data-game="quiz"] .quiz-answer--selected-wrong .quiz-answer-letter {
@@ -500,10 +500,10 @@
 /* STATE: correct_reveal - Show correct answer when user was wrong (subtle!) */
 .game-shell[data-game="quiz"] .quiz-answer--correct-reveal {
   background: var(--quiz-surface-container-low);
-  border-color: var(--quiz-outline-variant);
-  border-left: 6px solid var(--quiz-success);
+  border: 2px solid var(--quiz-outline-variant);
+  border-left: 8px solid var(--quiz-success);
   color: var(--quiz-on-surface);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* STATE: locked - Other answers after selection */
@@ -2927,10 +2927,10 @@
 /* Status section (authenticated) */
 .game-shell[data-game="quiz"] .quiz-start-card__status {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--quiz-space-sm);
+  gap: var(--quiz-space-3);
   padding: var(--quiz-space-md);
   background: var(--quiz-surface-variant);
   border-radius: var(--quiz-radius-sm);
@@ -2962,6 +2962,7 @@
   align-items: center;
   gap: var(--quiz-space-xs);
   padding: var(--quiz-space-sm) var(--quiz-space-md);
+  margin-left: auto;
   background: transparent;
   border: 1px solid var(--quiz-outline-variant);
   border-radius: var(--quiz-radius-sm);
@@ -3712,10 +3713,12 @@
   /* ===== 6. LEVEL-UP: KPI 1-Column auf Mobile ===== */
   
   .game-shell[data-game="quiz"] .quiz-level-up-container {
+    max-width: none;
     padding: var(--space-4);
   }
   
   .game-shell[data-game="quiz"] .quiz-level-up__card {
+    max-width: none;
     padding: var(--space-4);
   }
   
