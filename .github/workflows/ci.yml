@@ -46,6 +46,10 @@ jobs:
         echo "=== passlib Details ==="
         python -c "import passlib; print(f'passlib version: {passlib.__version__}')"
 
+    - name: Syntax check
+      run: |
+        python -m compileall -q game_modules
+
     - name: Run md3 forms/auth guard
       run: |
         python scripts/md3-forms-auth-guard.py

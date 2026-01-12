@@ -1142,7 +1142,6 @@ def api_get_run_state(run_id: str):
                      timer_started=timer_started, remaining_seconds=remaining_seconds,
                      is_expired=is_expired, running_score=running_score,
                      debug=debug_flag)
-        )
 
         return jsonify(payload)
 
