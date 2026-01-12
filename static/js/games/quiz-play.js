@@ -2837,8 +2837,9 @@
    * @param {number} end - Ending value
    * @param {number} duration - Animation duration in ms (default 800ms)
    * @param {string} prefix - Prefix string (e.g. '+' for bonus)
+   * @param {Function} onComplete - Optional callback when animation completes
    */
-  function animateCountUp(element, start, end, duration = 800, prefix = '') {
+  function animateCountUp(element, start, end, duration = 800, prefix = '', onComplete = null) {
     if (!element) return;
     
     const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2846,6 +2847,9 @@
     // Reduced motion: show end value immediately
     if (isReducedMotion) {
       element.textContent = `${prefix}${end}`;
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
       return;
     }
     
@@ -2866,6 +2870,9 @@
       } else {
         // Ensure we end exactly at the target value
         element.textContent = `${prefix}${end}`;
+        if (typeof onComplete === 'function') {
+          onComplete();
+        }
       }
     }
     
@@ -2986,10 +2993,23 @@
         noDuplicates: true
       });
       
-      // ✅ FIX 4: Bonus Count-Up Animation starten (nur wenn bonus > 0)
+      // ✅ Sequential Animation: Bonus first, then Total
       if (bonus > 0 && bonusValueEl) {
-        animateCountUp(bonusValueEl, 0, bonus, 800, '+');
-        debugLog('animateCountUp', { target: 'bonus', from: 0, to: bonus });
+        // Reset both values to prepare for animation
+        bonusValueEl.textContent = '+0';
+        const scoreValueEl = container.querySelector('.quiz-level-up__total-block .quiz-level-up__value');
+        if (scoreValueEl) {
+          const scoreBeforeBonus = scoreAfterBonus - bonus;
+          scoreValueEl.textContent = String(scoreBeforeBonus);
+          
+          // Step 1: Animate bonus from 0 to bonus value
+          animateCountUp(bonusValueEl, 0, bonus, 800, '+', () => {
+            // Step 2: After bonus animation completes, animate total score
+            animateCountUp(scoreValueEl, scoreBeforeBonus, scoreAfterBonus, 800, '', null);
+            debugLog('animateCountUp', { target: 'total', from: scoreBeforeBonus, to: scoreAfterBonus });
+          });
+          debugLog('animateCountUp', { target: 'bonus', from: 0, to: bonus });
+        }
       }
       
       // ✅ PHASE 1: VISIBILITY CHECK - Beweise dass Container SICHTBAR ist

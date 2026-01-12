@@ -289,11 +289,14 @@
 /**
  * Question Prompt Surface (NEW): Dedicated section for question + media
  * Visually separate from answers, with high hierarchy
+ * MD3: Higher elevation (level 2) to distinguish from answers
  */
 .game-shell[data-game="quiz"] .quiz-question-prompt-surface {
-  background: var(--md-sys-color-surface-container);
+  background: var(--md-sys-color-surface-container-high);
   border-radius: 16px;
-  padding: 24px;  /* Großzügiger Padding = higher hierarchy */
+  padding: 24px;
+  box-shadow: var(--quiz-shadow-md);
+  border: 1px solid var(--md-sys-color-outline-variant);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -411,8 +414,7 @@
   flex-direction: column;
   gap: var(--quiz-space-md);
   margin: 0;
-  padding-top: var(--quiz-space-lg);  /* Add top padding for separation from question prompt */
-  border-top: 1px solid var(--md-sys-color-outline-variant);  /* Subtle divider between question and answers */
+  padding-top: var(--quiz-space-lg);
 }
 
 /* ========================================
@@ -2035,6 +2037,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--quiz-space-xs);
+  min-height: 80px;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .game-shell[data-game="quiz"] .quiz-level-up__bonus-block--active {
@@ -3368,10 +3373,9 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard-card__item {
-  display: grid;
-  grid-template-columns: 40px 1fr auto auto;
-  gap: var(--quiz-space-md);
+  display: flex;
   align-items: center;
+  gap: var(--quiz-space-md);
   padding: var(--quiz-space-md);
   background: var(--quiz-surface-container);
   border-radius: var(--quiz-radius-sm);
@@ -3398,6 +3402,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
+  flex: 0 0 auto;
   background: var(--quiz-surface-variant);
   color: var(--quiz-on-surface-variant);
   border-radius: var(--quiz-radius-full);
@@ -3416,6 +3421,8 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard-card__name {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 500;
   color: var(--quiz-on-surface);
   overflow: hidden;
@@ -3424,25 +3431,21 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard-card__score {
+  flex: 0 0 auto;
   display: flex;
   align-items: baseline;
   gap: var(--quiz-space-xs);
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard-card__score-value {
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
   color: var(--quiz-on-surface);
-}
-
-.game-shell[data-game="quiz"] .quiz-leaderboard-card__score-label {
-  font-size: 0.6875rem;
-  color: var(--quiz-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard-card__tokens {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -3544,9 +3547,9 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-hud__title h1 {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 700;
-  line-height: 1.25rem;
+  line-height: 1.5rem;
   letter-spacing: 0.00625rem;
   color: var(--quiz-on-surface);
   margin: 0;
@@ -4130,16 +4133,16 @@
 
 /* Trash icon button in leaderboard rows */
 .game-shell[data-game="quiz"] .quiz-leaderboard-card__item--admin {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto 40px;
+  /* Inherit flex layout from parent, add admin icon at end */
 }
 
 .game-shell[data-game="quiz"] .quiz-admin-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
   padding: 0;
   border: none;
   background: transparent;
@@ -4147,7 +4150,6 @@
   border-radius: 50%;
   cursor: pointer;
   transition: all var(--quiz-transition-fast);
-  flex-shrink: 0;
 }
 
 .game-shell[data-game="quiz"] .quiz-admin-icon-btn:hover {

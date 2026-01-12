@@ -222,7 +222,6 @@
         <span class="quiz-leaderboard-card__name">${escapeHtml(entry.player_name)}</span>
         <span class="quiz-leaderboard-card__score">
           <span class="quiz-leaderboard-card__score-value">${entry.total_score}</span>
-          <span class="quiz-leaderboard-card__score-label">Punkte</span>
         </span>
         <span class="quiz-leaderboard-card__tokens">
           <span class="material-symbols-rounded">toll</span>
