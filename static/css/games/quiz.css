@@ -267,9 +267,9 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--quiz-space-md);
-  margin-bottom: var(--quiz-space-lg);
-  padding-bottom: var(--quiz-space-md);
-  border-bottom: 1px solid var(--quiz-outline-variant);
+  margin-bottom: var(--quiz-space-md);
+  padding-bottom: 0;  /* Padding removed - divider handles spacing */
+  border-bottom: none;  /* Border removed - dedicated divider below */
 }
 
 /* ============================================================================
@@ -284,6 +284,29 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/**
+ * Question Prompt Surface (NEW): Dedicated section for question + media
+ * Visually separate from answers, with high hierarchy
+ */
+.game-shell[data-game="quiz"] .quiz-question-prompt-surface {
+  background: var(--md-sys-color-surface-container);
+  border-radius: 16px;
+  padding: 24px;  /* Großzügiger Padding = higher hierarchy */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/**
+ * Visual Divider: Subtle separation between meta and question
+ */
+.game-shell[data-game="quiz"] .quiz-question-divider {
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+  margin: 8px 0;  /* Light vertical spacing */
+  opacity: 0.5;   /* Subtle, nicht dominant */
 }
 
 /* Media surface - subtly inset within question surface */
@@ -309,8 +332,13 @@
   gap: 8px;
 }
 
-/* Responsive adjustments for question surface */
+/* Responsive adjustments for question prompt surface */
 @media (max-width: 600px) {
+  .game-shell[data-game="quiz"] .quiz-question-prompt-surface {
+    padding: 18px;
+    gap: 10px;
+  }
+  
   .game-shell[data-game="quiz"] .quiz-question-surface {
     padding: 16px;
     gap: 14px;
@@ -382,7 +410,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--quiz-space-md);
-  margin: 0; /* Margin now handled by quiz-question-surface gap */
+  margin: 0;
+  padding-top: var(--quiz-space-lg);  /* Add top padding for separation from question prompt */
+  border-top: 1px solid var(--md-sys-color-outline-variant);  /* Subtle divider between question and answers */
 }
 
 /* ========================================
@@ -1280,44 +1310,71 @@
    ============================================================================ */
 
 .game-shell[data-game="quiz"] .quiz-explanation-card {
-  margin-top: var(--quiz-space-xl);  /* Mehr Abstand zu Antworten */
-  padding: var(--quiz-space-lg);
+  margin-top: var(--quiz-space-xl);  /* Abstand zu Antworten */
+  padding: 20px;  /* Großzügiger, konsistenter Padding */
   border-radius: var(--quiz-radius-md);
-  background: var(--quiz-secondary-container);  /* Klar unterscheidbar */
-  border: 1px solid var(--quiz-outline-variant);
-  border-left: 6px solid var(--quiz-secondary);  /* Akzentlinie */
+  background: var(--md-sys-color-secondary-container, var(--quiz-secondary-container));
+  border: 1px solid var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
   box-shadow: var(--quiz-shadow-sm);
   overflow: hidden;
   /* Animation: expand + fade */
   animation: quiz-explanation-expand var(--quiz-anim-explanation) ease-out;
 }
 
-/* Status line: "Richtige Antwort!" or "Leider falsch!" */
-.game-shell[data-game="quiz"] .quiz-explanation-card__status {
-  margin: 0 0 var(--quiz-space-sm) 0;
-  font-size: 0.875rem;  /* Small, eyebrow style */
-  font-weight: 500;
-  color: var(--quiz-on-secondary-container);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  min-height: 1.25em;  /* Reserve space to prevent layout shift */
+/**
+ * Default (Correct) State: Primary/Secondary Farbton
+ * - Dezente Akzentlinie (optional) 4px in Primary oder Tertiary
+ * - Konsistent zur Wrong-Variante, aber minimal invasiv
+ */
+.game-shell[data-game="quiz"] .quiz-explanation-card--correct {
+  border-inline-start: 4px solid var(--md-sys-color-primary, var(--quiz-primary));
+  background: var(--md-sys-color-secondary-container, var(--quiz-secondary-container));
 }
 
-/* Modifier: Wrong answer variant */
+.game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__status {
+  background: var(--md-sys-color-primary-container, var(--quiz-primary-container));
+  color: var(--md-sys-color-on-primary-container, var(--quiz-on-primary-container));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__title {
+  color: var(--md-sys-color-on-secondary-container, var(--quiz-on-surface));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__title .material-symbols-rounded {
+  color: var(--md-sys-color-primary, var(--quiz-primary));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--correct .quiz-explanation-card__body {
+  color: var(--md-sys-color-on-secondary-container, var(--quiz-on-surface));
+}
+
+/**
+ * Wrong State: Klare Codierung durch roten linken Akzentstreifen
+ * - 6px error-colored border-inline-start
+ * - warning-container Hintergrund (nicht zu aggressiv)
+ * - Konsistente Schrift auf allen Ebenen
+ */
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong {
+  border-inline-start: 6px solid var(--md-sys-color-error, #ba1a1a);
   background: var(--md-sys-color-warning-container, var(--quiz-warning-container));
-  border-left-color: var(--md-sys-color-warning, var(--quiz-warning));
   border-color: var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
 }
 
-.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__status,
-.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title,
-.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__body {
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__status {
+  background: var(--md-sys-color-error-container, var(--quiz-error-container));
+  color: var(--md-sys-color-on-error-container, var(--quiz-on-error-container));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title {
   color: var(--md-sys-color-on-warning-container, var(--quiz-on-surface));
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title .material-symbols-rounded {
-  color: var(--md-sys-color-warning, var(--quiz-warning));
+  color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__body {
+  color: var(--md-sys-color-on-warning-container, var(--quiz-on-surface));
 }
 
 @keyframes quiz-explanation-expand {
@@ -1345,26 +1402,72 @@
   }
 }
 
+/**
+ * Header Container: Status & Title zusammengefasst für saubere Trennung vom Body
+ */
+.game-shell[data-game="quiz"] .quiz-explanation-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;  /* Abstand zwischen Status und Title */
+  margin-bottom: 16px;  /* Trennung zum Body */
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
+}
+
+/**
+ * Status: "eyebrow chip" Style
+ * - Inline-flex für compakte Größe
+ * - Rounded Corners (999px)
+ * - Kleine Schrift (0.75rem), medium weight
+ * - Farblich angepasst via State-Modifiers (--correct / --wrong)
+ */
+.game-shell[data-game="quiz"] .quiz-explanation-card__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;  /* Pill-shaped */
+  margin: 0;
+  font-size: 0.75rem;  /* Eye-brow tiny */
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--md-sys-color-primary-container, var(--quiz-primary-container));
+  color: var(--md-sys-color-on-primary-container, var(--quiz-on-primary-container));
+  width: fit-content;
+  min-height: auto;
+}
+
+/**
+ * Title: Icon + Label saubere Trennung
+ */
 .game-shell[data-game="quiz"] .quiz-explanation-card__title {
   display: flex;
   align-items: center;
-  gap: var(--quiz-space-sm);
-  font-size: 1rem;
+  gap: 8px;  /* Platz zwischen Icon und Text */
+  font-size: 0.95rem;  /* Subtitle/Headline-Small */
   font-weight: 600;
-  color: var(--quiz-on-secondary-container);
-  margin: 0 0 var(--quiz-space-sm) 0;
+  color: var(--md-sys-color-on-secondary-container, var(--quiz-on-surface));
+  margin: 0;
+  padding: 0;
 }
 
 .game-shell[data-game="quiz"] .quiz-explanation-card__title .material-symbols-rounded {
   font-size: 1.25rem;
-  color: var(--quiz-secondary);
+  font-weight: 400;
+  color: var(--md-sys-color-primary, var(--quiz-primary));
+  flex-shrink: 0;
 }
 
+/**
+ * Body: Ruhiger, lesbar
+ */
 .game-shell[data-game="quiz"] .quiz-explanation-card__body {
   margin: 0;
+  padding: 0;
   font-size: 1rem;
-  color: var(--quiz-on-secondary-container);
-  line-height: 1.5;
+  color: var(--md-sys-color-on-secondary-container, var(--quiz-on-surface));
+  line-height: 1.6;  /* Etwas mehr line-height für Lesbarkeit */
+  font-weight: 400;
 }
 
 /* ============================================================================
@@ -3719,6 +3822,12 @@
   .game-shell[data-game="quiz"] .quiz-question-surface {
     padding: var(--space-4);
     gap: var(--space-3);
+    overflow: hidden;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-question-prompt-surface {
+    padding: var(--space-4);
+    gap: var(--space-2);
     overflow: hidden;
   }
   

@@ -2495,8 +2495,9 @@
     // Determine if wrong answer
     const isWrong = result === 'wrong';
     
-    // Toggle modifier class for wrong answer styling
+    // Toggle modifier classes for state-specific styling (wrong/correct)
     explanationCard.classList.toggle('quiz-explanation-card--wrong', isWrong);
+    explanationCard.classList.toggle('quiz-explanation-card--correct', !isWrong);
     
     // Set status line text
     if (statusEl) {

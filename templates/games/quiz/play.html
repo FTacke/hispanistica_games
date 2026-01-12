@@ -88,8 +88,11 @@
             </span>
           </div>
           
-          <!-- Question Surface: Consolidated container for prompt + media + answers -->
-          <section class="quiz-question-surface">
+          <!-- Visual Divider: subtle separation between meta and question -->
+          <div class="quiz-question-divider"></div>
+          
+          <!-- Question Prompt Surface: Dedicated section for the question text + media -->
+          <section class="quiz-question-prompt-surface">
             <div class="quiz-question-media-surface" id="quiz-question-media-surface">
               <p class="quiz-question__prompt" id="quiz-question-prompt" tabindex="-1">
                 <!-- Question text loaded dynamically -->
@@ -99,23 +102,27 @@
                 <!-- Audio player if present -->
               </div>
             </div>
-            
-            <div class="quiz-answers" id="quiz-answers" role="group" aria-label="Antwortoptionen">
-              <!-- Answers loaded dynamically -->
-            </div>
           </section>
+          
+          <!-- Answers Section: separate from question prompt -->
+          <div class="quiz-answers" id="quiz-answers" role="group" aria-label="Antwortoptionen">
+            <!-- Answers loaded dynamically -->
+          </div>
         </div>
         
         <!-- Explanation Card (separate from feedback, always visible after answer) -->
         <div class="quiz-explanation-card" id="quiz-explanation-card" hidden>
-          <!-- Status line (correct/wrong header) -->
-          <p class="quiz-explanation-card__status" id="quiz-explanation-status" role="status" aria-live="polite"></p>
-          
-          <!-- Title -->
-          <h3 class="quiz-explanation-card__title">
-            <span class="material-symbols-rounded">lightbulb</span>
-            <span id="quiz-explanation-title-label" data-i18n="ui.quiz.explanation">Erklärung</span>
-          </h3>
+          <!-- Header: Status & Title (saubere typografische Trennung) -->
+          <div class="quiz-explanation-card__header">
+            <!-- Status line (correct/wrong header) -->
+            <p class="quiz-explanation-card__status" id="quiz-explanation-status" role="status" aria-live="polite"></p>
+            
+            <!-- Title: Icon + Label -->
+            <h3 class="quiz-explanation-card__title">
+              <span class="material-symbols-rounded">lightbulb</span>
+              <span id="quiz-explanation-title-label" data-i18n="ui.quiz.explanation">Erklärung</span>
+            </h3>
+          </div>
           
           <!-- Body text -->
           <p class="quiz-explanation-card__body" id="quiz-explanation-text"></p>
