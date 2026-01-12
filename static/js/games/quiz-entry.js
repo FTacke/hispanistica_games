@@ -687,7 +687,8 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'same-origin'  // Send JWT cookies
       });
 
       if (!response.ok) {
@@ -712,7 +713,8 @@
   async function deleteHighscoreEntry(topicId, entryId) {
     try {
       const response = await fetch(`${API_BASE}/admin/topics/${topicId}/highscores/${entryId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'same-origin'  // Send JWT cookies
       });
 
       if (!response.ok) {

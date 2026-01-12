@@ -4,6 +4,19 @@ Dokumentiert alle wesentlichen Änderungen an der CO.RA.PAN-Dokumentation.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **Admin Highscore Management (Production Critical)**: Behebung von HTTP 503 "Admin auth not configured" Fehler
+  - Endpoints `POST /api/quiz/admin/topics/<id>/highscores/reset` und `DELETE /api/quiz/admin/topics/<id>/highscores/<entry_id>` lieferten in Prod 503-Fehler
+  - Root Cause: Custom `webapp_admin_required` Decorator mit Fallback zu ENV-basiertem `QUIZ_ADMIN_KEY` (nicht in Prod konfiguriert)
+  - Lösung: Migration zu Standard-Auth-Decorators (`@jwt_required()` + `@require_role(Role.ADMIN)`)
+  - Konsistentes Auth-System über alle Admin-APIs hinweg, keine ENV-Abhängigkeiten mehr
+  - Files: `game_modules/quiz/routes.py`, `static/js/games/quiz-entry.js`
+  - Docs: `docs/ADMIN_HIGHSCORE_FIX_SUMMARY.md`, `docs/ADMIN_HIGHSCORE_FIX_SMOKE_TEST.md`
+
+---
+
 ## [1.0.0] - 2025-12-05: v1.0 Release - Production Ready
 
 ### 🎉 Release Highlights

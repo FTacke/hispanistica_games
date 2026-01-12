@@ -38,9 +38,12 @@ from flask import (
     request,
     g,
 )
+from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 
 from src.app.extensions.sqlalchemy_ext import get_session
+from src.app.auth import Role
+from src.app.auth.decorators import require_role
 from . import services
 
 logger = logging.getLogger(__name__)
@@ -1329,48 +1332,15 @@ def api_get_question(question_id: str):
 # ============================================================================
 # Admin API Routes - Content Import
 # ============================================================================
-
-def webapp_admin_required(f: Callable) -> Callable:
-    """Decorator to require webapp admin authentication.
-    
-    This checks for the webapp's JWT-based admin authentication.
-    Falls back to a simple check if the auth system is not available.
-    """
-    @wraps(f)
-    def decorated(*args: Any, **kwargs: Any) -> Any:
-        # Check if user has admin role via webapp auth (set by JWT middleware)
-        role = getattr(g, "role", None)
-        
-        if role is not None:
-            # Webapp auth is available
-            # ROLE_ORDER is ["admin", "editor", "user", "guest"]
-            # Admin is index 0, so we need role to be "admin"
-            if role != "admin":
-                return jsonify({
-                    "error": "Admin role required",
-                    "code": "ADMIN_ROLE_REQUIRED"
-                }), 403
-        else:
-            # Webapp auth not available, fall back to header-based auth
-            # This is a placeholder for development/testing
-            admin_key = request.headers.get("X-Admin-Key")
-            import os
-            expected_key = os.environ.get("QUIZ_ADMIN_KEY")
-            
-            if not expected_key:
-                return jsonify({
-                    "error": "Admin auth not configured",
-                    "code": "ADMIN_NOT_CONFIGURED"
-                }), 503
-            
-            if admin_key != expected_key:
-                return jsonify({
-                    "error": "Invalid admin key",
-                    "code": "ADMIN_KEY_INVALID"
-                }), 401
-        
-        return f(*args, **kwargs)
-    return decorated
+# 
+# IMPORTANT: Admin routes use the standard JWT + Role-based auth system.
+# All admin endpoints require:
+#   1. @jwt_required() - Valid JWT token (set by auth middleware)
+#   2. @require_role(Role.ADMIN) - Admin role check
+#
+# This ensures consistent authentication across all admin APIs and eliminates
+# the need for separate QUIZ_ADMIN_KEY environment variables.
+# ============================================================================
 
 
 # ============================================================================
@@ -1378,7 +1348,8 @@ def webapp_admin_required(f: Callable) -> Callable:
 # ============================================================================
 
 @blueprint.route("/api/quiz/admin/topics/<topic_id>/highscores/reset", methods=["POST"])
-@webapp_admin_required
+@jwt_required()
+@require_role(Role.ADMIN)
 def api_admin_reset_highscores(topic_id: str):
     """Reset all highscores for a topic (admin only).
     
@@ -1386,13 +1357,14 @@ def api_admin_reset_highscores(topic_id: str):
     The associated runs remain (status='finished') but no longer appear in leaderboard.
     
     Security:
-    - Requires webapp admin role
-    - No CSRF token needed (JWT-based auth)
+    - Requires valid JWT token and admin role
+    - Uses standard auth decorators (@jwt_required + @require_role)
     - Topic ownership is implicit (all topics accessible to admin)
     
     Returns:
         200: {"ok": true, "deleted_count": N}
         404: Topic not found
+        401: Not authenticated
         403: Not admin
     """
     with get_session() as session:
@@ -1430,7 +1402,8 @@ def api_admin_reset_highscores(topic_id: str):
 
 
 @blueprint.route("/api/quiz/admin/topics/<topic_id>/highscores/<entry_id>", methods=["DELETE"])
-@webapp_admin_required
+@jwt_required()
+@require_role(Role.ADMIN)
 def api_admin_delete_highscore(topic_id: str, entry_id: str):
     """Delete a single highscore entry (admin only).
     
@@ -1438,13 +1411,14 @@ def api_admin_delete_highscore(topic_id: str, entry_id: str):
     so remaining entries automatically "move up".
     
     Security:
-    - Requires webapp admin role
-    - No CSRF token needed (JWT-based auth)
+    - Requires valid JWT token and admin role
+    - Uses standard auth decorators (@jwt_required + @require_role)
     - Validates that entry belongs to specified topic (prevents IDOR)
     
     Returns:
         204: No content (success)
         404: Entry not found or doesn't belong to topic
+        401: Not authenticated
         403: Not admin
     """
     with get_session() as session:
