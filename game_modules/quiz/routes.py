@@ -23,6 +23,7 @@ API routes:
 from __future__ import annotations
 
 import logging
+import uuid
 from functools import wraps
 from typing import Callable, Any
 import os
@@ -784,13 +785,56 @@ def api_get_run_state(run_id: str):
         remaining_seconds = services.get_remaining_seconds(run)
         is_expired = services.is_question_expired(run)
         
+        # AUTO-TIMEOUT: If expired and no answer recorded yet, create timeout record
+        if is_expired and run.question_started_at and run.current_index < services.QUESTIONS_PER_RUN:
+            # Check if there's already an answer for current_index
+            stmt_check = select(QuizRunAnswer).where(
+                and_(
+                    QuizRunAnswer.run_id == run.id,
+                    QuizRunAnswer.question_index == run.current_index
+                )
+            )
+            existing_answer = session.execute(stmt_check).scalar_one_or_none()
+            
+            if not existing_answer:
+                # Create timeout answer record (idempotent server-side timeout)
+                _quiz_debug_log(
+                    "api_get_run_state.auto_timeout",
+                    run_id=run.id,
+                    player_id=g.quiz_player_id,
+                    question_index=run.current_index,
+                )
+                question_config = run.run_questions[run.current_index]
+                timeout_answer = QuizRunAnswer(
+                    id=str(uuid.uuid4()),
+                    run_id=run.id,
+                    question_id=question_config["question_id"],
+                    question_index=run.current_index,
+                    selected_answer_id=None,
+                    result="timeout",
+                    answered_at_ms=int(run.expires_at.timestamp() * 1000),
+                    used_joker=False,
+                    created_at=server_now,
+                )
+                session.add(timeout_answer)
+                
+                # Advance to next question and clear timer state
+                run.current_index += 1
+                run.question_started_at = None
+                run.expires_at = None
+                run.time_limit_seconds = services.TIMER_SECONDS
+                run.question_started_at_ms = None
+                run.deadline_at_ms = None
+                
+                session.flush()  # Persist changes for score calculation
+        
         # Determine phase based on timer state
         phase = "ANSWERING"
         if remaining_seconds is None:
             # No timer active - either not started or already answered
             phase = "POST_ANSWER"
         elif is_expired:
-            # Timer expired but not yet answered
+            # Timer expired and timeout recorded, now POST_ANSWER
             phase = "POST_ANSWER"
         
         # Calculate current score

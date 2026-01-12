@@ -246,7 +246,28 @@ def api_get_run_state(run_id: str):
     remaining_seconds = services.get_remaining_seconds(run)
     is_expired = services.is_question_expired(run)
     
-    # Determine phase
+    # ✅ AUTO-TIMEOUT: If expired and no answer recorded, create timeout record (idempotent)
+    if is_expired and run.question_started_at and run.current_index < QUESTIONS_PER_RUN:
+        existing_answer = get_answer_for_index(run.id, run.current_index)
+        if not existing_answer:
+            # Create timeout answer record
+            timeout_answer = QuizRunAnswer(
+                run_id=run.id,
+                question_id=run.run_questions[run.current_index]["question_id"],
+                question_index=run.current_index,
+                selected_answer_id=None,
+                result="timeout",
+                answered_at_ms=int(run.expires_at.timestamp() * 1000),
+            )
+            session.add(timeout_answer)
+            
+            # Advance to next question and clear timer
+            run.current_index += 1
+            run.question_started_at = None
+            run.expires_at = None
+            session.flush()
+    
+    # Determine phase (after auto-timeout, so phase reflects new state)
     phase = "ANSWERING"
     if remaining_seconds is None or is_expired:
         phase = "POST_ANSWER"
