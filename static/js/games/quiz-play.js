@@ -1952,7 +1952,7 @@
       const id = btn.dataset.answerId;
       
       // Remove old classes
-      btn.classList.remove('quiz-answer--selected', 'quiz-answer--correct', 'quiz-answer--wrong');
+      btn.classList.remove('quiz-answer--selected', 'quiz-answer--correct', 'quiz-answer--wrong', 'quiz-answer-option--inactive');
       
       if (id === selectedId) {
         if (result === 'correct') {
@@ -1965,6 +1965,9 @@
       } else if (id === correctId && result !== 'correct') {
         // Show correct answer subtly when user was wrong
         btn.classList.add('quiz-answer--correct-reveal');
+      } else {
+        // Other answers: inactive (dimmed)
+        btn.classList.add('quiz-answer-option--inactive');
       }
     });
   }

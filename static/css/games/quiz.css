@@ -516,6 +516,15 @@
   pointer-events: none;
 }
 
+/* STATE: inactive - Andere Antworten treten zurück wenn eine ausgewählt wurde */
+.game-shell[data-game="quiz"] .quiz-answer-option--inactive {
+  opacity: 0.5;
+  background: var(--quiz-surface-variant);
+  border-color: var(--quiz-outline-variant);
+  cursor: default;
+  pointer-events: none;
+}
+
 /* Answer hidden by 50/50 joker */
 .game-shell[data-game="quiz"] .quiz-answer-option--hidden {
   display: none !important;
@@ -1827,6 +1836,8 @@
   padding: var(--quiz-space-xl);
   box-shadow: var(--quiz-shadow-lg);
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .game-shell[data-game="quiz"] .quiz-level-up__title {
@@ -2927,10 +2938,10 @@
 /* Status section (authenticated) */
 .game-shell[data-game="quiz"] .quiz-start-card__status {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--quiz-space-3);
+  gap: var(--quiz-space-sm);
   padding: var(--quiz-space-md);
   background: var(--quiz-surface-variant);
   border-radius: var(--quiz-radius-sm);
@@ -2955,6 +2966,7 @@
   font-size: 0.8125rem;
   color: var(--quiz-on-surface-variant);
   margin-top: var(--quiz-space-xs);
+  text-align: left;
 }
 
 .game-shell[data-game="quiz"] .quiz-start-card__action-btn {
@@ -2962,7 +2974,6 @@
   align-items: center;
   gap: var(--quiz-space-xs);
   padding: var(--quiz-space-sm) var(--quiz-space-md);
-  margin-left: auto;
   background: transparent;
   border: 1px solid var(--quiz-outline-variant);
   border-radius: var(--quiz-radius-sm);
@@ -3134,8 +3145,25 @@
     justify-content: center;
   }
   
+  .game-shell[data-game="quiz"] .quiz-start-card__status-hint {
+    text-align: center;
+  }
+  
   .game-shell[data-game="quiz"] .quiz-start-card__action-btn {
     align-self: center;
+  }
+}
+
+/* Desktop: Status-Box horizontal mit Button rechts */
+@media (min-width: 601px) {
+  .game-shell[data-game="quiz"] .quiz-start-card__status {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-start-card__action-btn {
+    margin-left: auto;
+    align-self: flex-start;
   }
 }
 
@@ -3714,12 +3742,19 @@
   
   .game-shell[data-game="quiz"] .quiz-level-up-container {
     max-width: none;
-    padding: var(--space-4);
+    padding: 0;
+  }
+  
+  .game-shell[data-game="quiz"] .quiz-level-up {
+    max-width: none;
+    margin: 0;
+    padding: 0;
   }
   
   .game-shell[data-game="quiz"] .quiz-level-up__card {
     max-width: none;
     padding: var(--space-4);
+    margin: 0;
   }
   
   /* KPI-Boxen untereinander auf Mobile */
@@ -3853,7 +3888,7 @@
   max-width: 720px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--quiz-space-lg);
+  padding: 0;
   box-sizing: border-box;
 }
 
