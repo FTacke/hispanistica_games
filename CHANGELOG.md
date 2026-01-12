@@ -6,20 +6,27 @@ Dokumentiert alle wesentlichen Änderungen an der CO.RA.PAN-Dokumentation.
 
 ## [Unreleased]
 
-### In Progress
-- **Admin Highscore Management Fix (Production Critical)**
-  - **Phase 1 (✅ DEPLOYED):** HTTP 503 Auth-Error behoben
-    - Custom `webapp_admin_required` durch Standard-Decorators ersetzt
-    - `@jwt_required()` + `@require_role(Role.ADMIN)`
-    - Frontend: `credentials: 'same-origin'` für JWT-Cookies
-    - Status: Auth funktioniert (401/403 korrekt)
-  - **Phase 2 (🔴 IN ARBEIT):** HTTP 500 Error
-    - Nach Auth-Fix liefern Endpoints 500
-    - Root Cause: UNBEKANNT (kein Traceback verfügbar)
-    - Next Step: Traceback erfassen (siehe [ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md](docs/ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md))
-    - Kein spekulativer Fix ohne Traceback!
-  - Files: `game_modules/quiz/routes.py`, `static/js/games/quiz-entry.js`
-  - Docs: `docs/ADMIN_HIGHSCORE_STATUS.md`, `docs/ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md`
+### Fixed
+- **Admin Highscore Management (Production Critical)** - Vollständiger Fix für HTTP 500 Errors
+  - **Root Cause 1: CSRF-Token fehlte**
+    - Admin-Fetches (Reset/Delete) sendeten keinen CSRF-Token
+    - Flask-JWT-Extended mit Cookie-Auth benötigt `X-CSRF-TOKEN` Header
+    - Fix: `getCsrfToken()` Helper in `quiz-entry.js`, Token in beiden Requests
+  - **Root Cause 2: NameError in JWT callback**
+    - `unauthorized_callback` nutzte `app.debug` statt `current_app.debug`
+    - Verursachte 500 Error bei 401-Handling
+    - Fix: Import `current_app`, Callback-Code korrigiert
+  - **Root Cause 3: VARCHAR Truncation in refresh_tokens**
+    - `replaced_by` varchar(36) zu kurz für Token-Rotation-Marker
+    - `StringDataRightTruncation` on `/auth/refresh`
+    - Fix: Model auf String(64), Migration 0013 erstellt
+  - **Status:** Ready for Deploy
+  - Files: 
+    - `static/js/games/quiz-entry.js` (CSRF)
+    - `src/app/extensions/__init__.py` (NameError)
+    - `src/app/auth/models.py` (VARCHAR)
+    - `migrations/0013_increase_refresh_token_replaced_by_limit.sql` (Migration)
+  - Docs: `docs/ADMIN_HIGHSCORE_DEPLOYMENT.md`, `docs/ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md`
 
 ---
 

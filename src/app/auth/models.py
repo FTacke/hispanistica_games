@@ -107,7 +107,7 @@ class RefreshToken(Base):
     )
     user_agent: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    replaced_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    replaced_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # Increased from 36 to 64 for rotation markers
 
     user: Mapped[User] = relationship("User", back_populates="refresh_tokens")
 

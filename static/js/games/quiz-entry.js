@@ -48,6 +48,20 @@
     setupShowLoginButton();
 
     // Test hook: indicates that event handlers are attached.
+  }
+
+  /**
+   * Get CSRF token from cookie (for admin operations)
+   * @returns {string|null}
+   */
+  function getCsrfToken() {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; csrf_access_token=`);
+    if (parts.length === 2) {
+      return parts.pop().split(';').shift();
+    }
+    return null;
+  }
     // (No user-visible behavior; used by Playwright to avoid early form submits.)
     window.__quizEntryReady = true;
   }
@@ -683,11 +697,17 @@
    */
   async function resetAllHighscores(topicId) {
     try {
+      const csrfToken = getCsrfToken();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (csrfToken) {
+        headers['X-CSRF-TOKEN'] = csrfToken;
+      }
+
       const response = await fetch(`${API_BASE}/admin/topics/${topicId}/highscores/reset`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         credentials: 'same-origin'  // Send JWT cookies
       });
 
@@ -712,8 +732,15 @@
    */
   async function deleteHighscoreEntry(topicId, entryId) {
     try {
+      const csrfToken = getCsrfToken();
+      const headers = {};
+      if (csrfToken) {
+        headers['X-CSRF-TOKEN'] = csrfToken;
+      }
+
       const response = await fetch(`${API_BASE}/admin/topics/${topicId}/highscores/${entryId}`, {
         method: 'DELETE',
+        headers: headers,
         credentials: 'same-origin'  // Send JWT cookies
       });
 
