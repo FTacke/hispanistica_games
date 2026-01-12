@@ -506,9 +506,9 @@
   font-weight: 600;
 }
 
-/* STATE: locked - Other answers after selection */
-.game-shell[data-game="quiz"] .quiz-answer-option--locked,
-.game-shell[data-game="quiz"] .quiz-answer-option[aria-disabled="true"] {
+/* STATE: locked - Other answers after selection (NOT selected-wrong/correct!) */
+.game-shell[data-game="quiz"] .quiz-answer-option--locked:not(.quiz-answer--selected-wrong):not(.quiz-answer--selected-correct),
+.game-shell[data-game="quiz"] .quiz-answer-option[aria-disabled="true"]:not(.quiz-answer--selected-wrong):not(.quiz-answer--selected-correct) {
   cursor: default;
   background: var(--quiz-surface-container);
   border-color: var(--quiz-outline-variant);

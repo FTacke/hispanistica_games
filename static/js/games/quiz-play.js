@@ -290,7 +290,8 @@
     pendingTransition: null, // ✅ TEIL 2: What to do after POST_ANSWER "Weiter"
     currentView: VIEW.QUESTION,
     isTransitioning: false,
-    transitionInFlight: false, // ✅ FIX: Global lock gegen konkurrierende Transitions
+    transitionInFlight: false, // ✅ FIX: Global lock gegen konkurrierende Transitions (Continue/Auto)
+    isLoadingQuestion: false, // ✅ FIX: Separate lock gegen paralleles Laden derselben Frage
     stageEls: null,
     finishData: null,
     // ✅ NEW: TimerController state
@@ -1038,12 +1039,12 @@
 
   /**
    * Load current question data and display
-   * ✅ FIX: Atomisiert mit Lock, Guards, vollständigem Timer-Stop
+   * ✅ FIX: Atomisiert mit isLoadingQuestion Lock (nicht transitionInFlight!)
    */
   async function loadCurrentQuestion() {
-    // ✅ GUARD 1: Transition Lock
-    if (state.transitionInFlight) {
-      console.error('[GUARD] ❌ BLOCKED loadCurrentQuestion - transition in flight');
+    // ✅ GUARD 1: Parallel Load Lock (verhindert doppeltes Laden)
+    if (state.isLoadingQuestion) {
+      console.error('[GUARD] ❌ BLOCKED loadCurrentQuestion - already loading');
       return;
     }
     
@@ -1053,12 +1054,13 @@
       return;
     }
     
-    // ✅ SET LOCK
-    state.transitionInFlight = true;
-    debugLog('loadCurrentQuestion', { action: 'set transition lock', index: state.currentIndex });
+    // ✅ SET LOCK (isLoadingQuestion, NICHT transitionInFlight!)
+    state.isLoadingQuestion = true;
+    debugLog('loadCurrentQuestion', { action: 'set loading lock', index: state.currentIndex });
     
-    // ✅ STOP ALL TIMERS SOFORT
-    stopAllTimers();
+    try {
+      // ✅ STOP ALL TIMERS SOFORT
+      stopAllTimers();
     
     // Stop any playing audio when loading new question
     AudioController.stopAndReset();
@@ -1156,14 +1158,16 @@
     state.phase = PHASE.ANSWERING;
     console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
     
-    // ✅ RELEASE LOCK
-    state.transitionInFlight = false;
-    debugLog('loadCurrentQuestion', { action: 'released transition lock' });
-    
     // ✅ TIMER: Start countdown nur wenn phase = ANSWERING
     startTimerCountdown();
     
     debugLog('loadCurrentQuestion', { action: 'complete' });
+      
+    } finally {
+      // ✅ RELEASE LOCK (immer, auch bei Fehler!)
+      state.isLoadingQuestion = false;
+      debugLog('loadCurrentQuestion', { action: 'released loading lock' });
+    }
   }
 
   /**
@@ -2139,8 +2143,10 @@
           state.nextQuestionIndex = null;
           
           console.error('[INDEX] loading next question:', state.currentIndex);
-          // ✅ loadCurrentQuestion setzt phase=ANSWERING, startet Timer, und released Lock selbst
+          // ✅ loadCurrentQuestion nutzt eigenes isLoadingQuestion Lock
           await loadCurrentQuestion();
+          // ✅ Release transitionInFlight NACH loadCurrentQuestion
+          state.transitionInFlight = false;
           break;
       }
       
