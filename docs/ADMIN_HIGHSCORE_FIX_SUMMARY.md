@@ -1,43 +1,62 @@
-# Fix: Admin Highscore Reset/Delete (503 Error)
+# Fix: Admin Highscore Reset/Delete (503 → Auth Fixed → 500 → TRACEBACK NEEDED)
 
 **Datum:** 2026-01-12  
-**Typ:** Bugfix (Production Critical)  
-**Issue:** Admin-Endpoints lieferten HTTP 503 "Admin auth not configured"
+**Status:** 🔴 **TRACEBACK ERFASSUNG ERFORDERLICH**  
+**Typ:** Bugfix (Production Critical)
 
 ---
 
-## Problem
+## Timeline & Status
 
-Die Admin-Aktionen **Zurücksetzen** und **Eintrag löschen** in der Quiz-Rangliste lieferten in Produktion:
+### ✅ Phase 1: HTTP 503 "Admin auth not configured" (BEHOBEN)
+- **Problem:** Custom Auth-Decorator mit ENV-Fallback
+- **Fix:** Standard-Decorators (`@jwt_required()` + `@require_role(Role.ADMIN)`)
+- **Status:** ✅ Deployed, funktioniert
 
-- **HTTP 503** 
-- Fehlertext: *"Admin auth not configured"*
-- Betroffen:
-  - `POST /api/quiz/admin/topics/<topic_id>/highscores/reset`
-  - `DELETE /api/quiz/admin/topics/<topic_id>/highscores/<entry_id>`
+### 🔴 Phase 2: HTTP 500 (AKTUELL - ROOT CAUSE UNBEKANNT)
+- **Problem:** Nach Auth-Fix liefern beide Endpoints 500
+- **Status:** ⏸️ **WARTE AUF TRACEBACK**
+- **Nächster Schritt:** [Traceback-Capture-Guide](ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md)
+
+**WICHTIG:** Kein spekulativer Fix ohne echten Traceback!
 
 ---
 
-## Root Cause
+## Phase 2: Was wir NICHT wissen (ohne Traceback)
 
-Der custom Decorator `webapp_admin_required` in `game_modules/quiz/routes.py` hatte einen **Fallback-Mechanismus**:
+❓ Welche Exception?
+- `StatementError`? (UUID vs String)
+- `DataError`? (Type mismatch)
+- `IntegrityError`? (FK violation)
+- `AttributeError`? (Objekt ist None)
+- Etwas anderes?
 
-1. Wenn `g.role` gesetzt ist (JWT-Auth funktioniert) → Admin-Check
-2. Wenn `g.role` None ist → Fallback zu Header-basiertem `X-Admin-Key` + ENV `QUIZ_ADMIN_KEY`
-3. **In Prod:** Middleware setzte `g.role` nicht korrekt **UND** `QUIZ_ADMIN_KEY` war nicht konfiguriert → **503 Error**
+❓ Welche Zeile crasht?
+- `session.execute(stmt)`?
+- `session.commit()`?
+- `topic = services.get_topic(...)`?
+- `QuizScore.id == entry_id`?
 
-**Inkonsistenz:** Andere Admin-APIs (`/api/admin/*`, `/quiz-admin/*`) nutzen Standard-Decorators (`@jwt_required()` + `@require_role(Role.ADMIN)`), aber diese beiden Endpoints hatten einen separaten Auth-Layer.
+❓ Warum crasht es?
+- UUID-Casting?
+- DB-Connection?
+- Session-State?
+- Model-Definition?
+
+**→ Ohne Traceback ist alles Spekulation!**
 
 ---
 
 ## Lösung
 
-### 1. Backend: Standard Auth-Decorators verwenden
+### 1. Backend: Standard Auth-Decorators + Robustes Error-Handling
 
 **Geänderte Dateien:**
 - [`game_modules/quiz/routes.py`](../game_modules/quiz/routes.py)
 
 **Änderungen:**
+
+#### A) Auth-Fix (Phase 1)
 1. **Imports hinzugefügt:**
    ```python
    from flask_jwt_extended import jwt_required
@@ -58,6 +77,29 @@ Der custom Decorator `webapp_admin_required` in `game_modules/quiz/routes.py` ha
    @require_role(Role.ADMIN) # ✅ Standard Role-Check
    def api_admin_reset_highscores(topic_id: str):
        # ...
+   ```
+
+#### B) Error-Handling-Fix (Phase 2)
+1. **Try-Except Blöcke hinzugefügt:**
+   ```python
+   try:
+       with get_session() as session:
+           # ... DB operations
+   except Exception as e:
+       logger.error("...", exc_info=True)
+       return jsonify({"error": "Internal server error"}), 500
+   ```
+
+2. **Konsistente FK-Verwendung:**
+   ```python
+   # VORHER: QuizScore.topic_id == topic_id (String-Parameter)
+   # NACHHER: QuizScore.topic_id == topic.id (sicherer, verwendet Topic-Objekt)
+   ```
+
+3. **Detailliertes Logging:**
+   - Warning bei 404 (Topic/Entry nicht gefunden)
+   - Info bei erfolgreicher Operation
+   - Error mit Traceback bei 500
    
    @blueprint.route("/api/quiz/admin/topics/<topic_id>/highscores/<entry_id>", methods=["DELETE"])
    @jwt_required()
@@ -95,20 +137,23 @@ fetch(`${API_BASE}/admin/topics/${topicId}/highscores/reset`, {
 
 1. **Konsistenz:** Alle Admin-APIs nutzen das gleiche Auth-System
 2. **Keine ENV-Abhängigkeiten:** Kein `QUIZ_ADMIN_KEY` mehr nötig
-3. **Standard-Fehlerbehandlung:** 401/403 statt 503
-4. **Bessere Sicherheit:** Zentrales RBAC über JWT-Claims
-5. **Einfachere Wartung:** Ein Auth-Mechanismus statt zwei
+3. **Robustes Error-Handling:** 404/500 korrekt unterschieden, niemals uncaught exceptions
+4. **Bessere Observability:** Detailliertes Logging für Debugging
+5. **Sicherheit:** Topic-FK-Validierung über Topic-Objekt statt String-Parameter
+6. **Einfachere Wartung:** Ein Auth-Mechanismus statt zwei
 
 ---
 
 ## Error-Mapping (vorher → nachher)
 
-| Szenario | Vorher | Nachher |
-|----------|--------|---------|
-| Nicht eingeloggt | 503 | **401** ✅ |
-| Eingeloggt, aber kein Admin | 403 | **403** (gleich) |
-| Admin | 503 (Bug!) | **200/204** ✅ |
-| ENV fehlt | 503 | **N/A** (ENV nicht mehr nötig) |
+| Szenario | Phase 1 (Auth-Bug) | Phase 2 (Nach Auth-Fix) | Final (Nach Error-Handling) |
+|----------|-------------------|------------------------|----------------------------|
+| Nicht eingeloggt | 503 | 401 | **401** ✅ |
+| Eingeloggt, aber kein Admin | 503 | 403 | **403** ✅ |
+| Admin, Topic fehlt | 503 | 500 (?) | **404** ✅ |
+| Admin, Entry fehlt | 503 | 500 (?) | **404** ✅ |
+| Admin, alles OK | 503 | 500 | **200/204** ✅ |
+| Unerwartete Exception | 503 | 500 (uncaught) | **500** (logged) ✅ |
 
 ---
 

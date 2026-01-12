@@ -1353,19 +1353,14 @@ def api_get_question(question_id: str):
 def api_admin_reset_highscores(topic_id: str):
     """Reset all highscores for a topic (admin only).
     
-    This deletes all QuizScore entries for the given topic.
-    The associated runs remain (status='finished') but no longer appear in leaderboard.
+    Deletes all QuizScore entries for the given topic.
     
-    Security:
-    - Requires valid JWT token and admin role
-    - Uses standard auth decorators (@jwt_required + @require_role)
-    - Topic ownership is implicit (all topics accessible to admin)
+    Args:
+        topic_id: Topic slug (e.g., 'variation_aussprache')
     
     Returns:
         200: {"ok": true, "deleted_count": N}
         404: Topic not found
-        401: Not authenticated
-        403: Not admin
     """
     with get_session() as session:
         from .models import QuizScore
@@ -1374,13 +1369,17 @@ def api_admin_reset_highscores(topic_id: str):
         # Verify topic exists
         topic = services.get_topic(session, topic_id)
         if not topic:
+            logger.warning(
+                "Admin reset: topic not found",
+                extra={"topic_id": topic_id}
+            )
             return jsonify({
                 "error": "Topic not found",
                 "code": "TOPIC_NOT_FOUND"
             }), 404
         
         # Delete all scores for this topic
-        stmt = delete(QuizScore).where(QuizScore.topic_id == topic_id)
+        stmt = delete(QuizScore).where(QuizScore.topic_id == topic.id)
         result = session.execute(stmt)
         deleted_count = result.rowcount
         
@@ -1389,9 +1388,8 @@ def api_admin_reset_highscores(topic_id: str):
         logger.info(
             "Admin reset highscores",
             extra={
-                "topic_id": topic_id,
+                "topic_id": topic.id,
                 "deleted_count": deleted_count,
-                "admin_role": getattr(g, "role", None),
             }
         )
         
@@ -1407,19 +1405,15 @@ def api_admin_reset_highscores(topic_id: str):
 def api_admin_delete_highscore(topic_id: str, entry_id: str):
     """Delete a single highscore entry (admin only).
     
-    This removes one QuizScore entry. Leaderboard ranks are recalculated dynamically,
-    so remaining entries automatically "move up".
+    Removes one QuizScore entry. Validates that entry belongs to topic.
     
-    Security:
-    - Requires valid JWT token and admin role
-    - Uses standard auth decorators (@jwt_required + @require_role)
-    - Validates that entry belongs to specified topic (prevents IDOR)
+    Args:
+        topic_id: Topic slug (e.g., 'variation_aussprache')
+        entry_id: QuizScore UUID
     
     Returns:
         204: No content (success)
         404: Entry not found or doesn't belong to topic
-        401: Not authenticated
-        403: Not admin
     """
     with get_session() as session:
         from .models import QuizScore
@@ -1428,34 +1422,44 @@ def api_admin_delete_highscore(topic_id: str, entry_id: str):
         # Verify topic exists
         topic = services.get_topic(session, topic_id)
         if not topic:
+            logger.warning(
+                "Admin delete: topic not found",
+                extra={"topic_id": topic_id}
+            )
             return jsonify({
                 "error": "Topic not found",
                 "code": "TOPIC_NOT_FOUND"
             }), 404
         
-        # Find and delete score entry (must belong to this topic)
+        # Delete score entry (must belong to this topic)
         stmt = delete(QuizScore).where(
             and_(
                 QuizScore.id == entry_id,
-                QuizScore.topic_id == topic_id
+                QuizScore.topic_id == topic.id
             )
         )
         result = session.execute(stmt)
         
         if result.rowcount == 0:
+            logger.warning(
+                "Admin delete: entry not found",
+                extra={
+                    "topic_id": topic.id,
+                    "entry_id": entry_id,
+                }
+            )
             return jsonify({
-                "error": "Highscore entry not found or does not belong to this topic",
+                "error": "Entry not found",
                 "code": "ENTRY_NOT_FOUND"
             }), 404
         
         session.commit()
         
         logger.info(
-            "Admin deleted highscore entry",
+            "Admin deleted highscore",
             extra={
-                "topic_id": topic_id,
+                "topic_id": topic.id,
                 "entry_id": entry_id,
-                "admin_role": getattr(g, "role", None),
             }
         )
         

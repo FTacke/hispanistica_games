@@ -6,14 +6,20 @@ Dokumentiert alle wesentlichen Änderungen an der CO.RA.PAN-Dokumentation.
 
 ## [Unreleased]
 
-### Fixed
-- **Admin Highscore Management (Production Critical)**: Behebung von HTTP 503 "Admin auth not configured" Fehler
-  - Endpoints `POST /api/quiz/admin/topics/<id>/highscores/reset` und `DELETE /api/quiz/admin/topics/<id>/highscores/<entry_id>` lieferten in Prod 503-Fehler
-  - Root Cause: Custom `webapp_admin_required` Decorator mit Fallback zu ENV-basiertem `QUIZ_ADMIN_KEY` (nicht in Prod konfiguriert)
-  - Lösung: Migration zu Standard-Auth-Decorators (`@jwt_required()` + `@require_role(Role.ADMIN)`)
-  - Konsistentes Auth-System über alle Admin-APIs hinweg, keine ENV-Abhängigkeiten mehr
+### In Progress
+- **Admin Highscore Management Fix (Production Critical)**
+  - **Phase 1 (✅ DEPLOYED):** HTTP 503 Auth-Error behoben
+    - Custom `webapp_admin_required` durch Standard-Decorators ersetzt
+    - `@jwt_required()` + `@require_role(Role.ADMIN)`
+    - Frontend: `credentials: 'same-origin'` für JWT-Cookies
+    - Status: Auth funktioniert (401/403 korrekt)
+  - **Phase 2 (🔴 IN ARBEIT):** HTTP 500 Error
+    - Nach Auth-Fix liefern Endpoints 500
+    - Root Cause: UNBEKANNT (kein Traceback verfügbar)
+    - Next Step: Traceback erfassen (siehe [ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md](docs/ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md))
+    - Kein spekulativer Fix ohne Traceback!
   - Files: `game_modules/quiz/routes.py`, `static/js/games/quiz-entry.js`
-  - Docs: `docs/ADMIN_HIGHSCORE_FIX_SUMMARY.md`, `docs/ADMIN_HIGHSCORE_FIX_SMOKE_TEST.md`
+  - Docs: `docs/ADMIN_HIGHSCORE_STATUS.md`, `docs/ADMIN_HIGHSCORE_TRACEBACK_CAPTURE.md`
 
 ---
 
