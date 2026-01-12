@@ -156,7 +156,12 @@ class QuizRun(QuizBase):
     joker_remaining: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
     joker_used_on: Mapped[dict] = mapped_column(JSONB, nullable=False, default=list)  # [0, 5] = used on indices 0 and 5
     
-    # Timer state (client epoch ms)
+    # Timer state (server-based UTC timestamps)
+    question_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    time_limit_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
+    
+    # Legacy timer fields (deprecated, keep for migration compatibility)
     question_started_at_ms: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     deadline_at_ms: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 

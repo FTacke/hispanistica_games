@@ -73,6 +73,7 @@ def _quiz_debug_log(event: str, **fields: Any) -> None:
 
 TIMER_SECONDS = 30
 JOKERS_PER_RUN = 2
+MEDIA_BONUS_SECONDS = 10  # Additional time for questions with media
 QUESTIONS_PER_RUN = 10
 DIFFICULTY_LEVELS = 5
 QUESTIONS_PER_DIFFICULTY = 2
@@ -115,6 +116,11 @@ class RunState:
     run_questions: List[Dict[str, Any]]
     joker_remaining: int
     joker_used_on: List[int]
+    # Server-based timer fields
+    question_started_at: Optional[str]  # ISO format UTC
+    expires_at: Optional[str]  # ISO format UTC
+    time_limit_seconds: int
+    # Legacy fields (deprecated)
     question_started_at_ms: Optional[int]
     deadline_at_ms: Optional[int]
     answers: List[Dict[str, Any]]
@@ -534,6 +540,11 @@ def get_run_state(session: Session, run: QuizRun) -> RunState:
         run_questions=run.run_questions if isinstance(run.run_questions, list) else [],
         joker_remaining=run.joker_remaining,
         joker_used_on=run.joker_used_on if isinstance(run.joker_used_on, list) else [],
+        # Server-based timer fields
+        question_started_at=run.question_started_at.isoformat() if run.question_started_at else None,
+        expires_at=run.expires_at.isoformat() if run.expires_at else None,
+        time_limit_seconds=run.time_limit_seconds or TIMER_SECONDS,
+        # Legacy fields
         question_started_at_ms=run.question_started_at_ms,
         deadline_at_ms=run.deadline_at_ms,
         answers=answers_data,
@@ -750,24 +761,101 @@ def _get_question_history(session: Session, player_id: str, topic_id: str) -> Tu
 
 
 # ============================================================================
-# Timer / Question Start
+# Timer / Question Start (Server-based)
 # ============================================================================
 
-def start_question(session: Session, run: QuizRun, question_index: int, started_at_ms: int) -> bool:
-    """Record when a question was started (for timer resume).
+def get_remaining_seconds(run: QuizRun) -> Optional[float]:
+    """Calculate remaining time in seconds from server perspective.
     
+    Returns:
+        Remaining seconds (can be negative if expired), or None if no timer active
+    """
+    if not run.expires_at:
+        return None
+    
+    server_now = datetime.now(timezone.utc)
+    remaining = (run.expires_at - server_now).total_seconds()
+    return remaining
+
+
+def is_question_expired(run: QuizRun) -> bool:
+    """Check if current question has expired (timeout).
+    
+    Returns:
+        True if timer has expired, False otherwise
+    """
+    remaining = get_remaining_seconds(run)
+    if remaining is None:
+        return False
+    return remaining <= 0
+
+
+def calculate_time_limit(question_data: dict) -> int:
+    """Calculate time limit for a question based on media content.
+    
+    Args:
+        question_data: Question dict with optional 'media' field
+        
+    Returns:
+        Time limit in seconds (30 + bonus for media)
+    """
+    base_time = TIMER_SECONDS
+    
+    # Check if question has media (images, audio)
+    media = question_data.get('media')
+    if media and isinstance(media, list) and len(media) > 0:
+        return base_time + MEDIA_BONUS_SECONDS
+    
+    return base_time
+
+
+def start_question(session: Session, run: QuizRun, question_index: int, started_at_ms: int = None, time_limit_seconds: int = None) -> bool:
+    """Record when a question was started (SERVER-SIDE TIMER).
+    
+    Args:
+        session: DB session
+        run: Current run
+        question_index: Question index to start
+        started_at_ms: (DEPRECATED) Client timestamp, ignored
+        time_limit_seconds: Time limit for this question (default: 30 or 30+bonus)
+        
+    Returns:
+        True if timer started successfully
+        
     Idempotent: won't overwrite if already set for current index.
     """
     # Only set if this is the current question and not already started
     if run.current_index != question_index:
         return False
     
-    if run.question_started_at_ms is not None:
-        # Already started, don't overwrite
+    if run.question_started_at is not None:
+        # Already started, don't overwrite (idempotent)
         return True
     
-    run.question_started_at_ms = started_at_ms
-    run.deadline_at_ms = started_at_ms + (TIMER_SECONDS * 1000)
+    # Use server time as source of truth
+    server_now = datetime.now(timezone.utc)
+    
+    # Use provided time limit or default
+    if time_limit_seconds is None:
+        time_limit_seconds = run.time_limit_seconds or TIMER_SECONDS
+    
+    run.question_started_at = server_now
+    run.expires_at = server_now + timedelta(seconds=time_limit_seconds)
+    run.time_limit_seconds = time_limit_seconds
+    
+    # Legacy fields for backward compatibility
+    client_now_ms = int(server_now.timestamp() * 1000)
+    run.question_started_at_ms = client_now_ms
+    run.deadline_at_ms = client_now_ms + (time_limit_seconds * 1000)
+    
+    _quiz_debug_log(
+        "start_question.server_timer",
+        run_id=run.id,
+        question_index=question_index,
+        started_at=server_now.isoformat(),
+        expires_at=run.expires_at.isoformat(),
+        time_limit_seconds=time_limit_seconds,
+    )
     
     return True
 
@@ -837,9 +925,23 @@ def submit_answer(
             correct_id = ans["id"]
             break
     
-    # Check for timeout (server-side validation)
+    # Check for timeout (server-side validation using server clock)
+    is_expired = is_question_expired(run)
+    
+    # LEGACY: Also check client-provided deadline for backward compatibility
+    client_timeout = False
     if run.deadline_at_ms and answered_at_ms > run.deadline_at_ms:
+        client_timeout = True
+    
+    if is_expired or client_timeout:
         result = "timeout"
+        _quiz_debug_log(
+            "submit_answer.timeout",
+            run_id=run.id,
+            question_index=question_index,
+            server_expired=is_expired,
+            client_timeout=client_timeout,
+        )
     elif selected_answer_id is not None:
         # Frontend sends answer IDs via DOM dataset (always strings).
         # Seeded/demo content may use numeric IDs (int) inside JSONB.
@@ -878,9 +980,16 @@ def submit_answer(
         run.joker_used_on = joker_used
         # Note: joker_remaining is decremented when joker is applied, not here
     
-    # Advance to next question
+    # Advance to next question and clear timer state
     next_index = question_index + 1
     run.current_index = next_index
+    
+    # Clear server-based timer fields
+    run.question_started_at = None
+    run.expires_at = None
+    run.time_limit_seconds = TIMER_SECONDS  # Reset to default
+    
+    # Clear legacy fields
     run.question_started_at_ms = None
     run.deadline_at_ms = None
     

@@ -270,6 +270,15 @@
     runQuestions: [],
     jokerRemaining: 2,
     jokerUsedOn: [],
+    // ✅ SERVER-BASED TIMER FIELDS (New)
+    expiresAtMs: null,  // Server-provided expiration timestamp (ms)
+    serverClockOffsetMs: 0,  // Offset between server and client clock for drift correction
+    timeLimitSeconds: 30,  // Time limit for current question
+    // ✅ SERVER-BASED STATE FIELDS (New - from /state endpoint)
+    serverPhase: null,  // Last known phase from server ('ANSWERING' or 'POST_ANSWER')
+    serverIsExpired: false,  // Last known expiry status from server
+    serverRemainingSeconds: null,  // Last known remaining time from server
+    // Legacy fields (deprecated, kept for backward compatibility)
     questionStartedAtMs: null,
     deadlineAtMs: null,
     answers: [],
@@ -364,9 +373,9 @@
       state.runQuestions = runData.run_questions || [];
       state.jokerRemaining = runData.joker_remaining;
       state.jokerUsedOn = runData.joker_used_on || [];
-      state.questionStartedAtMs = runData.question_started_at_ms;
-      state.deadlineAtMs = runData.deadline_at_ms;
-      state.answers = runData.answers || [];
+      
+      // ✅ NEW: Load complete state from /state endpoint for timer resume
+      const serverState = await loadStateForResume();
       
       // Restore score from server (source of truth)
       await restoreRunningScore();
@@ -378,8 +387,16 @@
         return;
       }
       
-      // Load current question
-      await loadCurrentQuestion();
+      // ✅ FIX: Respect server phase - don't blindly call loadCurrentQuestion
+      if (state.phase === PHASE.POST_ANSWER) {
+        // Server says we're in POST_ANSWER (question already answered/expired)
+        // Need to show post-answer UI, not start new question
+        debugLog('init', { action: 'server phase is POST_ANSWER, showing post-answer UI' });
+        await loadCurrentQuestionForPostAnswer();
+      } else {
+        // Normal case: load current question and start timer
+        await loadCurrentQuestion();
+      }
       
     } catch (error) {
       console.error('Failed to initialize quiz:', error);
@@ -431,17 +448,21 @@
   }
 
   /**
-   * Start a new run (immer neu, kein Resume)
-   * Vereinfacht: Jeder Quiz-Start ist ein neuer Lauf.
+   * Start a new run or resume existing run
+   * Uses force_new only when explicitly requested via ?restart=1
    */
   async function startOrResumeRun() {
-    debugLog('startOrResumeRun', { action: 'starting NEW run (always force_new)' });
+    // Check if user explicitly wants to restart
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceNew = urlParams.has('restart') && urlParams.get('restart') === '1';
+    
+    debugLog('startOrResumeRun', { action: forceNew ? 'force new run' : 'start or resume', force_new: forceNew });
 
     const startResp = await fetch(`${API_BASE}/${state.topicId}/run/start`, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force_new: true })
+      body: JSON.stringify({ force_new: forceNew })  // ✅ FIX: Allow resume unless explicitly restarting
     });
 
     if (!startResp.ok) {
@@ -461,6 +482,89 @@
     });
 
     return startData.run;
+  }
+
+  /**
+   * Load complete state from /state endpoint for resume
+   * Calculates server clock offset for drift-free timer
+   */
+  async function loadStateForResume() {
+    debugLog('loadStateForResume', { action: 'start', runId: state.runId });
+    
+    try {
+      const response = await fetch(`${API_BASE}/run/${state.runId}/state`, {
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        console.error(`Failed to load state: HTTP ${response.status}`);
+        return null;
+      }
+      
+      const stateData = await response.json();
+      
+      // Calculate server clock offset for drift correction
+      const clientNowMs = Date.now();
+      const serverNowMs = stateData.server_now_ms;
+      state.serverClockOffsetMs = serverNowMs - clientNowMs;
+      
+      debugLog('loadStateForResume', {
+        serverNowMs,
+        clientNowMs,
+        offsetMs: state.serverClockOffsetMs,
+        expiresAtMs: stateData.expires_at_ms,
+        remainingSeconds: stateData.remaining_seconds,
+        phase: stateData.phase,
+        isExpired: stateData.is_expired
+      });
+      
+      // ✅ FIX: Store server-provided phase and expiry state
+      state.serverPhase = stateData.phase;  // 'ANSWERING' or 'POST_ANSWER'
+      state.serverIsExpired = stateData.is_expired || false;
+      state.serverRemainingSeconds = stateData.remaining_seconds;
+      
+      // Update timer state from server ONLY if still in ANSWERING phase
+      if (stateData.phase === 'ANSWERING' && stateData.expires_at_ms && !stateData.is_expired) {
+        state.expiresAtMs = stateData.expires_at_ms;
+        state.timeLimitSeconds = stateData.time_limit_seconds || 30;
+        
+        // Set legacy fields for backward compatibility
+        state.deadlineAtMs = stateData.expires_at_ms;
+        state.questionStartedAtMs = stateData.expires_at_ms - (state.timeLimitSeconds * 1000);
+      } else {
+        // ✅ FIX: Clear timer state if not in active ANSWERING
+        state.expiresAtMs = null;
+        state.deadlineAtMs = null;
+        state.questionStartedAtMs = null;
+      }
+      
+      // Update phase from server (ANSWERING or POST_ANSWER)
+      if (stateData.phase === 'POST_ANSWER' || stateData.is_expired) {
+        state.phase = PHASE.POST_ANSWER;
+        state.isAnswered = true;  // ✅ FIX: Mark as answered
+        state.lastOutcome = stateData.last_answer_result || 'timeout';  // ✅ FIX: Store last result
+        debugLog('loadStateForResume', { action: 'restored POST_ANSWER phase from server', lastOutcome: state.lastOutcome });
+      } else {
+        state.phase = PHASE.ANSWERING;
+      }
+      
+      // Update run questions and joker state
+      if (stateData.run_questions) {
+        state.runQuestions = stateData.run_questions;
+      }
+      if (stateData.joker_used_on) {
+        state.jokerUsedOn = stateData.joker_used_on;
+      }
+      
+      debugLog('loadStateForResume', { action: 'complete', phase: state.phase, serverPhase: state.serverPhase });
+      
+      // ✅ FIX: Return stateData so caller can decide what to do
+      return stateData;
+    } catch (error) {
+      console.error('Failed to load state for resume:', error);
+      debugLog('loadStateForResume', { error: error.message });
+      return null;
+    }
   }
 
   /**
@@ -967,7 +1071,7 @@
           if (!btn.classList.contains('quiz-answer--selected-correct') &&
               !btn.classList.contains('quiz-answer--selected-wrong') &&
               !btn.classList.contains('quiz-answer--correct-reveal')) {
-            btn.classList.add('quiz-answer--locked');
+            btn.classList.add('quiz-answer-option--locked'); // ✅ FIX: Match CSS class name
           }
         });
         // Disable joker
@@ -1039,6 +1143,66 @@
   }
 
   /**
+   * Load current question for POST_ANSWER state (resume after timeout/answer)
+   * ✅ NEW: Server sagt POST_ANSWER -> keine Timer-Start, nur UI anzeigen
+   */
+  async function loadCurrentQuestionForPostAnswer() {
+    debugLog('loadCurrentQuestionForPostAnswer', { action: 'start', index: state.currentIndex, outcome: state.lastOutcome });
+    
+    if (state.currentIndex >= state.runQuestions.length) {
+      debugLog('loadCurrentQuestionForPostAnswer', { action: 'finished, calling finishRun' });
+      await finishRun();
+      return;
+    }
+    
+    const questionConfig = state.runQuestions[state.currentIndex];
+    const questionId = questionConfig.question_id;
+    
+    // Fetch question details (need this to render the question)
+    const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+      credentials: 'same-origin'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load question');
+    }
+    
+    state.questionData = await response.json();
+    
+    // Render question (but NO timer)
+    renderQuestion();
+    
+    // Switch to QUESTION view
+    state.currentView = VIEW.QUESTION;
+    renderCurrentView();
+    
+    // ✅ KEY DIFFERENCE: Phase stays POST_ANSWER, no timer start
+    state.phase = PHASE.POST_ANSWER;
+    state.isAnswered = true;
+    
+    // Apply appropriate UI based on outcome
+    if (state.lastOutcome === 'timeout') {
+      // Timeout: all answers locked+inactive, no correct reveal
+      applyTimeoutUI();
+    } else if (state.lastOutcome === 'correct' || state.lastOutcome === 'wrong') {
+      // User answered: show result styling
+      // Note: We don't have selected_answer_id on resume, so just lock all
+      setUIState(STATE.ANSWERED_LOCKED);
+    } else {
+      // Unknown state - just lock
+      setUIState(STATE.ANSWERED_LOCKED);
+    }
+    
+    // Show explanation card with generic message for resume
+    showExplanationCard('Drücke "Weiter" um fortzufahren.');
+    
+    // Set pending transition to next question
+    state.pendingTransition = 'NEXT_QUESTION';
+    state.nextQuestionIndex = state.currentIndex + 1;
+    
+    debugLog('loadCurrentQuestionForPostAnswer', { action: 'complete', pendingTransition: state.pendingTransition });
+  }
+
+  /**
    * Load current question data and display
    * ✅ FIX: Atomisiert mit isLoadingQuestion Lock (nicht transitionInFlight!)
    */
@@ -1062,6 +1226,12 @@
     try {
       // ✅ STOP ALL TIMERS SOFORT
       stopAllTimers();
+      
+      // ✅ FIX: Clear timer state IMMEDIATELY to prevent stale values
+      state.expiresAtMs = null;
+      state.deadlineAtMs = null;
+      state.questionStartedAtMs = null;
+      debugLog('loadCurrentQuestion', { action: 'cleared timer state for fresh start' });
     
     // Stop any playing audio when loading new question
     AudioController.stopAndReset();
@@ -1105,9 +1275,14 @@
     
     debugLog('loadCurrentQuestion', { action: 'data loaded, rendering question' });
     
-    // Start timer if not already started
+    // ✅ FIX: Start timer ONLY if not already started AND we get valid server response
     if (!state.questionStartedAtMs) {
-      await startQuestionTimer();
+      const timerStarted = await startQuestionTimer();
+      if (!timerStarted || !state.expiresAtMs) {
+        console.error('[TIMER] ❌ Failed to start server timer, cannot proceed safely');
+        // Don't continue with invalid timer state
+        throw new Error('Failed to start question timer on server');
+      }
     }
     
     // Render question
@@ -1156,12 +1331,16 @@
       });
     }
     
-    // ✅ PHASE: Set to ANSWERING NUR am Ende, nach allem Setup
-    state.phase = PHASE.ANSWERING;
-    console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
-    
-    // ✅ TIMER: Start countdown nur wenn phase = ANSWERING
-    startTimerCountdown();
+    // ✅ FIX: Set ANSWERING phase and start countdown ONLY if we have valid server timer
+    if (state.expiresAtMs) {
+      state.phase = PHASE.ANSWERING;
+      console.error('[PHASE] ✅ Set to ANSWERING for question:', state.currentIndex);
+      
+      // ✅ TIMER: Start countdown nur wenn phase = ANSWERING und expiresAtMs vorhanden
+      startTimerCountdown();
+    } else {
+      console.error('[PHASE] ❌ Cannot set ANSWERING - no valid expiresAtMs from server');
+    }
     
     debugLog('loadCurrentQuestion', { action: 'complete' });
       
@@ -1173,13 +1352,12 @@
   }
 
   /**
-   * Start question timer on server
-   * Includes media bonus time if question has audio/image
+   * Start question timer on server (SERVER-BASED)
+   * Server decides start time and expiration
+   * @returns {Promise<boolean>} true if timer was started successfully
    */
   async function startQuestionTimer() {
-    const startedAtMs = Date.now();
-    
-    // Calculate total time including media bonus
+    // Calculate total time including media bonus (for logging)
     const totalTimerSeconds = TIMER_SECONDS + currentQuestionMediaBonusSeconds;
     
     if (currentQuestionMediaBonusSeconds > 0) {
@@ -1197,24 +1375,60 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question_index: state.currentIndex,
-          started_at_ms: startedAtMs,
-          time_limit_bonus_s: currentQuestionMediaBonusSeconds
+          // ✅ NEW: Send time limit for media bonus calculation
+          time_limit_seconds: currentQuestionMediaBonusSeconds > 0 ? totalTimerSeconds : undefined
+          // ❌ OLD: No more started_at_ms - server decides!
         })
       });
       
       if (response.ok) {
         const data = await response.json();
+        
+        // ✅ NEW: Calculate server clock offset
+        const clientNowMs = Date.now();
+        const serverNowMs = data.server_now_ms;
+        if (serverNowMs) {
+          state.serverClockOffsetMs = serverNowMs - clientNowMs;
+          debugLog('startQuestionTimer', {
+            serverNowMs,
+            clientNowMs,
+            offsetMs: state.serverClockOffsetMs
+          });
+        }
+        
+        // ✅ NEW: Store server-provided expiration timestamp
+        if (data.expires_at_ms) {
+          state.expiresAtMs = data.expires_at_ms;
+          state.timeLimitSeconds = data.time_limit_seconds || totalTimerSeconds;
+          
+          debugLog('startQuestionTimer', {
+            expiresAtMs: state.expiresAtMs,
+            timeLimitSeconds: state.timeLimitSeconds,
+            remainingSeconds: data.remaining_seconds
+          });
+        }
+        
+        // Legacy fields for backward compatibility
         state.questionStartedAtMs = data.question_started_at_ms;
-        state.deadlineAtMs = data.deadline_at_ms;
+        state.deadlineAtMs = data.deadline_at_ms || data.expires_at_ms;
+        
+        // ✅ FIX: Return success only if we got valid timer data
+        return !!(state.expiresAtMs && state.questionStartedAtMs);
       } else {
-        // Fallback to client-side timer (with bonus)
-        state.questionStartedAtMs = startedAtMs;
-        state.deadlineAtMs = startedAtMs + (totalTimerSeconds * 1000);
+        // Fallback: Cannot start timer without server
+        console.error('Failed to start question timer on server');
+        state.expiresAtMs = null;
+        state.questionStartedAtMs = null;
+        state.deadlineAtMs = null;
+        return false;
       }
     } catch (error) {
-      // Fallback to client-side timer (with bonus)
-      state.questionStartedAtMs = startedAtMs;
-      state.deadlineAtMs = startedAtMs + (totalTimerSeconds * 1000);
+      console.error('Failed to start question timer:', error);
+      // Fallback: Cannot start timer without server
+      state.expiresAtMs = null;
+      state.questionStartedAtMs = null;
+      state.deadlineAtMs = null;
+      return false;
     }
   }
 
@@ -1280,7 +1494,7 @@
 
   /**
    * Start the timer countdown display with attemptId guards
-   * ✅ FIX: Verstärkte Guards + stopAllTimers() zuerst
+   * ✅ FIX: Verstärkte Guards + stopAllTimers() zuerst + server-time validation
    */
   function startTimerCountdown() {
     // ✅ GUARD 1: Transition Lock
@@ -1298,6 +1512,14 @@
     // ✅ GUARD 3: Question Data muss vorhanden sein
     if (!state.questionData || !state.questionData.id) {
       console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - no questionData');
+      return;
+    }
+    
+    // ✅ GUARD 3b: Server time MUST be available (expiresAtMs set by startQuestionTimer)
+    if (!state.expiresAtMs) {
+      console.error('[TIMER GUARD] ❌ BLOCKED startTimerCountdown - no expiresAtMs from server');
+      // Reset UI to show default time instead of stale value
+      resetTimerUI();
       return;
     }
     
@@ -1319,8 +1541,17 @@
     console.error('[TIMER] ✅ Started for attemptId:', attemptId, 'index:', state.currentIndex);
     
     const updateTimer = () => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.ceil((state.deadlineAtMs - now) / 1000));
+      // ✅ NEW: Use server-based time with drift correction
+      const clientNow = Date.now();
+      const correctedNow = clientNow + state.serverClockOffsetMs;
+      const expiresAt = state.expiresAtMs || state.deadlineAtMs;  // Fallback to legacy field
+      
+      if (!expiresAt) {
+        console.error('[TIMER] ❌ No expires_at available, cannot calculate remaining');
+        return;
+      }
+      
+      const remaining = Math.max(0, Math.ceil((expiresAt - correctedNow) / 1000));
       
       const timerEl = document.getElementById('quiz-timer');
       const timerDisplay = document.getElementById('quiz-timer-display');
@@ -2073,8 +2304,15 @@
 
   /**
    * Show result styling on answer buttons (new state system)
+   * ✅ FIX: Early return if timeout - timeout UI must not be overwritten
    */
   function showAnswerResult(selectedId, result, correctId) {
+    // ✅ GUARD: Don't overwrite timeout UI
+    if (state.lastOutcome === 'timeout') {
+      debugLog('showAnswerResult', { action: 'blocked - timeout state active' });
+      return;
+    }
+    
     document.querySelectorAll('.quiz-answer-option').forEach(btn => {
       const id = btn.dataset.answerId;
       
@@ -2129,8 +2367,16 @@
 
   /**
    * Show the correct answer (for timeout)
+   * ✅ FIX: This should NOT be called on timeout - timeout shows no correct answer
+   * @deprecated Use applyTimeoutUI() instead for timeouts
    */
   function showCorrectAnswer(correctId) {
+    // ✅ GUARD: Never show correct answer on timeout
+    if (state.lastOutcome === 'timeout') {
+      console.error('[GUARD] ❌ BLOCKED showCorrectAnswer - timeout state, should use applyTimeoutUI()');
+      return;
+    }
+    
     document.querySelectorAll('.quiz-answer-option').forEach(btn => {
       const id = btn.dataset.answerId;
       if (id === correctId) {
@@ -2141,6 +2387,7 @@
 
   /**
    * Setup "Weiter" button handler
+   * ✅ FIX: transitionInFlight Release in finally{} to prevent stuck lock
    */
   function setupWeiterButton() {
     const btn = document.getElementById('quiz-weiter-btn');
@@ -2172,51 +2419,51 @@
       stopAllTimers(); // ✅ FIX: Stop ALL timers before transition
       setUIState(STATE.TRANSITIONING);
       
-      switch (state.pendingTransition) {
-        case 'LEVEL_UP':
-          // Show LevelUp screen
-          console.error('[TRANSITION] -> LEVEL_UP after Weiter');
-          state.transitionInFlight = false; // Release Lock vor View-Transition
-          await transitionToView(VIEW.LEVEL_UP);
-          break;
-          
-        case 'LEVEL_UP_THEN_FINAL':
-          // Show LevelUp first, then Final after continue
-          console.error('[TRANSITION] -> LEVEL_UP (then FINAL) after Weiter');
-          state.transitionInFlight = false; // Release Lock vor View-Transition
-          await transitionToView(VIEW.LEVEL_UP);
-          break;
-          
-        case 'FINAL':
-          // Go directly to Final (no LevelUp)
-          console.error('[TRANSITION] -> FINAL after Weiter');
-          state.transitionInFlight = false; // Release Lock vor finishRun
-          await finishRun();
-          break;
-          
-        case 'NEXT_QUESTION':
-        default:
-          // ✅ TEIL 3: Use nextQuestionIndex from backend, NOT currentIndex + 1
-          if (state.nextQuestionIndex === null || state.nextQuestionIndex === undefined) {
-            console.error('❌ CRITICAL: nextQuestionIndex is null! Cannot proceed.');
-            alert('Fehler: Nächste Frage nicht gefunden. Bitte Seite neu laden.');
-            state.transitionInFlight = false;
-            btn.disabled = false;
-            return;
-          }
-          
-          state.currentIndex = state.nextQuestionIndex;
-          state.nextQuestionIndex = null;
-          
-          console.error('[INDEX] loading next question:', state.currentIndex);
-          // ✅ loadCurrentQuestion nutzt eigenes isLoadingQuestion Lock
-          await loadCurrentQuestion();
-          // ✅ Release transitionInFlight NACH loadCurrentQuestion
-          state.transitionInFlight = false;
-          break;
+      try {
+        switch (state.pendingTransition) {
+          case 'LEVEL_UP':
+            // Show LevelUp screen
+            console.error('[TRANSITION] -> LEVEL_UP after Weiter');
+            await transitionToView(VIEW.LEVEL_UP);
+            break;
+            
+          case 'LEVEL_UP_THEN_FINAL':
+            // Show LevelUp first, then Final after continue
+            console.error('[TRANSITION] -> LEVEL_UP (then FINAL) after Weiter');
+            await transitionToView(VIEW.LEVEL_UP);
+            break;
+            
+          case 'FINAL':
+            // Go directly to Final (no LevelUp)
+            console.error('[TRANSITION] -> FINAL after Weiter');
+            await finishRun();
+            break;
+            
+          case 'NEXT_QUESTION':
+          default:
+            // ✅ TEIL 3: Use nextQuestionIndex from backend, NOT currentIndex + 1
+            if (state.nextQuestionIndex === null || state.nextQuestionIndex === undefined) {
+              console.error('❌ CRITICAL: nextQuestionIndex is null! Cannot proceed.');
+              alert('Fehler: Nächste Frage nicht gefunden. Bitte Seite neu laden.');
+              return; // Lock released in finally
+            }
+            
+            state.currentIndex = state.nextQuestionIndex;
+            state.nextQuestionIndex = null;
+            
+            console.error('[INDEX] loading next question:', state.currentIndex);
+            // ✅ loadCurrentQuestion nutzt eigenes isLoadingQuestion Lock
+            await loadCurrentQuestion();
+            break;
+        }
+      } catch (error) {
+        console.error('[WEITER] ❌ Transition error:', error);
+      } finally {
+        // ✅ FIX: ALWAYS release lock, even on error
+        state.transitionInFlight = false;
+        btn.disabled = false;
+        debugLog('setupWeiterButton', { action: 'released transition lock in finally' });
       }
-      
-      btn.disabled = false;
     });
   }
 

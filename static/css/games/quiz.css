@@ -1647,7 +1647,7 @@
 }
 
 .game-shell[data-game="quiz"] .quiz-finish__score-value {
-  font-size: 2rem;
+  font-size: 3rem;
   font-weight: 700;
   color: var(--quiz-primary);
   font-variant-numeric: tabular-nums;
@@ -1798,7 +1798,7 @@
   }
   
   .game-shell[data-game="quiz"] .quiz-finish__score-value {
-    font-size: 2.5rem;
+    font-size: 3rem;
   }
   
   .game-shell[data-game="quiz"] .quiz-finish__breakdown-row {
@@ -1948,6 +1948,7 @@
 
 .game-shell[data-game="quiz"] .quiz-finish-score-value {
   color: var(--quiz-primary);
+  font-size: 3rem;
   line-height: 1;
 }
 

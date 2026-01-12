@@ -221,7 +221,7 @@ class TestAnswerStateCSS:
         """CSS should have locked state."""
         with open('static/css/games/quiz.css', 'r', encoding='utf-8') as f:
             css = f.read()
-            assert '.quiz-answer--locked' in css
+            assert '.quiz-answer-option--locked' in css
 
 
 class TestPointsPopAnimation:
@@ -303,10 +303,10 @@ class TestJavaScriptFunctions:
             assert 'TRANSITION_DURATION_MS' in js
     
     def test_js_has_current_score_state(self):
-        """JavaScript state should track currentScore."""
+        """JavaScript state should track runningScore (source of truth from server)."""
         with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
             js = f.read()
-            assert 'currentScore' in js
+            assert 'runningScore' in js  # ✅ FIX: actual state field name
     
     def test_js_answer_states_use_new_classes(self):
         """JavaScript should use new answer state classes."""
@@ -315,7 +315,7 @@ class TestJavaScriptFunctions:
             assert 'quiz-answer--selected-correct' in js
             assert 'quiz-answer--selected-wrong' in js
             assert 'quiz-answer--correct-reveal' in js
-            assert 'quiz-answer--locked' in js
+            assert 'quiz-answer-option--locked' in js  # ✅ FIX: Match CSS class name
     
     def test_js_no_richtig_falsch_text(self):
         """JavaScript should not display 'Richtig!' or 'Falsch!' text."""

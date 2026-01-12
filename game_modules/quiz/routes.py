@@ -27,6 +27,7 @@ from functools import wraps
 from typing import Callable, Any
 import os
 import time
+from datetime import datetime, timezone
 
 from flask import (
     Blueprint,
@@ -543,13 +544,14 @@ def api_get_current_run():
 @blueprint.route("/api/quiz/run/<run_id>/question/start", methods=["POST"])
 @quiz_auth_required
 def api_start_question(run_id: str):
-    """Start timer for a question."""
+    """Start timer for a question (SERVER-BASED)."""
     data = request.get_json() or {}
     question_index = data.get("question_index")
-    started_at_ms = data.get("started_at_ms")
+    started_at_ms = data.get("started_at_ms")  # DEPRECATED - ignored
+    time_limit_seconds = data.get("time_limit_seconds")  # Optional custom time limit
     
-    if question_index is None or started_at_ms is None:
-        return jsonify({"error": "question_index and started_at_ms required"}), 400
+    if question_index is None:
+        return jsonify({"error": "question_index required"}), 400
     
     with get_session() as session:
         from .models import QuizRun
@@ -566,10 +568,23 @@ def api_start_question(run_id: str):
         if not run:
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
         
-        success = services.start_question(session, run, question_index, started_at_ms)
+        # Start question timer (server decides start time)
+        success = services.start_question(session, run, question_index, started_at_ms, time_limit_seconds)
         
+        # Calculate remaining time from server perspective
+        remaining_seconds = services.get_remaining_seconds(run)
+        
+        # Return both new fields and legacy fields for compatibility
         return jsonify({
             "success": success,
+            # Server-based fields
+            "server_now_ms": int(datetime.now(timezone.utc).timestamp() * 1000),
+            "question_started_at": run.question_started_at.isoformat() if run.question_started_at else None,
+            "expires_at": run.expires_at.isoformat() if run.expires_at else None,
+            "expires_at_ms": int(run.expires_at.timestamp() * 1000) if run.expires_at else None,
+            "time_limit_seconds": run.time_limit_seconds or 30,
+            "remaining_seconds": remaining_seconds,
+            # Legacy fields (deprecated)
             "question_started_at_ms": run.question_started_at_ms,
             "deadline_at_ms": run.deadline_at_ms,
         })
@@ -730,6 +745,122 @@ def api_get_run_status(run_id: str):
             level_completed=level_completed,
             level_perfect=level_perfect,
             level_bonus=level_bonus,
+        )
+
+        return jsonify(payload)
+
+
+@blueprint.route("/api/quiz/run/<run_id>/state", methods=["GET"])
+@quiz_auth_required
+def api_get_run_state(run_id: str):
+    """Get complete run state including timer (SERVER-BASED, for refresh resume)."""
+    with get_session() as session:
+        from .models import QuizRun, QuizRunAnswer
+        from sqlalchemy import select, and_
+        from datetime import datetime, timezone
+
+        _quiz_debug_log(
+            "api_get_run_state.request",
+            run_id=run_id,
+            player_id=getattr(g, "quiz_player_id", None),
+        )
+
+        stmt = select(QuizRun).where(
+            and_(
+                QuizRun.id == run_id,
+                QuizRun.player_id == g.quiz_player_id,
+            )
+        )
+        run = session.execute(stmt).scalar_one_or_none()
+
+        if not run:
+            return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
+
+        # Get server time
+        server_now = datetime.now(timezone.utc)
+        server_now_ms = int(server_now.timestamp() * 1000)
+        
+        # Calculate remaining time from server perspective
+        remaining_seconds = services.get_remaining_seconds(run)
+        is_expired = services.is_question_expired(run)
+        
+        # Determine phase based on timer state
+        phase = "ANSWERING"
+        if remaining_seconds is None:
+            # No timer active - either not started or already answered
+            phase = "POST_ANSWER"
+        elif is_expired:
+            # Timer expired but not yet answered
+            phase = "POST_ANSWER"
+        
+        # Calculate current score
+        stmt_answers = select(QuizRunAnswer).where(
+            QuizRunAnswer.run_id == run.id
+        ).order_by(QuizRunAnswer.question_index)
+        answers = list(session.execute(stmt_answers).scalars().all())
+
+        running_score = 0
+        level_completed = False
+        level_perfect = False
+        level_bonus = 0
+        level_correct_count = 0
+        level_questions_in_level = 0
+        last_answer_result = None
+
+        if answers:
+            last_answer = answers[-1]
+            last_answer_result = last_answer.result
+            running_score, level_completed, level_perfect, level_bonus, level_correct_count, level_questions_in_level = services.calculate_running_score(
+                session, run, last_answer.question_index, last_answer.result
+            )
+
+        current_index = run.current_index
+        is_run_finished = (run.status != "in_progress") or (current_index >= services.QUESTIONS_PER_RUN)
+
+        payload = {
+            "run_id": run.id,
+            "topic_id": run.topic_id,
+            "status": run.status,
+            "current_index": current_index,
+            # Server-based timer fields
+            "server_now_ms": server_now_ms,
+            "question_started_at": run.question_started_at.isoformat() if run.question_started_at else None,
+            "expires_at": run.expires_at.isoformat() if run.expires_at else None,
+            "expires_at_ms": int(run.expires_at.timestamp() * 1000) if run.expires_at else None,
+            "time_limit_seconds": run.time_limit_seconds or 30,
+            "remaining_seconds": max(0, remaining_seconds) if remaining_seconds is not None else None,
+            "is_expired": is_expired,
+            "phase": phase,
+            # Score and progress
+            "running_score": running_score,
+            "next_question_index": (current_index if not is_run_finished else None),
+            "finished": is_run_finished,
+            "is_run_finished": is_run_finished,
+            "joker_remaining": run.joker_remaining,
+            # Level info
+            "level_completed": level_completed,
+            "level_perfect": level_perfect,
+            "level_bonus": level_bonus,
+            "last_answer_result": last_answer_result,
+            "level_correct_count": level_correct_count,
+            "level_questions_in_level": level_questions_in_level,
+            # Run questions for frontend
+            "run_questions": run.run_questions if isinstance(run.run_questions, list) else [],
+            "joker_used_on": run.joker_used_on if isinstance(run.joker_used_on, list) else [],
+            # Legacy fields (deprecated)
+            "question_started_at_ms": run.question_started_at_ms,
+            "deadline_at_ms": run.deadline_at_ms,
+        }
+
+        _quiz_debug_log(
+            "api_get_run_state.response",
+            run_id=run.id,
+            player_id=getattr(g, "quiz_player_id", None),
+            current_index=current_index,
+            phase=phase,
+            remaining_seconds=remaining_seconds,
+            is_expired=is_expired,
+            running_score=running_score,
         )
 
         return jsonify(payload)
