@@ -139,17 +139,34 @@ Base.metadata.create_all(bind=engine)
 print('Database tables initialized.')
 "
 
-# Create initial admin user if START_ADMIN_PASSWORD is set
-if [ -n "$START_ADMIN_PASSWORD" ]; then
-    echo "Creating/updating initial admin user..."
+# Create initial admin user ONLY on first deployment (ADMIN_BOOTSTRAP=1)
+# This flag must be explicitly set and should ONLY be used during initial deployment
+# or when recovering from a complete database reset.
+# For production deployments, ADMIN_BOOTSTRAP should NOT be set, preventing accidental
+# password overwrites.
+#
+# To set admin password on initial deployment:
+#   ADMIN_BOOTSTRAP=1 START_ADMIN_PASSWORD=secret docker-compose up
+#
+# To reset admin password in production, use the dedicated CLI command:
+#   python scripts/admin_reset_password.py --username admin --password newpass
+if [ "${ADMIN_BOOTSTRAP:-0}" = "1" ]; then
+    if [ -z "$START_ADMIN_PASSWORD" ]; then
+        echo "ERROR: ADMIN_BOOTSTRAP=1 but START_ADMIN_PASSWORD not set"
+        exit 1
+    fi
+    echo "Bootstrapping initial admin user (ADMIN_BOOTSTRAP=1)..."
     python scripts/create_initial_admin.py \
         --username "${START_ADMIN_USERNAME:-admin}" \
         --password "$START_ADMIN_PASSWORD" \
         --allow-production || {
-            echo "WARNING: Admin user creation failed (may already exist with different settings)"
+            echo "ERROR: Admin user bootstrap failed"
+            exit 1
         }
 else
-    echo "Skipping admin user creation (START_ADMIN_PASSWORD not set)"
+    echo "Skipping admin user bootstrap (ADMIN_BOOTSTRAP not set)"
+    echo "  To enable on initial deployment, set: ADMIN_BOOTSTRAP=1"
+    echo "  For password reset, use: scripts/admin_reset_password.py"
 fi
 
 echo "=== Starting application ==="

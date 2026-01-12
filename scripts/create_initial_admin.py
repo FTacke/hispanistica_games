@@ -149,20 +149,25 @@ def main():
                     return services.hash_password(pw)
 
             if existing:
-                # Idempotent update: unlock and reset password so admin is always usable in dev/staging
+                # Idempotent update: unlock but NEVER reset password on existing users
+                # (prevents accidental password overwrites on Deploy)
+                # Password reset must be done explicitly via CLI command or admin interface
                 existing.role = "admin"
                 existing.is_active = True
-                existing.must_reset_password = False
+                # Only reset must_reset_password flag if it was set (user flagged for reset)
+                if existing.must_reset_password:
+                    existing.must_reset_password = False
                 existing.login_failed_count = 0
                 existing.locked_until = None
                 existing.deleted_at = None
                 existing.deletion_requested_at = None
-                existing.password_hash = _safe_hash(args.password)
+                # REMOVED: existing.password_hash = _safe_hash(args.password)
+                # Password is now preserved - only explicit CLI/admin can change it
                 existing.updated_at = now
                 if args.display_name:
                     existing.display_name = args.display_name
                 print(
-                    f"Updated existing user '{args.username}' as admin (unlocked, password reset)"
+                    f"Updated existing user '{args.username}' as admin (unlocked, password preserved)"
                 )
             else:
                 # create a new admin user
