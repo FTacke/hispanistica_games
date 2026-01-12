@@ -2152,8 +2152,8 @@
         setCachedScoreForRun(state.runId, state.runningScore);
       }
       
-      // Show explanation card (no "Richtig/Falsch" text)
-      showExplanationCard(answer.explanationKey);
+      // Show explanation card with result status
+      showExplanationCard(answer.explanationKey, answer.result);
       
       // Update state for next question
       state.jokerRemaining = answer.jokerRemaining;
@@ -2418,8 +2418,8 @@
         }
       }
       
-      // Show explanation card
-      showExplanationCard(answer.explanationKey || data.explanation_key);
+      // Show explanation card (timeout = wrong)
+      showExplanationCard(answer.explanationKey || data.explanation_key, 'wrong');
       
       // Update state
       state.jokerRemaining = answer.jokerRemaining;
@@ -2476,17 +2476,45 @@
   }
 
   /**
-   * Show explanation card (no "Richtig/Falsch" text)
+   * Show explanation card with status based on result
+   * @param {string} explanationKey - Explanation text from backend
+   * @param {string} result - 'correct' or 'wrong' (optional, defaults to 'correct')
    */
-  function showExplanationCard(explanationKey) {
+  function showExplanationCard(explanationKey, result = 'correct') {
     const explanationCard = document.getElementById('quiz-explanation-card');
     const explanationText = document.getElementById('quiz-explanation-text');
+    const statusEl = document.getElementById('quiz-explanation-status');
+    const titleLabelEl = document.getElementById('quiz-explanation-title-label');
     
     if (!explanationCard || !explanationText) return;
     
     // Use explanation text directly from backend
     const explanation = explanationKey || 'Keine Erklärung verfügbar.';
     explanationText.textContent = explanation;
+    
+    // Determine if wrong answer
+    const isWrong = result === 'wrong';
+    
+    // Toggle modifier class for wrong answer styling
+    explanationCard.classList.toggle('quiz-explanation-card--wrong', isWrong);
+    
+    // Set status line text
+    if (statusEl) {
+      if (isWrong) {
+        statusEl.textContent = QuizI18n.t('ui.quiz.wrong_header', 'Leider falsch!');
+      } else {
+        statusEl.textContent = QuizI18n.t('ui.quiz.correct_header', 'Richtige Antwort!');
+      }
+    }
+    
+    // Set title label (changes between "Erklärung" and "Es ist so:")
+    if (titleLabelEl) {
+      if (isWrong) {
+        titleLabelEl.textContent = QuizI18n.t('ui.quiz.it_is_so', 'Es ist so:');
+      } else {
+        titleLabelEl.textContent = QuizI18n.t('ui.quiz.explanation', 'Erklärung');
+      }
+    }
     
     // Show card with animation
     explanationCard.hidden = false;

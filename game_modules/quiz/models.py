@@ -43,7 +43,7 @@ class QuizPlayer(QuizBase):
     """Game player account (separate from webapp users).
     
     Players authenticate with pseudonym + 4-char PIN.
-    Anonymous players use name='Anónimo' with is_anonymous=True.
+    Anonymous players use name='Anonym' with is_anonymous=True.
     """
     __tablename__ = "quiz_players"
 

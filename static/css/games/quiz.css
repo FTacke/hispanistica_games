@@ -1292,6 +1292,34 @@
   animation: quiz-explanation-expand var(--quiz-anim-explanation) ease-out;
 }
 
+/* Status line: "Richtige Antwort!" or "Leider falsch!" */
+.game-shell[data-game="quiz"] .quiz-explanation-card__status {
+  margin: 0 0 var(--quiz-space-sm) 0;
+  font-size: 0.875rem;  /* Small, eyebrow style */
+  font-weight: 500;
+  color: var(--quiz-on-secondary-container);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-height: 1.25em;  /* Reserve space to prevent layout shift */
+}
+
+/* Modifier: Wrong answer variant */
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong {
+  background: var(--md-sys-color-warning-container, var(--quiz-warning-container));
+  border-left-color: var(--md-sys-color-warning, var(--quiz-warning));
+  border-color: var(--md-sys-color-outline-variant, var(--quiz-outline-variant));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__status,
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title,
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__body {
+  color: var(--md-sys-color-on-warning-container, var(--quiz-on-surface));
+}
+
+.game-shell[data-game="quiz"] .quiz-explanation-card--wrong .quiz-explanation-card__title .material-symbols-rounded {
+  color: var(--md-sys-color-warning, var(--quiz-warning));
+}
+
 @keyframes quiz-explanation-expand {
   from {
     opacity: 0;

@@ -108,10 +108,16 @@
         
         <!-- Explanation Card (separate from feedback, always visible after answer) -->
         <div class="quiz-explanation-card" id="quiz-explanation-card" hidden>
+          <!-- Status line (correct/wrong header) -->
+          <p class="quiz-explanation-card__status" id="quiz-explanation-status" role="status" aria-live="polite"></p>
+          
+          <!-- Title -->
           <h3 class="quiz-explanation-card__title">
             <span class="material-symbols-rounded">lightbulb</span>
-            <span data-i18n="ui.quiz.explanation">Erklärung</span>
+            <span id="quiz-explanation-title-label" data-i18n="ui.quiz.explanation">Erklärung</span>
           </h3>
+          
+          <!-- Body text -->
           <p class="quiz-explanation-card__body" id="quiz-explanation-text"></p>
         </div>
         

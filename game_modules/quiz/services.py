@@ -205,7 +205,7 @@ def register_player(session: Session, name: str, pin: Optional[str], anonymous: 
         session: SQLAlchemy session
         name: Player name (ignored if anonymous)
         pin: 4-character PIN (required if not anonymous)
-        anonymous: If True, use shared "Anónimo" account
+        anonymous: If True, use shared "Anonym" account
         
     Returns:
         AuthResult with session token on success
@@ -218,8 +218,8 @@ def register_player(session: Session, name: str, pin: Optional[str], anonymous: 
         if not player:
             player = QuizPlayer(
                 id=str(uuid.uuid4()),
-                name="Anónimo",
-                normalized_name="anónimo",
+                name="Anonym",
+                normalized_name="anonym",
                 pin_hash=None,
                 is_anonymous=True,
                 created_at=datetime.now(timezone.utc),
