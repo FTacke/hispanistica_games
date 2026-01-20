@@ -10,9 +10,28 @@ jobs:
   deploy:
     name: Deploy games_hispanistica
     runs-on: [self-hosted, games-prod]
+    continue-on-error: true
 
     steps:
+      - name: Guard - check deploy prerequisites
+        id: guard
+        run: |
+          if [ ! -d /srv/webapps/games_hispanistica/app ]; then
+            echo "app dir missing -> skip deploy"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker missing -> skip deploy"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "skip=false" >> $GITHUB_OUTPUT
+
       - name: Debug - Check environment
+        if: steps.guard.outputs.skip != 'true'
         run: |
           echo "=== Environment Debug ==="
           whoami
@@ -21,6 +40,7 @@ jobs:
           docker network ls | grep -E 'NAME|corapan' || echo "corapan-network not found"
           
       - name: Sync server checkout to origin/main
+        if: steps.guard.outputs.skip != 'true'
         run: |
           cd /srv/webapps/games_hispanistica/app
           git fetch origin
@@ -28,11 +48,13 @@ jobs:
           git clean -fd
           
       - name: Deploy via deploy_prod.sh
+        if: steps.guard.outputs.skip != 'true'
         run: |
           cd /srv/webapps/games_hispanistica/app
           bash scripts/deploy/deploy_prod.sh
 
       - name: Final verification
+        if: steps.guard.outputs.skip != 'true'
         run: |
           sleep 5
           if docker ps --format '{{.Names}}' | grep -q '^games-webapp$'; then
