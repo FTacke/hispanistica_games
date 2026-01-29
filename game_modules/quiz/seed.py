@@ -537,7 +537,7 @@ def seed_quiz_units(session: Session, units_dir: Optional[Path] = None) -> Dict[
                 media_files_copied += media_count
                 
             except ValidationError as e:
-                error_msg = f"{json_file.name}: {e.message}"
+                error_msg = f"{json_file.name}: {getattr(e, 'message', str(e))}"
                 if e.errors:
                     error_msg += f" - {'; '.join(e.errors[:3])}"  # Show first 3 errors
                 errors.append(error_msg)

@@ -46,6 +46,9 @@ if ($UsePostgres) {
 $env:FLASK_SECRET_KEY = "dev-secret-change-me"
 $env:JWT_SECRET_KEY = "dev-jwt-secret-change-me"
 $env:FLASK_ENV = "development"
+if (-not $env:ENV) {
+    $env:ENV = "dev"
+}
 
 Write-Host "Starting Hispanistica Games dev server..." -ForegroundColor Cyan
 Write-Host "AUTH_DATABASE_URL = $($env:AUTH_DATABASE_URL)"
@@ -91,13 +94,48 @@ if ($dbMode -eq "postgres") {
 
     Write-Host "[OK] Quiz DEV migrations applied`n" -ForegroundColor Green
 
+    if ($env:QUIZ_DEV_MIGRATE_CONTENT -eq "1") {
+        Write-Host "`n[DEV] Migrating quiz content to v2..." -ForegroundColor Cyan
+        $quizContentMigrate = Join-Path $repoRoot "scripts\quiz_content_migrate_difficulty_1_3.py"
+        & $venvPython $quizContentMigrate
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "`nERROR: Quiz content migration failed!" -ForegroundColor Red
+            exit 1
+        }
+        Write-Host "[OK] Quiz content migration complete`n" -ForegroundColor Green
+    }
+
+    $quizDevSeedMode = $env:QUIZ_DEV_SEED_MODE
+    if (-not $quizDevSeedMode) {
+        if ($env:QUIZ_MECHANICS_VERSION -eq "v2" -or $env:QUIZ_STRICT_VALIDATION -eq "1") {
+            $quizDevSeedMode = "single"
+        } else {
+            $quizDevSeedMode = "all"
+        }
+    }
+
     Write-Host "`nRunning quiz content pipeline..." -ForegroundColor Cyan
-    Write-Host "  1) Normalize JSON units (IDs + statistics)" -ForegroundColor Gray
-    Write-Host "  2) Seed database (upsert)" -ForegroundColor Gray
-    Write-Host "  3) Soft prune removed topics" -ForegroundColor Gray
-    
-    $quizSeedScript = Join-Path $repoRoot "scripts\quiz_seed.py"
-    & $venvPython $quizSeedScript --prune-soft
+    Write-Host "  Seed mode: $quizDevSeedMode" -ForegroundColor Gray
+
+    if ($quizDevSeedMode -eq "none") {
+        Write-Host "[SKIP] Quiz seeding skipped (QUIZ_DEV_SEED_MODE=none)" -ForegroundColor Yellow
+    } elseif ($quizDevSeedMode -eq "single") {
+        $quizSeedSingleScript = Join-Path $repoRoot "scripts\quiz_seed_single.py"
+        $quizSeedSingleFile = Join-Path $repoRoot "content\quiz\topics\variation_aussprache_v2.json"
+        if (-not (Test-Path $quizSeedSingleFile)) {
+            Write-Host "`nERROR: Missing $quizSeedSingleFile" -ForegroundColor Red
+            Write-Host "Run: python scripts/quiz_content_migrate_difficulty_1_3.py" -ForegroundColor Yellow
+            exit 1
+        }
+        & $venvPython $quizSeedSingleScript --file $quizSeedSingleFile
+    } else {
+        Write-Host "  1) Normalize JSON units (IDs + statistics)" -ForegroundColor Gray
+        Write-Host "  2) Seed database (upsert)" -ForegroundColor Gray
+        Write-Host "  3) Soft prune removed topics" -ForegroundColor Gray
+        
+        $quizSeedScript = Join-Path $repoRoot "scripts\quiz_seed.py"
+        & $venvPython $quizSeedScript --prune-soft
+    }
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "`nERROR: Quiz seed pipeline failed!" -ForegroundColor Red

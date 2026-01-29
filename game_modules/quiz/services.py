@@ -72,7 +72,8 @@ def _quiz_debug_log(event: str, **fields: Any) -> None:
 # Configuration
 # ============================================================================
 
-TIMER_SECONDS = 30
+TIMER_SECONDS_NAMED = 40
+TIMER_SECONDS_ANON = 240
 JOKERS_PER_RUN = 2
 MEDIA_BONUS_SECONDS = 10  # Additional time for questions with media
 QUESTIONS_PER_RUN = 10
@@ -548,6 +549,9 @@ def get_run_state(session: Session, run: QuizRun) -> RunState:
         for a in answers
     ]
     
+    player = run.player or session.get(QuizPlayer, run.player_id)
+    is_anonymous = player.is_anonymous if player else False
+
     return RunState(
         run_id=run.id,
         topic_id=run.topic_id,
@@ -559,7 +563,7 @@ def get_run_state(session: Session, run: QuizRun) -> RunState:
         # Server-based timer fields
         question_started_at=run.question_started_at.isoformat() if run.question_started_at else None,
         expires_at=run.expires_at.isoformat() if run.expires_at else None,
-        time_limit_seconds=run.time_limit_seconds or TIMER_SECONDS,
+        time_limit_seconds=run.time_limit_seconds or _get_base_timer_seconds(is_anonymous),
         # Legacy fields
         question_started_at_ms=run.question_started_at_ms,
         deadline_at_ms=run.deadline_at_ms,
@@ -803,16 +807,21 @@ def is_question_expired(run: QuizRun) -> bool:
     return remaining <= 0
 
 
-def calculate_time_limit(question_data: dict) -> int:
-    """Calculate time limit for a question based on media content.
+def _get_base_timer_seconds(is_anonymous: bool) -> int:
+    return TIMER_SECONDS_ANON if is_anonymous else TIMER_SECONDS_NAMED
+
+
+def calculate_time_limit(question_data: dict, is_anonymous: bool) -> int:
+    """Calculate time limit for a question based on user type and media content.
     
     Args:
         question_data: Question dict with optional 'media' field
+        is_anonymous: Whether the player is anonymous
         
     Returns:
-        Time limit in seconds (30 + bonus for media)
+        Time limit in seconds (named=40, anon=240, +10 for media)
     """
-    base_time = TIMER_SECONDS
+    base_time = _get_base_timer_seconds(is_anonymous)
     
     # Check if question has media (images, audio)
     media = question_data.get('media')
@@ -848,9 +857,12 @@ def start_question(session: Session, run: QuizRun, question_index: int, started_
     # Use server time as source of truth
     server_now = datetime.now(timezone.utc)
     
-    # Use provided time limit or default
-    if time_limit_seconds is None:
-        time_limit_seconds = run.time_limit_seconds or TIMER_SECONDS
+    # Always compute server-side time limit (ignore client override)
+    question_config = run.run_questions[question_index]
+    question_id = question_config["question_id"]
+    question = session.get(QuizQuestion, question_id)
+    question_media = question.media if question else None
+    time_limit_seconds = calculate_time_limit({"media": question_media}, run.player.is_anonymous)
     
     run.question_started_at = server_now
     run.expires_at = server_now + timedelta(seconds=time_limit_seconds)
@@ -1000,7 +1012,7 @@ def submit_answer(
     # Clear server-based timer fields
     run.question_started_at = None
     run.expires_at = None
-    run.time_limit_seconds = TIMER_SECONDS  # Reset to default
+    run.time_limit_seconds = _get_base_timer_seconds(run.player.is_anonymous)
     
     # Clear legacy fields
     run.question_started_at_ms = None

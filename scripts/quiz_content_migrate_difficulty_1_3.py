@@ -15,6 +15,7 @@ Validates migrated content with validate_quiz_unit and enforces minimum counts (
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import logging
 import sys
@@ -24,7 +25,16 @@ from typing import Dict, Any
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from game_modules.quiz.validation import validate_quiz_unit, ValidationError
+_VALIDATION_PATH = Path(__file__).parent.parent / "game_modules" / "quiz" / "validation.py"
+_validation_spec = importlib.util.spec_from_file_location("quiz_validation", _VALIDATION_PATH)
+if _validation_spec is None or _validation_spec.loader is None:
+    raise RuntimeError(f"Could not load validation module at {_VALIDATION_PATH}")
+_validation_module = importlib.util.module_from_spec(_validation_spec)
+sys.modules["quiz_validation"] = _validation_module
+_validation_spec.loader.exec_module(_validation_module)
+
+validate_quiz_unit = _validation_module.validate_quiz_unit
+ValidationError = _validation_module.ValidationError
 
 
 logging.basicConfig(

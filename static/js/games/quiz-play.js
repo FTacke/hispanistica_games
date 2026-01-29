@@ -184,7 +184,7 @@
   }
 
   const API_BASE = '/api/quiz';
-  const TIMER_SECONDS = 30;
+  const TIMER_SECONDS_DEFAULT = 40;
   const TIMER_WARNING = 10;
   const TIMER_DANGER = 5;
   const AUTO_ADVANCE_DELAY_MS = 20000; // 20 seconds - genug Zeit zum Lesen
@@ -297,11 +297,12 @@
     // ✅ SERVER-BASED TIMER FIELDS (New)
     expiresAtMs: null,  // Server-provided expiration timestamp (ms)
     serverClockOffsetMs: 0,  // Offset between server and client clock for drift correction
-    timeLimitSeconds: 30,  // Time limit for current question
+    timeLimitSeconds: 40,  // Time limit for current question
     // ✅ SERVER-BASED STATE FIELDS (New - from /state endpoint)
     serverPhase: null,  // Last known phase from server ('ANSWERING' or 'POST_ANSWER')
     serverIsExpired: false,  // Last known expiry status from server
     serverRemainingSeconds: null,  // Last known remaining time from server
+    serverRemainingSecondsAtMs: null,
     // Legacy fields (deprecated, kept for backward compatibility)
     questionStartedAtMs: null,
     deadlineAtMs: null,
@@ -550,11 +551,12 @@
       state.serverPhase = stateData.phase;  // 'ANSWERING' or 'POST_ANSWER'
       state.serverIsExpired = stateData.is_expired || false;
       state.serverRemainingSeconds = stateData.remaining_seconds;
+      state.serverRemainingSecondsAtMs = Date.now() + state.serverClockOffsetMs;
       
       // Update timer state from server ONLY if still in ANSWERING phase
       if (stateData.phase === 'ANSWERING' && stateData.expires_at_ms && !stateData.is_expired) {
         state.expiresAtMs = stateData.expires_at_ms;
-        state.timeLimitSeconds = stateData.time_limit_seconds || 30;
+        state.timeLimitSeconds = stateData.time_limit_seconds || TIMER_SECONDS_DEFAULT;
         
         // Set legacy fields for backward compatibility
         state.deadlineAtMs = stateData.expires_at_ms;
@@ -797,15 +799,12 @@
       return;
     }
     
-    // Keep HUD always visible so score display is accessible
-    // Only hide timer/joker during non-question views
+    // Keep HUD, timer, and joker always visible
     if (hudEl) {
       const timerEl = document.getElementById('quiz-timer');
       const jokerEl = document.getElementById('quiz-joker-btn');
-      const isQuestion = state.currentView === VIEW.QUESTION;
-      
-      if (timerEl) timerEl.style.display = isQuestion ? '' : 'none';
-      if (jokerEl) jokerEl.style.display = isQuestion ? '' : 'none';
+      if (timerEl) timerEl.style.display = '';
+      if (jokerEl) jokerEl.style.display = '';
     }
 
     // ✅ FIX: Verwende state.stageEls (konsistente Referenzen)
@@ -1525,11 +1524,11 @@
    */
   async function startQuestionTimer() {
     // Calculate total time including media bonus (for logging)
-    const totalTimerSeconds = TIMER_SECONDS + currentQuestionMediaBonusSeconds;
+    const totalTimerSeconds = (state.timeLimitSeconds || TIMER_SECONDS_DEFAULT) + currentQuestionMediaBonusSeconds;
     
     if (currentQuestionMediaBonusSeconds > 0) {
       debugLog('startQuestionTimer', { 
-        baseTimer: TIMER_SECONDS, 
+        baseTimer: state.timeLimitSeconds || TIMER_SECONDS_DEFAULT, 
         mediaBonus: currentQuestionMediaBonusSeconds,
         totalTimer: totalTimerSeconds
       });
@@ -1541,10 +1540,8 @@
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question_index: state.currentIndex,
-          // ✅ NEW: Send time limit for media bonus calculation
-          time_limit_seconds: currentQuestionMediaBonusSeconds > 0 ? totalTimerSeconds : undefined
-          // ❌ OLD: No more started_at_ms - server decides!
+          question_index: state.currentIndex
+          // ❌ No client-side time limit override - server decides
         })
       });
       
@@ -1567,6 +1564,8 @@
         if (data.expires_at_ms) {
           state.expiresAtMs = data.expires_at_ms;
           state.timeLimitSeconds = data.time_limit_seconds || totalTimerSeconds;
+          state.serverRemainingSeconds = data.remaining_seconds;
+          state.serverRemainingSecondsAtMs = serverNowMs || (Date.now() + state.serverClockOffsetMs);
           
           debugLog('startQuestionTimer', {
             expiresAtMs: state.expiresAtMs,
@@ -1659,8 +1658,7 @@
     const timerDisplay = document.getElementById('quiz-timer-display');
     
     if (timerDisplay) {
-      // Calculate total time including media bonus
-      const totalTime = TIMER_SECONDS + (currentQuestionMediaBonusSeconds || 0);
+      const totalTime = state.timeLimitSeconds || TIMER_SECONDS_DEFAULT;
       timerDisplay.textContent = totalTime;
     }
     
@@ -1668,7 +1666,7 @@
       timerEl.classList.remove('quiz-timer--warning', 'quiz-timer--danger');
     }
     
-    debugLog('resetTimerUI', { totalTime: TIMER_SECONDS + (currentQuestionMediaBonusSeconds || 0) });
+    debugLog('resetTimerUI', { totalTime: state.timeLimitSeconds || TIMER_SECONDS_DEFAULT });
   }
 
   /**
@@ -1735,14 +1733,19 @@
       // ✅ NEW: Use server-based time with drift correction
       const clientNow = Date.now();
       const correctedNow = clientNow + state.serverClockOffsetMs;
-      const expiresAt = state.expiresAtMs || state.deadlineAtMs;  // Fallback to legacy field
-      
-      if (!expiresAt) {
-        console.error('[TIMER] ❌ No expires_at available, cannot calculate remaining');
-        return;
+      let remaining = null;
+
+      if (typeof state.serverRemainingSeconds === 'number' && state.serverRemainingSecondsAtMs) {
+        const elapsedSeconds = (correctedNow - state.serverRemainingSecondsAtMs) / 1000;
+        remaining = Math.max(0, Math.ceil(state.serverRemainingSeconds - elapsedSeconds));
+      } else {
+        const expiresAt = state.expiresAtMs || state.deadlineAtMs;  // Fallback to legacy field
+        if (!expiresAt) {
+          console.error('[TIMER] ❌ No expires_at available, cannot calculate remaining');
+          return;
+        }
+        remaining = Math.max(0, Math.ceil((expiresAt - correctedNow) / 1000));
       }
-      
-      const remaining = Math.max(0, Math.ceil((expiresAt - correctedNow) / 1000));
       
       const timerEl = document.getElementById('quiz-timer');
       const timerDisplay = document.getElementById('quiz-timer-display');
@@ -1822,7 +1825,7 @@
     const promptEl = document.getElementById('quiz-question-prompt');
     const promptText = q.prompt || q.prompt_key || '';
     console.log('[DEBUG] Prompt text:', promptText, 'from q:', q);
-    promptEl.textContent = promptText;
+    promptEl.innerHTML = renderInlineMarkdown(promptText);
     
     // Render question-level media (supports v2 array format)
     const mediaEl = document.getElementById('quiz-question-media');
@@ -1854,6 +1857,7 @@
       const isDisabled = jokerDisabled.includes(answerId);
       const marker = String.fromCharCode(65 + idx); // A, B, C, D
       const answerText = answer.text || answer.text_key || '';  // Support both 'text' and 'text_key'
+      const answerTextPlain = stripInlineMarkdown(answerText);
       
       // Check if answer has audio media
       const answerMedia = answer.media || [];
@@ -1896,7 +1900,7 @@
             <div class="${inlineClass}">
               <span class="quiz-answer-letter">${marker}</span>
               ${audioElementsHtml}
-              <span class="quiz-answer-text">${escapeHtml(answerText)}</span>
+              <span class="quiz-answer-text">${renderInlineMarkdown(answerText)}</span>
               ${audioCaptionHtml}
             </div>
           </div>
@@ -1909,12 +1913,12 @@
           data-answer-id="${answerId}"
           role="button"
           tabindex="0"
-          aria-label="Antwort ${marker}: ${escapeHtml(answerText)}"
+          aria-label="Antwort ${marker}: ${escapeHtml(answerTextPlain)}"
         >
           <div class="${inlineClass}">
             <span class="quiz-answer-letter">${marker}</span>
             ${audioElementsHtml}
-            <span class="quiz-answer-text">${escapeHtml(answerText)}</span>
+            <span class="quiz-answer-text">${renderInlineMarkdown(answerText)}</span>
             ${audioCaptionHtml}
           </div>
         </div>
@@ -2490,7 +2494,7 @@
     
     // Use explanation text directly from backend
     const explanation = explanationKey || 'Keine Erklärung verfügbar.';
-    explanationText.textContent = explanation;
+    explanationText.innerHTML = renderInlineMarkdown(explanation);
     
     // Determine if wrong answer
     const isWrong = result === 'wrong';
@@ -3581,6 +3585,20 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Render a safe markdown subset (**bold**, *italic*)
+   */
+  function renderInlineMarkdown(text) {
+    const safe = escapeHtml(text || '');
+    const withBold = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    const withItalic = withBold.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
+    return withItalic;
+  }
+
+  function stripInlineMarkdown(text) {
+    return (text || '').replace(/\*\*|\*/g, '');
   }
 
   // Initialize on DOM ready

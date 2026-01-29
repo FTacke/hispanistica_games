@@ -761,7 +761,7 @@ def api_start_question(run_id: str):
             "question_started_at": run.question_started_at.isoformat() if run.question_started_at else None,
             "expires_at": run.expires_at.isoformat() if run.expires_at else None,
             "expires_at_ms": int(run.expires_at.timestamp() * 1000) if run.expires_at else None,
-            "time_limit_seconds": run.time_limit_seconds or 30,
+            "time_limit_seconds": run.time_limit_seconds or services._get_base_timer_seconds(run.player.is_anonymous),
             "remaining_seconds": remaining_seconds,
             # Legacy fields (deprecated)
             "question_started_at_ms": run.question_started_at_ms,

@@ -14,7 +14,14 @@
 
 .\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup
 
+$env:QUIZ_DEV_SEED_MODE='single'; $env:QUIZ_MECHANICS_VERSION='v2'; .\scripts\dev-start.ps1 -UsePostgres
+
 ```
+
+> **Hinweis (Refactoring-Branch):** Wenn die v2-Validatoren aktiv sind, setze vor dem Start
+> `QUIZ_DEV_SEED_MODE=single` (und optional `QUIZ_MECHANICS_VERSION=v2`).
+> Falls `variation_aussprache_v2.json` fehlt, zuerst Migration ausführen:
+> `python scripts/quiz_content_migrate_difficulty_1_3.py`.
 
 Das Skript:
 1. Startet PostgreSQL via Docker (Port 54321)
@@ -35,6 +42,27 @@ Das Skript:
 Wenn alles bereits eingerichtet ist:
 
 ```powershell
+.\scripts\dev-start.ps1 -UsePostgres
+```
+
+Wenn der Seed wegen v2-Validatoren fehlschlägt:
+```powershell
+$env:QUIZ_DEV_SEED_MODE = 'single'
+$env:QUIZ_MECHANICS_VERSION = 'v2'
+.\scripts\dev-start.ps1 -UsePostgres
+```
+
+**Kopierbarer Single-Seed-Start (v2):**
+```powershell
+$env:QUIZ_DEV_SEED_MODE = 'single'
+$env:QUIZ_MECHANICS_VERSION = 'v2'
+.\scripts\dev-start.ps1 -UsePostgres
+```
+
+**Mehrere v2-Units testen:**
+```powershell
+$env:QUIZ_DEV_SEED_MODE = 'all'
+$env:QUIZ_MECHANICS_VERSION = 'v2'
 .\scripts\dev-start.ps1 -UsePostgres
 ```
 

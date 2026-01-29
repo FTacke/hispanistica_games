@@ -544,21 +544,6 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
     if errors:
         raise ValidationError(f"Quiz unit validation failed{context}", errors)
 
-    # Validate required counts per difficulty (v2: 4/4/2)
-    difficulty_counts: Dict[int, int] = {}
-    for q in questions:
-        difficulty_counts[q.difficulty] = difficulty_counts.get(q.difficulty, 0) + 1
-    required_counts = {1: 4, 2: 4, 3: 2}
-    for d, required in required_counts.items():
-        count = difficulty_counts.get(d, 0)
-        if count < required:
-            errors.append(
-                f"Difficulty {d}: need at least {required} questions{context}, got {count}"
-            )
-
-    if errors:
-        raise ValidationError(f"Quiz unit validation failed{context}", errors)
-    
     # Validate each question
     questions = []
     seen_ids = set()
@@ -578,6 +563,18 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
             questions.append(question)
         except ValidationError as e:
             errors.extend(e.errors)
+
+    # Validate required counts per difficulty (v2: 4/4/2)
+    difficulty_counts: Dict[int, int] = {}
+    for q in questions:
+        difficulty_counts[q.difficulty] = difficulty_counts.get(q.difficulty, 0) + 1
+    required_counts = {1: 4, 2: 4, 3: 2}
+    for d, required in required_counts.items():
+        count = difficulty_counts.get(d, 0)
+        if count < required:
+            errors.append(
+                f"Difficulty {d}: need at least {required} questions{context}, got {count}"
+            )
     
     if errors:
         raise ValidationError(f"Quiz unit validation failed{context}", errors)

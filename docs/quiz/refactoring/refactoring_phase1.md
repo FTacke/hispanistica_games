@@ -58,7 +58,7 @@ Stand: 2026-01-29
 
 ## Content-Migration (Difficulty 1–5 ➜ 1–3)
 - Script: `scripts/quiz_content_migrate_difficulty_1_3.py`
-- Mapping (fix): `1→1, 2→1, 3→2, 4→3, 5→3`
+- Mapping (fix): `1→1, 2→1, 3→2, 4→2, 5→3`
 - In-Place (mit .bak):
   - `python scripts/quiz_content_migrate_difficulty_1_3.py --input-dir content/quiz/topics`
 - Output-Dir:
