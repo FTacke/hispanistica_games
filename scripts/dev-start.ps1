@@ -80,6 +80,17 @@ if (Test-Path $venvActivate) {
 
 # Quiz content pipeline (DEV only, PostgreSQL only)
 if ($dbMode -eq "postgres") {
+    Write-Host "`nApplying DEV-only quiz migrations..." -ForegroundColor Cyan
+    $quizMigrateScript = Join-Path $repoRoot "scripts\quiz_dev_migrate.py"
+    & $venvPython $quizMigrateScript
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "`nERROR: Quiz DEV migration failed!" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "[OK] Quiz DEV migrations applied`n" -ForegroundColor Green
+
     Write-Host "`nRunning quiz content pipeline..." -ForegroundColor Cyan
     Write-Host "  1) Normalize JSON units (IDs + statistics)" -ForegroundColor Gray
     Write-Host "  2) Seed database (upsert)" -ForegroundColor Gray

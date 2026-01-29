@@ -96,6 +96,9 @@ class BaseConfig:
     DEBUG = False
     TESTING = False
 
+    # Quiz mechanics version flag (v1 default, v2 supported)
+    QUIZ_MECHANICS_VERSION = os.getenv("QUIZ_MECHANICS_VERSION", "v1")
+
 
 class DevConfig(BaseConfig):
     """Development configuration."""

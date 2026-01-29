@@ -26,6 +26,7 @@ from passlib.hash import argon2
 from sqlalchemy import select, and_, desc, asc, func, or_
 from sqlalchemy.orm import Session
 
+from .config import get_quiz_mechanics_version
 from .models import (
     QuizPlayer,
     QuizSession,
@@ -646,6 +647,18 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     - Avoid repeating recently used questions
     - Shuffle answer order per question
     """
+    mechanics_version = get_quiz_mechanics_version()
+    if mechanics_version == "v1":
+        difficulty_levels = DIFFICULTY_LEVELS
+        questions_per_difficulty = QUESTIONS_PER_DIFFICULTY
+    elif mechanics_version == "v2":
+        # Phase 0: v2 still uses v1 constants (behavior unchanged)
+        difficulty_levels = DIFFICULTY_LEVELS
+        questions_per_difficulty = QUESTIONS_PER_DIFFICULTY
+    else:
+        difficulty_levels = DIFFICULTY_LEVELS
+        questions_per_difficulty = QUESTIONS_PER_DIFFICULTY
+
     # Get all active questions for topic grouped by difficulty
     # Visibility controlled by is_active flag only (releases = import history only)
     stmt = select(QuizQuestion).where(
@@ -656,9 +669,9 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     )
     all_questions = list(session.execute(stmt).scalars().all())
     
-    questions_by_difficulty: Dict[int, List[QuizQuestion]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+    questions_by_difficulty: Dict[int, List[QuizQuestion]] = {d: [] for d in range(1, difficulty_levels + 1)}
     for q in all_questions:
-        if 1 <= q.difficulty <= DIFFICULTY_LEVELS:
+        if 1 <= q.difficulty <= difficulty_levels:
             questions_by_difficulty[q.difficulty].append(q)
     
     # Get history from last 3 runs
@@ -668,7 +681,7 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     run_questions = []
     wrong_used = 0
     
-    for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+    for difficulty in range(1, difficulty_levels + 1):
         available = questions_by_difficulty[difficulty].copy()
         random.shuffle(available)
         
@@ -676,7 +689,7 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
         
         # Try to select 2 questions, preferring wrong ones
         for q in available:
-            if len(selected) >= QUESTIONS_PER_DIFFICULTY:
+            if len(selected) >= questions_per_difficulty:
                 break
             
             # Check if this was answered wrong recently (prefer these)
@@ -691,7 +704,7 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
         
         # If we don't have enough, fill with any available
         for q in available:
-            if len(selected) >= QUESTIONS_PER_DIFFICULTY:
+            if len(selected) >= questions_per_difficulty:
                 break
             if q not in selected:
                 selected.append(q)
