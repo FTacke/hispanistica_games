@@ -33,7 +33,7 @@ Set-Location $repoRoot
 if ($UsePostgres) {
     $dbMode = "postgres"
     # Use 127.0.0.1 instead of localhost to avoid DNS resolution issues with psycopg3 on Windows
-    $env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54320/hispanistica_auth"
+    $env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54321/hispanistica_auth"
     Write-Host "Database mode: PostgreSQL" -ForegroundColor Green
 } else {
     $dbMode = "sqlite"

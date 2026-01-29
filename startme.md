@@ -9,12 +9,15 @@
 **Ein Befehl startet alles:** Docker PostgreSQL, Virtualenv, Dependencies, Auth-DB, Quiz-DB, Dev-Server.
 
 ```powershell
-# Im Repository-Root ausfuehren
-.\scripts\dev-setup.ps1 -UsePostgres
+
+.\scripts\dev-start.ps1 -UsePostgres    # Täglicher Start
+
+.\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup
+
 ```
 
 Das Skript:
-1. Startet PostgreSQL via Docker (Port 54320)
+1. Startet PostgreSQL via Docker (Port 54321)
 2. Richtet `.venv` + Python-Dependencies ein
 3. Erstellt Auth-DB (PostgreSQL)
 4. Legt den Admin-User an (admin / change-me)
@@ -333,7 +336,7 @@ Die Dev-Skripte setzen automatisch:
 
 | Variable | Dev-Wert |
 |----------|----------|
-| `AUTH_DATABASE_URL` | `postgresql://hispanistica_auth:hispanistica_auth@localhost:54320/hispanistica_auth` |
+| `AUTH_DATABASE_URL` | `postgresql://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth` |
 | `JWT_SECRET_KEY` | `dev-jwt-secret-change-me` |
 | `FLASK_SECRET_KEY` | `dev-secret-change-me` |
 
@@ -351,7 +354,7 @@ Der Dev-Stack verwendet `docker-compose.dev-postgres.yml`:
 
 | Service | Container | Port | Beschreibung |
 |---------|-----------|------|-------------|
-| PostgreSQL | `hispanistica_auth_db` | `54320` | Auth-DB + Quiz-DB
+| PostgreSQL | `hispanistica_auth_db` | `54321` | Auth-DB + Quiz-DB
 # Starten
 docker compose -f docker-compose.dev-postgres.yml up -d
 
@@ -407,7 +410,7 @@ docker compose -f docker-compose.dev-postgres.yml restart hispanistica_auth_db
 ### Quiz-DB neu initialisieren
 
 ```powershell
-$env:AUTH_DATABASE_URL = "postgresql://hispanistica_auth:hispanistica_auth@localhost:54320/hispanistica_auth"
+$env:AUTH_DATABASE_URL = "postgresql://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth"
 python scripts/init_quiz_db.py --seed --drop
 
 # PostgreSQL

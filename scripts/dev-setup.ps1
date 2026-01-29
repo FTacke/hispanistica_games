@@ -52,7 +52,7 @@ Write-Host "Repository: $repoRoot"
 if ($UsePostgres) {
     $dbMode = "postgres"
     # Use 127.0.0.1 instead of localhost to avoid DNS resolution issues with psycopg3 on Windows
-    $env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54320/hispanistica_auth"
+    $env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54321/hispanistica_auth"
     Write-Host "Database mode: PostgreSQL (production-like)" -ForegroundColor Green
 } else {
     $dbMode = "sqlite"
@@ -122,13 +122,14 @@ if ($dbMode -eq "postgres") {
     # Clean up any conflicting containers first
     $existing = docker ps -aq --filter "name=hispanistica_auth_db" 2>$null
     if ($existing) {
-        Write-Host "  Removing existing container: hispanistica_auth_db" -ForegroundColor Gray
-        docker rm -f hispanistica_auth_db 2>$null | Out-Null
+        Write-Host "  Stopping and removing existing container: hispanistica_auth_db" -ForegroundColor Gray
+        docker compose -f docker-compose.dev-postgres.yml down 2>&1 | Out-Null
     }
 
     # Start PostgreSQL service
+    Write-Host "  Starting PostgreSQL container..." -ForegroundColor Gray
     $ErrorActionPreference = 'Continue'
-    docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db 2>&1 | Out-Null
+    docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db
     $composeExitCode = $LASTEXITCODE
     $ErrorActionPreference = 'Stop'
     
@@ -137,6 +138,8 @@ if ($dbMode -eq "postgres") {
         Write-Host "  Check: docker compose -f docker-compose.dev-postgres.yml logs" -ForegroundColor Gray
         exit 1
     }
+    
+    Write-Host "  Container started, waiting for health check..." -ForegroundColor Gray
 
     # Wait for Postgres to be healthy and accepting connections
     Write-Host "  Waiting for PostgreSQL to be ready..." -ForegroundColor Gray

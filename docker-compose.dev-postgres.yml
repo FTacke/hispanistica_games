@@ -2,7 +2,7 @@
 # Start with: docker compose -f docker-compose.dev-postgres.yml up -d
 # Stop with:  docker compose -f docker-compose.dev-postgres.yml down
 #
-# Default auth DB URL: postgresql+psycopg://hispanistica_auth:hispanistica_auth@localhost:54320/hispanistica_auth
+# Default auth DB URL: postgresql+psycopg://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth
 
 services:
   hispanistica_auth_db:
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: hispanistica_auth
       POSTGRES_DB: hispanistica_auth
     ports:
-      - "54320:5432"
+      - "54321:5432"
     volumes:
       - ./data/db/postgres_dev:/var/lib/postgresql/data
       - ./:/app:ro

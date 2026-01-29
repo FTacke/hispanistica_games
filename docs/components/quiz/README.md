@@ -1,8 +1,31 @@
-# quiz Component
+# quiz Component – Overview
 
 **Purpose:** Interactive multiple-choice quiz game with timer, jokers, leaderboard.
 
 **Scope:** Complete quiz game module (player auth, run management, scoring). Separate from webapp auth (see [auth](../auth/)).
+
+---
+
+## Documentation Structure
+
+This component has comprehensive documentation organized by purpose:
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[README.md](README.md)** (this file) | Quick reference, overview | Everyone |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | System design, mechanics | Developers |
+| **[CONTENT.md](CONTENT.md)** | JSON schema, authoring | Content creators |
+| **[OPERATIONS.md](OPERATIONS.md)** | DEV/Prod workflows | Developers, DevOps |
+| **[ADMIN_IMPORT.md](ADMIN_IMPORT.md)** | Import API, Admin Dashboard | Administrators, DevOps |
+| **[GLOSSARY.md](GLOSSARY.md)** | Term definitions | Everyone |
+| **[AUDIT_REPORT.md](AUDIT_REPORT.md)** | Complete audit (as-is state) | Developers, Project managers |
+| **[MECHANICS_CHANGE_CHECKLIST.md](MECHANICS_CHANGE_CHECKLIST.md)** | Pre-flight checklist | Developers |
+
+**Quick Start:**
+- **I want to add content (DEV):** → [OPERATIONS.md - DEV Workflow](OPERATIONS.md#dev-workflow)
+- **I want to deploy to production:** → [OPERATIONS.md - Production Workflow](OPERATIONS.md#production-workflow)
+- **I want to understand the game:** → [ARCHITECTURE.md](ARCHITECTURE.md)
+- **I want to change mechanics:** → [MECHANICS_CHANGE_CHECKLIST.md](MECHANICS_CHANGE_CHECKLIST.md)
 
 ---
 
@@ -26,9 +49,10 @@
 | `game_modules/quiz/routes.py` | Flask blueprint (pages + API) |
 | `game_modules/quiz/models.py` | SQLAlchemy ORM models (PostgreSQL-only) |
 | `game_modules/quiz/services.py` | Business logic (player auth, run management) |
-| `game_modules/quiz/seed.py` | Database seeding from YAML |
-| `game_modules/quiz/validation.py` | Content validation for YAML files |
-| `game_modules/quiz/content/topics/` | Topic YAML files |
+| `game_modules/quiz/seed.py` | DEV: Database seeding from JSON |
+| `game_modules/quiz/validation.py` | JSON schema validation (v1/v2) |
+| `game_modules/quiz/import_service.py` | Production: Release import service |
+| `content/quiz/topics/` | Topic JSON files (DEV) |
 | `templates/games/quiz/` | Jinja2 templates |
 | `static/js/games/quiz/` | Frontend JavaScript |
 | `game_modules/quiz/styles/quiz.css` | Scoped CSS styles |
@@ -135,77 +159,89 @@
 
 ## Content Format
 
-**Location:** `game_modules/quiz/content/topics/<topic_id>.yml`
+**Current Format:** JSON (quiz_unit_v1/v2 schema) with plaintext content (no i18n keys)  
+**Location (DEV):** `content/quiz/topics/<slug>.json`  
+**Location (Production):** `media/releases/<release_id>/units/<slug>.json`
 
-**YAML Structure:**
-```yaml
-topic_id: "demo_topic"
-title_key: "Demo Topic"
-description_key: "Practice questions for beginners"
-authors:
-  - "Author Name"
-based_on:
-  chapter_title: "Chapter 1"
-  chapter_url: "https://example.com/chapter1"
-  course_title: "Course Name"
-  course_url: "https://example.com/course"
-is_active: true
-order_index: 0
-questions:
-  - question_id: "demo_topic.q1"
-    difficulty_level: 1
-    question_text:
-      de: "What is 2+2?"
-      en: "What is 2+2?"
-    answers:
-      - text:
-          de: "3"
-          en: "3"
-        help_text:
-          de: "Try again."
-          en: "Try again."
-      - text:
-          de: "4"
-          en: "4"
-        help_text:
-          de: "Correct!"
-          en: "Correct!"
-      - text:
-          de: "5"
-          en: "5"
-        help_text:
-          de: "Not quite."
-          en: "Not quite."
-      - text:
-          de: "6"
-          en: "6"
-        help_text:
-          de: "Incorrect."
-          en: "Incorrect."
-    correct_index: 1
+**See:** [CONTENT.md](CONTENT.md) for complete JSON schema documentation
+
+**Key Features:**
+- ULID-based question IDs (auto-generated via `scripts/quiz_units_normalize.py`)
+- Media arrays (audio/image support)
+- Plaintext content (direct in JSON, no i18n lookup)
+- Release tracking (production only)
+
+**Example:**
+```json
+{
+  "schema_version": "quiz_unit_v2",
+  "slug": "aussprache",
+  "title": "Aussprache",
+  "description": "Quiz über spanische Aussprache",
+  "authors": ["Author Name"],
+  "is_active": true,
+  "questions": [
+    {
+      "id": "aussprache_q_01KE59P9SVXJF4WMBPGHSJXDK6",
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Welche Aussprache ist korrekt?",
+      "explanation": "Die richtige Aussprache ist...",
+      "answers": [
+        {"id": "a1", "text": "Option A", "correct": true, "media": []},
+        {"id": "a2", "text": "Option B", "correct": false, "media": []}
+      ],
+      "media": [],
+      "sources": [],
+      "meta": {}
+    }
+  ]
+}
 ```
 
-**Validation:** `QuizContentValidator` in `validation.py`
+**Validation:** `validate_quiz_unit()` in `validation.py` (supports v1 and v2)
 
 ---
 
-## Database Seeding
+## Content Import
 
-**Script:** `scripts/init_quiz_db.py`
+### DEV Workflow
+
+**Script:** `scripts/quiz_seed.py`
 
 **Usage:**
 ```bash
-# Seed demo topic
-python scripts/init_quiz_db.py
+# Normalize + Seed (recommended)
+python scripts/quiz_seed.py
 
-# Seed specific topic
-python scripts/init_quiz_db.py --topic-file game_modules/quiz/content/topics/my_topic.yml
+# Normalize only
+python scripts/quiz_units_normalize.py --write
 
-# Dry-run (validate only)
-python scripts/init_quiz_db.py --dry-run
+# Check without writing
+python scripts/quiz_units_normalize.py --check
 ```
 
-**See:** `seed.py` for seeding logic.
+**See:** [OPERATIONS.md](OPERATIONS.md) for complete DEV workflow
+
+### Production Workflow
+
+**CLI:** `./manage import-content`
+
+**Usage:**
+```bash
+# Import release
+./manage import-content \
+  --units-path media/releases/<release_id>/units \
+  --audio-path media/releases/<release_id>/audio \
+  --release <release_id>
+
+# Publish release
+./manage publish-release --release <release_id>
+```
+
+**Admin Dashboard:** `https://games.hispanistica.de/quiz-admin/`
+
+**See:** [ADMIN_IMPORT.md](ADMIN_IMPORT.md) for complete production workflow
 
 ---
 
@@ -243,6 +279,10 @@ python scripts/init_quiz_db.py --dry-run
 ---
 
 **See Also:**
-- Quiz README: [../../../game_modules/quiz/README.md](../../../game_modules/quiz/README.md)
-- Module Manifest: [../../../game_modules/quiz/manifest.json](../../../game_modules/quiz/manifest.json)
-- Main README: [../../README.md](../../README.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System design and mechanics
+- [CONTENT.md](CONTENT.md) - JSON schema and authoring guide
+- [OPERATIONS.md](OPERATIONS.md) - DEV vs Production workflows
+- [ADMIN_IMPORT.md](ADMIN_IMPORT.md) - Admin Dashboard and import API
+- [GLOSSARY.md](GLOSSARY.md) - Term definitions
+- [AUDIT_REPORT.md](AUDIT_REPORT.md) - Complete architecture audit
+- [MECHANICS_CHANGE_CHECKLIST.md](MECHANICS_CHANGE_CHECKLIST.md) - Pre-flight checklist for mechanics changes

@@ -1,12 +1,12 @@
-# Quiz Gold Standard – Architektur & Anpassung
+# Quiz Component – Architecture
 
-> **⚠️ Content-Workflow-Hinweis:**
-> Die in diesem Dokument beschriebenen `quiz_seed.py`-Befehle sind **DEV-only**.
-> In Production wird Content per rsync hochgeladen und über `./manage import-content`
-> oder das Admin-Dashboard importiert.
-> Siehe: [games_hispanistica_production.md](../../../games_hispanistica_production.md)
+> **⚠️ WICHTIG: DEV vs Production**  
+> Dieses Dokument beschreibt die Architektur und Mechaniken des Quiz-Moduls.  
+> **Content-Workflows sind in [OPERATIONS.md](OPERATIONS.md) dokumentiert.**  
+> - **DEV:** `scripts/quiz_seed.py` (direkter DB-Zugriff)  
+> - **Production:** `./manage import-content` oder Admin Dashboard (Release-basiert)
 
-Dieses Dokument beschreibt die "Gold Standard" Implementierung des Quiz-Moduls.
+Dieses Dokument beschreibt die technische Architektur und Spielmechanik des Quiz-Moduls.
 
 ## Architektur
 
@@ -36,31 +36,23 @@ Die Logik für Level-Größe und Punkte ist in `services.py` definiert:
 
 ### Content-Format (aktualisiert 2026-01)
 
-**Aktuell:** JSON-Format (quiz_unit_v1/v2 schema) in `quiz_units/topics/`
+**Aktuell:** JSON-Format (quiz_unit_v1/v2 schema) in `content/quiz/topics/` (DEV) oder `media/releases/<release_id>/units/` (Production)
 - Plaintext-Inhalte (direkt in JSON, keine i18n-Keys)
 - ULID-basierte Question-IDs (auto-generiert via `quiz_units_normalize.py`)
 - Media-Support mit `seed_src` (lokale Dateien) oder `src` (URLs)
 
-**DEV-Workflow:**
-1. JSON-Datei in `content/quiz/topics/<slug>.json` erstellen/bearbeiten
-2. Normalisieren: `python scripts/quiz_units_normalize.py --write`
-3. Importieren: `python scripts/quiz_seed.py --prune-soft`
-
-**Production-Workflow:**
-1. Content als Release vorbereiten (außerhalb Repo): `C:\content\games_hispanistica\2026-01-06_1430\`
-2. Upload: `rsync -avz <local_path> user@server:/srv/webapps/games_hispanistica/media/releases/<release_id>/`
-3. Symlink: `ln -sfn releases/<release_id> media/current`
-4. Import: `./manage import-content --release <release_id>`
-5. Publish: `./manage publish-release --release <release_id>`
-
-Siehe: [games_hispanistica_production.md](../../../games_hispanistica_production.md) für Details.
+**Siehe:** [CONTENT.md](CONTENT.md) für vollständige Schema-Dokumentation  
+**Siehe:** [OPERATIONS.md](OPERATIONS.md) für DEV vs Production Workflows
 
 **Legacy:** YAML-Format mit i18n-Keys (deprecated, nicht mehr verwendet)
 
-### Neues Quiz-Topic hinzufügen (DEV)
-1.  JSON-Datei in `content/quiz/topics/` erstellen (siehe Template unter `content/quiz/topics/`)
-2.  Normalisieren und importieren (siehe Content-Format oben)
-3.  Das Frontend (`/quiz/<topic_id>`) lädt automatisch das Topic
+### Neues Quiz-Topic hinzufügen
+
+**DEV:**  
+Siehe [OPERATIONS.md - Add New Topic](OPERATIONS.md#add-new-topic)
+
+**Production:**  
+Siehe [OPERATIONS.md - Production Workflow](OPERATIONS.md#production-workflow)
 
 ## Wichtige Implementierungsdetails
 

@@ -21,10 +21,10 @@ Usage:
   
 Production Workflow:
   # 1. Normalize content locally BEFORE upload
-  python scripts/quiz_units_normalize.py --write --topics-dir C:\content\games_hispanistica\2026-01-06_1430\units
+  python scripts/quiz_units_normalize.py --write --topics-dir C:/content/games_hispanistica/2026-01-06_1430/units
   
   # 2. Upload to server
-  rsync -avz C:\content\games_hispanistica\2026-01-06_1430\ user@server:/srv/webapps/games_hispanistica/media/releases/2026-01-06_1430/
+  rsync -avz C:/content/games_hispanistica/2026-01-06_1430/ user@server:/srv/webapps/games_hispanistica/media/releases/2026-01-06_1430/
   
   # 3. Import on server
   ./manage import-content --release 2026-01-06_1430
