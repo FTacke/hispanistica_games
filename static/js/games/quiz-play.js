@@ -149,7 +149,7 @@
     
     return {
       totalScore: raw.total_score,
-      tokensCount: raw.tokens_count || 0,
+      tokensCount: 0,
       breakdown: raw.breakdown || [],
       rank: raw.rank !== undefined ? raw.rank : null,
       raw

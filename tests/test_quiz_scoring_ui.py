@@ -8,7 +8,8 @@ Tests verify:
 
 from game_modules.quiz.services import (
     AnswerResult,
-    POINTS_PER_DIFFICULTY,
+    POINTS_PER_DIFFICULTY_V1,
+    POINTS_PER_DIFFICULTY_V2,
 )
 
 
@@ -104,46 +105,72 @@ class TestAnswerResultFields:
         assert result.difficulty == 0
 
 
-class TestPointsPerDifficulty:
-    """Tests for POINTS_PER_DIFFICULTY configuration."""
+class TestPointsPerDifficultyV1:
+    """Tests for v1 points configuration (1-5)."""
 
     def test_difficulty_1_points(self):
         """Difficulty 1 should give 10 points."""
-        assert POINTS_PER_DIFFICULTY[1] == 10
+        assert POINTS_PER_DIFFICULTY_V1[1] == 10
 
     def test_difficulty_2_points(self):
         """Difficulty 2 should give 20 points."""
-        assert POINTS_PER_DIFFICULTY[2] == 20
+        assert POINTS_PER_DIFFICULTY_V1[2] == 20
 
     def test_difficulty_3_points(self):
         """Difficulty 3 should give 30 points."""
-        assert POINTS_PER_DIFFICULTY[3] == 30
+        assert POINTS_PER_DIFFICULTY_V1[3] == 30
 
     def test_difficulty_4_points(self):
         """Difficulty 4 should give 40 points."""
-        assert POINTS_PER_DIFFICULTY[4] == 40
+        assert POINTS_PER_DIFFICULTY_V1[4] == 40
 
     def test_difficulty_5_points(self):
         """Difficulty 5 should give 50 points."""
-        assert POINTS_PER_DIFFICULTY[5] == 50
+        assert POINTS_PER_DIFFICULTY_V1[5] == 50
 
     def test_all_difficulties_defined(self):
         """All difficulties 1-5 should be defined."""
         for d in range(1, 6):
-            assert d in POINTS_PER_DIFFICULTY
+            assert d in POINTS_PER_DIFFICULTY_V1
 
     def test_points_increase_with_difficulty(self):
         """Points should increase with difficulty level."""
         for d in range(1, 5):
-            assert POINTS_PER_DIFFICULTY[d] < POINTS_PER_DIFFICULTY[d + 1]
+            assert POINTS_PER_DIFFICULTY_V1[d] < POINTS_PER_DIFFICULTY_V1[d + 1]
 
     def test_token_bonus_formula(self):
         """Token bonus should be 2x difficulty points for perfect level."""
         for d in range(1, 6):
-            base_points = POINTS_PER_DIFFICULTY[d]
+            base_points = POINTS_PER_DIFFICULTY_V1[d]
             expected_bonus = 2 * base_points
             # Verify this matches the formula in services.py
-            assert expected_bonus == 2 * POINTS_PER_DIFFICULTY[d]
+            assert expected_bonus == 2 * POINTS_PER_DIFFICULTY_V1[d]
+
+
+class TestPointsPerDifficultyV2:
+    """Tests for v2 points configuration (1-3)."""
+
+    def test_difficulty_1_points(self):
+        """Difficulty 1 should give 10 points."""
+        assert POINTS_PER_DIFFICULTY_V2[1] == 10
+
+    def test_difficulty_2_points(self):
+        """Difficulty 2 should give 20 points."""
+        assert POINTS_PER_DIFFICULTY_V2[2] == 20
+
+    def test_difficulty_3_points(self):
+        """Difficulty 3 should give 30 points."""
+        assert POINTS_PER_DIFFICULTY_V2[3] == 30
+
+    def test_all_difficulties_defined(self):
+        """All difficulties 1-3 should be defined."""
+        for d in range(1, 4):
+            assert d in POINTS_PER_DIFFICULTY_V2
+
+    def test_points_increase_with_difficulty(self):
+        """Points should increase with difficulty level."""
+        for d in range(1, 3):
+            assert POINTS_PER_DIFFICULTY_V2[d] < POINTS_PER_DIFFICULTY_V2[d + 1]
 
 
 class TestMaxScore:
@@ -155,15 +182,15 @@ class TestMaxScore:
         # Base points: 2 * (10 + 20 + 30 + 40 + 50) = 2 * 150 = 300
         # Token bonus: 2 * (10 + 20 + 30 + 40 + 50) = 300
         # Total: 600
-        base_points = sum(2 * POINTS_PER_DIFFICULTY[d] for d in range(1, 6))
-        token_bonus = sum(2 * POINTS_PER_DIFFICULTY[d] for d in range(1, 6))
+        base_points = sum(2 * POINTS_PER_DIFFICULTY_V1[d] for d in range(1, 6))
+        token_bonus = sum(2 * POINTS_PER_DIFFICULTY_V1[d] for d in range(1, 6))
         expected_max = base_points + token_bonus
         assert expected_max == 600
 
     def test_no_bonus_score(self):
         """Calculate score with 5/10 correct (one per level, no bonuses)."""
         # 1 correct per difficulty = no token bonus
-        base_points = sum(1 * POINTS_PER_DIFFICULTY[d] for d in range(1, 6))
+        base_points = sum(1 * POINTS_PER_DIFFICULTY_V1[d] for d in range(1, 6))
         expected = base_points  # No bonus
         assert expected == 150
 

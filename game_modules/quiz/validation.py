@@ -94,7 +94,7 @@ class UnitQuestionSchema:
     v2 supports media array instead of single object.
     """
     id: str  # String ID (generated if missing)
-    difficulty: int  # 1-5
+    difficulty: int  # 1-3
     type: str  # "single_choice"
     prompt: str  # Plaintext question
     explanation: str  # Plaintext explanation
@@ -167,10 +167,10 @@ def validate_question(data: Dict[str, Any], topic_id: str) -> tuple[QuestionSche
     
     question_id = data["id"]
     
-    # Validate difficulty (1-5)
+    # Validate difficulty (1-3)
     difficulty = data["difficulty"]
-    if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 5:
-        errors.append(f"Question {question_id}: difficulty must be 1-5, got {difficulty}")
+    if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 3:
+        errors.append(f"Question {question_id}: difficulty must be 1-3, got {difficulty}")
     
     # Validate answers
     answers_data = data.get("answers", [])
@@ -254,15 +254,16 @@ def validate_topic_content(data: Dict[str, Any]) -> TopicContentSchema:
             seen_ids.add(question.id)
             questions.append(question)
     
-    # Validate we have 2 questions per difficulty level
+    # Validate required questions per difficulty level (v2: 4/4/2 for 1-3)
     difficulty_counts = {}
     for q in questions:
         difficulty_counts[q.difficulty] = difficulty_counts.get(q.difficulty, 0) + 1
     
-    for d in range(1, 6):
+    required_counts = {1: 4, 2: 4, 3: 2}
+    for d, required in required_counts.items():
         count = difficulty_counts.get(d, 0)
-        if count < 2:
-            errors.append(f"Difficulty {d}: need at least 2 questions, got {count}")
+        if count < required:
+            errors.append(f"Difficulty {d}: need at least {required} questions, got {count}")
     
     if errors:
         raise ValidationError(f"Topic '{topic_id}' validation failed", errors)
@@ -542,6 +543,21 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
     
     if errors:
         raise ValidationError(f"Quiz unit validation failed{context}", errors)
+
+    # Validate required counts per difficulty (v2: 4/4/2)
+    difficulty_counts: Dict[int, int] = {}
+    for q in questions:
+        difficulty_counts[q.difficulty] = difficulty_counts.get(q.difficulty, 0) + 1
+    required_counts = {1: 4, 2: 4, 3: 2}
+    for d, required in required_counts.items():
+        count = difficulty_counts.get(d, 0)
+        if count < required:
+            errors.append(
+                f"Difficulty {d}: need at least {required} questions{context}, got {count}"
+            )
+
+    if errors:
+        raise ValidationError(f"Quiz unit validation failed{context}", errors)
     
     # Validate each question
     questions = []
@@ -603,8 +619,8 @@ def _validate_unit_question(
     difficulty = data.get("difficulty")
     if difficulty is None:
         errors.append(f"Missing required field: 'difficulty'{context}")
-    elif not isinstance(difficulty, int) or difficulty < 1 or difficulty > 5:
-        errors.append(f"Field 'difficulty' must be 1-5{context}, got {difficulty}")
+    elif not isinstance(difficulty, int) or difficulty < 1 or difficulty > 3:
+        errors.append(f"Field 'difficulty' must be 1-3{context}, got {difficulty}")
     
     # Validate type
     q_type = data.get("type", "single_choice")

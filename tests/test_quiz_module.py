@@ -149,6 +149,45 @@ def seeded_quiz_db(quiz_app: Flask):
     return quiz_app
 
 
+@pytest.fixture
+def seeded_quiz_db_v2(quiz_app: Flask):
+    """Seed the quiz database with v2-ready test data (1-3 difficulties, 4/4/2)."""
+    from game_modules.quiz.models import QuizTopic, QuizQuestion
+
+    with get_session() as session:
+        topic = QuizTopic(
+            id="test_topic_v2",
+            title_key="topics.test_v2.title",
+            description_key="topics.test_v2.description",
+            is_active=True,
+        )
+        session.add(topic)
+
+        required_counts = {1: 4, 2: 4, 3: 2}
+        for difficulty, count in required_counts.items():
+            for q_num in range(1, count + 1):
+                q_id = f"test_v2_q{difficulty}_{q_num}"
+                question = QuizQuestion(
+                    id=q_id,
+                    topic_id="test_topic_v2",
+                    difficulty=difficulty,
+                    type="single_choice",
+                    prompt_key=f"questions.{q_id}.prompt",
+                    explanation_key=f"questions.{q_id}.explanation",
+                    answers=[
+                        {"id": 1, "text_key": f"questions.{q_id}.a1", "correct": True},
+                        {"id": 2, "text_key": f"questions.{q_id}.a2", "correct": False},
+                        {"id": 3, "text_key": f"questions.{q_id}.a3", "correct": False},
+                        {"id": 4, "text_key": f"questions.{q_id}.a4", "correct": False},
+                    ],
+                )
+                session.add(question)
+
+        session.commit()
+
+    return quiz_app
+
+
 # ============================================================================
 # Validation Tests
 # ============================================================================
@@ -160,10 +199,11 @@ class TestContentValidation:
         """Valid topic content should pass validation."""
         from game_modules.quiz.validation import validate_topic_content, ValidationError
         
-        content = {
-            "topic_id": "test",
-            "questions": [
-                {
+        questions = []
+        required_counts = {1: 4, 2: 4, 3: 2}
+        for d, count in required_counts.items():
+            for n in range(1, count + 1):
+                questions.append({
                     "id": f"q{d}_{n}",
                     "difficulty": d,
                     "prompt_key": f"q{d}_{n}.prompt",
@@ -174,9 +214,11 @@ class TestContentValidation:
                         {"id": 3, "text_key": f"q{d}_{n}.a3", "correct": False},
                         {"id": 4, "text_key": f"q{d}_{n}.a4", "correct": False},
                     ],
-                }
-                for d in range(1, 6) for n in range(1, 3)
-            ],
+                })
+
+        content = {
+            "topic_id": "test",
+            "questions": questions,
         }
         
         # Should not raise ValidationError
@@ -200,7 +242,7 @@ class TestContentValidation:
         assert "topic_id" in errors_str
     
     def test_validate_invalid_difficulty(self):
-        """Difficulty outside 1-5 range should fail validation."""
+        """Difficulty outside 1-3 range should fail validation."""
         from game_modules.quiz.validation import validate_topic_content, ValidationError
         
         content = {
@@ -208,7 +250,7 @@ class TestContentValidation:
             "questions": [
                 {
                     "id": "q1",
-                    "difficulty": 6,  # Invalid
+                    "difficulty": 4,  # Invalid
                     "prompt_key": "q1.prompt",
                     "explanation_key": "q1.explanation",
                     "answers": [
@@ -352,12 +394,12 @@ class TestScoring:
         - Stufe 4: +80
         - Stufe 5: +100
         """
-        from game_modules.quiz.services import POINTS_PER_DIFFICULTY
+        from game_modules.quiz.services import POINTS_PER_DIFFICULTY_V1
         
         # Token bonus formula verification
         for difficulty in range(1, 6):
             expected_bonus = 2 * (10 * difficulty)
-            actual_bonus = 2 * POINTS_PER_DIFFICULTY[difficulty]
+            actual_bonus = 2 * POINTS_PER_DIFFICULTY_V1[difficulty]
             assert actual_bonus == expected_bonus, f"Token bonus for difficulty {difficulty}"
 
 
