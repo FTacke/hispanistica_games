@@ -2,6 +2,8 @@
 
 **Purpose:** Definiert quiz_unit_v2 Format, Regeln, Beispiele.
 
+**Markdown-Regeln:** Siehe [CONTENT_MARKDOWN.md](CONTENT_MARKDOWN.md)
+
 ---
 
 ## Schema Version
@@ -104,7 +106,7 @@
 |-------|------|----------|-------|
 | `id` | string | ✅ | ULID format: `<topic>_q_<26-char-ulid>` |
 | `type` | string | ❌ | Default: `"single_choice"` (only type supported) |
-| `difficulty` | integer | ✅ | 1-5 |
+| `difficulty` | integer | ✅ | 1-3 |
 | `prompt_key` | string | ✅ | Plaintext question, max 500 chars |
 | `answers` | array | ✅ | 2-6 answers, exactly 1 correct |
 | `explanation_key` | string | ❌ | Plaintext explanation, shown after answer |
@@ -134,13 +136,11 @@ question_id = f"{topic_id}_q_{ulid.new()}"
 
 | Difficulty | Questions per Run | Recommended per Topic |
 |------------|-------------------|----------------------|
-| 1 | 2 | 10+ |
-| 2 | 2 | 10+ |
+| 1 | 4 | 10+ |
+| 2 | 4 | 10+ |
 | 3 | 2 | 10+ |
-| 4 | 2 | 10+ |
-| 5 | 2 | 10+ |
 
-**Total:** Min 50 questions per topic (für Variety), optimal 100+.
+**Total:** Min 30 questions per topic (für Variety), optimal 60+.
 
 ---
 
@@ -443,8 +443,6 @@ def validate_media_files(media: list, base_path: Path):
 | 1 | Basic recognition, definitions | "Wie sagt man 'Hallo' auf Spanisch?" |
 | 2 | Application, simple grammar | "Welche Form ist korrekt: 'Yo hablo' oder 'Yo habla'?" |
 | 3 | Analysis, exceptions | "Welches Verb ist unregelmäßig im Präteritum?" |
-| 4 | Synthesis, complex rules | "Welcher Satz verwendet Subjuntivo korrekt?" |
-| 5 | Evaluation, edge cases | "Welche Übersetzung ist idiomatisch korrekt?" |
 
 ### Media Usage
 
@@ -460,8 +458,8 @@ def validate_media_files(media: list, base_path: Path):
 ### Content Coverage
 
 **Balanced Distribution:**
-- All 5 difficulty levels represented
-- 50+ questions per topic (min)
+- All 3 difficulty levels represented
+- 30+ questions per topic (min)
 - No duplication (same question with different wording)
 
 ---

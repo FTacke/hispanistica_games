@@ -17,17 +17,16 @@
 - Level 3: 2 Fragen (difficulty=3)
 - **Gesamt:** 10 Fragen (unverändert)
 
-**Neue Difficulty-Range:** 1-3 (statt 1-5)
+**Neue Difficulty-Range:** 1-3
 
 **Timer-Änderungen:**
 - Named Mode: 40 Sekunden (statt 30)
 - Anonym Mode: 240 Sekunden (statt 30)
 - Media-Bonus: Bleibt 10 Sekunden (optional anpassen)
 
-**Token-Entfernung:**
-- Tokens komplett aus UI/Responses entfernen (soft removal)
-- DB-Feld `tokens_count` bleibt, wird auf 0 gesetzt
-- Nur noch: Base Points + Level-Bonus (bei perfect Level)
+**Scoring:**
+- Base Points + Level-Bonus (bei perfektem Level)
+- Keine Zusatzmetriken
 
 **Textformatierung:**
 - Markdown-Subset in Prompts/Answers/Explanations: `**bold**`, `*italic*`
@@ -40,7 +39,7 @@
 
 ### Was bewusst NICHT Teil des Refactorings ist
 
-❌ Scoring-Formeln (außer Token-Entfernung)  
+❌ Scoring-Formeln (außer Level-Bonus-Regel)  
 ❌ Joker-Logik (bleibt 50:50, 2× pro Run)  
 ❌ Leaderboard-Sortierung (bleibt: score DESC, created_at ASC)  
 ❌ Player-Auth (bleibt separates System)  
@@ -58,12 +57,23 @@
 |-------|------|----------|------|
 | Phase 0 | Vorbereitung & Safety | 1 Tag | 🟢 Low |
 | Phase 1 | Mechanik + Content + Schema | 3-5 Tage | 🔴 Critical |
-| Phase 2 | Timer & Modi | 1-2 Tage | 🟠 High |
-| Phase 3 | Textformatierung (Markdown) | 1-2 Tage | 🟡 Medium |
-| Phase 4 | Admin / Import / Ops | 1 Tag | 🟡 Medium |
-| Phase 5 | Stabilisierung & Bugfixes | 2-3 Tage | 🟠 High |
+| Phase 2 | Timer, HUD, Layout | 1-2 Tage | 🟠 High |
+| Phase 3a | Markdown finalisieren | 1-2 Tage | 🟡 Medium |
+| Phase 3b | Server / Admin / Import / Prod-Prep | 1-2 Tage | 🟠 High |
+| Phase 4 | Stabilität & Bugfixes | 2-3 Tage | 🟠 High |
+| Phase 5 | Cleanup & Merge | 0.5-1 Tag | 🟡 Medium |
 
 **Gesamt:** 9-14 Tage
+
+---
+
+## Status
+
+- **Phase 0 – Done (29.01.2026):** Feature-Flag + Safety-Grundlagen dokumentiert.
+- **DEV-Unblock – Done (29.01.2026):** Dev-Start/Seed-Modi stabilisiert.
+- **Phase 1 (inkl. 1C/1D) – Done (29.01.2026):** v2-Mechanik, Content-Migration, Seeds/Prune, Dev-Docs.
+- **Phase 2 (inkl. 2b/2c/2d) – Done (29.01.2026):** Timer 40/240, HUD/Meta-Layout finalisiert.
+- **Phase 3a – In Progress (29.01.2026):** Markdown finalisieren (Renderer + Regeln + Doku).
 
 ---
 
@@ -115,7 +125,7 @@ ALTER TABLE quiz_runs ADD COLUMN mechanics_version INTEGER DEFAULT 1;
 **Unit-Tests (Python):**
 - `test_question_selection_v2()` – 4/4/2 Verteilung
 - `test_level_detection_v2()` – Level-Complete bei idx 3, 7, 9
-- `test_scoring_v2()` – Neue Bonus-Regeln, Tokens=0
+- `test_scoring_v2()` – Neue Bonus-Regeln (Level-Bonus)
 
 **Frontend-Tests (manuell):**
 - Load Question → Answer → Level-Up Animation
@@ -138,7 +148,7 @@ ALTER TABLE quiz_runs ADD COLUMN mechanics_version INTEGER DEFAULT 1;
 
 ## Phase 1 – Mechanik + Content + Schema
 
-**Ziel:** 3 Levels, Difficulty 1-3, Fragen-Verteilung 4/4/2, Tokens raus.
+**Ziel:** 3 Levels, Difficulty 1-3, Fragen-Verteilung 4/4/2, Level-Bonus aktiv.
 
 **Risk:** 🔴 Critical – Diese Phase ändert Core-Mechanik, Scoring und Content.
 
@@ -149,7 +159,7 @@ ALTER TABLE quiz_runs ADD COLUMN mechanics_version INTEGER DEFAULT 1;
 **Inhalt:**
 - 3 Level: L1 (4×D1), L2 (4×D2), L3 (2×D3)
 - Bonus-Regel: "Alle Fragen eines Levels korrekt" → Bonus = 2 × Difficulty × Base-Points
-- Tokens: Entfernt aus API, UI. DB-Feld bleibt bei 0.
+- Keine Zusatzmetriken neben Base-Points + Level-Bonus.
 - Points: Unverändert (10/20/30 für D1/D2/D3)
 
 **Code-Stellen (Referenz):**
@@ -205,7 +215,7 @@ else:
 
 **Aktuelle Logik:**
 ```python
-for difficulty in range(1, DIFFICULTY_LEVELS + 1):  # 1-5
+for difficulty in range(1, DIFFICULTY_LEVELS + 1):  # 1-3
     # Select 2 questions per difficulty
     for _ in range(QUESTIONS_PER_DIFFICULTY):  # 2
         ...
@@ -257,35 +267,16 @@ if difficulty == current_difficulty and len(results) == expected_count:
 
 ---
 
-#### 1B.4 – Scoring anpassen (Tokens raus)
+#### 1B.4 – Scoring anpassen (Level-Bonus)
 
 **Datei:** `game_modules/quiz/services.py`, Function `finish_run()` Z.1201-1312
 
-**Tokens-Code entfernen:**
+**Regel:** Level-Bonus = Summe der Punkte des Levels, nur bei 100% korrekt.
 
-**ALT:**
-```python
-tokens_count = 0
-for difficulty in range(1, DIFFICULTY_LEVELS + 1):
-    # ...
-    if earned_token:
-        tokens_count += 1
-```
+**Was darf sich ändern:** Bonus-Berechnung
+**Was darf sich NICHT ändern:** Base-Points pro Frage
 
-**NEU:**
-```python
-tokens_count = 0  # Fixed to 0 (soft removal)
-for difficulty in range(1, DIFFICULTY_LEVELS + 1):
-    # ...
-    # Bonus bleibt, aber kein Token-Counter
-```
-
-**Bonus-Regel:** Unverändert (perfect Level → 2 × Base-Points)
-
-**Was darf sich ändern:** Token-Counter-Logic
-**Was darf sich NICHT ändern:** Bonus-Berechnung (nur Token-Display weg)
-
-**Abnahmekriterium:** `finish_run()` returned `tokens_count=0`, Bonus trotzdem korrekt
+**Abnahmekriterium:** Bonus wird nur bei perfektem Level addiert
 
 ---
 
@@ -304,33 +295,25 @@ level_perfect: bool = False
 
 # NEU:
 level_perfect: bool = False  # Bleibt (für Bonus-Anzeige)
-# KEIN tokens_remaining oder tokens_earned
+# Keine Zusatzfelder für Bonus-Tracking außerhalb von `level_bonus`
 ```
 
 **ScoreResult:**
 ```python
-# ALT:
-tokens_count: int
-
 # NEU:
-tokens_count: int = 0  # Immer 0, aber Feld bleibt (backward compat)
+level_bonus: int  # Bonus pro Level (wenn perfekt)
 ```
 
 **Breakdown-Item:**
 ```python
-# ALT:
-"token_earned": earned_token,
-"token_bonus": token_bonus,
-
 # NEU:
-"token_earned": False,  # Immer False
-"token_bonus": token_bonus,  # Bleibt (ist eigentlich Level-Bonus)
+"level_bonus": level_bonus,
 ```
 
-**Was darf sich ändern:** Response-Werte (tokens=0)
-**Was darf sich NICHT ändern:** Response-Felder (müssen existieren für backward compat)
+**Was darf sich ändern:** Response-Werte für Bonus
+**Was darf sich NICHT ändern:** Response-Struktur für bestehende Felder
 
-**Abnahmekriterium:** API-Responses enthalten `tokens_count: 0`, kein Frontend-Crash
+**Abnahmekriterium:** Bonus wird korrekt im Breakdown abgebildet
 
 ---
 
@@ -354,7 +337,7 @@ if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 3:
 **Count-Validation (Z.257-265):**
 ```python
 # ALT:
-for d in range(1, 6):  # 1-5
+for d in range(1, 4):  # 1-3
     count = difficulty_counts.get(d, 0)
     if count < 2:
         errors.append(f"Difficulty {d}: need at least 2 questions, got {count}")
@@ -371,7 +354,7 @@ for d, required in required_counts.items():
 **Was darf sich ändern:** Validation-Rules
 **Was darf sich NICHT ändern:** JSON-Format (quiz_unit_v2 bleibt)
 
-**Abnahmekriterium:** Validator akzeptiert Difficulty 1-3, lehnt 4-5 ab
+**Abnahmekriterium:** Validator akzeptiert Difficulty 1-3, lehnt >3 ab
 
 ---
 
@@ -379,7 +362,7 @@ for d, required in required_counts.items():
 
 **Tool:** `scripts/quiz_content_migrate_v2.py` (neu erstellen)
 
-**Ziel:** Alle existierenden Units von Difficulty 1-5 → 1-3 konvertieren
+**Ziel:** Alle existierenden Units mit Difficulty >3 → 1-3 konvertieren
 
 **Mapping (Beispiel):**
 ```python
@@ -403,7 +386,7 @@ DIFFICULTY_MAP = {
 **Was darf sich ändern:** Content-Dateien (difficulty-Werte)
 **Was darf sich NICHT ändern:** Question-IDs, Prompts, Answers
 
-**Abnahmekriterium:** Alle Units validieren gegen neues Schema, keine Frage hat Difficulty 4/5
+**Abnahmekriterium:** Alle Units validieren gegen neues Schema, keine Frage hat Difficulty >3
 
 ---
 
@@ -437,8 +420,8 @@ SELECT difficulty, COUNT(*) FROM quiz_questions GROUP BY difficulty;
 
 **Blocker für:**
 - Phase 2 (Timer): Kann parallel, aber Level-Detection aus 1B nötig für korrekte Timer-Resets
-- Phase 3 (Markdown): Unabhängig, kann parallel
-- Phase 4 (Admin): Braucht 1C.1 (Validator)
+- Phase 3a (Markdown): Unabhängig, kann parallel
+- Phase 3b (Server/Admin/Import): Braucht 3a + 1C.1 (Validator)
 
 ---
 
@@ -447,10 +430,10 @@ SELECT difficulty, COUNT(*) FROM quiz_questions GROUP BY difficulty;
 ✅ Feature-Flag `MECHANICS_VERSION=v2` aktiv  
 ✅ Backend selektiert 4/4/2 Fragen  
 ✅ Level-Complete bei idx 3, 7, 9  
-✅ Scoring: Bonus korrekt, `tokens_count=0`  
-✅ API-Responses: `tokens_count: 0`, kein Frontend-Crash  
+✅ Scoring: Bonus korrekt (nur bei perfektem Level)  
+✅ API-Responses: Bonus korrekt, kein Frontend-Crash  
 ✅ Validator akzeptiert nur Difficulty 1-3  
-✅ Content-Dateien: Keine Difficulty 4/5 mehr  
+✅ Content-Dateien: Keine Difficulty >3 mehr  
 ✅ DEV-DB: Neue Runs laufen mit v2-Mechanik durch  
 
 ---
@@ -572,7 +555,7 @@ MEDIA_BONUS_SECONDS = 10  # Unverändert
 
 **2A → 2B:** Frontend braucht neue Time-Limits vom Backend
 
-**Blocker für:** Keine (Phase 2 kann parallel zu Phase 3 laufen)
+**Blocker für:** Keine (Phase 2 kann parallel zu Phase 3a laufen)
 
 ---
 
@@ -586,7 +569,7 @@ MEDIA_BONUS_SECONDS = 10  # Unverändert
 
 ---
 
-## Phase 3 – Textformatierung (Markdown)
+## Phase 3a – Markdown finalisieren
 
 **Ziel:** `**bold**` und `*italic*` in Prompts/Answers/Explanations.
 
@@ -594,7 +577,7 @@ MEDIA_BONUS_SECONDS = 10  # Unverändert
 
 ### 3A – Festlegung
 
-**Dokument:** Erweitere `docs/quiz/CONTENT.md` um Markdown-Regeln
+**Dokument:** `docs/quiz/CONTENT_MARKDOWN.md` (verlinkt aus CONTENT.md + README.md)
 
 **Erlaubt:**
 - `**bold**` → `<strong>`
@@ -602,9 +585,10 @@ MEDIA_BONUS_SECONDS = 10  # Unverändert
 
 **Nicht erlaubt:**
 - HTML-Tags (werden escaped)
-- Underline `__text__` (wird als bold interpretiert, optional)
-- Links `[text](url)` (erstmal nicht, später optional)
-- Listen, Headings, Code-Blocks (nicht sinnvoll in Fragen)
+- Links `[text](url)`
+- Nested Markdown (`***text***`, `**bold *italic***`)
+- Underline `__text__`
+- Listen, Headings, Code-Blocks
 
 **Was darf sich ändern:** Dokumentation (neu)
 **Was darf sich NICHT ändern:** Content (noch)
@@ -628,15 +612,20 @@ MEDIA_BONUS_SECONDS = 10  # Unverändert
 **Code (Beispiel):**
 ```javascript
 function renderMarkdown(text) {
-    // Bold: **text** → <strong>text</strong>
-    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Italic: *text* → <em>text</em>
-    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    return text;
+    const safe = escapeHtml(text || '');
+    // Bold zuerst markieren, damit kein Nested-Rendering passiert
+    const placeholders = [];
+    const withBoldMarkers = safe.replace(/\*\*([^*]+)\*\*/g, (_, c) => {
+        const marker = `__B${placeholders.length}__`;
+        placeholders.push(c);
+        return marker;
+    });
+    const withItalic = withBoldMarkers.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    return withItalic.replace(/__B(\d+)__/g, (_, i) => `<strong>${placeholders[i] || ''}</strong>`);
 }
 ```
 
-**Wichtig:** Sanitize HTML-Tags vorher (falls User-Input, aber hier nicht der Fall)
+**Wichtig:** HTML wird zuerst escaped; nur **bold**/**italic** werden ersetzt.
 
 **Was darf sich ändern:** Rendering-Logic
 **Was darf sich NICHT ändern:** Content-Format (bleibt Plaintext + Markdown)
@@ -694,13 +683,13 @@ promptEl.innerHTML = renderMarkdown(question.prompt_key);
 
 **3A → 3B:** Implementation braucht Spec
 
-**Blocker für:** Keine (Phase 3 unabhängig von 1+2)
+**Blocker für:** Phase 3b startet erst nach 3a (Markdown finalisiert)
 
 **Kritisch für:** Content-Authoring (muss vor Content-Freeze fertig sein)
 
 ---
 
-### Abnahmekriterien (Phase 3 gesamt)
+### Abnahmekriterien (Phase 3a gesamt)
 
 ✅ Markdown-Regeln dokumentiert  
 ✅ `renderMarkdown()` implementiert (bold + italic)  
@@ -710,13 +699,23 @@ promptEl.innerHTML = renderMarkdown(question.prompt_key);
 
 ---
 
-## Phase 4 – Admin / Import / Ops
+## Phase 3b – Server / Admin / Import / Prod-Prep
 
-**Ziel:** Admin-Import akzeptiert neues Schema, UI passt.
+**Ziel:** Prod-Prep verstehen + Admin/Import auf v2-Content absichern.
 
-**Risk:** 🟡 Medium – Wenn falsch: Imports schlagen fehl.
+**Risk:** 🟠 High – Fehlende Baseline blockiert Prod-Prep.
 
-### 4A – Import-Service anpassen
+### 3B.1 – Server Baseline (read-only)
+
+**Dokument:** `docs/quiz/refactoring/quiz_refactoring_server.md`
+
+**Quelle:** Server-Agent (read-only) mit Prompt aus `docs/quiz/refactoring/server_agent_prompt.md`
+
+**Abnahmekriterium:** Baseline liegt vor (ENV-Keys, Release-Pfade, DB-Counts, Logs)
+
+---
+
+### 3B.2 – Import-Service anpassen
 
 **Datei:** `game_modules/quiz/import_service.py`
 
@@ -736,12 +735,12 @@ promptEl.innerHTML = renderMarkdown(question.prompt_key);
 
 ---
 
-### 4B – Admin-UI Templates/Forms
+### 3B.3 – Admin-UI Templates/Forms
 
 **Datei:** `templates/admin/quiz_content.html` (nicht analysiert)
 
 **Änderungen (falls vorhanden):**
-- Preview/Schema-Hinweise: "Difficulty 1-3" statt "1-5"
+- Preview/Schema-Hinweise: "Difficulty 1-3" (kein Legacy-Bereich)
 - Wenn Difficulty-Dropdown: Nur 1-3 anzeigen
 
 **Oder:** Keine Änderung nötig (wenn Admin-UI nur Import-Button, kein Editor)
@@ -753,7 +752,7 @@ promptEl.innerHTML = renderMarkdown(question.prompt_key);
 
 ---
 
-### 4C – Release-Statistiken
+### 3B.4 – Release-Statistiken
 
 **Datei:** `src/app/routes/quiz_admin.py` (nicht analysiert im Detail)
 
@@ -772,28 +771,29 @@ promptEl.innerHTML = renderMarkdown(question.prompt_key);
 
 ### Abhängigkeiten
 
-**Phase 1C.1 → Phase 4A:** Validator muss fertig sein
+**Phase 3a → Phase 3b:** Markdown finalisiert
+**Phase 1C.1 → Phase 3B.2:** Validator muss fertig sein
 
-**Blocker für:** Keine (Phase 4 unabhängig von 2+3)
+**Blocker für:** Phase 4 (Stabilität) startet nach 3b
 
 ---
 
-### Abnahmekriterien (Phase 4 gesamt)
+### Abnahmekriterien (Phase 3b gesamt)
 
 ✅ Import-Service akzeptiert Units mit Difficulty 1-3  
-✅ Import-Service lehnt Difficulty 4-5 ab (Validation-Error)  
+✅ Import-Service lehnt Difficulty >3 ab (Validation-Error)  
 ✅ Admin-UI zeigt korrekte Schema-Info (falls vorhanden)  
 ✅ Release-Stats zeigen Difficulty 1-3 (falls implementiert)  
 
 ---
 
-## Phase 5 – Stabilisierung & Bugfixes
+## Phase 4 – Stabilität & Bugfixes
 
 **Ziel:** Bekannte UI-Bugs reproduzieren + fixen mit Instrumentation.
 
 **Risk:** 🟠 High – Bugs können schwer reproduzierbar sein.
 
-### 5A – Instrumentation einbauen
+### 4A – Instrumentation einbauen
 
 **Datei:** `static/js/games/quiz-play.js`
 
@@ -829,7 +829,7 @@ answerButton.addEventListener('click', (e) => {
 
 ---
 
-### 5B – Bugs gezielt reproduzieren
+### 4B – Bugs gezielt reproduzieren
 
 **Bug 1: Antworten nicht anklickbar**
 
@@ -880,7 +880,7 @@ answerButton.addEventListener('click', (e) => {
 
 ---
 
-### 5C – Race-Conditions härten
+### 4C – Race-Conditions härten
 
 **Timer vs Manual-Submit (Baseline Z. Race-Conditions):**
 
@@ -901,13 +901,13 @@ answerButton.addEventListener('click', (e) => {
 
 ### Abhängigkeiten
 
-**Phase 1+2 → Phase 5:** Bugs können sich durch Umbau ändern, daher erst nach Refactoring
+**Phase 1+2 → Phase 4:** Bugs können sich durch Umbau ändern, daher erst nach Refactoring
 
-**Blocker für:** Keine (letzte Phase)
+**Blocker für:** Phase 5 (Cleanup & Merge)
 
 ---
 
-### Abnahmekriterien (Phase 5 gesamt)
+### Abnahmekriterien (Phase 4 gesamt)
 
 ✅ Instrumentation läuft (Debug-Log)  
 ✅ Bug "Antworten nicht anklickbar" reproduziert + gefixed  
@@ -917,11 +917,41 @@ answerButton.addEventListener('click', (e) => {
 
 ---
 
+## Phase 5 – Cleanup & Merge
+
+**Ziel:** Aufräumen, Konsolidierung, Merge-Readiness.
+
+**Risk:** 🟡 Medium – verteilte Änderungen müssen konsistent sein.
+
+### 5A – Cleanup
+
+- Entferne veraltete TODOs/Notizen aus Phase 1–4
+- Prüfe Dokumentations-Links (CONTENT/README/OPERATIONS)
+- Reduziere Debug-Logging (falls nicht mehr gebraucht)
+
+### 5B – Merge-Check
+
+- Abhängigkeitsmatrix erfüllt
+- E2E-Run einmal final
+- Refactoring-Dokumente vollständig
+
+### Abhängigkeiten
+
+**Phase 4 → Phase 5:** Stabilität abgeschlossen
+
+### Abnahmekriterien (Phase 5 gesamt)
+
+✅ Cleanup abgeschlossen  
+✅ E2E final ok  
+✅ Merge freigegeben  
+
+---
+
 ## Explizit ausgeschlossene Arbeiten
 
 Diese Dinge sind **bewusst nicht** Teil des Refactorings (können später separat angegangen werden):
 
-❌ **Scoring-Formeln überarbeiten** (außer Token-Entfernung)  
+❌ **Scoring-Formeln überarbeiten** (außer Level-Bonus-Regel)  
    - Time-Bonus bleibt unverändert
    - Base-Points bleiben 10/20/30
 
@@ -965,18 +995,19 @@ Diese Dinge sind **bewusst nicht** Teil des Refactorings (können später separa
 | Phase | Braucht abgeschlossen | Blockiert |
 |-------|----------------------|-----------|
 | 0 | - | - |
-| 1 | 0 (optional) | 2, 4 |
+| 1 | 0 (optional) | 2, 3b, 4 |
 | 2 | 1B (Level-Detection) | - |
-| 3 | - | - |
-| 4 | 1C (Validator) | - |
-| 5 | 1, 2 | - |
+| 3a | - | 3b |
+| 3b | 3a, 1C (Validator) | 4 |
+| 4 | 1, 2, 3b | 5 |
+| 5 | 4 | - |
 
-**Kritischer Pfad:** 0 → 1 → 5 (9+ Tage)
+**Kritischer Pfad:** 0 → 1 → 3a → 3b → 4 → 5
 
 **Parallele Pfade:**
 - 2 kann während 1C laufen (Timer unabhängig von Content)
-- 3 kann komplett parallel (Markdown unabhängig)
-- 4 wartet nur auf 1C.1 (Validator)
+- 3a kann parallel zu 1 laufen (nur Rendering + Doku)
+- 3b wartet auf 3a + 1C.1 (Validator)
 
 ---
 
@@ -986,9 +1017,9 @@ Diese Dinge sind **bewusst nicht** Teil des Refactorings (können später separa
 
 **Wann:** Nach Phase 1C.2 (Content-Migration)
 
-**Regel:** Keine neuen Questions mit Difficulty 4-5 mehr authoren
+**Regel:** Keine neuen Questions mit Difficulty >3 authoren
 
-**Duration:** Bis Phase 4 abgeschlossen (Import-Service validiert)
+**Duration:** Bis Phase 3b abgeschlossen (Import-Service validiert)
 
 ### Code-Freeze
 
@@ -1013,7 +1044,7 @@ Diese Dinge sind **bewusst nicht** Teil des Refactorings (können später separa
 
 **Rollback-Plan:**
 - Unpublish neue Release
-- Republish alte Release (Difficulty 1-5)
+- Republish alte Release (Legacy-Difficulties)
 - Feature-Flag zurück auf `v1` (falls nötig)
 
 ---

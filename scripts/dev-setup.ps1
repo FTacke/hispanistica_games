@@ -53,6 +53,12 @@ if ($UsePostgres) {
     $dbMode = "postgres"
     # Use 127.0.0.1 instead of localhost to avoid DNS resolution issues with psycopg3 on Windows
     $env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54321/hispanistica_auth"
+    if (-not $env:QUIZ_DB_HOST) { $env:QUIZ_DB_HOST = "127.0.0.1" }
+    if (-not $env:QUIZ_DB_PORT) { $env:QUIZ_DB_PORT = "54321" }
+    if (-not $env:QUIZ_DB_USER) { $env:QUIZ_DB_USER = "hispanistica_auth" }
+    if (-not $env:QUIZ_DB_PASSWORD) { $env:QUIZ_DB_PASSWORD = "hispanistica_auth" }
+    if (-not $env:QUIZ_DB_NAME) { $env:QUIZ_DB_NAME = "hispanistica_auth" }
+    $env:QUIZ_DATABASE_URL = "postgresql+psycopg://$($env:QUIZ_DB_USER):$($env:QUIZ_DB_PASSWORD)@$($env:QUIZ_DB_HOST):$($env:QUIZ_DB_PORT)/$($env:QUIZ_DB_NAME)"
     Write-Host "Database mode: PostgreSQL (production-like)" -ForegroundColor Green
 } else {
     $dbMode = "sqlite"
@@ -247,7 +253,16 @@ if (-not $SkipDevServer) {
     Write-Host "`n[4/4] Starting Flask dev server..." -ForegroundColor Yellow
     Write-Host "  AUTH_DATABASE_URL = $($env:AUTH_DATABASE_URL)" -ForegroundColor Gray
     Write-Host "`n  Dev server will run in foreground. Press Ctrl+C to stop." -ForegroundColor Cyan
-    Write-Host "  Open http://localhost:8000 in your browser" -ForegroundColor Cyan
+    $port = 8000
+    while (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
+        $port++
+        if ($port -gt 8100) {
+            Write-Host "ERROR: No free port found in range 8000-8100." -ForegroundColor Red
+            exit 1
+        }
+    }
+    $env:PORT = $port
+    Write-Host "  Open http://localhost:$port in your browser" -ForegroundColor Cyan
     Write-Host "  Login: admin / $StartAdminPassword`n" -ForegroundColor Cyan
 
     # Use venv Python (should be set up by this point)

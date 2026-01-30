@@ -236,7 +236,7 @@ def main():
         # Now import quiz modules within app context
         from game_modules.quiz.seed import seed_quiz_units, QUIZ_UNITS_TOPICS_DIR
         from game_modules.quiz.models import QuizTopic, QuizQuestion
-        from src.app.extensions.sqlalchemy_ext import get_session
+        from src.app.extensions.sqlalchemy_ext import get_quiz_session
         
         # Determine topics directory
         topics_dir = Path(args.topics_dir) if args.topics_dir else QUIZ_UNITS_TOPICS_DIR
@@ -257,7 +257,7 @@ def main():
         
         # Step 2: Seed database
         logger.info("Seeding database...")
-        with get_session() as session:
+        with get_quiz_session() as session:
             result = seed_quiz_units(session, units_dir=topics_dir.parent)
         
         if not result["success"]:
@@ -270,7 +270,7 @@ def main():
         )
         
         # Step 3: Prune
-        with get_session() as session:
+        with get_quiz_session() as session:
             if args.prune_hard:
                 prune_stats = prune_topics_hard(session, topics_dir, QuizTopic, QuizQuestion)
             else:

@@ -54,7 +54,7 @@ def _verify_critical_dependencies() -> list[str]:
     return errors
 
 
-def _verify_auth_db_connection(app: Flask) -> None:
+def _verify_auth_db_connection(app: Flask, require_postgres: bool) -> None:
     """Verify auth database connection works. Raises exception on failure."""
     from sqlalchemy import text
     from .extensions.sqlalchemy_ext import get_engine
@@ -63,11 +63,36 @@ def _verify_auth_db_connection(app: Flask) -> None:
     if engine is None:
         raise RuntimeError("Auth engine not initialized")
 
+    if require_postgres and engine.dialect.name != "postgresql":
+        raise RuntimeError(
+            "Auth DB must be PostgreSQL (sqlite not supported). Set AUTH_DATABASE_URL."
+        )
+
     # Try a simple query
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
 
     app.logger.info(f"Auth DB connection verified: {engine.url}")
+
+
+def _verify_quiz_db_connection(app: Flask, require_postgres: bool) -> None:
+    """Verify quiz database connection works. Raises exception on failure."""
+    from sqlalchemy import text
+    from .extensions.sqlalchemy_ext import get_quiz_engine
+
+    engine = get_quiz_engine()
+    if engine is None:
+        raise RuntimeError("Quiz engine not initialized")
+
+    if require_postgres and engine.dialect.name != "postgresql":
+        raise RuntimeError(
+            "Quiz DB must be PostgreSQL (sqlite not supported). Set QUIZ_DB_* or QUIZ_DATABASE_URL."
+        )
+
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
+
+    app.logger.info(f"Quiz DB connection verified: {engine.url}")
 
 
 def create_app(env_name: str | None = None) -> Flask:
@@ -96,28 +121,40 @@ def create_app(env_name: str | None = None) -> Flask:
     # This ensures url_for(_external=True) generates https:// URLs when behind HTTPS proxy
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    # Initialize auth DB engine with fail-fast behavior in production
+    # Initialize auth DB engine with fail-fast behavior in non-test envs
     from .extensions.sqlalchemy_ext import init_engine as init_auth_db
+    from .extensions.sqlalchemy_ext import init_quiz_engine as init_quiz_db
+
+    is_test_env = env_name == "test" or app.config.get("TESTING") is True
 
     try:
         init_auth_db(app)
-        # Verify DB connection works (fail fast if misconfigured)
-        _verify_auth_db_connection(app)
+        _verify_auth_db_connection(app, require_postgres=not is_test_env)
     except Exception as e:
-        is_production = (
-            env_name == "production" or app.config.get("FLASK_ENV") == "production"
-        )
-        if is_production:
-            # In production, fail fast if auth DB is not available
+        if not is_test_env:
             app.logger.error(f"FATAL: Auth DB initialization failed: {e}")
             app.logger.error(
-                "Production requires a working auth database. Check AUTH_DATABASE_URL."
+                "Non-test environments require a PostgreSQL auth database. Check AUTH_DATABASE_URL."
             )
             raise RuntimeError(f"Auth DB initialization failed: {e}") from e
         else:
-            # In development, warn but continue (allows testing without DB)
             app.logger.warning(
-                f"Auth DB not initialized: {e}. Some features may be unavailable."
+                f"Auth DB not initialized in test: {e}. Some features may be unavailable."
+            )
+
+    try:
+        init_quiz_db(app)
+        _verify_quiz_db_connection(app, require_postgres=not is_test_env)
+    except Exception as e:
+        if not is_test_env:
+            app.logger.error(f"FATAL: Quiz DB initialization failed: {e}")
+            app.logger.error(
+                "Production requires a working quiz database. Check QUIZ_DB_* or QUIZ_DATABASE_URL."
+            )
+            raise RuntimeError(f"Quiz DB initialization failed: {e}") from e
+        else:
+            app.logger.warning(
+                f"Quiz DB not initialized: {e}. Quiz features may be unavailable."
             )
 
     # Add build ID for cache busting and deployment verification

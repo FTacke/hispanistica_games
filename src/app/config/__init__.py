@@ -73,10 +73,13 @@ class BaseConfig:
     # Media paths (kept for potential future use)
     MEDIA_DIR = PROJECT_ROOT / "media"
 
-    # Auth DB (used only when AUTH_BACKEND=db) - DSN or fallback to sqlite file
-    AUTH_DATABASE_URL = os.getenv(
-        "AUTH_DATABASE_URL",
-        f"sqlite:///{(Path(PROJECT_ROOT) / 'data' / 'db' / 'auth.db').as_posix()}",
+    # Auth DB (used only when AUTH_BACKEND=db) - DSN required in non-test envs
+    AUTH_DATABASE_URL = os.getenv("AUTH_DATABASE_URL")
+
+    # Quiz DB (PostgreSQL-only). Prefer explicit QUIZ_DATABASE_URL; fallback to DATABASE_URL.
+    QUIZ_DATABASE_URL = os.getenv(
+        "QUIZ_DATABASE_URL",
+        os.getenv("DATABASE_URL")
     )
 
     # Hashing (argon2 or bcrypt)
@@ -95,6 +98,12 @@ class BaseConfig:
     # Debug
     DEBUG = False
     TESTING = False
+
+    # Quiz mechanics version flag (v2 default; v1 override supported)
+    QUIZ_MECHANICS_VERSION = os.getenv("QUIZ_MECHANICS_VERSION", "v2")
+
+    # DEV-only: quiz seed mode (none/single/all). Default to none for safety.
+    QUIZ_DEV_SEED_MODE = os.getenv("QUIZ_DEV_SEED_MODE", "none")
 
 
 class DevConfig(BaseConfig):

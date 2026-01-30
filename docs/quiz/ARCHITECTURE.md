@@ -10,7 +10,7 @@
 
 - **Standalone game module** mit eigener Player-DB
 - **PostgreSQL-only** (keine SQLite-Unterstützung)
-- **10-Fragen-Runs** (5 Difficulty-Levels × 2 Fragen)
+- **10-Fragen-Runs** (3 Levels: 4/4/2)
 - **Timer-enforced** (Server validiert Deadlines)
 - **Release-basiert** (Production: Draft → Published)
 
@@ -32,8 +32,7 @@
 | **Question** | Eine Frage (ULID-basierte ID) | `"aussprache_q_01KE59P9..."` |
 | **Answer** | Eine Antwort-Option (genau 1 correct=true) | `{"id":"a1","text":"...","correct":true}` |
 | **Run** | Ein Durchlauf (10 Fragen) | UUID, status: in_progress/finished |
-| **Level** | Ein Difficulty-Tier (2 Fragen) | Level 1 = Questions 0-1 (difficulty=1) |
-| **Token** | Erfolgsmetrik (0-3 pro Level) | 3 = beide korrekt, 2 = eine korrekt, 1 = Joker, 0 = falsch |
+| **Level** | Ein Difficulty-Tier (4/4/2 Fragen) | Level 1 = Questions 0-3 (difficulty=1) |
 | **Joker** | 50:50 Hilfe (eliminiert 2 falsche) | 2× pro Run verfügbar |
 | **Release** | Versioniertes Content-Paket | `release_20260106_1430_a7x2` |
 | **Draft** | Importiert, nicht sichtbar | `status='draft'` |
@@ -49,18 +48,17 @@
 
 ```
 Run (10 Questions)
-├─ Level 1 (difficulty=1): Q0, Q1
-├─ Level 2 (difficulty=2): Q2, Q3
-├─ Level 3 (difficulty=3): Q4, Q5
-├─ Level 4 (difficulty=4): Q6, Q7
-└─ Level 5 (difficulty=5): Q8, Q9
+├─ Level 1 (difficulty=1): Q0, Q1, Q2, Q3
+├─ Level 2 (difficulty=2): Q4, Q5, Q6, Q7
+└─ Level 3 (difficulty=3): Q8, Q9
 ```
 
 **Konstanten (in `services.py`):**
 - `QUESTIONS_PER_RUN = 10`
-- `DIFFICULTY_LEVELS = 5`
-- `QUESTIONS_PER_DIFFICULTY = 2`
-- `TIMER_SECONDS = 30`
+- `DIFFICULTY_LEVELS = 3`
+- `QUESTIONS_PER_LEVEL = {1:4, 2:4, 3:2}`
+- `TIMER_SECONDS_NAMED = 40`
+- `TIMER_SECONDS_ANON = 240`
 - `MEDIA_BONUS_SECONDS = 10` (extra time wenn Media vorhanden)
 - `JOKERS_PER_RUN = 2`
 
@@ -75,7 +73,7 @@ Run (10 Questions)
    - History: Letzte `HISTORY_RUNS_COUNT=3` Runs, max `MAX_HISTORY_QUESTIONS_PER_RUN=2` pro Run
 
 **Invarianten:**
-- Genau 2 Fragen pro Difficulty
+- Difficulty-Verteilung: 4/4/2 pro Run
 - Keine Frage doppelt in einem Run
 - Keine garantierte Randomness zwischen Spielern (jeder bekommt unterschiedliche Fragen)
 
@@ -92,7 +90,8 @@ if answered_at_ms > time_limit_ms:
 
 **Time Limit Calculation:**
 ```python
-time_limit = TIMER_SECONDS + (MEDIA_BONUS_SECONDS if question has media else 0)
+base = TIMER_SECONDS_ANON if is_anonymous else TIMER_SECONDS_NAMED
+time_limit = base + (MEDIA_BONUS_SECONDS if question has media else 0)
 ```
 
 ### Scoring
@@ -102,34 +101,20 @@ time_limit = TIMER_SECONDS + (MEDIA_BONUS_SECONDS if question has media else 0)
 POINTS_PER_DIFFICULTY = {
     1: 10,
     2: 20,
-    3: 30,
-    4: 40,
-    5: 50
+    3: 30
 }
 ```
 
-**Time Bonus:** (in `services.py:851`)
+**Level-Bonus:** (nur bei 100% korrekt im Level)
 ```python
-if correct and time_taken < time_limit:
-    time_bonus = calculate_time_bonus(difficulty, time_taken, time_limit)
-```
-
-**Token Calculation:** (per Level, 2 Fragen)
-```python
-if both_correct and no_joker_used:
-    tokens = 3
-elif one_correct and no_joker_used:
-    tokens = 2
-elif any_correct and joker_used:
-    tokens = 1
-else:
-    tokens = 0
+if level_perfect:
+    level_bonus = sum(points_in_level)
 ```
 
 **Max Score per Run:**
-- Base: 10+10 + 20+20 + 30+30 + 40+40 + 50+50 = 300 Punkte
-- Time Bonus: Variabel
-- Tokens: Max 15 (5 Levels × 3)
+- Base: 4×10 + 4×20 + 2×30 = 180 Punkte
+- Level-Bonus: 180 Punkte (bei 3 perfekten Levels)
+- Total: 360 Punkte
 
 ### Leaderboard (verbindlich)
 
@@ -184,7 +169,7 @@ else:
 **quiz_questions:**
 - `id` (Text, PK = ULID format)
 - `topic_id` (String, FK)
-- `difficulty` (Integer, 1-5)
+- `difficulty` (Integer, 1-3)
 - `type` (String, default "single_choice")
 - `prompt_key` (Text, plaintext prompt)
 - `explanation_key` (Text, plaintext explanation)
@@ -204,7 +189,6 @@ else:
 - `current_question_index` (Integer, 0-9)
 - `jokers_remaining` (Integer, 0-2)
 - `running_score` (Integer)
-- `tokens_earned` (Integer)
 - `created_at`, `finished_at`
 
 **run_questions Structure (JSONB):**
@@ -215,7 +199,7 @@ else:
     "difficulty": 1,
     "answers_order": [2, 1, 4, 3],
     "joker_disabled": [],
-    "time_limit_seconds": 30,
+   "time_limit_seconds": 40,
     "started_at_ms": 1673012735000,
     "answered_at_ms": null
   }
@@ -238,7 +222,6 @@ else:
 - `player_name` (String, denormalized)
 - `topic_id` (String, FK)
 - `total_score` (Integer)
-- `tokens_count` (Integer)
 - `created_at` (Timestamp)
 - **Index:** `(topic_id, total_score DESC, created_at ASC)`
 
@@ -276,7 +259,7 @@ else:
 
 **POST /api/quiz/run/<run_id>/finish**
 - Request: `{}`
-- Response: `{"total_score": 245, "tokens_count": 12, "rank": 5, "breakdown": [...]}`
+- Response: `{"total_score": 245, "rank": 5, "breakdown": [...]}`
 - Idempotent: Mehrfache Calls geben gleiches Result
 
 ### Admin Endpoints (JWT + ADMIN Role)
@@ -307,8 +290,7 @@ else:
 
 1. Total Score ist **deterministisch** (gleiche Inputs → gleicher Output)
 2. Total Score ist **monoton** (mehr Correct → höher oder gleich)
-3. Time Bonus ist **non-negative** (nie negativ)
-4. Token Count ist **0-15** (5 Levels × 3)
+3. Level-Bonus nur bei 100% im Level (kein Teilbonus)
 
 ### Timer Enforcement
 
@@ -318,7 +300,7 @@ else:
 
 ### Question Selection
 
-1. Jeder Run hat 2 Fragen pro Difficulty (außer Distribution ändert sich)
+1. Jeder Run hat 4/4/2 Fragen pro Difficulty (außer Distribution ändert sich)
 2. Questions randomized (keine predictable order)
 3. Weighted Selection bevorzugt weniger-beantwortete (fairness)
 4. Keine Frage zweimal in selben Run
@@ -339,12 +321,12 @@ else:
 
 | Function | Line | Affected by |
 |----------|------|-------------|
-| `start_or_resume_run()` | ~565 | QUESTIONS_PER_RUN, QUESTIONS_PER_DIFFICULTY |
+| `start_or_resume_run()` | ~565 | QUESTIONS_PER_RUN, QUESTIONS_PER_LEVEL |
 | `_select_questions_weighted()` | ~642 | Question selection algorithm, HISTORY_* |
-| `start_question()` | ~795 | TIMER_SECONDS, MEDIA_BONUS_SECONDS |
-| `submit_answer()` | ~851 | POINTS_PER_DIFFICULTY, timeout logic, token calc |
+| `start_question()` | ~795 | TIMER_SECONDS_NAMED/ANON, MEDIA_BONUS_SECONDS |
+| `submit_answer()` | ~851 | POINTS_PER_DIFFICULTY, timeout logic |
 | `use_joker()` | ~1029 | JOKERS_PER_RUN, elimination logic |
-| `finish_run()` | ~1201 | Final score, token totals, leaderboard insert |
+| `finish_run()` | ~1201 | Final score, leaderboard insert |
 | `get_leaderboard()` | ~1330 | Leaderboard sort order, limit |
 
 ### routes.py
@@ -363,7 +345,7 @@ else:
 |-------|----------|--------------|
 | QUESTION | `renderQuestion()` | Timer display, answer rendering |
 | QUESTION | `handleAnswerSelect()` | `/api/.../answer` contract |
-| LEVEL_UP | `renderLevelUp()` | Bonus animation, token display |
+| LEVEL_UP | `renderLevelUp()` | Bonus animation, score update |
 | FINISH | `renderFinish()` | `/api/.../finish` contract, leaderboard |
 
 ---
@@ -388,21 +370,19 @@ else:
 
 | Change | Impact | Mitigation |
 |--------|--------|------------|
-| QUESTIONS_PER_DIFFICULTY | 🔴 Critical | Separate leaderboards, migration script |
+| QUESTIONS_PER_LEVEL | 🔴 Critical | Separate leaderboards, migration script |
 | POINTS_PER_DIFFICULTY | 🔴 Critical | Version scoring, separate leaderboards |
-| TIMER_SECONDS | 🟠 High | Test timeout logic, update docs |
-| Token rules | 🟠 High | Version mechanics field, changelog |
+| TIMER_SECONDS_NAMED/ANON | 🟠 High | Test timeout logic, update docs |
+| Level-Bonus rules | 🟠 High | Version mechanics field, changelog |
 | New question types | 🟠 High | Schema migration, frontend update |
 | Joker logic | 🟡 Medium | Test fairness, document |
-| Time bonus formula | 🟡 Medium | Version formula, update tests |
 | UI-only changes | 🟢 Low | Visual tests |
 
 ### Required Tests
 
 **Unit:**
 - [ ] Question selection (weighted, history)
-- [ ] Scoring (all difficulties, time bonus)
-- [ ] Token calculation (all combinations)
+- [ ] Scoring (all difficulties, level bonus)
 - [ ] Joker elimination (edge cases)
 - [ ] Timer validation (timeout, early submit)
 
@@ -462,7 +442,7 @@ else:
 
 **States:**
 1. **QUESTION** – Display question, timer, answers
-2. **LEVEL_UP** – Show bonus, animate score (after Q1, Q3, Q5, Q7, Q9)
+2. **LEVEL_UP** – Show bonus, animate score (after Q3, Q7, Q9)
 3. **FINISH** – Final score, leaderboard, rank
 
 **Transitions:**
@@ -489,14 +469,13 @@ else:
 ## Design System
 
 **Material Design 3:**
-- Tokens: `static/css/md3/tokens.css`
 - Quiz Styles: `static/css/games/quiz.css`
 
 **Key Components:**
 - `md3-card` – Topic cards, question card
 - `md3-button` – Answer buttons, action buttons
 - `md3-progress` – Timer progress bar
-- `md3-badge` – Difficulty badges, token count
+- `md3-badge` – Difficulty badges
 
 **Color Scheme:**
 - Correct: `--md-sys-color-tertiary` (green)

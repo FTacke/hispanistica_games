@@ -23,4 +23,5 @@ if __name__ == "__main__":
     # Check FLASK_DEBUG env var explicitly to override
     # If not set, default to False to avoid auto-reload issues
     explicit_debug = os.getenv("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
-    app.run(host="0.0.0.0", port=8000, debug=explicit_debug, use_reloader=False)
+    port = int(os.getenv("PORT") or os.getenv("FLASK_RUN_PORT") or "8000")
+    app.run(host="0.0.0.0", port=port, debug=explicit_debug, use_reloader=False)

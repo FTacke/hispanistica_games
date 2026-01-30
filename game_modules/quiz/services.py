@@ -26,6 +26,7 @@ from passlib.hash import argon2
 from sqlalchemy import select, and_, desc, asc, func, or_
 from sqlalchemy.orm import Session
 
+from .config import get_quiz_mechanics_version
 from .models import (
     QuizPlayer,
     QuizSession,
@@ -71,25 +72,50 @@ def _quiz_debug_log(event: str, **fields: Any) -> None:
 # Configuration
 # ============================================================================
 
-TIMER_SECONDS = 30
+TIMER_SECONDS_NAMED = 40
+TIMER_SECONDS_ANON = 240
 JOKERS_PER_RUN = 2
 MEDIA_BONUS_SECONDS = 10  # Additional time for questions with media
 QUESTIONS_PER_RUN = 10
-DIFFICULTY_LEVELS = 5
-QUESTIONS_PER_DIFFICULTY = 2
+DIFFICULTY_LEVELS_V1 = 5
+DIFFICULTY_LEVELS_V2 = 3
+QUESTIONS_PER_DIFFICULTY_V1 = {d: 2 for d in range(1, DIFFICULTY_LEVELS_V1 + 1)}
+QUESTIONS_PER_DIFFICULTY_V2 = {1: 4, 2: 4, 3: 2}
 LEADERBOARD_LIMIT = 30
 SESSION_EXPIRY_DAYS = 30
 HISTORY_RUNS_COUNT = 3
 MAX_HISTORY_QUESTIONS_PER_RUN = 2
 
 # Scoring points per difficulty level
-POINTS_PER_DIFFICULTY = {
+POINTS_PER_DIFFICULTY_V1 = {
     1: 10,
     2: 20,
     3: 30,
     4: 40,
     5: 50,
 }
+POINTS_PER_DIFFICULTY_V2 = {
+    1: 10,
+    2: 20,
+    3: 30,
+}
+# Default points map (v2 mechanics)
+POINTS_PER_DIFFICULTY = POINTS_PER_DIFFICULTY_V2
+
+
+def _get_mechanics_config(mechanics_version: str) -> tuple[list[int], Dict[int, int], Dict[int, int]]:
+    """Return difficulty order, question counts, and points map for the mechanics version."""
+    if mechanics_version == "v2":
+        return (
+            list(range(1, DIFFICULTY_LEVELS_V2 + 1)),
+            QUESTIONS_PER_DIFFICULTY_V2,
+            POINTS_PER_DIFFICULTY_V2,
+        )
+    return (
+        list(range(1, DIFFICULTY_LEVELS_V1 + 1)),
+        QUESTIONS_PER_DIFFICULTY_V1,
+        POINTS_PER_DIFFICULTY_V1,
+    )
 
 
 # ============================================================================
@@ -143,7 +169,7 @@ class AnswerResult:
     earned_points: int = 0  # Points earned for this answer
     running_score: int = 0  # Total score so far in this run
     level_completed: bool = False  # True if this answer completes a difficulty level
-    level_perfect: bool = False  # True if both questions in level were correct
+    level_perfect: bool = False  # True if all questions in the level were correct
     level_bonus: int = 0  # Bonus points for perfect level (if any)
     difficulty: int = 0  # Difficulty of the answered question
     level_correct_count: int = 0
@@ -523,6 +549,9 @@ def get_run_state(session: Session, run: QuizRun) -> RunState:
         for a in answers
     ]
     
+    player = run.player or session.get(QuizPlayer, run.player_id)
+    is_anonymous = player.is_anonymous if player else False
+
     return RunState(
         run_id=run.id,
         topic_id=run.topic_id,
@@ -534,7 +563,7 @@ def get_run_state(session: Session, run: QuizRun) -> RunState:
         # Server-based timer fields
         question_started_at=run.question_started_at.isoformat() if run.question_started_at else None,
         expires_at=run.expires_at.isoformat() if run.expires_at else None,
-        time_limit_seconds=run.time_limit_seconds or TIMER_SECONDS,
+        time_limit_seconds=run.time_limit_seconds or _get_base_timer_seconds(is_anonymous),
         # Legacy fields
         question_started_at_ms=run.question_started_at_ms,
         deadline_at_ms=run.deadline_at_ms,
@@ -641,11 +670,15 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     """Build array of 10 questions for a new run.
     
     Selection rules:
-    - 5 difficulty levels × 2 questions each
+    - v1: 5 difficulty levels × 2 questions each
+    - v2: 3 difficulty levels with 4/4/2 distribution
     - Prefer questions answered incorrectly in last 3 runs (max 2 per new run)
     - Avoid repeating recently used questions
     - Shuffle answer order per question
     """
+    mechanics_version = get_quiz_mechanics_version()
+    difficulty_order, questions_per_difficulty, _points_map = _get_mechanics_config(mechanics_version)
+
     # Get all active questions for topic grouped by difficulty
     # Visibility controlled by is_active flag only (releases = import history only)
     stmt = select(QuizQuestion).where(
@@ -656,9 +689,9 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     )
     all_questions = list(session.execute(stmt).scalars().all())
     
-    questions_by_difficulty: Dict[int, List[QuizQuestion]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+    questions_by_difficulty: Dict[int, List[QuizQuestion]] = {d: [] for d in difficulty_order}
     for q in all_questions:
-        if 1 <= q.difficulty <= DIFFICULTY_LEVELS:
+        if q.difficulty in questions_by_difficulty:
             questions_by_difficulty[q.difficulty].append(q)
     
     # Get history from last 3 runs
@@ -668,15 +701,16 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
     run_questions = []
     wrong_used = 0
     
-    for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+    for difficulty in difficulty_order:
         available = questions_by_difficulty[difficulty].copy()
         random.shuffle(available)
         
         selected = []
+        required_count = questions_per_difficulty.get(difficulty, 0)
         
-        # Try to select 2 questions, preferring wrong ones
+        # Try to select required_count questions, preferring wrong ones
         for q in available:
-            if len(selected) >= QUESTIONS_PER_DIFFICULTY:
+            if len(selected) >= required_count:
                 break
             
             # Check if this was answered wrong recently (prefer these)
@@ -691,7 +725,7 @@ def _build_run_questions(session: Session, player_id: str, topic_id: str) -> Lis
         
         # If we don't have enough, fill with any available
         for q in available:
-            if len(selected) >= QUESTIONS_PER_DIFFICULTY:
+            if len(selected) >= required_count:
                 break
             if q not in selected:
                 selected.append(q)
@@ -773,16 +807,21 @@ def is_question_expired(run: QuizRun) -> bool:
     return remaining <= 0
 
 
-def calculate_time_limit(question_data: dict) -> int:
-    """Calculate time limit for a question based on media content.
+def _get_base_timer_seconds(is_anonymous: bool) -> int:
+    return TIMER_SECONDS_ANON if is_anonymous else TIMER_SECONDS_NAMED
+
+
+def calculate_time_limit(question_data: dict, is_anonymous: bool) -> int:
+    """Calculate time limit for a question based on user type and media content.
     
     Args:
         question_data: Question dict with optional 'media' field
+        is_anonymous: Whether the player is anonymous
         
     Returns:
-        Time limit in seconds (30 + bonus for media)
+        Time limit in seconds (named=40, anon=240, +10 for media)
     """
-    base_time = TIMER_SECONDS
+    base_time = _get_base_timer_seconds(is_anonymous)
     
     # Check if question has media (images, audio)
     media = question_data.get('media')
@@ -818,9 +857,12 @@ def start_question(session: Session, run: QuizRun, question_index: int, started_
     # Use server time as source of truth
     server_now = datetime.now(timezone.utc)
     
-    # Use provided time limit or default
-    if time_limit_seconds is None:
-        time_limit_seconds = run.time_limit_seconds or TIMER_SECONDS
+    # Always compute server-side time limit (ignore client override)
+    question_config = run.run_questions[question_index]
+    question_id = question_config["question_id"]
+    question = session.get(QuizQuestion, question_id)
+    question_media = question.media if question else None
+    time_limit_seconds = calculate_time_limit({"media": question_media}, run.player.is_anonymous)
     
     run.question_started_at = server_now
     run.expires_at = server_now + timedelta(seconds=time_limit_seconds)
@@ -970,7 +1012,7 @@ def submit_answer(
     # Clear server-based timer fields
     run.question_started_at = None
     run.expires_at = None
-    run.time_limit_seconds = TIMER_SECONDS  # Reset to default
+    run.time_limit_seconds = _get_base_timer_seconds(run.player.is_anonymous)
     
     # Clear legacy fields
     run.question_started_at_ms = None
@@ -1100,7 +1142,7 @@ def calculate_answer_score(
 ) -> int:
     """Calculate score for a single correct answer.
     
-    Per spec section 1.7:
+    Per spec section 1.7 (v1 baseline):
     - difficulty 1: 10 points
     - difficulty 2: 20 points
     - difficulty 3: 30 points
@@ -1116,8 +1158,11 @@ def calculate_answer_score(
     """
     if not is_correct:
         return 0
-    
-    return POINTS_PER_DIFFICULTY.get(difficulty, 10)
+
+    mechanics_version = get_quiz_mechanics_version()
+    _difficulty_order, _questions_per_difficulty, points_map = _get_mechanics_config(mechanics_version)
+
+    return points_map.get(difficulty, 0)
 
 
 def calculate_running_score(
@@ -1141,7 +1186,7 @@ def calculate_running_score(
         Tuple of (running_score, level_completed, level_perfect, level_bonus, level_correct_count, level_questions_in_level)
         - running_score: Total points so far (same formula as highscore)
         - level_completed: True if this answer completes a difficulty level
-        - level_perfect: True if both questions in the completed level were correct
+        - level_perfect: True if all questions in the completed level were correct
         - level_bonus: Bonus points earned for perfect level (0 if not perfect)
         - level_correct_count: Number of correct answers in this level
         - level_questions_in_level: Total questions in this level
@@ -1150,8 +1195,11 @@ def calculate_running_score(
     stmt = select(QuizRunAnswer).where(QuizRunAnswer.run_id == run.id).order_by(QuizRunAnswer.question_index)
     answers = list(session.execute(stmt).scalars().all())
     
+    mechanics_version = get_quiz_mechanics_version()
+    difficulty_order, questions_per_difficulty, points_map = _get_mechanics_config(mechanics_version)
+
     # Build results by difficulty
-    difficulty_results: Dict[int, List[bool]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+    difficulty_results: Dict[int, List[bool]] = {d: [] for d in difficulty_order}
     
     for i, q_config in enumerate(run.run_questions):
         if i > current_question_index:
@@ -1160,6 +1208,8 @@ def calculate_running_score(
         # Find answer for this question
         answer = next((a for a in answers if a.question_index == i), None)
         is_correct = answer and answer.result == "correct"
+        if difficulty not in difficulty_results:
+            difficulty_results[difficulty] = []
         difficulty_results[difficulty].append(is_correct)
     
     # Calculate running score using exact same logic as finish_run
@@ -1172,27 +1222,28 @@ def calculate_running_score(
     level_perfect = False
     level_bonus = 0
     
-    for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+    for difficulty in difficulty_order:
         results = difficulty_results[difficulty]
         correct_count = sum(1 for r in results if r)
-        points = correct_count * POINTS_PER_DIFFICULTY[difficulty]
+        points = correct_count * points_map.get(difficulty, 0)
+        required_count = questions_per_difficulty.get(difficulty, 0)
         
-        # Token bonus: both questions correct (same as highscore calculation)
+        # Level bonus: perfect level (same as highscore calculation)
         bonus = 0
-        is_perfect = len(results) == 2 and all(results)
+        is_perfect = required_count > 0 and len(results) == required_count and all(results)
         if is_perfect:
-            bonus = 2 * POINTS_PER_DIFFICULTY[difficulty]
+            bonus = required_count * points_map.get(difficulty, 0)
             total_level_bonus += bonus
         
         running_score += points + bonus
         
         # Check if current answer completed this level
-        if difficulty == current_difficulty and len(results) == 2:
+        if difficulty == current_difficulty and required_count > 0 and len(results) == required_count:
             level_completed = True
             level_perfect = is_perfect
             level_bonus = bonus if is_perfect else 0
             level_correct_count = correct_count
-            level_questions_in_level = len(results)
+            level_questions_in_level = required_count
             
     # Return extended stats for frontend
     return (running_score, level_completed, level_perfect, level_bonus, level_correct_count if level_completed else 0, level_questions_in_level if level_completed else 0)
@@ -1204,6 +1255,9 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
     Returns:
         ScoreResult with total score and token count
     """
+    mechanics_version = get_quiz_mechanics_version()
+    difficulty_order, questions_per_difficulty, points_map = _get_mechanics_config(mechanics_version)
+
     # Idempotency check: if already finished, return existing score
     if run.status == "finished":
         # Find existing score
@@ -1216,33 +1270,33 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
             stmt = select(QuizRunAnswer).where(QuizRunAnswer.run_id == run.id).order_by(QuizRunAnswer.question_index)
             answers = list(session.execute(stmt).scalars().all())
             
-            difficulty_results: Dict[int, List[bool]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+            difficulty_results: Dict[int, List[bool]] = {d: [] for d in difficulty_order}
             for i, q_config in enumerate(run.run_questions):
                 difficulty = q_config["difficulty"]
                 answer = next((a for a in answers if a.question_index == i), None)
                 is_correct = answer and answer.result == "correct"
+                if difficulty not in difficulty_results:
+                    difficulty_results[difficulty] = []
                 difficulty_results[difficulty].append(is_correct)
                 
             breakdown = []
-            for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+            for difficulty in difficulty_order:
                 results = difficulty_results[difficulty]
                 correct_count = sum(1 for r in results if r)
-                points = correct_count * POINTS_PER_DIFFICULTY[difficulty]
-                earned_token = len(results) == 2 and all(results)
-                token_bonus = 2 * POINTS_PER_DIFFICULTY[difficulty] if earned_token else 0
+                points = correct_count * points_map.get(difficulty, 0)
                 
                 breakdown.append({
                     "difficulty": difficulty,
                     "correct": correct_count,
                     "total": len(results),
                     "points": points,
-                    "token_earned": earned_token,
-                    "token_bonus": token_bonus,
+                    "token_earned": False,
+                    "token_bonus": 0,
                 })
                 
             return ScoreResult(
                 total_score=existing_score.total_score,
-                tokens_count=existing_score.tokens_count,
+                tokens_count=0,
                 breakdown=breakdown,
             )
 
@@ -1251,13 +1305,15 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
     answers = list(session.execute(stmt).scalars().all())
     
     # Calculate score per difficulty
-    difficulty_results: Dict[int, List[bool]] = {d: [] for d in range(1, DIFFICULTY_LEVELS + 1)}
+    difficulty_results: Dict[int, List[bool]] = {d: [] for d in difficulty_order}
     
     for i, q_config in enumerate(run.run_questions):
         difficulty = q_config["difficulty"]
         # Find answer for this question
         answer = next((a for a in answers if a.question_index == i), None)
         is_correct = answer and answer.result == "correct"
+        if difficulty not in difficulty_results:
+            difficulty_results[difficulty] = []
         difficulty_results[difficulty].append(is_correct)
     
     # Calculate total score and tokens
@@ -1265,27 +1321,27 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
     tokens_count = 0
     breakdown = []
     
-    for difficulty in range(1, DIFFICULTY_LEVELS + 1):
+    for difficulty in difficulty_order:
         results = difficulty_results[difficulty]
         correct_count = sum(1 for r in results if r)
-        points = correct_count * POINTS_PER_DIFFICULTY[difficulty]
+        points = correct_count * points_map.get(difficulty, 0)
+        required_count = questions_per_difficulty.get(difficulty, 0)
+
+        # Level bonus: perfect level (tokens are soft-removed)
+        level_bonus = 0
+        is_perfect = required_count > 0 and len(results) == required_count and all(results)
+        if is_perfect:
+            level_bonus = required_count * points_map.get(difficulty, 0)
         
-        # Token bonus: both questions correct
-        token_bonus = 0
-        earned_token = len(results) == 2 and all(results)
-        if earned_token:
-            tokens_count += 1
-            token_bonus = 2 * POINTS_PER_DIFFICULTY[difficulty]
-        
-        total_score += points + token_bonus
+        total_score += points + level_bonus
         
         breakdown.append({
             "difficulty": difficulty,
             "correct": correct_count,
             "total": len(results),
             "points": points,
-            "token_earned": earned_token,
-            "token_bonus": token_bonus,
+            "token_earned": False,
+            "token_bonus": 0,
         })
     
     # Update run
@@ -1302,7 +1358,7 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
         player_name=player.name,
         topic_id=run.topic_id,
         total_score=total_score,
-        tokens_count=tokens_count,
+        tokens_count=0,
         created_at=datetime.now(timezone.utc),
     )
     session.add(score)
@@ -1358,7 +1414,7 @@ def get_leaderboard(session: Session, topic_id: str, limit: int = 30) -> List[Di
             "rank": i + 1,
             "player_name": s.player_name,
             "total_score": s.total_score,
-            "tokens_count": s.tokens_count,
+            "tokens_count": 0,
             "created_at": s.created_at.isoformat() if s.created_at else None,
         }
         for i, s in enumerate(scores)

@@ -78,12 +78,12 @@ def list_releases() -> Response:
         200: {"items": [{"release_id": str, "status": str, ...}]}
     """
     from game_modules.quiz.import_service import QuizImportService
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
         service = QuizImportService(project_root=get_project_root())
         
-        with get_session() as session:
+        with get_quiz_session() as session:
             releases = service.list_releases(session)
         
         return jsonify({"items": releases}), 200
@@ -103,10 +103,10 @@ def get_release(release_id: str) -> Response:
         404: {"error": "not_found"}
     """
     from game_modules.quiz.release_model import QuizContentRelease
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
-        with get_session() as session:
+        with get_quiz_session() as session:
             release = session.query(QuizContentRelease).filter(
                 QuizContentRelease.release_id == release_id
             ).first()
@@ -145,7 +145,7 @@ def import_release(release_id: str) -> Response:
     """
     from game_modules.quiz.import_service import QuizImportService
     from game_modules.quiz.release_model import QuizContentRelease
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
         project_root = get_project_root()
@@ -164,7 +164,7 @@ def import_release(release_id: str) -> Response:
         
         service = QuizImportService(project_root=project_root)
         
-        with get_session() as session:
+        with get_quiz_session() as session:
             result = service.import_release(
                 session=session,
                 units_path=units_path,
@@ -186,9 +186,9 @@ def import_release(release_id: str) -> Response:
     except Exception as e:
         current_app.logger.error(f"Import failed: {e}", exc_info=True)
         # Rollback session to prevent cascading errors
-        from src.app.extensions.sqlalchemy_ext import get_session
+        from src.app.extensions.sqlalchemy_ext import get_quiz_session
         try:
-            with get_session() as session:
+            with get_quiz_session() as session:
                 session.rollback()
         except Exception:
             pass  # Best effort rollback
@@ -212,12 +212,12 @@ def publish_release(release_id: str) -> Response:
         400: {"ok": false, "errors": [...]}
     """
     from game_modules.quiz.import_service import QuizImportService
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
         service = QuizImportService(project_root=get_project_root())
         
-        with get_session() as session:
+        with get_quiz_session() as session:
             result = service.publish_release(session, release_id)
         
         return jsonify({
@@ -246,12 +246,12 @@ def unpublish_release(release_id: str) -> Response:
         400: {"ok": false, "errors": [...]}
     """
     from game_modules.quiz.import_service import QuizImportService
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
         service = QuizImportService(project_root=get_project_root())
         
-        with get_session() as session:
+        with get_quiz_session() as session:
             result = service.unpublish_release(session, release_id)
         
         return jsonify({
@@ -284,7 +284,7 @@ def list_units() -> Response:
         200: {"items": [{"slug": str, "title": str, ...}]}
     """
     from game_modules.quiz.models import QuizTopic
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     from sqlalchemy import or_, func
     
     include_inactive = request.args.get("include_inactive") == "1"
@@ -292,7 +292,7 @@ def list_units() -> Response:
     release_filter = request.args.get("release_id", "").strip() or None
     
     try:
-        with get_session() as session:
+        with get_quiz_session() as session:
             query = session.query(QuizTopic)
             
             if not include_inactive:
@@ -343,10 +343,10 @@ def get_unit(slug: str) -> Response:
         404: {"error": "not_found"}
     """
     from game_modules.quiz.models import QuizTopic
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
-        with get_session() as session:
+        with get_quiz_session() as session:
             unit = session.query(QuizTopic).filter(QuizTopic.id == slug).first()
             
             if not unit:
@@ -381,7 +381,7 @@ def bulk_update_units() -> Response:
         400: {"error": "invalid_request"}
     """
     from game_modules.quiz.models import QuizTopic
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     data = request.get_json() or {}
     updates = data.get("updates", [])
@@ -395,7 +395,7 @@ def bulk_update_units() -> Response:
     try:
         updated_count = 0
         
-        with get_session() as session:
+        with get_quiz_session() as session:
             for update in updates:
                 slug = update.get("slug")
                 if not slug:
@@ -436,10 +436,10 @@ def delete_unit(slug: str) -> Response:
         404: {"error": "not_found"}
     """
     from game_modules.quiz.models import QuizTopic
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
-        with get_session() as session:
+        with get_quiz_session() as session:
             unit = session.query(QuizTopic).filter(QuizTopic.id == slug).first()
             
             if not unit:
@@ -464,11 +464,12 @@ def delete_unit(slug: str) -> Response:
 def upload_unit() -> Response:
     """Upload a quiz unit (1 JSON + 0-n media files).
     
-    Creates a new release directory and stores the files.
+    Stores files in a release directory (new or existing).
     
     Request: multipart/form-data
         - unit_json: File (required)
         - media_files[]: Files (optional, multiple)
+        - release_id: str (optional; if provided, append to existing release)
     
     Returns:
         200: {"ok": true, "release_id": str, "slug": str, ...}
@@ -476,6 +477,7 @@ def upload_unit() -> Response:
     """
     import re
     from werkzeug.utils import secure_filename
+    from game_modules.quiz.validation import validate_quiz_unit, ValidationError
     
     # Check for JSON file
     if "unit_json" not in request.files:
@@ -506,14 +508,18 @@ def upload_unit() -> Response:
             "message": "JSON file must be UTF-8 encoded"
         }), 400
     
-    # Validate slug
-    slug = unit_data.get("slug", "").strip()
-    if not slug:
+    # Validate full unit schema (v1/v2)
+    try:
+        validated_unit = validate_quiz_unit(unit_data, json_file.filename or "upload")
+    except ValidationError as e:
         return jsonify({
-            "error": "missing_slug",
-            "message": "Missing required field: slug"
+            "error": "validation_error",
+            "message": str(e),
+            "errors": e.errors
         }), 400
     
+    # Validate slug (redundant safety check for filesystem)
+    slug = validated_unit.slug.strip()
     if not re.match(r"^[a-z0-9_]+$", slug):
         return jsonify({
             "error": "invalid_slug",
@@ -534,10 +540,12 @@ def upload_unit() -> Response:
                 if media.get("type") == "audio" and media.get("seed_src"):
                     detected_refs.append(media["seed_src"])
     
-    # Generate release ID
-    release_id = generate_release_id()
+    # Resolve release ID (optional: upload into existing release)
+    release_id = (request.form.get("release_id") or "").strip()
+    if not release_id:
+        release_id = generate_release_id()
     
-    # Create release directory
+    # Create release directory (if missing)
     releases_path = get_media_releases_path()
     release_path = releases_path / release_id
     units_path = release_path / "units"
@@ -552,7 +560,7 @@ def upload_unit() -> Response:
             "message": f"Failed to create release directory: {e}"
         }), 500
     
-    # Save JSON file
+    # Save JSON file (overwrite or add without touching other units)
     json_filename = f"{slug}.json"
     json_filepath = units_path / json_filename
     try:
@@ -586,24 +594,57 @@ def upload_unit() -> Response:
         if ref_filename not in uploaded_files:
             missing_files.append(ref_filename)
     
-    # Create release record in DB
+    # Create or update release record in DB
     from game_modules.quiz.release_model import QuizContentRelease
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
+    
+    # Recompute counts based on filesystem (units/audio) to avoid destructive updates
+    try:
+        unit_files = list(units_path.glob("*.json"))
+        units_count = len(unit_files)
+        questions_count = 0
+        for unit_file in unit_files:
+            try:
+                with open(unit_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                questions_count += len(data.get("questions", []))
+            except Exception:
+                # Best effort: ignore malformed files here; validation happens on import
+                pass
+        audio_count = len(list(audio_path.glob("*")))
+    except Exception:
+        units_count = 1
+        questions_count = len(questions)
+        audio_count = len(uploaded_files)
     
     try:
-        with get_session() as session:
-            release = QuizContentRelease(
-                release_id=release_id,
-                status="draft",
-                units_path=str(units_path),
-                audio_path=str(audio_path),
-                units_count=1,
-                questions_count=len(questions),
-                audio_count=len(uploaded_files),
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc)
-            )
-            session.add(release)
+        with get_quiz_session() as session:
+            release = session.query(QuizContentRelease).filter(
+                QuizContentRelease.release_id == release_id
+            ).first()
+            
+            if not release:
+                release = QuizContentRelease(
+                    release_id=release_id,
+                    status="draft",
+                    units_path=str(units_path),
+                    audio_path=str(audio_path),
+                    units_count=units_count,
+                    questions_count=questions_count,
+                    audio_count=audio_count,
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc)
+                )
+                session.add(release)
+            else:
+                release.status = "draft"
+                release.units_path = str(units_path)
+                release.audio_path = str(audio_path)
+                release.units_count = units_count
+                release.questions_count = questions_count
+                release.audio_count = audio_count
+                release.updated_at = datetime.now(timezone.utc)
+            
             session.commit()
     except Exception as e:
         current_app.logger.error(f"Failed to create release record: {e}")
@@ -620,7 +661,8 @@ def upload_unit() -> Response:
         "questions_count": len(questions),
         "detected_refs": detected_refs,
         "uploaded_files": uploaded_files,
-        "missing_files": missing_files
+        "missing_files": missing_files,
+        "schema_version": validated_unit.schema_version
     }), 200
 
 

@@ -293,7 +293,7 @@ class QuizImportService:
                     audio_refs = self._collect_audio_refs(unit)
                     audio_refs_map[unit.slug] = audio_refs
                     
-                    logger.info(f"✓ {json_file.name}: {len(unit.questions)} questions, {len(audio_refs)} audio refs")
+                    logger.info(f"[OK] {json_file.name}: {len(unit.questions)} questions, {len(audio_refs)} audio refs")
                     
                 except (ValidationError, json.JSONDecodeError) as e:
                     msg = f"Validation failed for {json_file.name}: {e}"
@@ -335,7 +335,7 @@ class QuizImportService:
                 return result
             
             result.audio_files_processed = len(audio_hashes)
-            logger.info(f"✓ Audio files: {result.audio_files_processed} unique files")
+            logger.info(f"[OK] Audio files: {result.audio_files_processed} unique files")
             
             if dry_run:
                 logger.info("DRY-RUN: Skipping database writes")
@@ -467,7 +467,7 @@ class QuizImportService:
                     
                     result.units_imported += 1
                     result.questions_imported += len(questions_in_unit)
-                    logger.info(f"✓ Imported {unit.slug}: {len(questions_in_unit)} questions")
+                    logger.info(f"[OK] Imported {unit.slug}: {len(questions_in_unit)} questions")
                     
                 except Exception as e:
                     msg = f"Failed to import {unit.slug}: {e}"
@@ -486,7 +486,7 @@ class QuizImportService:
             # Commit transaction
             session.commit()
             
-            logger.info(f"✓ Import completed successfully")
+            logger.info("[OK] Import completed successfully")
             logger.info(f"  Units: {result.units_imported}")
             logger.info(f"  Questions: {result.questions_imported}")
             logger.info(f"  Audio files: {result.audio_files_processed}")
@@ -570,7 +570,7 @@ class QuizImportService:
             
             session.commit()
             
-            logger.info(f"✓ Published release {release_id} ({units} units)")
+            logger.info(f"[OK] Published release {release_id} ({units} units)")
             
             return result
             
@@ -635,7 +635,7 @@ class QuizImportService:
             
             session.commit()
             
-            logger.info(f"✓ Unpublished release {release_id}")
+            logger.info(f"[OK] Unpublished release {release_id}")
             
             return result
             

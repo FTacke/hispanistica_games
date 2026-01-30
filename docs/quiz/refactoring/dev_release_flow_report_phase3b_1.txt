@@ -1,0 +1,74 @@
+﻿dev_release_flow_v2.ps1
+Timestamp: 2026-01-30 12:02:35
+Release ID: release_20260130_120235_dev
+Project Root: C:\dev\hispanistica_games
+ENV=dev
+QUIZ_MECHANICS_VERSION=v2
+QUIZ_DEV_SEED_MODE=none
+QUIZ_DB_HOST=127.0.0.1
+QUIZ_DB_PORT=54321
+QUIZ_DB_USER=hispanistica_auth
+QUIZ_DB_NAME=hispanistica_auth
+QUIZ_DATABASE_URL set: True
+FLASK_SECRET_KEY set: True
+AUTH_DATABASE_URL set: True
+
+Copied unit: content/quiz/topics/variation_aussprache_v2.json -> media/releases/release_20260130_120235_dev/units/variation_aussprache.json
+media/current link mode: junction
+
+Command: python -c 'check auth DB dialect'
+Auth DB dialect: postgresql
+Command: python -c 'check quiz DB dialect'
+Quiz DB dialect: postgresql
+Command: python scripts/init_quiz_db.py
+Initializing Quiz database (PostgreSQL)...
+URL: 127.0.0.1:54321/hispanistica_auth
+[OK] Quiz database tables initialized.
+
+[OK] Quiz module initialization complete.
+
+Command: python manage.py import-content --units-path media/current/units --audio-path media/current/audio --release release_20260130_120235_dev
+[OK] Import successful
+  Units: 1
+  Questions: 18
+  Audio files: 0
+
+Command: python manage.py publish-release --release release_20260130_120235_dev
+[OK] Release 'release_20260130_120235_dev' published
+  Units affected: 1
+
+Patched unit copied to media/current/units/variation_aussprache.json
+Command: python manage.py import-content --units-path media/current/units --audio-path media/current/audio --release release_20260130_120235_dev
+[OK] Import successful
+  Units: 1
+  Questions: 18
+  Audio files: 0
+
+Import log search: C:\dev\hispanistica_games\data\import_logs\*import_release_20260130_120235_dev*.log
+Import log (latest): 20260130_120240_import_release_20260130_120235_dev.log
+Log evidence: [2026-01-30 12:02:40] INFO: Updated release record: release_20260130_120235_dev
+
+Command: python manage.py publish-release --release release_20260130_120235_dev
+[OK] Release 'release_20260130_120235_dev' published
+  Units affected: 1
+
+Command: python manage.py quiz-db-report
+Quiz DB Report (read-only)
+DB dialect: postgresql
+==============================
+Counts:
+  quiz_topics: 1
+  quiz_questions: 18
+  quiz_content_releases: 9
+  quiz_runs: 14
+  quiz_scores: 5
+
+Published Releases:
+  - release_20260130_120235_dev | published_at=2026-01-30T11:02:42.000012+00:00 | imported_at=2026-01-30T11:02:40.810611+00:00 | units=1 | questions=18
+
+Current release id: release_20260130_120235_dev
+
+Command: python scripts/verify_patch.py --question-id variation_aussprache_q_01KDT5WVTVXYEBZMKK9NWF7SNK
+question_id=variation_aussprache_q_01KDT5WVTVXYEBZMKK9NWF7SNK
+explanation=Beim **seseo** werden die Laute /s/ und /θ/ gleich ausgesprochen, etwa casa und caza beide mit [s]; in Varietäten mit *distinción* bleibt der Unterschied erhalten.
+

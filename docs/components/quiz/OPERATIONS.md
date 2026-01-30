@@ -32,10 +32,17 @@ source .venv/bin/activate  # Linux/Mac
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Initialize database
+# 3. Start DEV Postgres (auth + quiz)
+docker compose -f docker-compose.dev-postgres.yml up -d
+
+# Default DB URLs
+# Auth: postgresql+psycopg://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth
+# Quiz: postgresql+psycopg://hispanistica_quiz:hispanistica_quiz@localhost:54322/hispanistica_quiz
+
+# 4. Initialize database
 python scripts/init_quiz_db.py
 
-# 4. Start dev server
+# 5. Start dev server
 flask run
 ```
 
