@@ -26,9 +26,8 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 | **Unit** | Eine JSON-Datei mit einem Quiz-Topic (Titel + Fragen) |
 | **Topic** | Ein thematisches Quiz (z.B. "Aussprache") |
 | **Question** | Eine Frage mit 2-6 Antwortoptionen (genau 1 korrekt) |
-| **Run** | Ein Durchlauf: 10 Fragen (5 Levels × 2 Fragen) |
-| **Level** | Ein Schwierigkeitsgrad (1-5), je 2 Fragen |
-| **Token** | Erfolgsmetrik (0-3 pro Level, max 15 pro Run) |
+| **Run** | Ein Durchlauf: 10 Fragen (3 Levels: 4/4/2) |
+| **Level** | Ein Schwierigkeitsgrad (1-3) mit fester Fragenanzahl |
 | **Joker** | 50:50 Hilfe (eliminiert 2 falsche Antworten, 2× pro Run) |
 | **Release** | Versioniertes Content-Paket (Production) |
 | **Leaderboard** | Top 30 Scores pro Topic |
@@ -44,6 +43,7 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 | **[README.md](README.md)** | Überblick (diese Datei) |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | System-Design, Mechanik-Invarianten, Breakpoints |
 | **[CONTENT.md](CONTENT.md)** | JSON-Schema, Content-Authoring, Validierung |
+| **[CONTENT_MARKDOWN.md](CONTENT_MARKDOWN.md)** | Markdown-Regeln für Content (bold/italic) |
 | **[OPERATIONS.md](OPERATIONS.md)** | DEV/Prod Workflows, Import/Publish, Rollback |
 
 **Quick-Start:**
@@ -51,6 +51,7 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 - Production-Deploy → [OPERATIONS.md#production-workflow](OPERATIONS.md#production-workflow)
 - Mechanik ändern → [ARCHITECTURE.md#mechanic-change-safety](ARCHITECTURE.md#mechanic-change-safety)
 - JSON-Schema → [CONTENT.md](CONTENT.md)
+- Markdown-Regeln → [CONTENT_MARKDOWN.md](CONTENT_MARKDOWN.md)
 
 ---
 
@@ -61,9 +62,9 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 1. **Player Auth** – Pseudonym + 4-Digit-PIN (separate from webapp)
 2. **Run Management** – Start/Resume/Restart/Finish
 3. **Question Selection** – Weighted randomization (history-based)
-4. **Timer** – 30s per question (server-enforced)
+4. **Timer** – 40s (named) / 240s (anonym), server-enforced
 5. **Joker** – 50:50 (2× per run)
-6. **Scoring** – Difficulty-based points + tokens
+6. **Scoring** – Difficulty-basierte Punkte + Level-Bonus
 7. **Leaderboard** – Top 30 per topic
 
 ### Komponenten
@@ -89,14 +90,19 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 
 ## Game-Regeln (Kurzfassung)
 
-**Run:** 10 Fragen (5 Levels × 2)  
-**Timer:** 30 Sekunden pro Frage  
+**Level-Mechanik:**
+- Level 1: 4 Fragen (difficulty 1)
+- Level 2: 4 Fragen (difficulty 2)
+- Level 3: 2 Fragen (difficulty 3)
+
+**Run:** 10 Fragen (3 Levels: 4/4/2)  
+**Timer:** 40s (named) / 240s (anonym) pro Frage  
 **Joker:** 2× pro Run (50:50)
 
 **Scoring:**
-- Base Points: `difficulty × 10` (10/20/30/40/50)
-- Time Bonus: Schneller = mehr Punkte
-- Tokens: 0-3 pro Level (beide korrekt = 3, eine korrekt = 2, Joker genutzt = max 1)
+- Punkte pro Frage: `difficulty × 10` (10/20/30)
+- Level-Bonus: Summe der Punkte des Levels, nur bei 100% korrekt
+- Keine Zusatzmetriken, kein Zeitbonus
 
 **Leaderboard:** 
 - Sort: `total_score DESC`, dann `created_at ASC` (ältester Eintrag gewinnt Ties)
@@ -104,6 +110,9 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 - Filter: Keine anonymen Spieler
 
 **Details:** [ARCHITECTURE.md#game-mechanics](ARCHITECTURE.md#game-mechanics)
+
+**Markdown:** Hervorhebungen mit **bold** und *italic* (keine Links/HTML).  
+**Details:** [CONTENT_MARKDOWN.md](CONTENT_MARKDOWN.md)
 
 ---
 
@@ -171,12 +180,12 @@ rsync <local> server:/media/releases/<release_id>/
 | Table | Purpose |
 |-------|---------|
 | `quiz_players` | Player accounts (UUID, name, PIN hash) |
-| `quiz_sessions` | Session tokens (30-day expiry) |
+| `quiz_sessions` | Session IDs (30-day expiry) |
 | `quiz_topics` | Topic definitions (slug, title, active) |
 | `quiz_questions` | Question bank (ULID IDs, JSONB answers) |
 | `quiz_runs` | Run state (JSONB run_questions) |
 | `quiz_run_answers` | Answer records |
-| `quiz_scores` | Leaderboard entries (topic_id, score, tokens) |
+| `quiz_scores` | Leaderboard entries (topic_id, total_score) |
 | `quiz_content_releases` | Release tracking (draft/published) |
 
 **Details:** [ARCHITECTURE.md#database-schema](ARCHITECTURE.md#database-schema)
@@ -186,7 +195,7 @@ rsync <local> server:/media/releases/<release_id>/
 ## Wichtige Invarianten
 
 **Niemals brechen:**
-1. Run hat exakt 10 Fragen (5 Levels × 2)
+1. Run hat exakt 10 Fragen (3 Levels: 4/4/2)
 2. Genau 1 korrekte Antwort pro Frage
 3. Timer server-seitig validiert (Client-Timer nur UI)
 4. Leaderboard-Sortierung: score DESC, created_at ASC

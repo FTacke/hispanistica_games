@@ -34,7 +34,7 @@ def main() -> int:
         return 1
 
     from src.app import create_app
-    from src.app.extensions.sqlalchemy_ext import get_session
+    from src.app.extensions.sqlalchemy_ext import get_quiz_session
     from game_modules.quiz.seed import (
         acquire_seed_lock,
         release_seed_lock,
@@ -45,7 +45,7 @@ def main() -> int:
     app = create_app()
 
     with app.app_context():
-        with get_session() as session:
+        with get_quiz_session() as session:
             if not acquire_seed_lock(session):
                 logger.warning("Seed already in progress (locked), aborting")
                 return 1

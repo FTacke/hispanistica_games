@@ -10,14 +10,25 @@
 
 ### 1. Setup
 
-**Start Services:**
+**Start Services (two DBs: auth + quiz):**
 ```powershell
 docker compose -f docker-compose.dev-postgres.yml up -d
 ```
 
+**Start App (Postgres default):**
+```powershell
+.\scripts\dev-start.ps1
+```
+
+**DEV Admin (DEV only):** `admin_dev` / `0000`
+
+**Default DB URLs:**
+- Auth: `postgresql+psycopg://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth`
+- Quiz: `postgresql+psycopg://hispanistica_quiz:hispanistica_quiz@localhost:54322/hispanistica_quiz`
+
 **Verify DB:**
 ```powershell
-docker ps  # Check quiz-db-1 running
+docker ps  # Check both hispanistica_auth_db + hispanistica_quiz_db
 ```
 
 **Run Migrations:**
@@ -111,6 +122,12 @@ media/releases/release_20260106_1430_a7x2/
     └── ...
 ```
 
+**Current Symlink (Prod-like):**
+```
+media/current -> media/releases/<release_id>/
+```
+The import command expects `media/current/units` and `media/current/audio`.
+
 **Create on Server:**
 ```bash
 cd /path/to/hispanistica_games
@@ -144,7 +161,7 @@ ls -lh audio/  # Should show audio files
 **Admin Dashboard:** https://games.hispanistica.org/quiz-admin
 
 **Login:**
-- Use Admin JWT Token (set in .env: `QUIZ_ADMIN_JWT_TOKEN`)
+- Use Admin JWT (see `.env`)
 - Or login as user with ADMIN role
 
 **Import Steps:**
@@ -155,7 +172,7 @@ ls -lh audio/  # Should show audio files
 **API Call (Alternative):**
 ```bash
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_20260106_1430_a7x2/import \
-  -H "Authorization: Bearer <admin-jwt-token>" \
+  -H "Authorization: Bearer <admin-jwt>" \
   -H "Content-Type: application/json"
 ```
 
@@ -167,14 +184,15 @@ curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_2026
   "ok": true,
   "units_imported": 7,
   "questions_imported": 142,
-  "audio_files_copied": 23
+  "audio_files_processed": 23
 }
 ```
 
 **State After Import:**
 - `quiz_content_releases.status = 'draft'`
-- Topics imported but **not visible** to players (`is_active=false`)
-- Media copied to `media/quiz/<release_id>/`
+- Topics/questions are **upserted** by `topic.id` and `question.id` (no delete step).
+- `is_active` is preserved for existing topics; new topics are created with `is_active=true`.
+- Audio files are validated for existence; no automatic copy step in the import service.
 
 ### 4. Publish Release
 
@@ -186,7 +204,7 @@ curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_2026
 **API Call:**
 ```bash
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_20260106_1430_a7x2/publish \
-  -H "Authorization: Bearer <admin-jwt-token>" \
+  -H "Authorization: Bearer <admin-jwt>" \
   -H "Content-Type: application/json"
 ```
 
@@ -204,8 +222,28 @@ curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_2026
 **State After Publish:**
 - `quiz_content_releases.status = 'published'`
 - Previous release: `status = 'unpublished'`
-- Topics now visible: `is_active=true`
+- Publish is a workflow marker; visibility is controlled by `is_active` on topics/questions.
 - Only **1 published release** at a time
+
+### 4.5 Dashboard Upload (v2)
+
+**Endpoint:** `POST /quiz-admin/api/upload-unit`
+
+**Request:** `multipart/form-data`
+- `unit_json` (required)
+- `media_files[]` (optional)
+- `release_id` (optional; append to existing release, otherwise new release is created)
+
+**Behavior:**
+- Validates `quiz_unit_v1`/`quiz_unit_v2` schema (difficulty 1–3, 4/4/2 minimum per difficulty).
+- Accepts `_v2.json` filenames (validation uses content, not filename).
+- Audio is optional; missing files are reported but do not crash upload.
+- Upload appends to a release directory without deleting other units.
+
+**Import Semantics (Verified in Code):**
+- Import uses UPSERT for topics (`quiz_topics.id`) and questions (`quiz_questions.id`).
+- No delete/rebuild step is present; missing units are not removed.
+- Re-importing a release updates `release_id` for touched topics/questions only.
 
 ### 5. Verify Deployment
 
@@ -244,13 +282,13 @@ curl https://games.hispanistica.org/api/quiz/topics | jq
 **Step 1: Unpublish Current**
 ```bash
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_20260106_1430_a7x2/unpublish \
-  -H "Authorization: Bearer <admin-jwt-token>"
+  -H "Authorization: Bearer <admin-jwt>"
 ```
 
 **Step 2: Republish Previous**
 ```bash
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_20260101_1200_x3y4/publish \
-  -H "Authorization: Bearer <admin-jwt-token>"
+  -H "Authorization: Bearer <admin-jwt>"
 ```
 
 **Result:** Previous release is now active.
@@ -322,13 +360,13 @@ nano aussprache.json  # Fix typo
 **Step 2: Re-import**
 ```bash
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_20260106_1430_a7x2/import \
-  -H "Authorization: Bearer <admin-jwt-token>"
+  -H "Authorization: Bearer <admin-jwt>"
 ```
 
 **Step 3: Publish (if unpublished)**
 ```bash
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/release_20260106_1430_a7x2/publish \
-  -H "Authorization: Bearer <admin-jwt-token>"
+  -H "Authorization: Bearer <admin-jwt>"
 ```
 
 **Note:** Re-import is **idempotent** (safe to run multiple times).
@@ -397,7 +435,7 @@ SELECT id, title_key, is_active, release_id FROM quiz_topics;
 ```bash
 # Republish
 curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/<release_id>/publish \
-  -H "Authorization: Bearer <admin-jwt-token>"
+  -H "Authorization: Bearer <admin-jwt>"
 ```
 
 ### Leaderboard Not Updating
@@ -415,7 +453,7 @@ curl -X POST https://games.hispanistica.org/quiz-admin/api/releases/<release_id>
 SELECT id, name, is_anonymous FROM quiz_players WHERE name = 'TestPlayer';
 
 -- Check run
-SELECT id, player_id, status, running_score, tokens_earned
+SELECT id, player_id, status, running_score
 FROM quiz_runs
 WHERE player_id = '<player_uuid>'
 ORDER BY created_at DESC
@@ -495,6 +533,8 @@ QUIZ_DB_PORT=5432
 QUIZ_DB_USER=quiz_user
 QUIZ_DB_PASSWORD=quiz_pass
 QUIZ_DB_NAME=quiz_db
+# Optional alternative (overrides QUIZ_DB_*):
+# QUIZ_DATABASE_URL=postgresql+psycopg2://quiz_user:quiz_pass@localhost:5432/quiz_db
 ```
 
 **Production (.env.prod):**
@@ -504,7 +544,7 @@ QUIZ_DB_PORT=5432
 QUIZ_DB_USER=quiz_user_prod
 QUIZ_DB_PASSWORD=<secure-password>
 QUIZ_DB_NAME=quiz_db_prod
-QUIZ_ADMIN_JWT_TOKEN=<admin-jwt-secret>
+QUIZ_ADMIN_JWT=<admin-jwt>
 ```
 
 **Admin Auth:**
@@ -520,7 +560,7 @@ QUIZ_ADMIN_JWT_TOKEN=<admin-jwt-secret>
 **API:**
 ```bash
 curl https://games.hispanistica.org/quiz-admin/api/releases \
-  -H "Authorization: Bearer <admin-jwt-token>" | jq
+  -H "Authorization: Bearer <admin-jwt>" | jq
 ```
 
 **Response:**
@@ -600,7 +640,7 @@ LIMIT 20;
 - View question stats (future)
 
 **Auth:**
-- JWT Token (set in .env: `QUIZ_ADMIN_JWT_TOKEN`)
+- JWT (see `.env`)
 - Or login as user with ADMIN role
 
 **Code:** `src/app/routes/quiz_admin.py`

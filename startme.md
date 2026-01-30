@@ -10,30 +10,30 @@
 
 ```powershell
 
-.\scripts\dev-start.ps1 -UsePostgres    # Täglicher Start
+.\scripts\dev-start.ps1    # Täglicher Start (Postgres default)
 
-.\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup
+\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup
 
-$env:QUIZ_DEV_SEED_MODE='single'; $env:QUIZ_MECHANICS_VERSION='v2'; .\scripts\dev-start.ps1 -UsePostgres
+$env:QUIZ_DEV_SEED_MODE='single'; .\scripts\dev-start.ps1
 
 ```
 
-> **Hinweis (Refactoring-Branch):** Wenn die v2-Validatoren aktiv sind, setze vor dem Start
-> `QUIZ_DEV_SEED_MODE=single` (und optional `QUIZ_MECHANICS_VERSION=v2`).
+> **Hinweis (Refactoring-Branch):** v2 ist jetzt Default. Wenn du seeden willst,
+> setze vor dem Start `QUIZ_DEV_SEED_MODE=single`.
 > Falls `variation_aussprache_v2.json` fehlt, zuerst Migration ausführen:
 > `python scripts/quiz_content_migrate_difficulty_1_3.py`.
 
 Das Skript:
-1. Startet PostgreSQL via Docker (Port 54321)
+1. Startet PostgreSQL via Docker (Ports 54321 Auth + 54322 Quiz)
 2. Richtet `.venv` + Python-Dependencies ein
 3. Erstellt Auth-DB (PostgreSQL)
 4. Legt den Admin-User an (admin / change-me)
 5. Initialisiert Quiz-Module mit Demo-Daten
-6. Startet den Flask Dev-Server unter `http://localhost:8000`
+6. Startet den Flask Dev-Server auf einem freien Port (Standard: 8000, wird im Terminal angezeigt)
 
-**Login:** `admin` / `change-me`
+**Login (DEV):** `admin_dev` / `0000`
 
-**Quiz Demo:** http://localhost:8000/quiz
+**Quiz Demo:** http://localhost:<PORT>/quiz
 
 ---
 
@@ -42,28 +42,27 @@ Das Skript:
 Wenn alles bereits eingerichtet ist:
 
 ```powershell
-.\scripts\dev-start.ps1 -UsePostgres
+.\scripts\dev-start.ps1
 ```
 
-Wenn der Seed wegen v2-Validatoren fehlschlägt:
+> `-UsePostgres` ist deprecated (Postgres ist Default).
+
+Wenn du seeden willst:
 ```powershell
 $env:QUIZ_DEV_SEED_MODE = 'single'
-$env:QUIZ_MECHANICS_VERSION = 'v2'
-.\scripts\dev-start.ps1 -UsePostgres
+.\scripts\dev-start.ps1
 ```
 
 **Kopierbarer Single-Seed-Start (v2):**
 ```powershell
 $env:QUIZ_DEV_SEED_MODE = 'single'
-$env:QUIZ_MECHANICS_VERSION = 'v2'
-.\scripts\dev-start.ps1 -UsePostgres
+.\scripts\dev-start.ps1
 ```
 
 **Mehrere v2-Units testen:**
 ```powershell
 $env:QUIZ_DEV_SEED_MODE = 'all'
-$env:QUIZ_MECHANICS_VERSION = 'v2'
-.\scripts\dev-start.ps1 -UsePostgres
+.\scripts\dev-start.ps1
 ```
 
 Startet PostgreSQL (falls gestoppt) + Dev-Server mit existierender Konfiguration.
@@ -365,6 +364,7 @@ Die Dev-Skripte setzen automatisch:
 | Variable | Dev-Wert |
 |----------|----------|
 | `AUTH_DATABASE_URL` | `postgresql://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth` |
+| `QUIZ_DATABASE_URL` | `postgresql://hispanistica_quiz:hispanistica_quiz@localhost:54322/hispanistica_quiz` |
 | `JWT_SECRET_KEY` | `dev-jwt-secret-change-me` |
 | `FLASK_SECRET_KEY` | `dev-secret-change-me` |
 
@@ -376,13 +376,12 @@ Die Dev-Skripte setzen automatisch:
 
 Der Dev-Stack verwendet `docker-compose.dev-postgres.yml`:
 
-| Service | Contai
-
-Der Dev-Stack verwendet `docker-compose.dev-postgres.yml`:
-
 | Service | Container | Port | Beschreibung |
 |---------|-----------|------|-------------|
-| PostgreSQL | `hispanistica_auth_db` | `54321` | Auth-DB + Quiz-DB
+| PostgreSQL (Auth) | `hispanistica_auth_db` | `54321` | Auth-DB |
+| PostgreSQL (Quiz) | `hispanistica_quiz_db` | `54322` | Quiz-DB |
+
+```powershell
 # Starten
 docker compose -f docker-compose.dev-postgres.yml up -d
 
@@ -395,24 +394,23 @@ docker compose -f docker-compose.dev-postgres.yml ps
 # Logs ansehen
 docker compose -f docker-compose.dev-postgres.yml logs -f
 ```
-
 ---
 
 ## Health Checks
 
 ```powershell
 # App Health
-Invoke-WebRequest -Uri "http://localhost:8000/health" -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:<PORT>/health" -UseBasicParsing
 
 # Auth DB Health
-Invoke-WebRequest -Uri "http://localhost:8000/health/auth" -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:<PORT>/health/auth" -UseBasicParsing
 ```
 
 ---
 
 
 # Quiz Topics API
-Invoke-WebRequest -Uri "http://localhost:8000/api/quiz/topics" -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:<PORT>/api/quiz/topics" -UseBasicParsing
 ## Troubleshooting
 
 ### Docker-Container laeuft nicht (PostgreSQL-Modus)

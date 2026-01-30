@@ -23,29 +23,6 @@
         <h1 id="quiz-play-title">{{ topic_title_key }}</h1>
       </div>
       
-      <!-- Mittig: Spielwerte (Punkte, Timer, Joker) - einheitliche Größe -->
-      <div class="quiz-hud__stats">
-        <!-- Score Chip -->
-        <div class="quiz-stat-chip" id="quiz-score-chip">
-          <span class="material-symbols-rounded">emoji_events</span>
-          <span id="quiz-score-display">0</span>
-          <span class="quiz-score-chip__pop" id="quiz-score-pop" aria-hidden="true"></span>
-        </div>
-        
-        <!-- Timer - stärker durch filled style -->
-        <div class="quiz-stat-chip quiz-stat-chip--timer" id="quiz-timer">
-          <span class="material-symbols-rounded">timer</span>
-          <span id="quiz-timer-display">30</span>
-        </div>
-        
-        <!-- Joker -->
-        <button type="button" class="quiz-stat-chip quiz-stat-chip--joker" id="quiz-joker-btn">
-          <span class="material-symbols-rounded">casino</span>
-          <span>50:50</span>
-          <span class="quiz-joker__count" id="quiz-joker-count">2</span>
-        </button>
-      </div>
-      
       <!-- Rechts: Spielerstatus + Spiel beenden -->
       <div class="quiz-hud__actions">
         <!-- Spielerstatus-Chip: nur Icon + Name -->
@@ -78,14 +55,32 @@
         <div class="quiz-question" id="quiz-question">
           <!-- Card Header: Level links + Fortschritt rechts (eine Zeile) -->
           <div class="quiz-question-card__meta">
-            <div class="quiz-level-chip" id="quiz-level-chip">
-              <span class="material-symbols-rounded">signal_cellular_alt</span>
-              <span data-i18n="ui.quiz.level_label">Level</span>
-              <span id="quiz-level-num">1</span>
+            <div class="quiz-question-meta-row quiz-question-meta-row--top">
+              <div class="quiz-level-chip" id="quiz-level-chip">
+                <span class="material-symbols-rounded">signal_cellular_alt</span>
+                <span data-i18n="ui.quiz.level_label">Level</span>
+                <span id="quiz-level-num">1</span>
+              </div>
+              <span class="quiz-question-progress" id="quiz-progress">
+                <span data-i18n="ui.quiz.question_label">Frage</span> <span id="quiz-question-current">1</span> <span data-i18n="ui.quiz.of">von</span> <span id="quiz-question-total">10</span>
+              </span>
             </div>
-            <span class="quiz-question-progress" id="quiz-progress">
-              <span data-i18n="ui.quiz.question_label">Frage</span> <span id="quiz-question-current">1</span> <span data-i18n="ui.quiz.of">von</span> <span id="quiz-question-total">10</span>
-            </span>
+            <div class="quiz-question-meta-row quiz-question-meta-row--bottom">
+              <div class="quiz-question-meta-stats" aria-label="Timer und Joker">
+                <!-- Timer - stärker durch filled style -->
+                <div class="quiz-stat-chip quiz-stat-chip--timer" id="quiz-timer">
+                  <span class="material-symbols-rounded">timer</span>
+                  <span id="quiz-timer-display">30</span>
+                </div>
+                
+                <!-- Joker -->
+                <button type="button" class="quiz-stat-chip quiz-stat-chip--joker" id="quiz-joker-btn">
+                  <span class="material-symbols-rounded">casino</span>
+                  <span>50:50</span>
+                  <span class="quiz-joker__count" id="quiz-joker-count">2</span>
+                </button>
+              </div>
+            </div>
           </div>
           
           <!-- Visual Divider: subtle separation between meta and question -->

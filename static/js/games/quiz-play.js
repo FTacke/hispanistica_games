@@ -10,7 +10,7 @@
  * No immediate navigation after answer selection.
  * 
  * Features:
- * - Score chip with points-pop animation on correct answers
+ * - Timer & joker HUD in question meta bar
  * - Answer states: neutral, selected_correct, selected_wrong, correct_reveal, locked
  * - Explanation card (no "Richtig/Falsch" text)
  * - Question transitions with slide+fade
@@ -792,21 +792,12 @@
     
     const questionContainer = document.getElementById('quiz-question-container');
     const questionWrapper = document.getElementById('quiz-question-wrapper');
-    const hudEl = document.getElementById('quiz-hud');
     
     if (!questionContainer) {
       debugLog('renderCurrentView', { error: 'question container not found' });
       return;
     }
     
-    // Keep HUD, timer, and joker always visible
-    if (hudEl) {
-      const timerEl = document.getElementById('quiz-timer');
-      const jokerEl = document.getElementById('quiz-joker-btn');
-      if (timerEl) timerEl.style.display = '';
-      if (jokerEl) jokerEl.style.display = '';
-    }
-
     // ✅ FIX: Verwende state.stageEls (konsistente Referenzen)
     const levelUpContainer = state.stageEls?.levelUpContainer;
     const finalContainer = state.stageEls?.finishContainer;
@@ -911,21 +902,7 @@
    * Update the score display (instant, no animation)
    */
   function updateScoreDisplay() {
-    const scoreEl = document.getElementById('quiz-score-display');
-    if (scoreEl) {
-      if (state.displayedScore === null || !Number.isFinite(state.displayedScore)) {
-        scoreEl.textContent = '—';
-      } else {
-        scoreEl.textContent = Math.round(state.displayedScore);
-      }
-      debugLog('updateScoreDisplay', { 
-        displayedScore: state.displayedScore, 
-        elementText: scoreEl.textContent
-      });
-    } else {
-      debugLog('updateScoreDisplay', { error: 'score element not found!' });
-      console.error('Score element #quiz-score-display not found in DOM');
-    }
+    return;
   }
 
   /**
@@ -974,71 +951,15 @@
    * Update score with count-up animation
    */
   function updateScoreWithAnimation(targetScore) {
-    debugLog('updateScoreWithAnimation', { 
-      startValue: state.displayedScore, 
-      targetScore 
-    });
-    
-    const scoreEl = document.getElementById('quiz-score-display');
-    if (!scoreEl) {
-      debugLog('updateScoreWithAnimation', { error: 'score element not found' });
-      console.error('Score element not found for animation');
-      return;
-    }
-    
-    // Animate from displayed to target
-    const startValue = state.displayedScore;
-    const startTime = performance.now();
-    
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      state.displayedScore = targetScore;
-      updateScoreDisplay();
-      return;
-    }
-    
-    function animateScore(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / COUNT_UP_DURATION_MS, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      
-      state.displayedScore = startValue + (targetScore - startValue) * eased;
-      updateScoreDisplay();
-      
-      if (progress < 1) {
-        requestAnimationFrame(animateScore);
-      } else {
-        state.displayedScore = targetScore;
-        updateScoreDisplay();
-        debugLog('updateScoreWithAnimation', { action: 'complete', finalScore: targetScore });
-      }
-    }
-    
-    requestAnimationFrame(animateScore);
+    state.displayedScore = targetScore;
+    updateScoreDisplay();
   }
 
   /**
    * Show points pop animation on score chip (longer duration, more visible)
    */
   function showPointsPop(points) {
-    if (points <= 0) return;
-    
-    const popEl = document.getElementById('quiz-score-pop');
-    if (!popEl) return;
-    
-    // Set text and trigger animation
-    popEl.textContent = `+${points}`;
-    popEl.classList.remove('quiz-score-chip__pop--animate');
-    
-    // Force reflow to restart animation
-    void popEl.offsetWidth;
-    
-    popEl.classList.add('quiz-score-chip__pop--animate');
-    
-    // Remove class after animation completes (longer duration)
-    setTimeout(() => {
-      popEl.classList.remove('quiz-score-chip__pop--animate');
-    }, POINTS_POP_DURATION_MS);
+    return;
   }
 
   /**
@@ -3592,9 +3513,19 @@
    */
   function renderInlineMarkdown(text) {
     const safe = escapeHtml(text || '');
-    const withBold = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    const withItalic = withBold.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
-    return withItalic;
+    const boldTokens = [];
+    const withBoldTokens = safe.replace(/\*\*([^*]+)\*\*/g, (_, content) => {
+      const token = `__BOLD_TOKEN_${boldTokens.length}__`;
+      boldTokens.push(content);
+      return token;
+    });
+
+    const withItalic = withBoldTokens.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    return withItalic.replace(/__BOLD_TOKEN_(\d+)__/g, (_, index) => {
+      const content = boldTokens[Number(index)] || '';
+      return `<strong>${content}</strong>`;
+    });
   }
 
   function stripInlineMarkdown(text) {

@@ -39,6 +39,7 @@ const DOM = {
   uploadErrorMessage: document.getElementById('upload-error-message'),
   resetUpload: document.getElementById('reset-upload'),
   submitUpload: document.getElementById('submit-upload'),
+  uploadReleaseSelect: document.getElementById('upload-release-select'),
 
   // Release section
   releaseSelect: document.getElementById('release-select'),
@@ -252,7 +253,16 @@ async function loadReleases() {
 
 function renderReleasesDropdown() {
   const select = DOM.releaseSelect;
+  const uploadSelect = DOM.uploadReleaseSelect;
   select.innerHTML = '';
+
+  if (uploadSelect) {
+    const currentValue = uploadSelect.value;
+    uploadSelect.innerHTML = '<option value="">Neu (Release-ID automatisch)</option>';
+    if (currentValue) {
+      uploadSelect.value = currentValue;
+    }
+  }
 
   if (state.releases.length === 0) {
     select.innerHTML = '<option value="">-- Keine Releases vorhanden --</option>';
@@ -267,6 +277,13 @@ function renderReleasesDropdown() {
     const statusIcon = release.status === 'published' ? '✓' : release.status === 'draft' ? '○' : '×';
     option.textContent = `${statusIcon} ${release.release_id} (${release.status})`;
     select.appendChild(option);
+
+    if (uploadSelect) {
+      const uploadOption = document.createElement('option');
+      uploadOption.value = release.release_id;
+      uploadOption.textContent = `${statusIcon} ${release.release_id} (${release.status})`;
+      uploadSelect.appendChild(uploadOption);
+    }
   }
 }
 

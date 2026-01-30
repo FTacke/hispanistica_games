@@ -48,6 +48,7 @@ def main():
 
     from src.app.extensions.sqlalchemy_ext import init_engine, get_engine
     from game_modules.quiz.models import QuizBase
+    from game_modules.quiz.release_model import QuizContentRelease  # noqa: F401
 
     class FakeApp:
         def __init__(self):

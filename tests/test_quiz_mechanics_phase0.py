@@ -29,12 +29,12 @@ def _create_player(session, name: str) -> str:
     return player_id
 
 
-def test_mechanics_flag_defaults_to_v1(monkeypatch):
+def test_mechanics_flag_defaults_to_v2(monkeypatch):
     monkeypatch.delenv("QUIZ_MECHANICS_VERSION", raising=False)
 
     from game_modules.quiz.config import get_quiz_mechanics_version
 
-    assert get_quiz_mechanics_version() == "v1"
+    assert get_quiz_mechanics_version() == "v2"
 
 
 def test_start_run_creates_10_questions(seeded_quiz_db):

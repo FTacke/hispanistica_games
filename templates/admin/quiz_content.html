@@ -68,6 +68,15 @@
                 <input type="file" id="media-files" name="media_files[]" accept=".mp3,.ogg,.wav" multiple aria-describedby="media-help">
                 <p id="media-help" class="md3-helper-text">MP3, OGG oder WAV Dateien für Fragen.</p>
               </div>
+
+              <!-- Optional Release Target -->
+              <div class="form-field form-field--select">
+                <label for="upload-release-select">Release (optional)</label>
+                <select id="upload-release-select" name="release_id" aria-describedby="release-help">
+                  <option value="">Neu (Release-ID automatisch)</option>
+                </select>
+                <p id="release-help" class="md3-helper-text">Optional: in bestehendes Release hochladen (kein Löschen anderer Units).</p>
+              </div>
             </div>
 
             <!-- JSON Preview (appears after file selection) -->

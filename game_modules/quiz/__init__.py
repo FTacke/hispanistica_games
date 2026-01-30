@@ -9,6 +9,12 @@ Features:
 - Resume/restart capability
 """
 
-from .routes import blueprint as quiz_blueprint
-
 __all__ = ["quiz_blueprint"]
+
+
+def __getattr__(name: str):
+	"""Lazy-load module attributes to avoid CLI circular imports."""
+	if name == "quiz_blueprint":
+		from .routes import blueprint as quiz_blueprint
+		return quiz_blueprint
+	raise AttributeError(f"module {__name__} has no attribute {name}")

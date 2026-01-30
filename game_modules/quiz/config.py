@@ -18,7 +18,7 @@ def get_quiz_mechanics_version() -> str:
     - Flask config: QUIZ_MECHANICS_VERSION
     - Environment: QUIZ_MECHANICS_VERSION
 
-    Falls back to "v1" on missing/invalid values.
+    Falls back to "v2" on missing/invalid values.
     """
     value = None
 
@@ -29,7 +29,7 @@ def get_quiz_mechanics_version() -> str:
         value = None
 
     if not value:
-        value = os.getenv(QUIZ_MECHANICS_VERSION_ENV, "v1")
+        value = os.getenv(QUIZ_MECHANICS_VERSION_ENV, "v2")
 
     if not isinstance(value, str):
         value = str(value)
@@ -37,6 +37,6 @@ def get_quiz_mechanics_version() -> str:
     value = value.strip().lower()
 
     if value not in QUIZ_MECHANICS_ALLOWED:
-        return "v1"
+        return "v2"
 
     return value

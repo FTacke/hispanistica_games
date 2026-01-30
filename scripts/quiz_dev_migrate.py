@@ -24,16 +24,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _resolve_db_host() -> Optional[str]:
-    """Resolve DB host from AUTH_DATABASE_URL (env or app config)."""
-    db_url = None
-    if "AUTH_DATABASE_URL" in os.environ:
-        db_url = os.environ.get("AUTH_DATABASE_URL")
-    if not db_url:
-        from src.app import create_app
+def _resolve_quiz_db_url() -> Optional[str]:
+    """Resolve quiz DB URL from env vars (QUIZ_DATABASE_URL or QUIZ_DB_*)."""
+    if os.getenv("QUIZ_DATABASE_URL"):
+        return os.getenv("QUIZ_DATABASE_URL")
 
-        app = create_app()
-        db_url = app.config.get("AUTH_DATABASE_URL")
+    host = os.getenv("QUIZ_DB_HOST")
+    port = os.getenv("QUIZ_DB_PORT")
+    user = os.getenv("QUIZ_DB_USER")
+    password = os.getenv("QUIZ_DB_PASSWORD")
+    name = os.getenv("QUIZ_DB_NAME")
+
+    if host and port and user and password and name:
+        return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+
+    return None
+
+
+def _resolve_db_host() -> Optional[str]:
+    """Resolve DB host from quiz DB URL."""
+    db_url = _resolve_quiz_db_url()
     if not db_url:
         return None
 
@@ -71,18 +81,15 @@ def apply_sql_file(sql_path: Path) -> None:
         logger.warning(f"Empty migration file: {sql_path}")
         return
 
-    from src.app import create_app
-    from src.app.extensions.sqlalchemy_ext import get_engine
+    from sqlalchemy import create_engine
 
-    app = create_app()
+    db_url = _resolve_quiz_db_url()
+    if not db_url:
+        raise RuntimeError("QUIZ_DATABASE_URL / QUIZ_DB_* not configured")
 
-    with app.app_context():
-        engine = get_engine()
-        if engine is None:
-            raise RuntimeError("Database engine not initialized. Check AUTH_DATABASE_URL.")
-
-        with engine.begin() as conn:
-            conn.exec_driver_sql(sql)
+    engine = create_engine(db_url, future=True)
+    with engine.begin() as conn:
+        conn.exec_driver_sql(sql)
 
 
 def main() -> int:

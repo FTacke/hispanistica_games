@@ -41,7 +41,7 @@ from flask import (
 from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 
-from src.app.extensions.sqlalchemy_ext import get_session
+from src.app.extensions.sqlalchemy_ext import get_quiz_session as get_session
 from src.app.auth import Role
 from src.app.auth.decorators import require_role
 from . import services
