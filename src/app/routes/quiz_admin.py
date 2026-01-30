@@ -148,6 +148,7 @@ def import_release(release_id: str) -> Response:
     from src.app.extensions.sqlalchemy_ext import get_quiz_session
     
     try:
+        request_id = (request.headers.get("X-Request-ID") or "").strip() or f"import-{secrets.token_hex(8)}"
         project_root = get_project_root()
         releases_path = get_media_releases_path()
         release_path = releases_path / release_id
@@ -163,6 +164,14 @@ def import_release(release_id: str) -> Response:
         audio_path = str(release_path / "audio")
         
         service = QuizImportService(project_root=project_root)
+
+        current_app.logger.info(
+            "Import request received: request_id=%s release_id=%s units_path=%s audio_path=%s",
+            request_id,
+            release_id,
+            units_path,
+            audio_path,
+        )
         
         with get_quiz_session() as session:
             result = service.import_release(
@@ -170,12 +179,14 @@ def import_release(release_id: str) -> Response:
                 units_path=units_path,
                 audio_path=audio_path,
                 release_id=release_id,
-                dry_run=False
+                dry_run=False,
+                request_id=request_id,
             )
         
         return jsonify({
             "ok": result.success,
             "release_id": result.release_id,
+            "request_id": result.request_id,
             "units_imported": result.units_imported,
             "questions_imported": result.questions_imported,
             "audio_files_processed": result.audio_files_processed,
@@ -479,6 +490,8 @@ def upload_unit() -> Response:
     from werkzeug.utils import secure_filename
     from game_modules.quiz.validation import validate_quiz_unit, ValidationError
     
+    request_id = (request.headers.get("X-Request-ID") or "").strip() or f"upload-{secrets.token_hex(8)}"
+
     # Check for JSON file
     if "unit_json" not in request.files:
         return jsonify({
@@ -550,11 +563,28 @@ def upload_unit() -> Response:
     release_path = releases_path / release_id
     units_path = release_path / "units"
     audio_path = release_path / "audio"
+
+    current_app.logger.info(
+        "Upload request: request_id=%s release_id=%s slug=%s units_path=%s audio_path=%s",
+        request_id,
+        release_id,
+        slug,
+        units_path,
+        audio_path,
+    )
     
     try:
         units_path.mkdir(parents=True, exist_ok=True)
         audio_path.mkdir(parents=True, exist_ok=True)
     except OSError as e:
+        current_app.logger.error(
+            "Upload failed (mkdir): request_id=%s release_id=%s units_path=%s audio_path=%s error=%s",
+            request_id,
+            release_id,
+            units_path,
+            audio_path,
+            e,
+        )
         return jsonify({
             "error": "filesystem_error",
             "message": f"Failed to create release directory: {e}"
@@ -567,10 +597,33 @@ def upload_unit() -> Response:
         with open(json_filepath, "w", encoding="utf-8") as f:
             json.dump(unit_data, f, ensure_ascii=False, indent=2)
     except OSError as e:
+        current_app.logger.error(
+            "Upload failed (json write): request_id=%s release_id=%s slug=%s path=%s error=%s",
+            request_id,
+            release_id,
+            slug,
+            json_filepath,
+            e,
+        )
         return jsonify({
             "error": "filesystem_error",
             "message": f"Failed to save JSON file: {e}"
         }), 500
+
+    json_size = None
+    try:
+        json_size = json_filepath.stat().st_size
+    except OSError:
+        pass
+
+    current_app.logger.info(
+        "Upload JSON saved: request_id=%s release_id=%s slug=%s path=%s bytes=%s",
+        request_id,
+        release_id,
+        slug,
+        json_filepath,
+        json_size,
+    )
     
     # Save media files
     uploaded_files = []
@@ -582,9 +635,31 @@ def upload_unit() -> Response:
             media_filepath = audio_path / filename
             try:
                 media_file.save(str(media_filepath))
+                media_size = None
+                try:
+                    media_size = media_filepath.stat().st_size
+                except OSError:
+                    media_size = media_file.content_length
                 uploaded_files.append(filename)
+                current_app.logger.info(
+                    "Upload media saved: request_id=%s release_id=%s slug=%s filename=%s path=%s bytes=%s",
+                    request_id,
+                    release_id,
+                    slug,
+                    filename,
+                    media_filepath,
+                    media_size,
+                )
             except OSError as e:
-                current_app.logger.warning(f"Failed to save media file {filename}: {e}")
+                current_app.logger.warning(
+                    "Upload media failed: request_id=%s release_id=%s slug=%s filename=%s path=%s error=%s",
+                    request_id,
+                    release_id,
+                    slug,
+                    filename,
+                    media_filepath,
+                    e,
+                )
     
     # Determine missing files
     missing_files = []
@@ -593,6 +668,15 @@ def upload_unit() -> Response:
         ref_filename = Path(ref).name
         if ref_filename not in uploaded_files:
             missing_files.append(ref_filename)
+
+    if missing_files:
+        current_app.logger.info(
+            "Upload missing refs: request_id=%s release_id=%s slug=%s missing=%s",
+            request_id,
+            release_id,
+            slug,
+            ",".join(missing_files),
+        )
     
     # Create or update release record in DB
     from game_modules.quiz.release_model import QuizContentRelease
@@ -647,7 +731,13 @@ def upload_unit() -> Response:
             
             session.commit()
     except Exception as e:
-        current_app.logger.error(f"Failed to create release record: {e}")
+        current_app.logger.error(
+            "Failed to create release record: request_id=%s release_id=%s slug=%s error=%s",
+            request_id,
+            release_id,
+            slug,
+            e,
+        )
         return jsonify({
             "error": "database_error",
             "message": f"Failed to create release record: {e}"
@@ -656,6 +746,7 @@ def upload_unit() -> Response:
     return jsonify({
         "ok": True,
         "release_id": release_id,
+        "request_id": request_id,
         "slug": slug,
         "title": unit_data.get("title", slug),
         "questions_count": len(questions),
@@ -689,9 +780,20 @@ def get_release_logs(release_id: str) -> Response:
     if not logs_dir.exists():
         return jsonify({"logs": "", "filename": None}), 200
     
-    # Find log files for this release
-    pattern = f"*_{release_id}.log"
+    # Find log files for this release (optionally filter by request_id)
+    request_id = (request.args.get("request_id") or "").strip()
+    if request_id:
+        import re
+
+        safe_request_id = re.sub(r"[^a-zA-Z0-9._-]+", "-", request_id).strip("-")
+        pattern = f"*_{release_id}_{safe_request_id}*.log"
+    else:
+        pattern = f"*_{release_id}_*.log"
     log_files = list(logs_dir.glob(pattern))
+    if not log_files and not request_id:
+        # Backwards compatibility for legacy log naming (no request_id suffix)
+        legacy_pattern = f"*_{release_id}.log"
+        log_files = list(logs_dir.glob(legacy_pattern))
     
     if not log_files:
         return jsonify({"logs": "", "filename": None}), 200

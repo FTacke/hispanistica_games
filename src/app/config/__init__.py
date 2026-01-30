@@ -70,8 +70,8 @@ class BaseConfig:
     # NOTE: This directory contains runtime DBs such as auth.db.
     DB_DIR = PROJECT_ROOT / "data" / "db"
 
-    # Media paths (kept for potential future use)
-    MEDIA_DIR = PROJECT_ROOT / "media"
+    # Media paths (override with MEDIA_ROOT or MEDIA_DIR env)
+    MEDIA_DIR = Path(os.getenv("MEDIA_ROOT", os.getenv("MEDIA_DIR", PROJECT_ROOT / "media")))
 
     # Auth DB (used only when AUTH_BACKEND=db) - DSN required in non-test envs
     AUTH_DATABASE_URL = os.getenv("AUTH_DATABASE_URL")

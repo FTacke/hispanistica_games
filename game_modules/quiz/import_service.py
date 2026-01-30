@@ -19,6 +19,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -80,6 +82,7 @@ class ImportResult:
     """Result of an import operation."""
     success: bool
     release_id: str
+    request_id: Optional[str] = None
     units_imported: int = 0
     questions_imported: int = 0
     audio_files_processed: int = 0
@@ -115,7 +118,18 @@ class QuizImportService:
         self.import_logs_dir = project_root / "data" / "import_logs"
         self.import_logs_dir.mkdir(parents=True, exist_ok=True)
     
-    def _setup_log_file(self, release_id: str, command: str) -> logging.FileHandler:
+    def _normalize_request_id(self, request_id: Optional[str]) -> str:
+        if not request_id:
+            return uuid.uuid4().hex
+        safe = re.sub(r"[^a-zA-Z0-9._-]+", "-", request_id).strip("-")
+        return safe or uuid.uuid4().hex
+
+    def _setup_log_file(
+        self,
+        release_id: str,
+        command: str,
+        request_id: Optional[str] = None,
+    ) -> logging.FileHandler:
         """Create log file for this import operation.
         
         Args:
@@ -126,7 +140,8 @@ class QuizImportService:
             FileHandler configured for this operation
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_filename = f"{timestamp}_{command}_{release_id}.log"
+        safe_request_id = self._normalize_request_id(request_id)
+        log_filename = f"{timestamp}_{command}_{release_id}_{safe_request_id}.log"
         log_path = self.import_logs_dir / log_filename
         
         file_handler = logging.FileHandler(log_path, encoding='utf-8')
@@ -207,7 +222,8 @@ class QuizImportService:
         units_path: str,
         audio_path: str,
         release_id: str,
-        dry_run: bool = False
+        dry_run: bool = False,
+        request_id: Optional[str] = None,
     ) -> ImportResult:
         """Import a content release from JSON files.
         
@@ -228,17 +244,22 @@ class QuizImportService:
         Returns:
             ImportResult with counts and errors
         """
-        file_handler = self._setup_log_file(release_id, "import")
+        request_id = self._normalize_request_id(request_id)
+        file_handler = self._setup_log_file(release_id, "import", request_id=request_id)
         
         try:
-            logger.info(f"{'DRY-RUN: ' if dry_run else ''}Starting import for release '{release_id}'")
+            logger.info(
+                f"{'DRY-RUN: ' if dry_run else ''}Starting import for release '{release_id}'"
+            )
+            logger.info(f"Request ID: {request_id}")
             logger.info(f"Units path: {units_path}")
             logger.info(f"Audio path: {audio_path}")
             
             result = ImportResult(
                 success=True,
                 release_id=release_id,
-                dry_run=dry_run
+                dry_run=dry_run,
+                request_id=request_id,
             )
             
             # Convert paths
@@ -278,6 +299,11 @@ class QuizImportService:
             for json_file in sorted(json_files):
                 try:
                     logger.debug(f"Validating {json_file.name}...")
+                    file_size = None
+                    try:
+                        file_size = json_file.stat().st_size
+                    except OSError:
+                        pass
                     unit = self._validate_unit_file(json_file)
                     
                     # Check slug matches filename
@@ -293,7 +319,11 @@ class QuizImportService:
                     audio_refs = self._collect_audio_refs(unit)
                     audio_refs_map[unit.slug] = audio_refs
                     
-                    logger.info(f"[OK] {json_file.name}: {len(unit.questions)} questions, {len(audio_refs)} audio refs")
+                    size_note = f", {file_size} bytes" if file_size is not None else ""
+                    logger.info(
+                        f"[OK] {json_file.name}: {len(unit.questions)} questions, "
+                        f"{len(audio_refs)} audio refs{size_note} (slug={unit.slug})"
+                    )
                     
                 except (ValidationError, json.JSONDecodeError) as e:
                     msg = f"Validation failed for {json_file.name}: {e}"
@@ -499,7 +529,8 @@ class QuizImportService:
             result = ImportResult(
                 success=False,
                 release_id=release_id,
-                errors=[str(e)]
+                errors=[str(e)],
+                request_id=request_id,
             )
             return result
         
@@ -507,7 +538,12 @@ class QuizImportService:
             logger.removeHandler(file_handler)
             file_handler.close()
     
-    def publish_release(self, session: Session, release_id: str) -> PublishResult:
+    def publish_release(
+        self,
+        session: Session,
+        release_id: str,
+        request_id: Optional[str] = None,
+    ) -> PublishResult:
         """Publish a release (mark as active).
         
         Only one release can be published at a time.
@@ -520,10 +556,12 @@ class QuizImportService:
         Returns:
             PublishResult
         """
-        file_handler = self._setup_log_file(release_id, "publish")
+        request_id = self._normalize_request_id(request_id)
+        file_handler = self._setup_log_file(release_id, "publish", request_id=request_id)
         
         try:
             logger.info(f"Publishing release: {release_id}")
+            logger.info(f"Request ID: {request_id}")
             
             result = PublishResult(success=True, release_id=release_id)
             
@@ -587,7 +625,12 @@ class QuizImportService:
             logger.removeHandler(file_handler)
             file_handler.close()
     
-    def unpublish_release(self, session: Session, release_id: str) -> PublishResult:
+    def unpublish_release(
+        self,
+        session: Session,
+        release_id: str,
+        request_id: Optional[str] = None,
+    ) -> PublishResult:
         """Unpublish a release (rollback).
         
         Args:
@@ -597,10 +640,12 @@ class QuizImportService:
         Returns:
             PublishResult
         """
-        file_handler = self._setup_log_file(release_id, "unpublish")
+        request_id = self._normalize_request_id(request_id)
+        file_handler = self._setup_log_file(release_id, "unpublish", request_id=request_id)
         
         try:
             logger.info(f"Unpublishing release: {release_id}")
+            logger.info(f"Request ID: {request_id}")
             
             result = PublishResult(success=True, release_id=release_id)
             

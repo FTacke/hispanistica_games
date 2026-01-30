@@ -29,6 +29,7 @@ See also:
 
 import sys
 import os
+import uuid
 from pathlib import Path
 
 # Add project root to path
@@ -91,6 +92,8 @@ def import_content(units_path, audio_path, release, dry_run):
     
     try:
         _init_cli_app()
+        request_id = os.getenv("REQUEST_ID") or f"cli-{uuid.uuid4().hex[:12]}"
+        click.echo(f"Request ID: {request_id}")
         service = QuizImportService()
         
         with get_quiz_session() as session:
@@ -99,7 +102,8 @@ def import_content(units_path, audio_path, release, dry_run):
                 units_path=units_path,
                 audio_path=audio_path,
                 release_id=release,
-                dry_run=dry_run
+                dry_run=dry_run,
+                request_id=request_id,
             )
         
         if result.success:
@@ -156,10 +160,16 @@ def publish_release(release):
     
     try:
         _init_cli_app()
+        request_id = os.getenv("REQUEST_ID") or f"cli-{uuid.uuid4().hex[:12]}"
+        click.echo(f"Request ID: {request_id}")
         service = QuizImportService()
         
         with get_quiz_session() as session:
-            result = service.publish_release(session=session, release_id=release)
+            result = service.publish_release(
+                session=session,
+                release_id=release,
+                request_id=request_id,
+            )
         
         if result.success:
             click.echo(f"[OK] Release '{release}' published")
@@ -193,10 +203,16 @@ def unpublish_release(release):
     
     try:
         _init_cli_app()
+        request_id = os.getenv("REQUEST_ID") or f"cli-{uuid.uuid4().hex[:12]}"
+        click.echo(f"Request ID: {request_id}")
         service = QuizImportService()
         
         with get_quiz_session() as session:
-            result = service.unpublish_release(session=session, release_id=release)
+            result = service.unpublish_release(
+                session=session,
+                release_id=release,
+                request_id=request_id,
+            )
         
         if result.success:
             click.echo(f"[OK] Release '{release}' unpublished")

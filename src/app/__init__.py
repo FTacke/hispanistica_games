@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import uuid
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -95,6 +97,39 @@ def _verify_quiz_db_connection(app: Flask, require_postgres: bool) -> None:
     app.logger.info(f"Quiz DB connection verified: {engine.url}")
 
 
+def _verify_media_storage(app: Flask) -> None:
+    """Verify media storage is writable and initialize required dirs.
+
+    This fails fast in non-test environments if /app/media is not writable.
+    """
+    media_root = Path(app.config.get("MEDIA_DIR") or Path(__file__).resolve().parents[2] / "media")
+    required_dirs = [
+        media_root / "quiz",
+        media_root / "releases",
+    ]
+
+    try:
+        media_root.mkdir(parents=True, exist_ok=True)
+        for required_dir in required_dirs:
+            required_dir.mkdir(parents=True, exist_ok=True)
+
+        test_file = media_root / f".rw_test_{uuid.uuid4().hex}"
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("ok")
+            f.flush()
+            os.fsync(f.fileno())
+        test_file.unlink(missing_ok=True)
+    except Exception as e:
+        app.logger.error(
+            "FATAL: Media storage is not writable. "
+            f"media_root={media_root} error={e}"
+        )
+        raise RuntimeError(
+            "Media storage not writable. Ensure /app/media is a read-write mount "
+            "and required directories exist (quiz, releases)."
+        ) from e
+
+
 def create_app(env_name: str | None = None) -> Flask:
     """Create and configure the Flask application instance."""
 
@@ -117,6 +152,10 @@ def create_app(env_name: str | None = None) -> Flask:
     )
     load_config(app, env_name)
 
+    is_test_env = env_name == "test" or app.config.get("TESTING") is True
+    if not is_test_env:
+        _verify_media_storage(app)
+
     # Apply ProxyFix to correctly handle X-Forwarded-* headers from Nginx
     # This ensures url_for(_external=True) generates https:// URLs when behind HTTPS proxy
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -124,8 +163,6 @@ def create_app(env_name: str | None = None) -> Flask:
     # Initialize auth DB engine with fail-fast behavior in non-test envs
     from .extensions.sqlalchemy_ext import init_engine as init_auth_db
     from .extensions.sqlalchemy_ext import init_quiz_engine as init_quiz_db
-
-    is_test_env = env_name == "test" or app.config.get("TESTING") is True
 
     try:
         init_auth_db(app)

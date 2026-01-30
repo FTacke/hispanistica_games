@@ -11,11 +11,13 @@ services:
       # nginx reverse proxy leitet dann an localhost:6000 weiter
       - "6000:8000"
     volumes:
-      # Media-Dateien (read-only, da auf Server extern gepflegt)
-      - ~/corapan/media/mp3-full:/app/media/mp3-full:ro
-      - ~/corapan/media/mp3-split:/app/media/mp3-split:ro
+      # Media-Dateien (read-write, Upload/Import benötigt Schreibzugriff)
+      - ~/corapan/media/mp3-full:/app/media/mp3-full
+      - ~/corapan/media/mp3-split:/app/media/mp3-split
       - ~/corapan/media/mp3-temp:/app/media/mp3-temp
-      - ~/corapan/media/transcripts:/app/media/transcripts:ro
+      - ~/corapan/media/transcripts:/app/media/transcripts
+      - ~/corapan/media/quiz:/app/media/quiz
+      - ~/corapan/media/releases:/app/media/releases
       
       # Config & Credentials (read-only)
       # NOTE: mounting passwords.env is legacy (env-based auth). Migrations use DB-based auth (AUTH_BACKEND=db).

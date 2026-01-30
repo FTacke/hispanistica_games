@@ -74,11 +74,13 @@ services:
       AUTH_HASH_ALGO: argon2
     volumes:
       # Production: only mount data directories, no source code
-      # Media files (managed externally)
-      - ~/corapan/media/mp3-full:/app/media/mp3-full:ro
-      - ~/corapan/media/mp3-split:/app/media/mp3-split:ro
+      # Media files (managed externally, read-write for uploads/imports)
+      - ~/corapan/media/mp3-full:/app/media/mp3-full
+      - ~/corapan/media/mp3-split:/app/media/mp3-split
       - ~/corapan/media/mp3-temp:/app/media/mp3-temp
-      - ~/corapan/media/transcripts:/app/media/transcripts:ro
+      - ~/corapan/media/transcripts:/app/media/transcripts
+      - ~/corapan/media/quiz:/app/media/quiz
+      - ~/corapan/media/releases:/app/media/releases
       
       # Config & Keys (read-only)
       - ~/corapan/config/keys:/app/config/keys:ro

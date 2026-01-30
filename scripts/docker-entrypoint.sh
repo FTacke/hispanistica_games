@@ -6,6 +6,47 @@ set -e
 
 echo "=== games.hispanistica Container Startup ==="
 
+# Media storage guard (fail-fast if /app/media is not writable)
+MEDIA_ROOT=${MEDIA_ROOT:-/app/media}
+MEDIA_UID=${MEDIA_UID:-}
+MEDIA_GID=${MEDIA_GID:-}
+
+echo "Media storage check: $MEDIA_ROOT"
+
+if [ ! -d "$MEDIA_ROOT" ]; then
+    echo "Creating media root: $MEDIA_ROOT"
+    if ! mkdir -p "$MEDIA_ROOT"; then
+        echo "ERROR: Failed to create media root: $MEDIA_ROOT"
+        exit 1
+    fi
+fi
+
+for dir in "quiz" "releases"; do
+    target="$MEDIA_ROOT/$dir"
+    if ! mkdir -p "$target"; then
+        echo "ERROR: Failed to create media directory: $target"
+        exit 1
+    fi
+done
+
+if [ -n "$MEDIA_UID" ] || [ -n "$MEDIA_GID" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
+        echo "Setting media ownership to ${MEDIA_UID:-0}:${MEDIA_GID:-0}"
+        chown -R "${MEDIA_UID:-0}:${MEDIA_GID:-0}" "$MEDIA_ROOT"
+    else
+        echo "WARNING: MEDIA_UID/GID set but container is not running as root; skipping chown."
+    fi
+fi
+
+TEST_FILE="$MEDIA_ROOT/.rw_test_$$"
+if ! (echo "ok" > "$TEST_FILE" 2>/dev/null); then
+    echo "ERROR: Media storage is not writable: $MEDIA_ROOT"
+    echo "Fix: Ensure /app/media is a read-write mount and owned by UID/GID running the app."
+    exit 1
+fi
+rm -f "$TEST_FILE"
+echo "Media storage OK (rw + dirs created)"
+
 # Configuration: Database wait timeout (seconds)
 DB_WAIT_SECONDS=${DB_WAIT_SECONDS:-60}
 
