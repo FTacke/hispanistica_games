@@ -63,6 +63,33 @@ Published Releases:
 Current release id: None
 ```
 
+### Run 2b: DB Report (with required env vars)
+```powershell
+$env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54321/hispanistica_auth"
+$env:QUIZ_DATABASE_URL = "postgresql+psycopg://hispanistica_quiz:hispanistica_quiz@127.0.0.1:54322/hispanistica_quiz"
+$env:FLASK_SECRET_KEY = "dev-secret-change-me"
+python manage.py quiz-db-report
+```
+**Output:**
+```
+[2026-01-30 15:15:26] INFO: Auth DB connection verified: postgresql+psycopg://hispanistica_auth:***@127.0.0.1:54321/hispanistica_auth
+[2026-01-30 15:15:26] INFO: Quiz DB connection verified: postgresql+psycopg://hispanistica_quiz:***@127.0.0.1:54322/hispanistica_quiz
+Quiz DB Report (read-only)
+DB dialect: postgresql
+==============================
+Counts:
+  quiz_topics: 1
+  quiz_questions: 18
+  quiz_content_releases: 0
+  quiz_runs: 1
+  quiz_scores: 0
+
+Published Releases:
+  (none)
+
+Current release id: None
+```
+
 ### Run 3: Smoke request
 ```powershell
 curl http://127.0.0.1:8000/api/quiz/topics
