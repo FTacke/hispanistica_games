@@ -12,7 +12,7 @@
 
 .\scripts\dev-start.ps1    # Täglicher Start (Postgres default)
 
-\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup
+\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup (nicht verwenden)
 
 $env:QUIZ_DEV_SEED_MODE='single'; .\scripts\dev-start.ps1
 
