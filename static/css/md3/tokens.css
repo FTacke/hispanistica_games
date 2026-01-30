@@ -81,6 +81,8 @@
   /* Error */
   --md-sys-color-error: #b3261e;
   --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #f9dedc;
+  --md-sys-color-on-error-container: #410e0b;
 
   /* Outline (für Borders, Dividers - KRITISCH für Form-Felder) */
   --md-sys-color-outline: #5A7A84;  /* Dunkler, deutlich sichtbar */

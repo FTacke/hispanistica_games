@@ -36,7 +36,9 @@ const DOM = {
   mediaRefs: document.getElementById('media-refs'),
   mediaRefsList: document.getElementById('media-refs-list'),
   uploadErrors: document.getElementById('upload-errors'),
+  uploadErrorTitle: document.getElementById('upload-error-title'),
   uploadErrorMessage: document.getElementById('upload-error-message'),
+  uploadActionsHelper: document.getElementById('upload-actions-helper'),
   resetUpload: document.getElementById('reset-upload'),
   submitUpload: document.getElementById('submit-upload'),
   uploadReleaseSelect: document.getElementById('upload-release-select'),
@@ -53,6 +55,7 @@ const DOM = {
   releaseImportedAt: document.getElementById('release-imported-at'),
   releasePublishedAt: document.getElementById('release-published-at'),
   releaseActionResult: document.getElementById('release-action-result'),
+  releaseActionsHelper: document.getElementById('release-actions-helper'),
   btnImport: document.getElementById('btn-import'),
   btnPublish: document.getElementById('btn-publish'),
   btnUnpublish: document.getElementById('btn-unpublish'),
@@ -66,6 +69,7 @@ const DOM = {
   filterInactive: document.getElementById('filter-inactive'),
   unitsBody: document.getElementById('units-body'),
   unitsActionResult: document.getElementById('units-action-result'),
+  unitsActionsHelper: document.getElementById('units-actions-helper'),
 
   // Dialogs
   confirmDialog: document.getElementById('confirm-dialog'),
@@ -271,17 +275,24 @@ function renderReleasesDropdown() {
 
   select.innerHTML = '<option value="">-- Release auswählen --</option>';
   
+  const statusLabels = {
+    draft: 'Draft',
+    published: 'Veröffentlicht',
+    unpublished: 'Zurückgenommen',
+  };
+
   for (const release of state.releases) {
     const option = document.createElement('option');
     option.value = release.release_id;
     const statusIcon = release.status === 'published' ? '✓' : release.status === 'draft' ? '○' : '×';
-    option.textContent = `${statusIcon} ${release.release_id} (${release.status})`;
+    const statusLabel = statusLabels[release.status] || release.status;
+    option.textContent = `${statusIcon} ${release.release_id} (${statusLabel})`;
     select.appendChild(option);
 
     if (uploadSelect) {
       const uploadOption = document.createElement('option');
       uploadOption.value = release.release_id;
-      uploadOption.textContent = `${statusIcon} ${release.release_id} (${release.status})`;
+      uploadOption.textContent = `${statusIcon} ${release.release_id} (${statusLabel})`;
       uploadSelect.appendChild(uploadOption);
     }
   }
@@ -296,16 +307,21 @@ function selectRelease(releaseId) {
 
 function renderReleaseInfo() {
   if (!state.selectedRelease) {
-    DOM.releaseInfo.style.display = 'none';
+    DOM.releaseInfo.hidden = true;
     return;
   }
 
   const r = state.selectedRelease;
-  DOM.releaseInfo.style.display = 'block';
+  DOM.releaseInfo.hidden = false;
   DOM.releaseIdDisplay.textContent = r.release_id;
   
   // Status badge
-  DOM.releaseStatusBadge.textContent = r.status;
+  const statusLabels = {
+    draft: 'Draft',
+    published: 'Veröffentlicht',
+    unpublished: 'Zurückgenommen',
+  };
+  DOM.releaseStatusBadge.textContent = statusLabels[r.status] || r.status;
   DOM.releaseStatusBadge.className = `md3-badge md3-badge--status-${r.status}`;
 
   // Counts
@@ -325,10 +341,22 @@ function renderReleaseInfo() {
 function updateReleaseButtons() {
   const r = state.selectedRelease;
   const hasSelection = !!r;
+  const status = r?.status;
+  const importedAt = r?.imported_at;
   
   DOM.btnImport.disabled = !hasSelection;
-  DOM.btnPublish.disabled = !hasSelection || r.status === 'published' || !r.imported_at;
-  DOM.btnUnpublish.disabled = !hasSelection || r.status !== 'published';
+  DOM.btnPublish.disabled = !hasSelection || status === 'published' || !importedAt;
+  DOM.btnUnpublish.disabled = !hasSelection || status !== 'published';
+
+  if (!hasSelection) {
+    DOM.releaseActionsHelper.textContent = 'Release auswählen, um Aktionen zu aktivieren.';
+  } else if (!importedAt) {
+    DOM.releaseActionsHelper.textContent = 'Importieren Sie das Release, bevor Sie veröffentlichen.';
+  } else if (status === 'published') {
+    DOM.releaseActionsHelper.textContent = 'Release ist veröffentlicht. Rücknahme ist möglich.';
+  } else {
+    DOM.releaseActionsHelper.textContent = 'Aktionen sind verfügbar.';
+  }
 }
 
 async function loadReleaseLogs() {
@@ -381,7 +409,8 @@ async function publishRelease() {
 
   const confirmed = await showConfirmDialog(
     'Release veröffentlichen?',
-    `Möchten Sie "${state.selectedRelease.release_id}" wirklich veröffentlichen? Dies ersetzt den aktuell veröffentlichten Content.`
+    `Möchten Sie "${state.selectedRelease.release_id}" wirklich veröffentlichen? Dies ersetzt den aktuell veröffentlichten Content.`,
+    'Veröffentlichen'
   );
   if (!confirmed) return;
 
@@ -405,7 +434,7 @@ async function publishRelease() {
   } catch (error) {
     showReleaseActionResult(`Fehler: ${error.message}`, 'error');
   } finally {
-    DOM.btnPublish.innerHTML = '<span class="material-symbols-rounded md3-button__icon">publish</span> Publish';
+    DOM.btnPublish.innerHTML = '<span class="material-symbols-rounded md3-button__icon">publish</span> Veröffentlichen';
     updateReleaseButtons();
   }
 }
@@ -414,19 +443,20 @@ async function unpublishRelease() {
   if (!state.selectedRelease) return;
 
   const confirmed = await showConfirmDialog(
-    'Release zurückziehen?',
-    `Möchten Sie "${state.selectedRelease.release_id}" wirklich zurückziehen? Die zugehörigen Units werden nicht mehr angezeigt.`
+    'Veröffentlichung zurücknehmen?',
+    `Möchten Sie die Veröffentlichung von "${state.selectedRelease.release_id}" wirklich zurücknehmen? Die zugehörigen Units werden nicht mehr angezeigt.`,
+    'Zurücknehmen'
   );
   if (!confirmed) return;
 
   const releaseId = state.selectedRelease.release_id;
-  showReleaseActionResult('Wird zurückgezogen...', 'loading');
+  showReleaseActionResult('Veröffentlichung wird zurückgenommen...', 'loading');
 
   try {
     const result = await API.post(`/releases/${releaseId}/unpublish`);
     
     if (result.ok) {
-      showReleaseActionResult(`✓ Zurückgezogen: ${result.units_affected} Units betroffen`, 'success');
+      showReleaseActionResult(`✓ Veröffentlichung zurückgenommen: ${result.units_affected} Units betroffen`, 'success');
       await loadReleases();
       selectRelease(releaseId);
       loadUnits();
@@ -441,13 +471,13 @@ async function unpublishRelease() {
 }
 
 function showReleaseActionResult(message, type) {
-  DOM.releaseActionResult.style.display = 'block';
+  DOM.releaseActionResult.hidden = false;
   DOM.releaseActionResult.className = `md3-action-result md3-action-result--${type}`;
   DOM.releaseActionResult.textContent = message;
   
   if (type !== 'loading') {
     setTimeout(() => {
-      DOM.releaseActionResult.style.display = 'none';
+      DOM.releaseActionResult.hidden = true;
     }, 5000);
   }
 }
@@ -488,11 +518,11 @@ function renderUnitsTable() {
         <td><code>${escapeHtml(unit.slug)}</code></td>
         <td>${escapeHtml(unit.title || '-')}</td>
         <td>
-          <span class="md3-badge md3-badge--small ${unit.release_id ? 'md3-badge--status-draft' : ''}">
+          <span class="md3-badge md3-badge--small md3-badge--metric">
             ${unit.questions_count || 0} Fragen
           </span>
         </td>
-        <td>
+        <td class="md3-table__cell--center">
           <input type="checkbox" 
                  class="md3-checkbox" 
                  data-field="is_active" 
@@ -500,7 +530,7 @@ function renderUnitsTable() {
                  ${isActiveChecked ? 'checked' : ''}
                  aria-label="Aktiv">
         </td>
-        <td>
+        <td class="md3-table__cell--center">
           <input type="number" 
                  class="md3-input--small" 
                  data-field="order_index" 
@@ -512,13 +542,16 @@ function renderUnitsTable() {
         <td class="md3-hide-mobile">
           <code class="md3-text-small">${unit.release_id ? escapeHtml(unit.release_id.substring(0, 20)) : 'Legacy'}</code>
         </td>
-        <td>
+        <td class="md3-table__cell--actions">
           <button type="button" 
-                  class="md3-button md3-button--text md3-button--danger md3-button--small"
+                  class="md3-button md3-button--tonal md3-button--danger-tonal md3-button--small"
                   data-action="delete"
                   data-slug="${escapeHtml(unit.slug)}"
+                  aria-label="Unit löschen"
+                  title="Unit löschen"
                   ${isInactive ? 'disabled' : ''}>
-            <span class="material-symbols-rounded">delete</span>
+            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+            Löschen
           </button>
         </td>
       </tr>
@@ -557,6 +590,9 @@ function handleUnitFieldChange(event) {
 
 function updateSaveButton() {
   DOM.saveUnits.disabled = state.pendingChanges.size === 0;
+  DOM.unitsActionsHelper.textContent = state.pendingChanges.size === 0
+    ? 'Änderungen vornehmen, um Speichern zu aktivieren.'
+    : 'Änderungen bereit zum Speichern.';
 }
 
 async function saveUnitChanges() {
@@ -569,6 +605,7 @@ async function saveUnitChanges() {
 
   DOM.saveUnits.disabled = true;
   DOM.saveUnits.innerHTML = '<span class="material-symbols-rounded md3-spinner">progress_activity</span> Speichern...';
+  DOM.unitsActionsHelper.textContent = 'Speichern läuft...';
 
   try {
     const result = await API.patch('/units', { updates });
@@ -593,8 +630,9 @@ async function handleDeleteUnit(event) {
   const slug = btn.dataset.slug;
 
   const confirmed = await showConfirmDialog(
-    'Unit deaktivieren?',
-    `Möchten Sie "${slug}" wirklich deaktivieren? (Soft-Delete: is_active=false)`
+    'Unit wirklich löschen?',
+    `Möchten Sie die Unit "${slug}" wirklich löschen? (Soft-Delete: is_active=false)`,
+    'Löschen'
   );
   if (!confirmed) return;
 
@@ -613,12 +651,12 @@ async function handleDeleteUnit(event) {
 }
 
 function showUnitsActionResult(message, type) {
-  DOM.unitsActionResult.style.display = 'block';
+  DOM.unitsActionResult.hidden = false;
   DOM.unitsActionResult.className = `md3-action-result md3-action-result--${type}`;
   DOM.unitsActionResult.textContent = message;
   
   setTimeout(() => {
-    DOM.unitsActionResult.style.display = 'none';
+    DOM.unitsActionResult.hidden = true;
   }, 5000);
 }
 
@@ -657,26 +695,27 @@ function handleMediaFilesSelect(event) {
 
 function renderUploadPreview() {
   if (!uploadedJson) {
-    DOM.jsonPreview.style.display = 'none';
+    DOM.jsonPreview.hidden = true;
     DOM.submitUpload.disabled = true;
     DOM.resetUpload.disabled = true;
+    DOM.uploadActionsHelper.textContent = 'JSON-Datei auswählen, um Upload zu starten.';
     return;
   }
 
   // Validate slug
   const slug = uploadedJson.slug || '';
   if (!slug) {
-    showUploadError('Missing required field: slug');
+    showUploadError('Pflichtfeld fehlt: slug');
     return;
   }
 
   if (!/^[a-z0-9_]+$/.test(slug)) {
-    showUploadError(`Invalid slug format: "${slug}". Must be lowercase alphanumeric + underscore.`);
+    showUploadError(`Ungültiges Slug-Format: "${slug}". Erlaubt sind Kleinbuchstaben, Ziffern und Unterstriche.`);
     return;
   }
 
   hideUploadError();
-  DOM.jsonPreview.style.display = 'block';
+  DOM.jsonPreview.hidden = false;
   DOM.previewSlug.textContent = slug;
   DOM.previewTitle.textContent = uploadedJson.title || slug;
   DOM.previewQuestions.textContent = (uploadedJson.questions || []).length;
@@ -685,7 +724,7 @@ function renderUploadPreview() {
   const audioRefs = extractAudioRefs(uploadedJson);
   
   if (audioRefs.length > 0) {
-    DOM.mediaRefs.style.display = 'block';
+    DOM.mediaRefs.hidden = false;
     DOM.mediaRefsList.innerHTML = audioRefs.map(ref => {
       const filename = ref.split('/').pop();
       const found = uploadedMediaFiles.includes(filename);
@@ -697,11 +736,12 @@ function renderUploadPreview() {
       `;
     }).join('');
   } else {
-    DOM.mediaRefs.style.display = 'none';
+    DOM.mediaRefs.hidden = true;
   }
 
   DOM.submitUpload.disabled = false;
   DOM.resetUpload.disabled = false;
+  DOM.uploadActionsHelper.textContent = 'Upload bereit. Datei(en) prüfen und speichern.';
 }
 
 function extractAudioRefs(json) {
@@ -729,12 +769,13 @@ function extractAudioRefs(json) {
 function resetUploadPreview() {
   uploadedJson = null;
   uploadedMediaFiles = [];
-  DOM.jsonPreview.style.display = 'none';
-  DOM.mediaRefs.style.display = 'none';
+  DOM.jsonPreview.hidden = true;
+  DOM.mediaRefs.hidden = true;
   DOM.submitUpload.disabled = true;
   DOM.resetUpload.disabled = true;
   DOM.uploadForm.reset();
   hideUploadError();
+  DOM.uploadActionsHelper.textContent = 'JSON-Datei auswählen, um Upload zu starten.';
 }
 
 async function submitUpload(event) {
@@ -746,6 +787,7 @@ async function submitUpload(event) {
   
   DOM.submitUpload.disabled = true;
   DOM.submitUpload.innerHTML = '<span class="material-symbols-rounded md3-spinner">progress_activity</span> Wird hochgeladen...';
+  DOM.uploadActionsHelper.textContent = 'Upload läuft...';
 
   try {
     const result = await API.upload(formData);
@@ -766,28 +808,36 @@ async function submitUpload(event) {
 }
 
 function showUploadError(message) {
-  DOM.uploadErrors.style.display = 'flex';
+  DOM.uploadErrors.hidden = false;
+  DOM.uploadErrors.classList.add('md3-alert--error');
+  DOM.uploadErrors.classList.remove('md3-alert--success');
+  DOM.uploadErrors.querySelector('.material-symbols-rounded').textContent = 'error';
+  DOM.uploadErrorTitle.textContent = 'Validierungsfehler';
   DOM.uploadErrorMessage.textContent = message;
   DOM.submitUpload.disabled = true;
+  DOM.uploadActionsHelper.textContent = 'Bitte die Fehler beheben, bevor Sie speichern.';
 }
 
 function hideUploadError() {
-  DOM.uploadErrors.style.display = 'none';
+  DOM.uploadErrors.hidden = true;
 }
 
 function showUploadSuccess(message) {
   // Reuse error container for success (styled differently)
-  DOM.uploadErrors.style.display = 'flex';
+  DOM.uploadErrors.hidden = false;
   DOM.uploadErrors.classList.remove('md3-alert--error');
   DOM.uploadErrors.classList.add('md3-alert--success');
   DOM.uploadErrors.querySelector('.material-symbols-rounded').textContent = 'check_circle';
+  DOM.uploadErrorTitle.textContent = 'Upload erfolgreich';
   DOM.uploadErrorMessage.textContent = message;
+  DOM.uploadActionsHelper.textContent = 'Upload abgeschlossen.';
   
   setTimeout(() => {
-    DOM.uploadErrors.style.display = 'none';
+    DOM.uploadErrors.hidden = true;
     DOM.uploadErrors.classList.add('md3-alert--error');
     DOM.uploadErrors.classList.remove('md3-alert--success');
     DOM.uploadErrors.querySelector('.material-symbols-rounded').textContent = 'error';
+    DOM.uploadErrorTitle.textContent = 'Validierungsfehler';
   }, 5000);
 }
 
@@ -795,10 +845,11 @@ function showUploadSuccess(message) {
 // Confirmation Dialog
 // =============================================================================
 
-function showConfirmDialog(title, message) {
+function showConfirmDialog(title, message, confirmLabel = 'Bestätigen') {
   return new Promise((resolve) => {
     DOM.confirmTitle.textContent = title;
     DOM.confirmMessage.textContent = message;
+    DOM.confirmOk.textContent = confirmLabel;
     DOM.confirmDialog.showModal();
 
     const handleCancel = () => {

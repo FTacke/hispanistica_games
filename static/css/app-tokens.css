@@ -35,6 +35,48 @@
      See: docs/md3-template/md3-spacing-system.md
      ----------------------------------------------------------------- */
   --app-textfield-label-bg: var(--md-sys-color-surface);
+
+  /* -----------------------------------------------------------------
+     APP: Dashboard Layout + Sizing Tokens
+     ----------------------------------------------------------------- */
+  --app-section-padding: var(--space-6);
+  --app-section-gap: var(--space-4);
+  --app-section-toolbar-gap: var(--space-3);
+  --app-form-grid-min-width: 240px;
+  --app-form-field-height: var(--space-12);
+  --app-form-field-compact-height: var(--space-10);
+  --app-table-row-height: var(--space-12);
+  --app-table-input-width: calc(var(--space-8) + var(--space-4));
+  --app-checkbox-size: var(--space-5);
+  --app-search-max-width: 420px;
+  --app-action-column-min-width: 140px;
+  --app-log-max-height: 400px;
+
+  /* -----------------------------------------------------------------
+     APP: Border Widths
+     ----------------------------------------------------------------- */
+  --app-border-width: 1px;
+  --app-border-width-strong: 2px;
+  --app-border-width-emphasis: 3px;
+
+  /* -----------------------------------------------------------------
+     APP: Icon Sizes
+     ----------------------------------------------------------------- */
+  --app-icon-size-sm: 18px;
+  --app-icon-size-md: 24px;
+  --app-icon-size-lg: 32px;
+
+  /* -----------------------------------------------------------------
+     APP: Focus Ring
+     ----------------------------------------------------------------- */
+  --app-focus-ring-width: var(--space-1);
+  --app-focus-ring-offset: var(--space-1);
+  --app-focus-ring-color: color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
+
+  /* -----------------------------------------------------------------
+     APP: Mono Font
+     ----------------------------------------------------------------- */
+  --app-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 /* MD3 Theme Attribute Support (data-theme="dark" / "auto") */

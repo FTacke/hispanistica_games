@@ -17,7 +17,7 @@
       <div class="md3-hero__content">
         <p class="md3-body-small md3-hero__eyebrow">Admin</p>
         <h1 class="md3-headline-medium md3-hero__title">Dashboard</h1>
-        <p class="md3-hero__intro">Verwalte Quiz-Units, Releases und Import-Operationen.</p>
+        <p class="md3-hero__intro">Verwalte Quiz-Units, Release-Importe und Veröffentlichungen.</p>
       </div>
     </div>
   </header>
@@ -26,12 +26,12 @@
   <nav class="md3-tabs" role="tablist">
     <button role="tab" aria-selected="true" aria-controls="tab-content" id="tab-quiz" class="md3-tab md3-tab--active">
       <span class="material-symbols-rounded">quiz</span>
-      Quiz Content
+      Quiz-Inhalte
     </button>
     <button role="tab" aria-selected="false" class="md3-tab" disabled aria-disabled="true">
       <span class="material-symbols-rounded">bar_chart</span>
-      Statistics
-      <span class="md3-badge md3-badge--small md3-badge--info">Coming Soon</span>
+      Statistiken
+      <span class="md3-badge md3-badge--small md3-badge--info">Demnächst</span>
     </button>
   </nav>
 
@@ -41,20 +41,23 @@
       <!-- ═══════════════ CONTENT PIPELINE ═══════════════ -->
       <div class="md3-section-header">
         <span class="material-symbols-rounded md3-section-header__icon">cloud_upload</span>
-        <span class="md3-title-small">Content Pipeline</span>
+        <span class="md3-title-small">Content-Pipeline</span>
       </div>
 
       <!-- Section 1: Upload Unit -->
-      <section class="md3-card md3-card--outlined" id="upload-section">
-        <header class="md3-card__header">
-          <h2 class="md3-title-medium">
+      <section class="md3-card md3-card--outlined md3-section-card" id="upload-section">
+        <header class="md3-card__header md3-section-card__header">
+          <div class="md3-section-card__title">
             <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
-            Upload Unit
-          </h2>
+            <div>
+              <h2 class="md3-title-medium">Unit hochladen</h2>
+              <p class="md3-body-small md3-section-card__subtitle">JSON + optionale Audiodateien</p>
+            </div>
+          </div>
         </header>
-        <div class="md3-card__content md3-stack--section">
+        <div class="md3-card__content md3-stack--section md3-section-card__body">
           <form id="upload-form" class="md3-form" enctype="multipart/form-data">
-            <div class="md3-row md3-row--wrap">
+            <div class="md3-form-grid">
               <!-- JSON File Input -->
               <div class="form-field form-field--file">
                 <label for="unit-json">JSON-Datei (erforderlich)</label>
@@ -80,7 +83,7 @@
             </div>
 
             <!-- JSON Preview (appears after file selection) -->
-            <div id="json-preview" class="md3-info-card" style="display: none;">
+            <div id="json-preview" class="md3-info-card" hidden>
               <h3 class="md3-title-small">Vorschau</h3>
               <dl class="md3-preview-grid">
                 <dt>Slug:</dt>
@@ -90,18 +93,18 @@
                 <dt>Fragen:</dt>
                 <dd id="preview-questions">-</dd>
               </dl>
-              <div id="media-refs" class="md3-media-refs" style="display: none;">
+              <div id="media-refs" class="md3-media-refs" hidden>
                 <h4 class="md3-label-medium">Audio-Referenzen:</h4>
                 <ul id="media-refs-list" class="md3-media-ref-list"></ul>
               </div>
             </div>
 
             <!-- Validation Errors -->
-            <div id="upload-errors" class="md3-alert md3-alert--error" role="alert" style="display: none;">
-              <span class="material-symbols-rounded">error</span>
+            <div id="upload-errors" class="md3-alert md3-alert--error md3-alert--inline" role="alert" hidden>
+              <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">error</span>
               <div class="md3-alert__content">
-                <strong>Validierungsfehler:</strong>
-                <span id="upload-error-message"></span>
+                <p id="upload-error-title" class="md3-alert__title">Validierungsfehler</p>
+                <p id="upload-error-message" class="md3-alert__text"></p>
               </div>
             </div>
 
@@ -115,29 +118,37 @@
                 Upload speichern
               </button>
             </div>
+            <p id="upload-actions-helper" class="md3-helper-text" role="status" aria-live="polite">
+              JSON-Datei auswählen, um Upload zu starten.
+            </p>
           </form>
         </div>
       </section>
 
       <!-- Section 2: Release Actions -->
-      <section class="md3-card md3-card--outlined" id="releases-section">
-        <header class="md3-card__header">
-          <h2 class="md3-title-medium">
+      <section class="md3-card md3-card--outlined md3-section-card" id="releases-section">
+        <header class="md3-card__header md3-section-card__header">
+          <div class="md3-section-card__title">
             <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
-            Releases
-          </h2>
-        </header>
-        <div class="md3-card__content md3-stack--section">
-          <!-- Release Selection -->
-          <div class="md3-row md3-row--between md3-row--wrap">
-            <div class="form-field form-field--select">
-              <label for="release-select">Release auswählen</label>
-              <select id="release-select" aria-label="Release auswählen">
-                <option value="">-- Laden... --</option>
-              </select>
+            <div>
+              <h2 class="md3-title-medium">Release</h2>
+              <p class="md3-body-small md3-section-card__subtitle">Importieren, veröffentlichen, zurücknehmen</p>
             </div>
-
-            <div class="md3-toolbar">
+          </div>
+        </header>
+        <div class="md3-card__content md3-stack--section md3-section-card__body">
+          <!-- Release Selection -->
+          <div class="md3-section-toolbar">
+            <div class="md3-section-toolbar__start">
+              <div class="form-field form-field--select">
+                <label for="release-select">Release auswählen</label>
+                <select id="release-select" aria-label="Release auswählen" aria-describedby="release-select-helper">
+                  <option value="">-- Laden... --</option>
+                </select>
+                <p id="release-select-helper" class="md3-helper-text">Wählen Sie ein Release für Import/Veröffentlichung.</p>
+              </div>
+            </div>
+            <div class="md3-section-toolbar__end">
               <button id="refresh-releases" class="md3-button md3-button--outlined" type="button">
                 <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">refresh</span>
                 Aktualisieren
@@ -146,7 +157,7 @@
           </div>
 
           <!-- Release Info -->
-          <div id="release-info" class="md3-release-status" style="display: none;">
+          <div id="release-info" class="md3-release-status" hidden>
             <div class="md3-release-status__header">
               <span id="release-id-display" class="md3-label-large">-</span>
               <span id="release-status-badge" class="md3-badge md3-badge--status-draft">Draft</span>
@@ -163,29 +174,33 @@
           </div>
 
           <!-- Action Result -->
-          <div id="release-action-result" class="md3-action-result" style="display: none;"></div>
+          <div id="release-action-result" class="md3-action-result" role="status" aria-live="polite" hidden></div>
 
           <!-- Release Actions -->
-          <div class="md3-toolbar md3-toolbar--actions">
+          <div class="md3-section-actions">
             <button id="btn-import" class="md3-button md3-button--tonal" type="button" disabled>
               <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">download</span>
               Import (Draft)
             </button>
-            <div class="md3-button-with-helper">
-              <button id="btn-publish" class="md3-button md3-button--filled" type="button" disabled>
-                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">publish</span>
-                Publish
-              </button>
-              <p class="md3-helper-text md3-helper-text--warning">
-                <span class="material-symbols-rounded">warning</span>
-                Ersetzt den aktuell veröffentlichten Content.
-              </p>
-            </div>
+            <button id="btn-publish" class="md3-button md3-button--filled" type="button" disabled>
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">publish</span>
+              Veröffentlichen
+            </button>
             <button id="btn-unpublish" class="md3-button md3-button--outlined" type="button" disabled>
               <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">unpublished</span>
-              Unpublish
+              Veröffentlichung zurücknehmen
             </button>
           </div>
+          <div class="md3-alert md3-alert--warning md3-alert--inline md3-release-warning" role="note">
+            <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">warning</span>
+            <div class="md3-alert__content">
+              <p class="md3-alert__title">Hinweis</p>
+              <p class="md3-alert__text">Das Veröffentlichen ersetzt den aktuell veröffentlichten Content.</p>
+            </div>
+          </div>
+          <p id="release-actions-helper" class="md3-helper-text" role="status" aria-live="polite">
+            Release auswählen, um Aktionen zu aktivieren.
+          </p>
 
           <!-- Log Viewer -->
           <details id="log-viewer" class="md3-log-viewer">
@@ -201,26 +216,37 @@
       <!-- ═══════════════ RUNTIME CONFIGURATION ═══════════════ -->
       <div class="md3-section-header">
         <span class="material-symbols-rounded md3-section-header__icon">tune</span>
-        <span class="md3-title-small">Runtime Configuration</span>
+        <span class="md3-title-small">Units-Verwaltung</span>
       </div>
 
       <!-- Section 3: Units List -->
-      <section class="md3-card md3-card--outlined" id="units-section">
-        <header class="md3-card__header">
-          <h2 class="md3-title-medium">
+      <section class="md3-card md3-card--outlined md3-section-card" id="units-section">
+        <header class="md3-card__header md3-section-card__header">
+          <div class="md3-section-card__title">
             <span class="material-symbols-rounded" aria-hidden="true">list_alt</span>
-            Units
-          </h2>
+            <div>
+              <h2 class="md3-title-medium">Units</h2>
+              <p class="md3-body-small md3-section-card__subtitle">Suche, Filter und Reihenfolge</p>
+            </div>
+          </div>
         </header>
-        <div class="md3-card__content md3-stack--section">
+        <div class="md3-card__content md3-stack--section md3-section-card__body">
           <!-- Search and Toolbar -->
-          <div class="md3-row--between align-items-center">
-            <div class="md3-row md3-fill-max max-w-400">
-              <div class="form-field form-field--compact form-field--no-margin">
-                <input id="units-search" type="search" aria-label="Units suchen" placeholder="Units suchen...">
+          <div class="md3-section-toolbar md3-section-toolbar--wrap">
+            <div class="md3-section-toolbar__start">
+              <div class="form-field form-field--compact form-field--no-margin md3-search-field">
+                <label for="units-search" class="sr-only">Units suchen</label>
+                <input id="units-search" type="search" aria-describedby="units-search-helper" placeholder="Units suchen...">
+                <span id="units-search-helper" class="sr-only">Suche nach Slug oder Titel.</span>
+              </div>
+              <div class="md3-filter-chips" role="group" aria-label="Filteroptionen">
+                <button type="button" id="filter-inactive" class="md3-chip" aria-pressed="false">
+                  <span class="material-symbols-rounded md3-chip__icon" aria-hidden="true">visibility_off</span>
+                  <span class="md3-chip__label">Inaktive anzeigen</span>
+                </button>
               </div>
             </div>
-            <div class="md3-toolbar">
+            <div class="md3-section-toolbar__end">
               <button id="refresh-units" class="md3-button md3-button--outlined" type="button">
                 <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">refresh</span>
                 Aktualisieren
@@ -231,17 +257,12 @@
               </button>
             </div>
           </div>
-
-          <!-- Filter Chips -->
-          <div class="md3-filter-chips" role="group" aria-label="Filteroptionen">
-            <button type="button" id="filter-inactive" class="md3-chip" aria-pressed="false">
-              <span class="material-symbols-rounded md3-chip__icon" aria-hidden="true">visibility_off</span>
-              <span class="md3-chip__label">Inaktive anzeigen</span>
-            </button>
-          </div>
+          <p id="units-actions-helper" class="md3-helper-text" role="status" aria-live="polite">
+            Änderungen vornehmen, um Speichern zu aktivieren.
+          </p>
 
           <!-- Units Save Result -->
-          <div id="units-action-result" class="md3-action-result" style="display: none;"></div>
+          <div id="units-action-result" class="md3-action-result" role="status" aria-live="polite" hidden></div>
 
           <!-- Units Table -->
           <div class="md3-table-container">
@@ -250,11 +271,11 @@
                 <tr>
                   <th class="col-w-15">Slug</th>
                   <th class="col-w-25">Titel</th>
-                  <th class="col-w-10">Status</th>
-                  <th class="col-w-10">Aktiv</th>
-                  <th class="col-w-10">Reihenfolge</th>
+                  <th class="col-w-10">Fragen</th>
+                  <th class="col-w-10 md3-table__cell--center">Aktiv</th>
+                  <th class="col-w-10 md3-table__cell--center">Reihenfolge</th>
                   <th class="col-w-15 md3-hide-mobile">Release</th>
-                  <th class="col-w-15">Aktionen</th>
+                  <th class="col-w-15 md3-table__cell--actions">Aktionen</th>
                 </tr>
               </thead>
               <tbody id="units-body">

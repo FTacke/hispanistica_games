@@ -16,11 +16,11 @@
   padding-block: var(--space-3);
   margin-block-start: var(--space-4);
   color: var(--md-sys-color-on-surface-variant);
-  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  border-block-end: var(--app-border-width) solid var(--md-sys-color-outline-variant);
 }
 
 .md3-section-header__icon {
-  font-size: 1.25rem;
+  font-size: var(--app-icon-size-md);
 }
 
 /* =============================================================================
@@ -32,7 +32,7 @@
   gap: var(--space-2);
   padding-inline: var(--space-4);
   padding-block: var(--space-2);
-  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  border-block-end: var(--app-border-width) solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container-low);
 }
 
@@ -43,11 +43,13 @@
   padding: var(--space-3) var(--space-4);
   background: transparent;
   border: none;
-  border-radius: var(--radius-m);
+  border-radius: var(--radius-md);
   color: var(--md-sys-color-on-surface-variant);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-label-large-font-family);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -67,6 +69,112 @@
 }
 
 /* =============================================================================
+   Section Card + Toolbar Patterns
+   ============================================================================= */
+
+.md3-section-card {
+  padding: 0;
+}
+
+.md3-section-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-section-gap);
+  padding: var(--app-section-padding);
+  border-block-end: var(--app-border-width) solid var(--md-sys-color-outline-variant);
+  flex-wrap: wrap;
+}
+
+.md3-section-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.md3-section-card__title .material-symbols-rounded {
+  font-size: var(--app-icon-size-md);
+  color: var(--md-sys-color-primary);
+}
+
+.md3-section-card__subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-section-card__body {
+  padding: var(--app-section-padding);
+}
+
+.md3-section-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-section-toolbar-gap);
+}
+
+.md3-section-toolbar--wrap {
+  flex-wrap: wrap;
+}
+
+.md3-section-toolbar__start,
+.md3-section-toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: var(--app-section-toolbar-gap);
+}
+
+.md3-section-toolbar__start {
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.md3-section-toolbar__end {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.md3-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-section-toolbar-gap);
+  align-items: center;
+  padding-block-start: var(--space-4);
+  border-block-start: var(--app-border-width) solid var(--md-sys-color-outline-variant);
+}
+
+.md3-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--app-form-grid-min-width), 1fr));
+  gap: var(--app-section-gap);
+}
+
+.md3-search-field {
+  flex: 1;
+  max-width: var(--app-search-max-width);
+  min-width: 0;
+}
+
+.md3-search-field input[type="search"] {
+  min-height: var(--app-form-field-compact-height);
+}
+
+.md3-helper-text {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-body-small-font-family);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+.md3-release-warning {
+  margin-block-start: var(--space-3);
+}
+
+/* =============================================================================
    Preview Grid
    ============================================================================= */
 
@@ -78,13 +186,13 @@
 }
 
 .md3-preview-grid dt {
-  font-weight: 500;
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
   color: var(--md-sys-color-on-surface-variant);
 }
 
 .md3-preview-grid dd {
   margin: 0;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--app-font-mono);
 }
 
 /* =============================================================================
@@ -94,8 +202,8 @@
 .md3-info-card {
   padding: var(--space-4);
   background: var(--md-sys-color-surface-container-low);
-  border-radius: var(--radius-m);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
+  border: var(--app-border-width) solid var(--md-sys-color-outline-variant);
 }
 
 .md3-info-card h3 {
@@ -110,7 +218,7 @@
 .md3-media-refs {
   margin-block-start: var(--space-4);
   padding-block-start: var(--space-3);
-  border-block-start: 1px solid var(--md-sys-color-outline-variant);
+  border-block-start: var(--app-border-width) solid var(--md-sys-color-outline-variant);
 }
 
 .md3-media-ref-list {
@@ -128,21 +236,22 @@
   gap: var(--space-2);
   padding: var(--space-2);
   background: var(--md-sys-color-surface);
-  border-radius: var(--radius-s);
-  font-family: var(--font-mono, monospace);
-  font-size: 0.8125rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--app-font-mono);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
 }
 
 .md3-media-ref--found {
-  border-left: 3px solid var(--md-sys-color-success);
+  border-left: var(--app-border-width-emphasis) solid var(--md-sys-color-success);
 }
 
 .md3-media-ref--missing {
-  border-left: 3px solid var(--md-sys-color-warning);
+  border-left: var(--app-border-width-emphasis) solid var(--md-sys-color-warning);
 }
 
 .md3-media-ref .material-symbols-rounded {
-  font-size: 1rem;
+  font-size: var(--app-icon-size-sm);
 }
 
 .md3-media-ref--found .material-symbols-rounded {
@@ -160,8 +269,8 @@
 .md3-release-status {
   padding: var(--space-4);
   background: var(--md-sys-color-surface-container-low);
-  border-radius: var(--radius-m);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
+  border: var(--app-border-width) solid var(--md-sys-color-outline-variant);
 }
 
 .md3-release-status__header {
@@ -176,15 +285,17 @@
   flex-wrap: wrap;
   gap: var(--space-4);
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.875rem;
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
 }
 
 .md3-release-status__timestamps {
   margin-block-start: var(--space-3);
   padding-block-start: var(--space-3);
-  border-block-start: 1px solid var(--md-sys-color-outline-variant);
+  border-block-start: var(--app-border-width) solid var(--md-sys-color-outline-variant);
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.8125rem;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
@@ -195,25 +306,23 @@
    ============================================================================= */
 
 .md3-badge--status-draft {
-  background: color-mix(in srgb, var(--md-sys-color-warning, #f59e0b) 16%, transparent);
-  color: var(--md-sys-color-on-warning-container, #92400e);
+  background: var(--md-sys-color-warning-container);
+  color: var(--md-sys-color-on-warning-container);
 }
 
 .md3-badge--status-published {
-  background: color-mix(in srgb, var(--md-sys-color-success, #22c55e) 16%, transparent);
-  color: var(--md-sys-color-success, #22c55e);
+  background: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
 }
 
 .md3-badge--status-unpublished {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 16%, transparent);
+  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.md3-badge--info {
-  background: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent);
-  color: var(--md-sys-color-primary);
-  font-size: 0.6875rem;
-  padding: 2px 6px;
+.md3-badge--metric {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
 }
 
 /* =============================================================================
@@ -222,8 +331,8 @@
 
 .md3-log-viewer {
   margin-block-start: var(--space-4);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--radius-m);
+  border: var(--app-border-width) solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -234,7 +343,11 @@
   padding: var(--space-3);
   background: var(--md-sys-color-surface-container);
   cursor: pointer;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-label-large-font-family);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  letter-spacing: var(--md-sys-typescale-label-large-letter-spacing);
   user-select: none;
 }
 
@@ -243,17 +356,17 @@
 }
 
 .md3-log-viewer[open] .md3-log-viewer__summary {
-  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  border-block-end: var(--app-border-width) solid var(--md-sys-color-outline-variant);
 }
 
 .md3-log-viewer__content {
   margin: 0;
   padding: var(--space-4);
-  max-height: 400px;
+  max-height: var(--app-log-max-height);
   overflow-y: auto;
-  font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
-  font-size: 0.75rem;
-  line-height: 1.5;
+  font-family: var(--app-font-mono);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
   white-space: pre-wrap;
@@ -270,53 +383,39 @@
 
 .md3-action-result--success {
   padding: var(--space-3);
-  background: color-mix(in srgb, var(--md-sys-color-success, #22c55e) 10%, transparent);
-  border: 1px solid var(--md-sys-color-success, #22c55e);
-  border-radius: var(--radius-m);
-  color: var(--md-sys-color-success, #22c55e);
+  background: color-mix(in srgb, var(--md-sys-color-success) 10%, transparent);
+  border: var(--app-border-width) solid var(--md-sys-color-success);
+  border-radius: var(--radius-md);
+  color: var(--md-sys-color-success);
 }
 
 .md3-action-result--error {
   padding: var(--space-3);
   background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
-  border: 1px solid var(--md-sys-color-error);
-  border-radius: var(--radius-m);
+  border: var(--app-border-width) solid var(--md-sys-color-error);
+  border-radius: var(--radius-md);
   color: var(--md-sys-color-error);
+}
+
+.md3-action-result--loading {
+  padding: var(--space-3);
+  background: var(--md-sys-color-surface-container-high);
+  border: var(--app-border-width) solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-md);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* =============================================================================
    Button with Helper Text
    ============================================================================= */
 
-.md3-button-with-helper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.md3-helper-text--warning {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: 0.75rem;
-  color: var(--md-sys-color-warning, #f59e0b);
-}
-
-.md3-helper-text--warning .material-symbols-rounded {
-  font-size: 0.875rem;
-}
+/* Deprecated helper styles removed in favor of md3-alert + md3-helper-text */
 
 /* =============================================================================
    Toolbar Actions
    ============================================================================= */
 
-.md3-toolbar--actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding-block-start: var(--space-4);
-  border-block-start: 1px solid var(--md-sys-color-outline-variant);
-}
+/* md3-toolbar--actions handled by md3-section-actions */
 
 /* =============================================================================
    File Input Styling
@@ -324,8 +423,9 @@
 
 .form-field--file input[type="file"] {
   padding: var(--space-3);
-  border: 2px dashed var(--md-sys-color-outline);
-  border-radius: var(--radius-m);
+  min-height: var(--app-form-field-height);
+  border: var(--app-border-width-strong) dashed var(--md-sys-color-outline);
+  border-radius: var(--radius-md);
   background: var(--md-sys-color-surface-container-low);
   width: 100%;
   cursor: pointer;
@@ -337,10 +437,10 @@
   background: var(--md-sys-color-surface-container);
 }
 
-.form-field--file input[type="file"]:focus {
+.form-field--file input[type="file"]:focus-visible {
   outline: none;
   border-color: var(--md-sys-color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+  box-shadow: 0 0 0 var(--app-focus-ring-width) var(--app-focus-ring-color);
 }
 
 /* =============================================================================
@@ -361,38 +461,65 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.md3-table .md3-input--small {
-  width: 60px;
-  padding: var(--space-2);
-  font-size: 0.875rem;
+.md3-table tbody tr {
+  min-height: var(--app-table-row-height);
+}
+
+.md3-table th,
+.md3-table td {
+  vertical-align: middle;
+}
+
+.md3-table__cell--center {
   text-align: center;
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--radius-s);
+}
+
+.md3-table__cell--actions {
+  text-align: right;
+  min-width: var(--app-action-column-min-width);
+}
+
+.md3-table .md3-input--small {
+  width: var(--app-table-input-width);
+  min-height: var(--app-form-field-compact-height);
+  padding: var(--space-2);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  text-align: center;
+  border: var(--app-border-width) solid var(--md-sys-color-outline);
+  border-radius: var(--radius-sm);
   background: var(--md-sys-color-surface);
 }
 
-.md3-table .md3-input--small:focus {
+.md3-table .md3-input--small:focus-visible {
   outline: none;
   border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 var(--app-focus-ring-width) var(--app-focus-ring-color);
 }
 
 .md3-table .md3-checkbox {
-  width: 20px;
-  height: 20px;
+  width: var(--app-checkbox-size);
+  height: var(--app-checkbox-size);
   cursor: pointer;
 }
 
-/* =============================================================================
-   Danger Button
-   ============================================================================= */
-
-.md3-button--danger {
-  background: var(--md-sys-color-error);
-  color: var(--md-sys-color-on-error);
+.md3-table .md3-checkbox:focus-visible {
+  outline: var(--app-focus-ring-width) solid var(--md-sys-color-primary);
+  outline-offset: var(--app-focus-ring-offset);
 }
 
-.md3-button--danger:hover {
-  background: color-mix(in srgb, var(--md-sys-color-error) 90%, black);
+.md3-button--danger-tonal {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.md3-button--danger-tonal:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 88%, var(--md-sys-color-on-error-container));
+}
+
+.md3-button--danger-tonal:focus-visible {
+  outline: var(--app-focus-ring-width) solid var(--md-sys-color-error);
+  outline-offset: var(--app-focus-ring-offset);
 }
 
 /* =============================================================================
@@ -413,18 +540,20 @@
    ============================================================================= */
 
 .form-field--select select {
-  min-width: 250px;
+  min-width: var(--app-form-grid-min-width);
+  min-height: var(--app-form-field-height);
   padding: var(--space-3);
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--radius-m);
+  border: var(--app-border-width) solid var(--md-sys-color-outline);
+  border-radius: var(--radius-md);
   background: var(--md-sys-color-surface);
   font: inherit;
   cursor: pointer;
 }
 
-.form-field--select select:focus {
+.form-field--select select:focus-visible {
   outline: none;
   border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 var(--app-focus-ring-width) var(--app-focus-ring-color);
 }
 
 /* =============================================================================
@@ -437,12 +566,25 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .md3-toolbar--actions {
+  .md3-section-actions {
     flex-direction: column;
   }
 
-  .md3-toolbar--actions .md3-button {
+  .md3-section-actions .md3-button {
     width: 100%;
+  }
+
+  .md3-section-toolbar__end {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .md3-section-toolbar__end .md3-button {
+    width: 100%;
+  }
+
+  .md3-search-field {
+    max-width: 100%;
   }
 
   .md3-release-status__meta {
