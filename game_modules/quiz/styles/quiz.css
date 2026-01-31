@@ -755,7 +755,7 @@
 
 .game-shell[data-game="quiz"] .quiz-leaderboard__item {
   display: grid;
-  grid-template-columns: 50px 1fr 80px 60px;
+  grid-template-columns: 50px 1fr 80px;
   gap: var(--quiz-space-md);
   padding: var(--quiz-space-md) var(--quiz-space-lg);
   border-bottom: 1px solid var(--quiz-surface-variant);
@@ -786,14 +786,6 @@
 .game-shell[data-game="quiz"] .quiz-leaderboard__score {
   font-weight: 600;
   text-align: right;
-}
-
-.game-shell[data-game="quiz"] .quiz-leaderboard__tokens {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--quiz-accent-gold);
-  font-weight: 500;
 }
 
 .game-shell[data-game="quiz"] .quiz-leaderboard__empty {

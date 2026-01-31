@@ -1738,6 +1738,10 @@
     document.getElementById('quiz-level-num').textContent = difficulty;
     document.getElementById('quiz-question-current').textContent = state.currentIndex + 1;
     document.getElementById('quiz-question-total').textContent = '10';
+    const compactProgress = document.getElementById('quiz-question-compact');
+    if (compactProgress) {
+      compactProgress.textContent = `${state.currentIndex + 1}/10`;
+    }
     
     // Update joker button
     updateJokerButton();

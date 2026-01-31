@@ -223,10 +223,6 @@
         <span class="quiz-leaderboard-card__score">
           <span class="quiz-leaderboard-card__score-value">${entry.total_score}</span>
         </span>
-        <span class="quiz-leaderboard-card__tokens">
-          <span class="material-symbols-rounded">toll</span>
-          <span>${entry.tokens_count}</span>
-        </span>
         ${isAdmin ? `
           <button type="button" 
                   class="quiz-admin-icon-btn" 
