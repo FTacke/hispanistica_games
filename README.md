@@ -145,30 +145,33 @@ Der Quellcode ist öffentlich auf [GitHub](https://github.com/FTacke/hispanistic
 
 ---
 
-## Schnellstart (lokale Entwicklung)
+## Python-Version (autoritativ)
 
-**Voraussetzungen**: Python 3.12+, pip
+- **Prod/CI:** Python `3.12` (latest Patch über Docker/CI)
+- **Dev-Target:** Python `3.12.10` (`.python-version`)
+- **Maßgebliche Quellen:**
+  - `Dockerfile`: `FROM python:3.12-slim` (Builder + Runtime)
+  - `.github/workflows/ci.yml`: `python-version: "3.12"`
+  - `.github/workflows/md3-lint.yml`: `python-version: "3.12"`
+- **Klarer Hinweis:** Wenn Docker/CI auf Patchlevel gepinnt werden sollen, dort explizit `3.12.10` setzen.
 
-```bash
-# Repository klonen
-git clone git@github.com:FTacke/hispanistica_games.git
+## Setup (Windows, copy-paste)
+
+```powershell
+git clone https://github.com/FTacke/hispanistica_games.git
 cd hispanistica_games
-
-# Virtuelle Umgebung erstellen
-python -m venv venv
-venv\Scripts\activate  # Windows
-
-# Abhängigkeiten installieren
-pip install -r requirements.txt
-
-# Admin-User erstellen
-$env:START_ADMIN_USERNAME='admin'; $env:START_ADMIN_PASSWORD='SecurePass123'; python scripts/create_initial_admin.py
-
-# Anwendung starten
-$env:FLASK_ENV='development'; $env:FLASK_SECRET_KEY='dev-secret-key'; python -m src.app.main
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+.\scripts\bootstrap.ps1
+python -m src.app.main
 ```
 
-Webapp ist verfügbar unter `http://localhost:8000`.
+Optional für zusätzliche Dev-Tools:
+
+```powershell
+.\scripts\bootstrap.ps1 -Dev
+```
+
+Wenn `.env` fehlt, gibt `scripts/bootstrap.ps1` nur einen Hinweis aus und verändert keinen bestehenden Zustand.
 
 ---
 
@@ -210,49 +213,37 @@ The application uses Material Design 3 (MD3) with a custom color scheme:
 
 Color tokens are defined in `static/css/branding.css`.
 
+## ENV-Variablen
+
+Secrets gehören in `.env` (gitignored) und sollen aus Secret-Manager/Deployment-Umgebung injiziert werden (z. B. Docker Secrets, CI Secrets, Vault).
+
+| Variable | Zweck |
+|---|---|
+| `FLASK_SECRET_KEY` | Signiert Flask-Session-Cookies. |
+| `JWT_SECRET_KEY` | Signiert JWTs bei symmetrischer Konfiguration (`HS256`). |
+| `AUTH_DATABASE_URL` | Verbindungs-URL zur Auth-Datenbank. |
+| `QUIZ_DATABASE_URL` | Verbindungs-URL zur Quiz-Datenbank. |
+| `AUTH_HASH_ALGO` | Passwort-Hash-Algorithmus für Auth-Accounts (`argon2` oder `bcrypt`). |
+| `FLASK_ENV` | Laufmodus der App (`development`, `production`, `testing`). |
+| `JWT_ALG` | JWT-Algorithmus (z. B. `HS256`, `RS256`). |
+| `JWT_PRIVATE_KEY_PATH` | Pfad zum privaten JWT-Schlüssel bei asymmetrischer Signatur. |
+| `JWT_PUBLIC_KEY_PATH` | Pfad zum öffentlichen JWT-Schlüssel zur Verifikation. |
+
 ## Development
 
 ### Running Tests
 
 ```bash
-pytest
+pytest -v
 ```
 
 ### Code Style
 
 ```bash
-# Linting
 ruff check .
-
-# Type checking
 mypy src/
 ```
-
-## Environment Variables
-
-### Required
-```env
-FLASK_SECRET_KEY=<random-secret>    # For sessions & JWT
-```
-
-### Optional
-```env
-FLASK_ENV=development               # development|production
-AUTH_DATABASE_URL=sqlite:///data/db/auth.db  # Or postgresql://...
-ACCESS_TOKEN_EXP=3600               # JWT access token lifetime (seconds)
-REFRESH_TOKEN_EXP=604800            # JWT refresh token lifetime (seconds)
-AUTH_HASH_ALGO=argon2               # Password hashing (argon2|bcrypt)
-```
-
-See [docs/admin/ADMIN_SETUP.md](docs/admin/ADMIN_SETUP.md) for full configuration reference.
-
-## Documentation
-
-- [Admin Setup Guide](docs/admin/ADMIN_SETUP.md) — Complete admin system documentation
-- [Admin Auth Audit](docs/admin/admin-auth-audit.md) — Technical analysis & architecture
-- [Architecture](docs/ARCHITECTURE.md) — System architecture overview
 
 ## License
 
 See [LICENSE](LICENSE) for details.
-# Test comment to trigger deployment

@@ -21,7 +21,6 @@ venv/
 env/
 .venv/
 ENV/
-.python-version
 
 # =============================================================================
 # Environment Variables & Secrets (CRITICAL - NEVER COMMIT!)
@@ -94,8 +93,26 @@ data/
 media/
 
 # Keep directory structure for deployment
+!data/
+data/*
 !data/.gitkeep
+
+!media/
+media/*
 !media/.gitkeep
+
+# Track placeholder docs inside ignored runtime directories
+!data/db/
+data/db/*
+!data/db/README.md
+
+!data/import_logs/
+data/import_logs/*
+!data/import_logs/README.md
+
+!media/current/
+media/current/*
+!media/current/README.md
 
 # =============================================================================
 # Quiz Content Releases (deployed via rsync, not tracked)
@@ -125,6 +142,9 @@ static/quiz-media/**/*.ogg
 media/releases/*
 !media/releases/README.md
 media/current
+!media/current/
+media/current/*
+!media/current/README.md
 
 # Import logs (production-generated)
 data/import_logs/*.log
@@ -170,7 +190,8 @@ releases/
 # =============================================================================
 # IDEs & Editors
 # =============================================================================
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
