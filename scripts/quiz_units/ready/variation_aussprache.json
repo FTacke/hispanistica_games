@@ -1,0 +1,1243 @@
+{
+  "schema_version": "quiz_unit_v2",
+  "slug": "variation_aussprache",
+  "title": "Variation in der Aussprache",
+  "description": "Hier geht es um Aussprachevariation im Spanischen. Im Fokus stehen regionale Unterschiede sowie zentrale Phänomene wie Distinción, Seseo und Yeísmo und deren Bedeutung für die Wahrnehmung gesprochener Varietäten.",
+  "authors": [
+    "Frederike Lau",
+    "Mika Wahn",
+    "Karina Stephan Quezada",
+    "Felix Tacke (Koordination)"
+  ],
+  "based_on": {
+    "chapter_title": "Aussprachevariation",
+    "chapter_url": "https://school.hispanistica.com/variation/variation_aussprache/",
+    "course_title": "Spanische Linguistik @ School",
+    "course_url": "https://school.hispanistica.com/"
+  },
+  "is_active": true,
+  "order_index": 1,
+  "questions_statistics": {
+    "1": 13,
+    "2": 10,
+    "3": 9
+  },
+  "questions": [
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Wo ist der *seseo* verbreitet?",
+      "explanation": "Während die *distinción* als regionale Besonderheit die Unterscheidung zwischen den Phonemen /θ/ und /s/ beschreibt, findet sich im Großteil der spanischsprachigen Welt nur der Laut /s/ im phonologischen System – der *seseo*.",
+      "answers": [
+        {
+          "text": "Überall in der spanischsprachigen Welt mit Ausnahme einiger Regionen Spaniens",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In Zentral- und Nordspanien",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "In großen Teilen Spaniens sowie im Norden Argentiniens",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur in Mexiko und Zentralamerika",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWBW",
+      "meta": {
+        "author_initials": "Mika"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "In welcher der folgenden Sprachen wird der Interdentallaut [θ] ebenfalls regelmäßig verwendet?",
+      "explanation": "Der Interdentallaut [θ] ist im Englischen ein regulärer Laut und kann Bedeutungen unterscheiden, etwa in Minimalpaaren wie *thin* [θɪn] vs. *sin* [sɪn]. In den meisten romanischen Sprachen wie dem Französischen, Portugiesischen oder Italienischen gehört [θ] hingegen nicht zum Lautsystem. Der Vergleich zeigt, dass [θ] sprachübergreifend vorkommt; seine Verwendung im Spanischen mit *distinción* ist jedoch eine spezifische varietätenbezogene Besonderheit.",
+      "answers": [
+        {
+          "text": "Im Englischen",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Im Französischen",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Im Portugiesischen",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Im Italienischen",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWBX",
+      "meta": {
+        "author_initials": "Mika"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Worum geht es bei der sogenannten *distinción* im Spanischen?",
+      "explanation": "Die *distinción* bezeichnet die phonologische Unterscheidung zwischen /θ/ und /s/, wie sie in vielen Varietäten Spaniens vorkommt. Während beim *seseo* beide Laute als /s/ realisiert werden, bleibt bei der *distinción* der Interdentallaut [θ] erhalten und wird z. B. in Wörtern wie *cena* oder *zapato* ausgesprochen.",
+      "answers": [
+        {
+          "text": "Unterscheidung der Phoneme /s/ und /θ/",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Abschwächung von /s/ am Silbenende",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Unterscheidung der Grapheme <ll> und <y>",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Velarisierung des Phonems /n/",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWBY",
+      "meta": {
+        "author_initials": "KSQ"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Was beschreibt das Phänomen des *yeísmo*?",
+      "explanation": "Der *yeísmo* bezeichnet die Neutralisierung der beiden palatalen Phoneme /ʎ/ und /ʝ/. In *yeísta*-Varietäten werden beide Laute als /ʝ/ realisiert, sodass Wörter wie *calló* und *cayó* gleich ausgesprochen werden. Der *yeísmo* ist heute in vielen Regionen der spanischsprachigen Welt verbreitet, während die Unterscheidung /ʎ/ vs. /ʝ/ nur noch in wenigen Varietäten erhalten ist.",
+      "answers": [
+        {
+          "text": "Die Neutralisierung der Phoneme /ʎ/ und /ʝ/ zu /ʝ/",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Die Unterscheidung der Phoneme /ʎ/ und /ʝ/",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Die Neutralisierung der Phoneme /ʎ/ und /ʝ/ zu /ʎ/",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Die Neutralisierung der Phoneme /s/ und /θ/ zu /s/",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWBZ",
+      "meta": {
+        "author_initials": "Mika"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Wie heißt die Aussprachevariante des Spanischen, bei der /s/ und /θ/ nicht unterschieden werden?",
+      "explanation": "Beim *seseo* werden die Phoneme /s/ und /θ/ nicht unterschieden, sondern beide als [s] realisiert (z. B. *casa* und *caza* mit [s]). Beim *ceceo* fallen die beiden Phoneme zwar ebenfalls zusammen, werden jedoch als [θ] ausgesprochen. Der Begriff *distinción* bezeichnet demgegenüber die systematische Unterscheidung von /s/ und /θ/ (z. B. *casa* mit [s] vs. *caza* mit [θ]).",
+      "answers": [
+        {
+          "text": "*Seseo*",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "*Ceceo*",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "*Distinción*",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "*Yeísmo*",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC0",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Welcher Laut wird in Varietäten mit *distinción* im Unterschied zum *seseo* unterschieden?",
+      "explanation": "Bei der *distinción* werden die Phoneme /s/ und /θ/ systematisch unterschieden; zusätzlich zum alveolaren Frikativ [s] tritt der interdental artikulierte Laut [θ] auf, etwa in *cena* oder *zapato*.",
+      "answers": [
+        {
+          "text": "/θ/",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "/s/",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "/z/",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "/ʎ/",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC1",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "In welchen Regionen Spaniens wird der Laut [θ] (z. B. in *zapato*, *cena*, *cine*) nicht realisiert?",
+      "explanation": "In Westandalusien und auf den Kanarischen Inseln ist der *seseo* verbreitet; die Grapheme <z> sowie <ce/ci> werden dort nicht als [θ], sondern als [s] realisiert. In anderen Regionen Spaniens, etwa in Zentral- und Nordspanien, ist hingegen die *distinción*, also die Unterscheidung von [θ] und [s], üblich.",
+      "answers": [
+        {
+          "text": "In Westandalusien und auf den Kanarischen Inseln",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In Andalusien und auf den Balearen",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "In Nordwestspanien",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "In Zentralspanien",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC2",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "In welchen Teilen der spanischsprachigen Welt ist der *yeísmo* heute die übliche Aussprachevariante?",
+      "explanation": "Der *yeísmo* (Neutralisierung von /ʎ/ und /ʝ/ zu /ʝ/) ist heute in den meisten Regionen der spanischsprachigen Welt verbreitet, sowohl in Hispanoamerika als auch in weiten Teilen Spaniens. Nur in wenigen Regionen, etwa in Teilen Nordspaniens oder in einzelnen Varietäten Südamerikas, ist die Unterscheidung /ʎ/ vs. /ʝ/ noch erhalten.",
+      "answers": [
+        {
+          "text": "In den meisten Regionen der spanischsprachigen Welt",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Nur in Nordspanien und den Anden",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Nur in Mexiko und Zentralamerika",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur im Süden Spaniens",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC3",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Welches der folgenden Phänomene betrifft nicht die Aussprachevariation im Spanischen?",
+      "explanation": "Der *voseo* betrifft die Verwendung des Pronomens *vos* statt *tú* (und entsprechende Verbformen) und ist primär ein morphosyntaktisches Phänomen. Im Gegensatz dazu sind *seseo*, *yeísmo* oder die Abschwächung von /s/ phonetisch-phonologische Phänomene der Aussprachevariation.",
+      "answers": [
+        {
+          "text": "Der *voseo*",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Der *seseo*",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Der *yeísmo*",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Die Aspiration von /s/",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC4",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Welches spanischsprachige Land hat die beste und korrekteste Aussprache?",
+      "explanation": "Es gibt im Spanischen keine allgemein „beste“ oder „korrekteste“ Aussprache. Alle Varietäten sind linguistisch gleichwertig; Unterschiede sind regional, sozial oder stilistisch bedingt und nicht prinzipiell „besser“ oder „schlechter“.",
+      "answers": [
+        {
+          "text": "Keines – alle Varietäten sind gleichwertig",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Mexiko",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Spanien (Zentralspanien)",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Kolumbien",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC5",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Welche Aussprachephänomene sollte man als Spanischlehrkraft kennen?",
+      "explanation": "Als besonders relevant gelten die im Kontakt mit Lernenden häufig auftretenden Varietätenmerkmale wie *seseo*, *distinción*, *yeísmo* sowie die Abschwächung oder Aspiration von /s/ am Silbenende. Diese Phänomene beeinflussen das Hörverstehen und die Wahrnehmung „korrekter“ Aussprache besonders stark.",
+      "answers": [
+        {
+          "text": "*seseo*, *distinción*, *yeísmo* und Abschwächung von /s/",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Nur *distinción*",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Nur *yeísmo*",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur Abschwächung von /s/",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC6",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Bei welchem der folgenden Variationsphänomene ist die Aussprache betroffen?",
+      "explanation": "Der *yeísmo* betrifft die Aussprache, da die Laute /ʎ/ und /ʝ/ nicht unterschieden werden. Im Gegensatz dazu betrifft z. B. der *voseo* primär die Grammatik (Pronomen und Verbformen).",
+      "answers": [
+        {
+          "text": "Der *yeísmo*",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Der *voseo*",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Die Wahl zwischen *ser* und *estar*",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Die Verwendung von Diminutiven",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC7",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 1,
+      "type": "single_choice",
+      "prompt": "Welche Lautklasse steht bei der Aussprachevariation im Spanischen im Vordergrund?",
+      "explanation": "Da die Vokale im Spanischen relativ stabil sind, betreffen viele Variationsphänomene vor allem Konsonanten, etwa /s/ (Aspiration/Elision), /ʎ/ vs. /ʝ/ (*yeísmo*) oder /θ/ vs. /s/ (*distinción* vs. *seseo*).",
+      "answers": [
+        {
+          "text": "Konsonanten",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Vokale",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Tonhöhe (Prosodie)",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Silbenstruktur",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC8",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "In welchen Regionen Hispanoamerikas wird das Phonem /s/ am Silben- und Wortende typischerweise abgeschwächt oder sogar getilgt?",
+      "explanation": "In den Tieflandgebieten und Küstenregionen Südamerikas sowie in der Karibik ist die Abschwächung oder der Ausfall von /s/ typisch, etwa durch Aspiration oder Elision. Dagegen bleibt das Phonem /s/ am Silbenende in den Hochlandgebieten in der Regel erhalten und wird klar artikuliert (z. B. in Mexiko-Stadt, Bogotá oder La Paz).",
+      "answers": [
+        {
+          "text": "In Tiefland- und Küstengebieten sowie in der Karibik",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In den Hochlandgebieten sowie im Binnenland",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Hauptsächlich in ländlichen Gebieten",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Vor allem in Hauptstädten und Ballungsräumen",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWC9",
+      "meta": {
+        "author_initials": "Mika"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Wo begegnet man typischerweise dem sogenannten *žeísmo* und *šeísmo*?",
+      "explanation": "Das Río-de-la-Plata-Gebiet ist bekannt für den *žeísmo* und *šeísmo*, bei denen <y> und <ll> nicht als [ʝ], sondern als postalveolare Frikative ([ʒ] bzw. [ʃ]) realisiert werden. Besonders in Argentinien und Uruguay sind diese Merkmale verbreitet und gelten als typisch für die regionale Aussprache.",
+      "answers": [
+        {
+          "text": "Im Río-de-la-Plata-Gebiet (Argentinien und Uruguay)",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In Mexiko und Zentralamerika",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "In Zentral- und Nordspanien",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "In Kolumbien und Venezuela",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCA",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Welche Aussprache des *yeísmo* ist u. a. in Mexiko oder Kolumbien typisch?",
+      "explanation": "In den meisten Ländern der spanischsprachigen Welt wird /ʝ/ als approximanter oder frikativer Laut realisiert, häufig [ʝ] bzw. [j]. In Mexiko und Kolumbien ist eine relativ klare [ʝ]-Realisierung verbreitet.",
+      "answers": [
+        {
+          "text": "[ʝ] bzw. [j]",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "[ʃ]",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "[ʒ]",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "[ʎ]",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCB",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "In welchen Regionen Hispanoamerikas bleibt das Phonem /s/ am Silben- und Wortende typischerweise erhalten?",
+      "explanation": "In vielen hispanoamerikanischen Hochlandregionen bleibt das Phonem /s/ am Silbenende in der Regel erhalten und wird klar artikuliert (z. B. in Mexiko-Stadt, Bogotá oder La Paz). In den Tieflandgebieten und Küstenregionen Südamerikas sowie in der Karibik ist hingegen häufig eine Abschwächung oder der Ausfall von /s/ typisch, etwa durch Aspiration oder Elision.",
+      "answers": [
+        {
+          "text": "In amerikanischen Hochlandregionen",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In karibischen Küstenregionen",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "In tiefliegenden Küstengebieten Südamerikas",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "In urbanen Zentren Hispanoamerikas",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCC",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Welche Lautrealisierung des *yeísmo* ist typisch für das Río-de-la-Plata-Gebiet (Argentinien, Uruguay)?",
+      "explanation": "Im Río-de-la-Plata-Gebiet werden <y> und <ll> häufig als postalveolarer Frikativ realisiert, entweder [ʒ] (*žeísmo*) oder [ʃ] (*šeísmo*). Diese Lautung ist ein markantes Merkmal der Region.",
+      "answers": [
+        {
+          "text": "[ʒ] oder [ʃ]",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "[ʝ]",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "[ʎ]",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "[θ]",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCD",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Wie wird die Aussprache von *caza* als [ˈka.sa] oder von *cena* als [ˈse.na] auf den Kanarischen Inseln bewertet?",
+      "explanation": "Auf den Kanarischen Inseln ist der *seseo* verbreitet; <z> und <ce/ci> werden dort als [s] realisiert. Daher werden Formen wie *caza* [ˈka.sa] und *cena* [ˈse.na] als regional typisch und nicht als „falsch“ bewertet.",
+      "answers": [
+        {
+          "text": "Als regional typisch und korrekt",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Immer als falsch bewertet",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Nur in informeller Sprache akzeptiert",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur bei älteren Sprechern verbreitet",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCE",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Sollte ich als Lehrkraft in meiner Aussprache zwischen /θ/ und /s/ sauber unterscheiden (*distinción*)?",
+      "explanation": "Ob Lehrkräfte /θ/ und /s/ unterscheiden sollten, hängt vom Lernziel und von der angestrebten Varietät ab. Wichtig ist vor allem, Lernenden die Variation zu erklären und sie auf unterschiedliche Realisationen vorzubereiten. Eine *distinción* ist nicht „korrekter“ als *seseo*, sondern varietätenspezifisch.",
+      "answers": [
+        {
+          "text": "Ja, immer, das ist die einzig korrekte Aussprache",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Nein, nie, das ist immer falsch",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Es hängt vom Lernziel und der Zielvarietät ab",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Das spielt keine Rolle, weil alle dasselbe aussprechen",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCF",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Wie groß ist der Anteil der *distinguidores* (Sprecher:innen, die *casa* und *caza* unterschiedlich aussprechen) im Spanischen ungefähr?",
+      "explanation": "Die *distinción* ist in großen Teilen Spaniens verbreitet, aber weltweit betrachtet ist *seseo* häufiger. Daher sind Sprecher:innen mit *distinción* global gesehen in der Minderheit, auch wenn sie innerhalb Spaniens in vielen Regionen die Mehrheit stellen.",
+      "answers": [
+        {
+          "text": "Global eher eine Minderheit",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Global eher eine Mehrheit",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Ungefähr 50/50 in allen Regionen",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Praktisch niemand unterscheidet das heute",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCG",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Wie verbreitet ist der *yeísmo*, also die lautliche Neutralisierung von /ʎ/ und /ʝ/ zugunsten von /ʝ/, im Spanischen?",
+      "explanation": "Der *yeísmo* ist heute in weiten Teilen der spanischsprachigen Welt verbreitet und gilt als die häufigste Aussprachevariante. Die Unterscheidung zwischen /ʎ/ und /ʝ/ ist nur noch in wenigen Regionen erhalten.",
+      "answers": [
+        {
+          "text": "In den meisten Regionen der spanischsprachigen Welt",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Nur in Spanien",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Nur in Hispanoamerika",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur in der Karibik",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCH",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 2,
+      "type": "single_choice",
+      "prompt": "Wie verteilt sich die Aussprache von /s/ am Silbenende (z. B. in *los amigos*) in Spanien regional?",
+      "explanation": "In Spanien ist die Abschwächung oder Aspiration von /s/ im Süden (v. a. in Andalusien) verbreitet, während in Zentral- und Nordspanien /s/ am Silbenende häufiger erhalten bleibt. Der Unterschied ist ein typisches Beispiel regionaler Variation.",
+      "answers": [
+        {
+          "text": "Vor allem im Süden Spaniens",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In ganz Spanien gleichmäßig",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Nur in Zentralspanien",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur auf den Balearen",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCJ",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Was ist ein typisches phonologisches Merkmal des Spanischen der Karibik?",
+      "explanation": "Ein typisches phonologisches Merkmal karibischer Varietäten ist die Abschwächung oder Aspiration von /s/ im Silbenende (z. B. *los amigos* → [loh aˈmiɣoh]) sowie häufig auch die Velarisierung von /n/ am Wortende.",
+      "answers": [
+        {
+          "text": "Die Aspiration oder Elision von /s/ am Silbenende",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Die *distinción* zwischen /s/ und /θ/",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Die klare Aussprache von /s/ in allen Positionen",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Die Beibehaltung von /ʎ/ gegenüber /ʝ/",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCK",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Warum gilt die Abschwächung des Phonems /s/ im Spanischen nicht grundsätzlich als „nachlässige“ Aussprache?",
+      "explanation": "Die Abschwächung oder Aspiration von /s/ ist in vielen Varietäten systematisch und regelhaft. Sie ist sozial und regional unterschiedlich verteilt und stellt keine objektive „Nachlässigkeit“ dar, sondern ist ein normales Merkmal sprachlicher Variation.",
+      "answers": [
+        {
+          "text": "Weil sie systematisch und regelhaft ist",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Weil sie nur bei Kindern vorkommt",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Weil sie immer falsch ist",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Weil sie nur im Schriftlichen relevant ist",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCM",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Die Aussprache welcher beiden Hauptstädte ist sich insgesamt am ähnlichsten?",
+      "explanation": "Für den Vergleich werden Varietätenmerkmale betrachtet: In Mexiko-Stadt und Bogotá bleibt /s/ am Silbenende meist erhalten, und die Realisierung von <y>/<ll> ist oft [ʝ]. Beide Städte gelten daher in vielen Beschreibungen als relativ ähnlich in ihrer „neutralen“ Hochlandaussprache.",
+      "answers": [
+        {
+          "text": "Mexiko-Stadt und Bogotá",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Bogotá und Havanna",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Mexiko-Stadt und Havanna",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Buenos Aires und Madrid",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCN",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Welche Kombination von Aussprachemerkmalen weist am ehesten auf eine karibische Varietät des Spanischen hin?",
+      "explanation": "Karibische Varietäten sind häufig durch Aspiration oder Elision von /s/ im Silbenende sowie durch (teilweise) Velarisierung von /n/ am Wortende gekennzeichnet. Diese Kombination ist typisch für viele Küstenregionen.",
+      "answers": [
+        {
+          "text": "Aspiration von /s/ und Velarisierung von /n/",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "*distinción* und Erhalt von /s/",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Erhalt von /ʎ/ und klare /s/-Aussprache",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Keine Variation, alles Standard",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCP",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "In welchen der folgenden Länder ist eine Aussprache wie *los amigos* → [loh aˈmiɣoh] (Abschwächung oder Aspiration von /s/ im Silbenende) so verbreitet, dass sie auch bei Nachrichtensprecher:innen üblich ist?",
+      "explanation": "In vielen karibischen und küstennahen Varietäten, etwa in Kuba, der Dominikanischen Republik oder Puerto Rico, sind Aspiration und Elision von /s/ sehr verbreitet und gelten als regionale Norm.",
+      "answers": [
+        {
+          "text": "In Kuba, der Dominikanischen Republik und Puerto Rico",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In Mexiko und Kolumbien",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "In Spanien (Zentral- und Nordspanien)",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "In Argentinien (Río-de-la-Plata)",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCQ",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "In welchem Land wird *los amigos* typischerweise klar als [los aˈmiɣos], also mit klar artikuliertem /s/ am Silbenende, ausgesprochen?",
+      "explanation": "In Hochlandvarietäten, etwa in Mexiko-Stadt oder in Teilen Kolumbiens, bleibt /s/ am Silbenende häufig erhalten. Daher ist eine klare Aussprache wie [los aˈmiɣos] dort typischer.",
+      "answers": [
+        {
+          "text": "In Mexiko (Hochland)",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In Kuba",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "In Puerto Rico",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "In Andalusien",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCR",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Wie verteilt sich die Aussprache von *los amigos* in Kolumbien regional?",
+      "explanation": "In Kolumbien zeigt sich eine deutliche diatopische Variation: In Hochlandregionen (z. B. Bogotá) bleibt /s/ am Silbenende meist erhalten, während in Küstenregionen (z. B. an der Karibikküste) Aspiration oder Elision häufiger ist.",
+      "answers": [
+        {
+          "text": "Im Hochland eher Erhalt, an der Küste eher Aspiration/Elision",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Überall gleichmäßig klar artikuliertes /s/",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Überall gleichmäßig aspiriertes /s/",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Nur in Bogotá aspiriert, sonst klar",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCS",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "Wo ist eine Realisierung von *pan* als [paŋ] (Velarisierung des /n/) oder sogar der Wegfall des Konsonanten mit Nasalisierung des vorangehenden Vokals wie [pã] besonders verbreitet?",
+      "explanation": "Die Velarisierung des /n/ am Wortende (z. B. *pan* → [paŋ]) tritt vor allem in südspanischen sowie in karibischen und anderen Küstenvarietäten Hispanoamerikas auf. Teilweise wird das /n/ weiter abgeschwächt oder getilgt, sodass nur eine Nasalisierung des vorangehenden Vokals hörbar bleibt (z. B. [pã]). Diese Entwicklungen sind besonders in Küsten- und Karibikregionen verbreitet und gelten dort als charakteristische regionale Merkmale.",
+      "answers": [
+        {
+          "text": "In Südspanien sowie in der Karibik und anderen Küstenregionen Hispanoamerikas",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "Vor allem in Zentral- und Nordspanien",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Im Andenhochland (v. a. Peru und Bolivien)",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Im mexikanischen Hochland",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCT",
+      "meta": {
+        "author_initials": "FT"
+      }
+    },
+    {
+      "difficulty": 3,
+      "type": "single_choice",
+      "prompt": "In welchen Regionen treten sowohl die Velarisierung von /n/ (z. B. *pan* → [paŋ]) als auch die Abschwächung von /s/ (z. B. *los amigos* → [loh aˈmiɣoh]) typischerweise gemeinsam auf?",
+      "explanation": "Die Kombination aus Velarisierung von /n/ am Wortende und Abschwächung oder Aspiration von /s/ im Silbenende ist besonders typisch für karibische und andere Küstenvarietäten. Beide Phänomene gelten dort als charakteristische regionale Merkmale und treten häufig gemeinsam auf.",
+      "answers": [
+        {
+          "text": "In der Karibik und anderen Küstenregionen Hispanoamerikas",
+          "correct": true,
+          "id": "a1",
+          "media": []
+        },
+        {
+          "text": "In Zentral- und Nordspanien",
+          "correct": false,
+          "id": "a2",
+          "media": []
+        },
+        {
+          "text": "Im mexikanischen Hochland",
+          "correct": false,
+          "id": "a3",
+          "media": []
+        },
+        {
+          "text": "Im Andenhochland (z. B. Bogotá und La Paz)",
+          "correct": false,
+          "id": "a4",
+          "media": []
+        }
+      ],
+      "media": [],
+      "sources": [],
+      "id": "variation_aussprache_q_01KH9663Z1VZ9Q1QRESD8GCWCV",
+      "meta": {
+        "author_initials": "FT"
+      }
+    }
+  ]
+}
