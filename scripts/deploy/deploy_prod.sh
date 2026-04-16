@@ -5,7 +5,9 @@
 
 set -euo pipefail
 
+COMPOSE_PROJECT_NAME="games-hispanistica-prod"
 CONTAINER_NAME="games-web-prod"
+LEGACY_CONTAINER_NAME="games-webapp"
 COMPOSE_FILE="infra/docker-compose.prod.yml"
 BASE_DIR="/srv/webapps/games_hispanistica"
 CONFIG_DIR="${BASE_DIR}/config"
@@ -27,8 +29,18 @@ log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
+compose_prod() {
+    docker compose -p "${COMPOSE_PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" "$@"
+}
+
 show_container_logs() {
-    if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    if command -v docker > /dev/null 2>&1 \
+        && [ -f "${COMPOSE_FILE}" ] \
+        && [ -f "${ENV_FILE}" ] \
+        && docker compose version > /dev/null 2>&1; then
+        log_info "Recent compose logs for project ${COMPOSE_PROJECT_NAME}:"
+        compose_prod logs --tail 50 web 2>&1 || true
+    elif docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
         log_info "Recent logs for ${CONTAINER_NAME}:"
         docker logs "${CONTAINER_NAME}" 2>&1 | tail -50 || true
     fi
@@ -160,6 +172,31 @@ ensure_backend_network() {
     exit 1
 }
 
+retire_legacy_webapp_container() {
+    if ! docker ps -a --format '{{.Names}}' | grep -q "^${LEGACY_CONTAINER_NAME}$"; then
+        return 0
+    fi
+
+    local legacy_status legacy_ports
+    legacy_status=$(docker inspect --format='{{.State.Status}}' "${LEGACY_CONTAINER_NAME}" 2>/dev/null || echo "unknown")
+    legacy_ports=$(docker port "${LEGACY_CONTAINER_NAME}" 2>/dev/null | tr '\n' ';' || true)
+
+    log_warn "Legacy container '${LEGACY_CONTAINER_NAME}' detected (status: ${legacy_status})."
+    if printf '%s' "${legacy_ports}" | grep -q '7000'; then
+        log_warn "Legacy container '${LEGACY_CONTAINER_NAME}' publishes host port 7000 and would block the compose web service."
+    fi
+
+    if [ "${legacy_status}" = "running" ]; then
+        log_info "Stopping legacy container '${LEGACY_CONTAINER_NAME}'..."
+        docker stop "${LEGACY_CONTAINER_NAME}" > /dev/null
+        log_success "Legacy container stopped: ${LEGACY_CONTAINER_NAME}"
+    fi
+
+    log_info "Removing legacy container '${LEGACY_CONTAINER_NAME}' before compose deployment..."
+    docker rm "${LEGACY_CONTAINER_NAME}" > /dev/null
+    log_success "Legacy container removed: ${LEGACY_CONTAINER_NAME}"
+}
+
 wait_for_container_health() {
     local timeout_seconds="$1"
     local attempt=0
@@ -277,28 +314,31 @@ log_success "Auth DB target: ${AUTH_DB_USER}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${A
 log_success "Quiz DB target: ${QUIZ_DB_USER}@${QUIZ_DB_HOST}:${QUIZ_DB_PORT}/${QUIZ_DB_NAME}"
 
 log_info "Validating compose configuration..."
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config > /dev/null
+compose_prod config > /dev/null
 log_success "Compose configuration is valid"
 
 check_db_connectivity "Auth DB" "${AUTH_DB_HOST}" "${AUTH_DB_USER}" "${AUTH_DB_NAME}"
 check_db_connectivity "Quiz DB" "${QUIZ_DB_HOST}" "${QUIZ_DB_USER}" "${QUIZ_DB_NAME}"
 
+log_info "Ensuring no legacy single-container deployment blocks host port 7000..."
+retire_legacy_webapp_container
+
 log_info "Deploying web service via docker compose..."
 export GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build --force-recreate
+compose_prod up -d --build --force-recreate
 
-if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+if [ -z "$(compose_prod ps -q web)" ]; then
     log_error "Container '${CONTAINER_NAME}' is not running after compose up"
     exit 1
 fi
 log_success "Container is running: ${CONTAINER_NAME}"
 
 log_info "Running auth database setup..."
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T web python scripts/setup_prod_db.py
+compose_prod exec -T web python scripts/setup_prod_db.py
 log_success "Auth database setup completed"
 
 log_info "Running quiz database setup..."
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T web python scripts/init_quiz_db.py
+compose_prod exec -T web python scripts/init_quiz_db.py
 log_success "Quiz database setup completed"
 
 wait_for_container_health 90
@@ -310,9 +350,10 @@ echo -e "${GREEN}Deployment Successful${NC}"
 echo "=============================================="
 echo "Container: ${CONTAINER_NAME}"
 echo "Compose:   ${COMPOSE_FILE}"
+echo "Project:   ${COMPOSE_PROJECT_NAME}"
 echo "Network:   ${BACKEND_NETWORK}"
 echo "Health:    ${HOST_HEALTH_URL}"
 echo "Finished:  $(date)"
 echo ""
 
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
+compose_prod ps

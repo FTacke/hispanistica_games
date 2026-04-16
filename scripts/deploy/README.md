@@ -12,6 +12,8 @@ This directory contains production deployment scripts for games_hispanistica.
 
 ## Usage
 
+Production deployments are required to go through `deploy_prod.sh`. The script pins the compose project name to `games-hispanistica-prod` and safely retires the legacy `games-webapp` container before the compose-managed web service starts.
+
 ### First-time Server Setup
 
 ```bash

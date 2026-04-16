@@ -21,6 +21,7 @@ The old single-container deployment with host PostgreSQL routing via localhost, 
 ## Canonical Production Model
 
 - Deployment entrypoint: docker compose with [infra/docker-compose.prod.yml](infra/docker-compose.prod.yml)
+- Explicit compose project name: games-hispanistica-prod
 - Web container name: games-web-prod
 - Host bind: 127.0.0.1:7000 -> 5000
 - Backend network: games-backend-prod
@@ -29,6 +30,8 @@ The old single-container deployment with host PostgreSQL routing via localhost, 
 - Quiz DB: games_hispanistica_quiz
 
 Both databases are required in production. The deploy script may create the dedicated games backend network if it is missing, but the repository does not provision the dedicated PostgreSQL service; that infrastructure must exist before deployment.
+
+The explicit compose project name is mandatory collision protection. Production deploys must not inherit a generic directory-based project name such as `infra`.
 
 ## Required Environment Variables
 
@@ -77,16 +80,18 @@ Remove ADMIN_BOOTSTRAP and START_ADMIN_PASSWORD again after the initial bootstra
 2. Run bash scripts/deploy/deploy_prod.sh from the repository root.
 3. If games-backend-prod is missing, the deploy script creates it.
 4. The deploy script then verifies that the dedicated DB service games-db-prod is reachable on that network.
-5. The deploy script rebuilds the web service via docker compose.
-6. The deploy script runs scripts/setup_prod_db.py for the auth database.
-7. The deploy script runs scripts/init_quiz_db.py for the quiz database.
-8. Verify http://127.0.0.1:7000/health on the host.
+5. The deploy script removes only the legacy single-container artifact `games-webapp` if it still exists and would otherwise block host port 7000.
+6. The deploy script rebuilds the web service via `docker compose -p games-hispanistica-prod`.
+7. The deploy script runs scripts/setup_prod_db.py for the auth database.
+8. The deploy script runs scripts/init_quiz_db.py for the quiz database.
+9. Verify http://127.0.0.1:7000/health on the host.
 
 ## Health Checks
 
 Expected checks:
 
 ```bash
+docker compose -p games-hispanistica-prod --env-file /srv/webapps/games_hispanistica/config/passwords.env -f infra/docker-compose.prod.yml ps
 docker ps --filter name=games-web-prod
 curl -f http://127.0.0.1:7000/health
 ```
@@ -111,6 +116,7 @@ Do not use any of the following as the production database path:
 - corapan-db-prod
 - a docker run based primary deployment path
 - a silent DATABASE_URL fallback for the quiz database
+- an implicit compose project name derived from `infra` or any other directory name
 
 ## External Prerequisites
 

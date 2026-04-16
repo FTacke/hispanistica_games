@@ -44,6 +44,27 @@ function Test-TcpPort {
     }
 }
 
+function Get-FreeTcpPort {
+    param(
+        [Parameter(Mandatory = $true)][int]$PreferredPort,
+        [int[]]$ExcludedPorts = @(),
+        [int]$MaxPort = 54550
+    )
+
+    for ($candidate = $PreferredPort; $candidate -le $MaxPort; $candidate++) {
+        if ($ExcludedPorts -contains $candidate) {
+            continue
+        }
+
+        $listener = Get-NetTCPConnection -LocalPort $candidate -State Listen -ErrorAction SilentlyContinue
+        if (-not $listener) {
+            return $candidate
+        }
+    }
+
+    throw "No free TCP port found in range ${PreferredPort}-${MaxPort}."
+}
+
 function Wait-ForPostgresService {
     param(
         [Parameter(Mandatory = $true)][string]$ContainerName,
@@ -74,10 +95,24 @@ function Test-ContainerPortPublished {
         [Parameter(Mandatory = $true)][int]$HostPort
     )
 
-    $portSpec = docker inspect --format="{{with index .NetworkSettings.Ports '$($ContainerPort)/tcp'}}{{(index . 0).HostIp}}:{{(index . 0).HostPort}}{{end}}" $ContainerName 2>$null
-    if (-not $portSpec) {
+    try {
+        $inspectJson = docker inspect $ContainerName 2>$null | ConvertFrom-Json
+        if (-not $inspectJson) {
+            return $false
+        }
+
+        $ports = $inspectJson[0].NetworkSettings.Ports
+        $portKey = "$ContainerPort/tcp"
+        $bindings = $ports.$portKey
+    } catch {
         return $false
     }
+
+    if (-not $bindings -or $bindings.Count -eq 0) {
+        return $false
+    }
+
+    $portSpec = "$($bindings[0].HostIp):$($bindings[0].HostPort)"
 
     $expectedPorts = @("$HostPort", "$HostName`:$HostPort", "0.0.0.0:$HostPort", "::$HostPort")
     if ($expectedPorts -notcontains $portSpec.Trim()) {
@@ -124,16 +159,31 @@ function Test-ContainerMatchesRepo {
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
-# Determine database mode (PostgreSQL default)
-$dbMode = "postgres"
+$preferredAuthDbPort = if ($env:AUTH_DB_PORT) { [int]$env:AUTH_DB_PORT } else { 54321 }
+$preferredQuizDbPort = if ($env:QUIZ_DB_PORT) { [int]$env:QUIZ_DB_PORT } else { 54322 }
+
+$selectedAuthDbPort = if ($env:AUTH_DB_PORT) {
+    $preferredAuthDbPort
+} else {
+    Get-FreeTcpPort -PreferredPort $preferredAuthDbPort
+}
+
+$selectedQuizDbPort = if ($env:QUIZ_DB_PORT) {
+    $preferredQuizDbPort
+} else {
+    Get-FreeTcpPort -PreferredPort $preferredQuizDbPort -ExcludedPorts @($selectedAuthDbPort)
+}
+
+$env:AUTH_DB_PORT = [string]$selectedAuthDbPort
+$env:QUIZ_DB_PORT = [string]$selectedQuizDbPort
+
 if ($UsePostgres) {
     Write-Host "[DEPRECATED] -UsePostgres is no longer needed; PostgreSQL is the default." -ForegroundColor Yellow
 }
 
 # Use 127.0.0.1 instead of localhost to avoid DNS resolution issues with psycopg3 on Windows
-$env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:54321/hispanistica_auth"
+$env:AUTH_DATABASE_URL = "postgresql+psycopg://hispanistica_auth:hispanistica_auth@127.0.0.1:$($env:AUTH_DB_PORT)/hispanistica_auth"
 if (-not $env:QUIZ_DB_HOST) { $env:QUIZ_DB_HOST = "127.0.0.1" }
-if (-not $env:QUIZ_DB_PORT) { $env:QUIZ_DB_PORT = "54322" }
 if (-not $env:QUIZ_DB_USER) { $env:QUIZ_DB_USER = "hispanistica_quiz" }
 if (-not $env:QUIZ_DB_PASSWORD) { $env:QUIZ_DB_PASSWORD = "hispanistica_quiz" }
 if (-not $env:QUIZ_DB_NAME) { $env:QUIZ_DB_NAME = "hispanistica_quiz" }
@@ -165,6 +215,12 @@ $maskedAuthUrl = $env:AUTH_DATABASE_URL -replace ':(.+?)@', ':*****@'
 $maskedQuizUrl = $env:QUIZ_DATABASE_URL -replace ':(.+?)@', ':*****@'
 Write-Host "AUTH_DATABASE_URL = $maskedAuthUrl"
 Write-Host "QUIZ_DATABASE_URL = $maskedQuizUrl"
+if ($selectedAuthDbPort -ne 54321) {
+    Write-Host "AUTH_DB_PORT fallback = $selectedAuthDbPort (54321 already in use)"
+}
+if ($selectedQuizDbPort -ne 54322) {
+    Write-Host "QUIZ_DB_PORT fallback = $selectedQuizDbPort (54322 already in use)"
+}
 Write-Host "QUIZ_MECHANICS_VERSION = $($env:QUIZ_MECHANICS_VERSION)$quizMechanicsNote"
 Write-Host "QUIZ_DEV_SEED_MODE = $($env:QUIZ_DEV_SEED_MODE)$quizSeedNote"
 
@@ -188,11 +244,11 @@ if ($dockerAvailable) {
     }
 
     if ($pgRunning -and $authMatchesRepo) {
-        $authPortReady = Test-ContainerPortPublished -ContainerName 'hispanistica_auth_db' -ContainerPort 5432 -HostName '127.0.0.1' -HostPort 54321
+        $authPortReady = Test-ContainerPortPublished -ContainerName 'hispanistica_auth_db' -ContainerPort 5432 -HostName '127.0.0.1' -HostPort $selectedAuthDbPort
     }
 
     if ($quizPgRunning -and $quizMatchesRepo) {
-        $quizPortReady = Test-ContainerPortPublished -ContainerName 'hispanistica_quiz_db' -ContainerPort 5432 -HostName '127.0.0.1' -HostPort 54322
+        $quizPortReady = Test-ContainerPortPublished -ContainerName 'hispanistica_quiz_db' -ContainerPort 5432 -HostName '127.0.0.1' -HostPort $selectedQuizDbPort
     }
 
     if ($pgRunning -and -not $authMatchesRepo) {
@@ -223,8 +279,8 @@ if ($dockerAvailable) {
         }
 
         Write-Host "Waiting for PostgreSQL..." -ForegroundColor Gray
-        $authReady = Wait-ForPostgresService -ContainerName 'hispanistica_auth_db' -HostName '127.0.0.1' -Port 54321
-        $quizReady = Wait-ForPostgresService -ContainerName 'hispanistica_quiz_db' -HostName '127.0.0.1' -Port 54322
+        $authReady = Wait-ForPostgresService -ContainerName 'hispanistica_auth_db' -HostName '127.0.0.1' -Port $selectedAuthDbPort
+        $quizReady = Wait-ForPostgresService -ContainerName 'hispanistica_quiz_db' -HostName '127.0.0.1' -Port $selectedQuizDbPort
         if (-not $authReady -or -not $quizReady) {
             Write-Host "ERROR: PostgreSQL host ports are not reachable after startup." -ForegroundColor Red
             Write-Host "  Check: docker compose -f docker-compose.dev-postgres.yml ps" -ForegroundColor Gray
@@ -269,15 +325,8 @@ Write-Host "[OK] DEV admin ensured`n" -ForegroundColor Green
 
 Write-Host "Ensuring Quiz DB schema..." -ForegroundColor Cyan
 $quizInitScript = Join-Path $repoRoot "scripts\init_quiz_db.py"
-$prevAuthDbUrl = $env:AUTH_DATABASE_URL
-$env:AUTH_DATABASE_URL = $env:QUIZ_DATABASE_URL
 & $venvPython $quizInitScript
 $initExit = $LASTEXITCODE
-if ($prevAuthDbUrl) {
-    $env:AUTH_DATABASE_URL = $prevAuthDbUrl
-} else {
-    Remove-Item env:AUTH_DATABASE_URL -ErrorAction SilentlyContinue
-}
 
 if ($initExit -ne 0) {
     Write-Host "`nERROR: Quiz DB initialization failed!" -ForegroundColor Red

@@ -166,6 +166,8 @@ sudo nano /srv/webapps/games_hispanistica/config/passwords.env
 
 Deployment happens automatically when pushing to `main` branch (via GitHub Actions).
 
+The canonical production path is always the deploy script with the explicit compose project name `games-hispanistica-prod`. This prevents accidental project-name inheritance from directory names such as `infra` and keeps the games stack isolated from other compose stacks on the same host. If the legacy single-container artifact `games-webapp` still exists, the deploy script retires it in a targeted way before the compose-managed web service claims host port `7000`.
+
 Manual deployment:
 ```bash
 cd /srv/webapps/games_hispanistica/app

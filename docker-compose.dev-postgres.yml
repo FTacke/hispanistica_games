@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: hispanistica_auth
       POSTGRES_DB: hispanistica_auth
     ports:
-      - "54321:5432"
+      - "${AUTH_DB_PORT:-54321}:5432"
     volumes:
       - ./data/db/postgres_dev_auth:/var/lib/postgresql/data
       - ./:/app:ro
@@ -34,7 +34,7 @@ services:
       POSTGRES_PASSWORD: hispanistica_quiz
       POSTGRES_DB: hispanistica_quiz
     ports:
-      - "54322:5432"
+      - "${QUIZ_DB_PORT:-54322}:5432"
     volumes:
       - ./data/db/postgres_dev_quiz:/var/lib/postgresql/data
       - ./:/app:ro

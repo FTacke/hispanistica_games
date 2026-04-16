@@ -133,7 +133,7 @@ Der Quellcode ist öffentlich auf [GitHub](https://github.com/FTacke/hispanistic
 
 ### Produktionshinweis
 
-Der Produktionsdeploy läuft über Docker Compose auf einem Self-Hosted GitHub Actions Runner. Das kanonische Deploy-Skript kann das dedizierte games-Backend-Netz bei Bedarf selbst erzeugen. Der dedizierte PostgreSQL-Service `games-db-prod` bleibt trotzdem eine externe Voraussetzung; es gibt keinen Fallback auf Host-Postgres, `host.docker.internal` oder fremde corapan-Ressourcen.
+Der Produktionsdeploy läuft über Docker Compose auf einem Self-Hosted GitHub Actions Runner. Das kanonische Deploy-Skript erzwingt dabei immer den expliziten Compose-Projektnamen `games-hispanistica-prod`, damit der Stack niemals einen generischen Verzeichnisnamen wie `infra` erbt und nicht mit anderen Compose-Stacks kollidiert. Das Skript kann das dedizierte games-Backend-Netz bei Bedarf selbst erzeugen, ersetzt vor dem Compose-Start gezielt nur den Legacy-Container `games-webapp` und bleibt strikt ohne Fallback auf Host-Postgres, `host.docker.internal` oder fremde Ressourcen.
 
 ### Technische Dokumentation
 

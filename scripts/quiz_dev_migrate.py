@@ -23,6 +23,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+FALLBACK_SERVER_TIMER_SQL = """
+ALTER TABLE quiz_runs ADD COLUMN IF NOT EXISTS question_started_at TIMESTAMPTZ NULL;
+ALTER TABLE quiz_runs ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NULL;
+ALTER TABLE quiz_runs ADD COLUMN IF NOT EXISTS time_limit_seconds INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE quiz_runs ADD COLUMN IF NOT EXISTS question_started_at_ms BIGINT NULL;
+ALTER TABLE quiz_runs ADD COLUMN IF NOT EXISTS deadline_at_ms BIGINT NULL;
+
+CREATE INDEX IF NOT EXISTS ix_quiz_runs_expires_at ON quiz_runs (expires_at)
+    WHERE expires_at IS NOT NULL AND status = 'in_progress';
+""".strip()
+
 
 def _resolve_quiz_db_url() -> Optional[str]:
     """Resolve quiz DB URL from env vars (QUIZ_DATABASE_URL or QUIZ_DB_*)."""
@@ -73,13 +84,15 @@ def _enforce_dev_safety() -> None:
 
 
 def apply_sql_file(sql_path: Path) -> None:
-    if not sql_path.exists():
-        raise FileNotFoundError(f"Migration file not found: {sql_path}")
-
-    sql = sql_path.read_text(encoding="utf-8")
-    if not sql.strip():
-        logger.warning(f"Empty migration file: {sql_path}")
-        return
+    if sql_path.exists():
+        sql = sql_path.read_text(encoding="utf-8")
+        if not sql.strip():
+            logger.warning(f"Empty migration file: {sql_path}")
+            return
+    else:
+        logger.warning("Migration file not found: %s", sql_path)
+        logger.info("Applying embedded fallback SQL for quiz run timer columns.")
+        sql = FALLBACK_SERVER_TIMER_SQL
 
     from sqlalchemy import create_engine
 

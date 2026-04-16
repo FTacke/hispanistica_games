@@ -43,6 +43,8 @@ jobs:
       - name: Deploy via deploy_prod.sh
         run: |
           cd /srv/webapps/games_hispanistica/app
+          # Production compose invocations stay centralized in deploy_prod.sh
+          # so the explicit project name cannot be bypassed accidentally.
           bash scripts/deploy/deploy_prod.sh
 
       - name: Final verification
