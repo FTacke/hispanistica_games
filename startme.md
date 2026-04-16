@@ -29,7 +29,7 @@ Das Skript:
 3. Erstellt Auth-DB (PostgreSQL)
 4. Legt den Admin-User an (admin / change-me)
 5. Initialisiert Quiz-Module mit Demo-Daten
-6. Startet den Flask Dev-Server auf einem freien Port (Standard: 8000, wird im Terminal angezeigt)
+6. Startet den Flask Dev-Server auf einem freien Port (Standard: 8000, wird im Terminal angezeigt) 
 
 **Login (DEV):** `admin_dev` / `0000`
 
