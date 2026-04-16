@@ -39,8 +39,7 @@ def _resolve_quiz_db_url(app) -> Optional[str]:
     Priority:
     1) QUIZ_DATABASE_URL
     2) QUIZ_DB_* (host/port/user/password/name)
-    3) DATABASE_URL
-    4) app.config["QUIZ_DATABASE_URL"] (if provided)
+    3) app.config["QUIZ_DATABASE_URL"] (if provided)
     """
     import os
 
@@ -55,9 +54,6 @@ def _resolve_quiz_db_url(app) -> Optional[str]:
 
     if host and port and user and password and name:
         return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
-
-    if os.getenv("DATABASE_URL"):
-        return os.getenv("DATABASE_URL")
 
     if app is not None:
         cfg = app.config.get("QUIZ_DATABASE_URL")

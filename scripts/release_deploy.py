@@ -15,7 +15,7 @@ Usage:
         --release 2026-01-06_1430 \\
         --ssh root@marele.online.uni-marburg.de \\
         --media-root /srv/webapps/games_hispanistica/media \\
-        --container games-webapp \\
+        --container games-web-prod \
         --prune soft
 
 Exit Codes:
@@ -96,7 +96,7 @@ Examples:
       --release 2026-01-06_1430 \\
       --ssh root@marele.online.uni-marburg.de \\
       --media-root /srv/webapps/games_hispanistica/media \\
-      --container games-webapp \\
+      --container games-web-prod \
       --prune soft
 
   # Dry-run to test without changes
@@ -135,8 +135,8 @@ Examples:
     
     parser.add_argument(
         "--container",
-        default="games-webapp",
-        help="Docker container name (default: games-webapp)"
+        default="games-web-prod",
+        help="Docker container name (default: games-web-prod)"
     )
     
     parser.add_argument(

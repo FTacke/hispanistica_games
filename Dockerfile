@@ -72,7 +72,7 @@ RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
 USER gamesapp
 
 # Healthcheck endpoint (requires /health route in app)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
   CMD curl -f http://localhost:5000/health || exit 1
 
 EXPOSE 5000

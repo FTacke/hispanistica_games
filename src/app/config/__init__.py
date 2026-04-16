@@ -76,11 +76,8 @@ class BaseConfig:
     # Auth DB (used only when AUTH_BACKEND=db) - DSN required in non-test envs
     AUTH_DATABASE_URL = os.getenv("AUTH_DATABASE_URL")
 
-    # Quiz DB (PostgreSQL-only). Prefer explicit QUIZ_DATABASE_URL; fallback to DATABASE_URL.
-    QUIZ_DATABASE_URL = os.getenv(
-        "QUIZ_DATABASE_URL",
-        os.getenv("DATABASE_URL")
-    )
+    # Quiz DB (PostgreSQL-only). Must be configured explicitly.
+    QUIZ_DATABASE_URL = os.getenv("QUIZ_DATABASE_URL")
 
     # Hashing (argon2 or bcrypt)
     AUTH_HASH_ALGO = os.getenv("AUTH_HASH_ALGO", "argon2")

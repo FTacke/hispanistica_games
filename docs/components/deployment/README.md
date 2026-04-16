@@ -53,45 +53,50 @@
 
 | Setting | Value | Notes |
 |---------|-------|-------|
-| Container name | `games-webapp` | |
-| Image name | `games-webapp:latest` | |
-| Network | `corapan-network` (prod)<br>`games-network` (dev) | **Configurable via `DOCKER_NETWORK` env variable** |
-| Subnet | `172.19.0.0/16` | Default for games-network |
+| Container name | `games-web-prod` | |
+| Image name | `games-web-prod:latest` | Built via compose |
+| Network | `games-backend-prod` (prod)<br>`games-network-dev` (dev) | Production network is external and must exist before deploy |
+| Web bind | `127.0.0.1:7000:5000` | Reverse proxy target |
 
 **Network Configuration:**
-- **Development:** Uses `games-network` (default)
-- **Production:** Uses existing `corapan-network` (shared with corapan infrastructure)
-- **Override:** Set `DOCKER_NETWORK=your-network-name` in `.env.prod` or `passwords.env`
+- **Development:** Uses `games-network-dev`
+- **Production:** Uses external `games-backend-prod`
+- **Override:** Set `GAMES_BACKEND_NETWORK=your-network-name` in `.env.prod` or `passwords.env`
 
 ### PostgreSQL
 
 | Setting | Value |
 |---------|-------|
-| Database name | `games_hispanistica` |
+| Auth DB | `games_hispanistica` |
+| Quiz DB | `games_hispanistica_quiz` |
 | User | `games_app` |
-| Connection | `postgresql://games_app:<PASSWORD>@172.19.0.1:5432/games_hispanistica` |
+| Connection | `postgresql+psycopg2://games_app:<PASSWORD>@games-db-prod:5432/...` |
 
 ### Environment Variables (passwords.env)
 
 ```bash
 # Docker Configuration
-DOCKER_NETWORK=corapan-network  # Production: use existing network
+GAMES_BACKEND_NETWORK=games-backend-prod
+GAMES_DB_HOST=games-db-prod
 
 # Required
 FLASK_SECRET_KEY=<random-hex-64>
 JWT_SECRET_KEY=<random-hex-64>
-AUTH_DATABASE_URL=postgresql://games_app:<PASSWORD>@172.19.0.1:5432/games_hispanistica
+AUTH_DATABASE_URL=postgresql+psycopg2://games_app:<PASSWORD>@games-db-prod:5432/games_hispanistica
+QUIZ_DATABASE_URL=postgresql+psycopg2://games_app:<PASSWORD>@games-db-prod:5432/games_hispanistica_quiz
 AUTH_HASH_ALGO=argon2
 JWT_COOKIE_SECURE=true
 FLASK_ENV=production
+DB_WAIT_SECONDS=120
 
-# Admin user (for setup_prod_db.py)
+# Admin user bootstrap (first deploy only)
+ADMIN_BOOTSTRAP=0
 START_ADMIN_USERNAME=admin
-START_ADMIN_PASSWORD=<secure-password>
+START_ADMIN_PASSWORD=
 START_ADMIN_EMAIL=admin@games.hispanistica.com
 ```
 
-**Note:** Production deployment shares the `corapan-network` Docker network with the main corapan infrastructure. This allows inter-container communication and avoids network conflicts.
+**Note:** Production deployment no longer uses host PostgreSQL routing or shared corapan infrastructure. The dedicated DB service and backend network must be provisioned separately.
 
 ### Nginx
 
@@ -119,7 +124,8 @@ START_ADMIN_EMAIL=admin@games.hispanistica.com
 | Path | Purpose |
 |------|---------|
 | `Dockerfile` | Production image (multi-stage) |
-| `docker-compose.yml` | Production compose |
+| `infra/docker-compose.prod.yml` | Canonical production compose |
+| `docker-compose.yml` | Compatibility mirror of the production compose |
 | `docker-compose.dev-postgres.yml` | Dev environment (PostgreSQL) |
 | `.github/workflows/ci.yml` | CI pipeline |
 | `.github/workflows/deploy.yml` | **Production deployment** |
@@ -151,9 +157,8 @@ sudo cp /srv/webapps/games_hispanistica/config/passwords.env.template \
 sudo nano /srv/webapps/games_hispanistica/config/passwords.env
 # Fill in real values!
 
-# Create PostgreSQL database
-sudo -u postgres createuser games_app -P
-sudo -u postgres createdb games_hispanistica -O games_app
+# Provision external backend network + dedicated PostgreSQL service first.
+# The repository does not create games-db-prod for you.
 ```
 
 ### Regular Deployment

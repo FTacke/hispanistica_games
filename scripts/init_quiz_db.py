@@ -10,8 +10,10 @@ Options:
     --drop    Drop existing tables first (use with caution)
 
 Environment:
-    AUTH_DATABASE_URL - PostgreSQL connection URL (required)
-                        e.g. postgresql://user:pass@localhost:5432/hispanistica
+    QUIZ_DATABASE_URL - PostgreSQL connection URL (preferred)
+                        e.g. postgresql+psycopg2://user:pass@games-db-prod:5432/games_hispanistica_quiz
+    QUIZ_DB_HOST / QUIZ_DB_PORT / QUIZ_DB_USER / QUIZ_DB_PASSWORD / QUIZ_DB_NAME
+                      - alternative explicit connection parts
 """
 
 import os
@@ -24,6 +26,24 @@ repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
 
+def resolve_quiz_db_url() -> str | None:
+    """Resolve quiz DB URL from explicit quiz environment variables only."""
+    db_url = os.environ.get("QUIZ_DATABASE_URL")
+    if db_url:
+        return db_url
+
+    host = os.environ.get("QUIZ_DB_HOST")
+    port = os.environ.get("QUIZ_DB_PORT")
+    user = os.environ.get("QUIZ_DB_USER")
+    password = os.environ.get("QUIZ_DB_PASSWORD")
+    name = os.environ.get("QUIZ_DB_NAME")
+
+    if host and port and user and password and name:
+        return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Initialize Quiz module database (PostgreSQL)")
     parser.add_argument("--seed", action="store_true", help="Seed demo content")
@@ -31,11 +51,11 @@ def main():
     args = parser.parse_args()
 
     # Validate PostgreSQL URL
-    db_url = os.environ.get('AUTH_DATABASE_URL')
+    db_url = resolve_quiz_db_url()
     if not db_url:
-        print("ERROR: AUTH_DATABASE_URL environment variable is required.")
-        print("       Set it to a PostgreSQL connection URL.")
-        print("       Example: postgresql://user:pass@localhost:5432/hispanistica")
+        print("ERROR: QUIZ_DATABASE_URL or QUIZ_DB_* environment variables are required.")
+        print("       Set them to the dedicated quiz PostgreSQL database.")
+        print("       Example: postgresql+psycopg2://games_app:***@games-db-prod:5432/games_hispanistica_quiz")
         sys.exit(1)
     
     scheme = db_url.split('://')[0] if '://' in db_url else ''
@@ -46,22 +66,23 @@ def main():
         print("       Expected: postgresql://, postgres://, or postgresql+<driver>://")
         sys.exit(1)
 
-    from src.app.extensions.sqlalchemy_ext import init_engine, get_engine
+    from src.app.extensions.sqlalchemy_ext import init_quiz_engine, get_quiz_engine
     from game_modules.quiz.models import QuizBase
     from game_modules.quiz.release_model import QuizContentRelease  # noqa: F401
 
     class FakeApp:
         def __init__(self):
             self.config = {
-                'AUTH_DATABASE_URL': db_url
+                'QUIZ_DATABASE_URL': db_url,
+                'AUTH_DATABASE_URL': os.environ.get('AUTH_DATABASE_URL'),
             }
 
     print("Initializing Quiz database (PostgreSQL)...")
     print(f"URL: {db_url.split('@')[1] if '@' in db_url else db_url}")  # Hide credentials
 
     app = FakeApp()
-    init_engine(app)
-    engine = get_engine()
+    init_quiz_engine(app)
+    engine = get_quiz_engine()
 
     if args.drop:
         print("Dropping existing Quiz tables...")

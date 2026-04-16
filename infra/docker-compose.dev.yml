@@ -1,4 +1,4 @@
-# CO.RA.PAN Development Stack: App + PostgreSQL Auth DB + BlackLab
+# games_hispanistica Development Stack: App + PostgreSQL + BlackLab
 # 
 # Usage:
 #   docker compose -f infra/docker-compose.dev.yml up -d          # Start all services
@@ -12,30 +12,30 @@
 services:
   db:
     image: postgres:14
-    container_name: corapan-db-dev
+    container_name: games-db-dev
     environment:
-      POSTGRES_USER: corapan_app
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-corapan_dev_password}
-      POSTGRES_DB: corapan_auth
+      POSTGRES_USER: games_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-games_dev_password}
+      POSTGRES_DB: games_hispanistica
     ports:
       - "54320:5432"
     volumes:
-      - corapan_postgres_dev:/var/lib/postgresql/data
+      - games_postgres_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "corapan_app", "-d", "corapan_auth"]
+      test: ["CMD", "pg_isready", "-U", "games_app", "-d", "games_hispanistica"]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 10s
     restart: unless-stopped
     networks:
-      - corapan-dev
+      - games-dev
 
   web:
     build:
       context: ..
       dockerfile: Dockerfile
-    container_name: corapan-web-dev
+    container_name: games-web-dev
     depends_on:
       db:
         condition: service_healthy
@@ -47,9 +47,9 @@ services:
       FLASK_DEBUG: "false"
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-dev-secret-change-in-production}
       
-      # Auth Database: connect to 'db' service (hostname inside Docker network)
-      AUTH_DATABASE_URL: postgresql+psycopg2://corapan_app:${POSTGRES_PASSWORD:-corapan_dev_password}@db:5432/corapan_auth
-      DATABASE_URL: postgresql+psycopg2://corapan_app:${POSTGRES_PASSWORD:-corapan_dev_password}@db:5432/corapan_auth
+      # Explicit auth + quiz databases on the local PostgreSQL service.
+      AUTH_DATABASE_URL: postgresql+psycopg2://games_app:${POSTGRES_PASSWORD:-games_dev_password}@db:5432/games_hispanistica
+      QUIZ_DATABASE_URL: postgresql+psycopg2://games_app:${POSTGRES_PASSWORD:-games_dev_password}@db:5432/games_hispanistica_quiz
       
       # JWT settings
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production}
@@ -87,15 +87,15 @@ services:
       start_period: 15s
     restart: unless-stopped
     networks:
-      - corapan-dev
+      - games-dev
 
   blacklab:
     image: instituutnederlandsetaal/blacklab:latest
-    container_name: corapan-blacklab-dev
+    container_name: games-blacklab-dev
     ports:
       - "8081:8080"
     volumes:
-      - ./data/blacklab_index:/data/index/corapan:ro
+      - ./data/blacklab_index:/data/index/games:ro
       - ./config/blacklab:/etc/blacklab:ro
     environment:
       JAVA_OPTS: "-Xmx2g -Xms512m"
@@ -108,12 +108,12 @@ services:
       start_period: 30s
     restart: unless-stopped
     networks:
-      - corapan-dev
+      - games-dev
 
 networks:
-  corapan-dev:
-    name: corapan-network-dev
+  games-dev:
+    name: games-network-dev
 
 volumes:
-  corapan_postgres_dev:
-    name: corapan_postgres_dev
+  games_postgres_dev:
+    name: games_postgres_dev

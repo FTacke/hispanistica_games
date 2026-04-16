@@ -25,12 +25,10 @@ set -euo pipefail
 
 # Configuration (from app_identity)
 APP_SLUG="games_hispanistica"
-CONTAINER_NAME="games-webapp"
+CONTAINER_NAME="games-web-prod"
 
-# Docker network (configurable via env, default: games-network)
-# To use existing network: export DOCKER_NETWORK=corapan-network before running
-DOCKER_NETWORK="${DOCKER_NETWORK:-games-network}"
-DOCKER_SUBNET="172.19.0.0/16"
+# External backend network (must also contain the dedicated DB service)
+BACKEND_NETWORK="${GAMES_BACKEND_NETWORK:-games-backend-prod}"
 HOST_PORT=7000
 CONTAINER_PORT=5000
 
@@ -115,18 +113,16 @@ fi
 echo ""
 
 # -----------------------------------------------------------------------------
-# Step 3: Set up Docker network
+# Step 3: Verify external backend network
 # -----------------------------------------------------------------------------
-log_info "Checking Docker network: ${DOCKER_NETWORK}..."
+log_info "Checking backend Docker network: ${BACKEND_NETWORK}..."
 
-if docker network inspect "${DOCKER_NETWORK}" &> /dev/null; then
-    NETWORK_SUBNET=$(docker network inspect "${DOCKER_NETWORK}" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
-    log_success "Docker network '${DOCKER_NETWORK}' already exists (subnet: ${NETWORK_SUBNET})"
-    log_info "Using existing network (no changes needed)"
+if docker network inspect "${BACKEND_NETWORK}" &> /dev/null; then
+    NETWORK_SUBNET=$(docker network inspect "${BACKEND_NETWORK}" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
+    log_success "Backend network '${BACKEND_NETWORK}' exists (subnet: ${NETWORK_SUBNET})"
 else
-    log_info "Creating Docker network '${DOCKER_NETWORK}' with subnet ${DOCKER_SUBNET}..."
-    docker network create --subnet="${DOCKER_SUBNET}" "${DOCKER_NETWORK}"
-    log_success "Created Docker network: ${DOCKER_NETWORK} (${DOCKER_SUBNET})"
+    log_warn "Backend network '${BACKEND_NETWORK}' is missing"
+    log_warn "Provision the external backend network together with the dedicated DB service before deploying."
 fi
 
 echo ""
@@ -155,8 +151,19 @@ FLASK_SECRET_KEY=CHANGE_ME_GENERATE_RANDOM_HEX
 # JWT secret key (generate with: openssl rand -hex 32)
 JWT_SECRET_KEY=CHANGE_ME_GENERATE_RANDOM_HEX
 
-# PostgreSQL connection (container reaches host via Docker bridge gateway)
-AUTH_DATABASE_URL=postgresql://games_app:CHANGE_ME_DB_PASSWORD@172.19.0.1:5432/games_hispanistica
+# External backend network and dedicated DB service
+GAMES_BACKEND_NETWORK=games-backend-prod
+GAMES_DB_HOST=games-db-prod
+
+# PostgreSQL connections (dedicated external DB service with two databases)
+AUTH_DATABASE_URL=postgresql+psycopg2://games_app:CHANGE_ME_DB_PASSWORD@games-db-prod:5432/games_hispanistica
+QUIZ_DATABASE_URL=postgresql+psycopg2://games_app:CHANGE_ME_DB_PASSWORD@games-db-prod:5432/games_hispanistica_quiz
+
+# Optional container mount overrides
+GAMES_DATA_DIR=/srv/webapps/games_hispanistica/data
+GAMES_MEDIA_DIR=/srv/webapps/games_hispanistica/media
+GAMES_LOGS_DIR=/srv/webapps/games_hispanistica/logs
+GAMES_KEYS_DIR=/srv/webapps/games_hispanistica/config/keys
 
 # Password hashing algorithm
 AUTH_HASH_ALGO=argon2
@@ -167,9 +174,10 @@ JWT_COOKIE_SECURE=true
 # Environment
 FLASK_ENV=production
 
-# Initial admin user (used by setup_prod_db.py)
+# Initial admin user (used by setup_prod_db.py only when ADMIN_BOOTSTRAP=1)
+ADMIN_BOOTSTRAP=0
 START_ADMIN_USERNAME=admin
-START_ADMIN_PASSWORD=CHANGE_ME_ADMIN_PASSWORD
+START_ADMIN_PASSWORD=
 START_ADMIN_EMAIL=admin@games.hispanistica.com
 EOF
     log_success "Created environment template: $ENV_TEMPLATE"
@@ -201,7 +209,7 @@ echo "  ├── logs/       # Application logs"
 echo "  ├── media/      # Content releases (MP3, etc.)"
 echo "  └── runner/     # GitHub Actions runner"
 echo ""
-echo "Docker network: ${DOCKER_NETWORK} (${DOCKER_SUBNET})"
+echo "Backend network: ${BACKEND_NETWORK}"
 echo "Container name: ${CONTAINER_NAME}"
 echo "Host port: ${HOST_PORT}"
 echo ""
@@ -209,8 +217,8 @@ echo "Next steps:"
 echo "  1. Clone repository to ${BASE_DIR}/app/"
 echo "  2. Copy ${ENV_TEMPLATE}"
 echo "     to ${BASE_DIR}/config/passwords.env"
-echo "  3. Configure PostgreSQL database: games_hispanistica"
-echo "  4. Create PostgreSQL user: games_app"
+echo "  3. Provision backend network '${BACKEND_NETWORK}' if it is still missing"
+echo "  4. Provision dedicated DB service '${GAMES_DB_HOST:-games-db-prod}' with auth + quiz databases"
 echo "  5. Set up Nginx reverse proxy"
 echo "  6. Install GitHub Actions runner (optional)"
 echo "  7. Run first deployment: bash scripts/deploy/deploy_prod.sh"

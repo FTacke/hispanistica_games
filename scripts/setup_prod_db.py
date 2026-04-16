@@ -19,14 +19,15 @@ Required environment variables:
 
 Optional environment variables:
 - START_ADMIN_USERNAME: Admin username (default: admin)
-- START_ADMIN_PASSWORD: Admin password (REQUIRED in production)
+- START_ADMIN_PASSWORD: Admin password (required only when ADMIN_BOOTSTRAP=1)
 - START_ADMIN_EMAIL: Admin email (default: admin@games.hispanistica.com)
+- ADMIN_BOOTSTRAP: Set to 1 to create the initial admin user explicitly
 
 Usage (in container):
     python scripts/setup_prod_db.py
 
 Usage (production deployment):
-    docker exec games-webapp python scripts/setup_prod_db.py
+    docker exec games-web-prod python scripts/setup_prod_db.py
 """
 
 from __future__ import annotations
@@ -67,13 +68,10 @@ def check_env() -> bool:
         log_error("AUTH_DATABASE_URL environment variable is not set")
         return False
 
-    # In production, require admin password
-    flask_env = os.environ.get("FLASK_ENV", "development")
-    if flask_env == "production":
+    if os.environ.get("ADMIN_BOOTSTRAP", "0") == "1":
         admin_pass = os.environ.get("START_ADMIN_PASSWORD")
         if not admin_pass:
-            log_error("START_ADMIN_PASSWORD is required in production")
-            log_error("Set it in config/passwords.env or as environment variable")
+            log_error("START_ADMIN_PASSWORD is required when ADMIN_BOOTSTRAP=1")
             return False
 
     return True
@@ -120,6 +118,10 @@ def ensure_admin_user() -> bool:
     from src.app.auth.models import User
     from src.app.auth import services
 
+    if os.environ.get("ADMIN_BOOTSTRAP", "0") != "1":
+        log_info("Skipping admin bootstrap (set ADMIN_BOOTSTRAP=1 for first-time setup)")
+        return True
+
     username = os.environ.get("START_ADMIN_USERNAME", "admin")
     password = os.environ.get("START_ADMIN_PASSWORD")
     email = os.environ.get(
@@ -127,14 +129,9 @@ def ensure_admin_user() -> bool:
         f"{username}@games.hispanistica.com"
     )
 
-    # In development, use a default password if not set
-    flask_env = os.environ.get("FLASK_ENV", "development")
     if not password:
-        if flask_env == "production":
-            log_error("START_ADMIN_PASSWORD is required in production")
-            return False
-        password = "change-me"
-        log_info(f"Using default password for development (username: {username})")
+        log_error("START_ADMIN_PASSWORD is required when ADMIN_BOOTSTRAP=1")
+        return False
 
     try:
         with get_session() as session:

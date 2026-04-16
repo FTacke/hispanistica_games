@@ -2,52 +2,18 @@
 # =============================================================================
 # games_hispanistica Production Deployment Script
 # =============================================================================
-#
-# This script is executed by the GitHub self-hosted runner (or manually)
-# to deploy the application. It performs the following steps:
-#   1. Fetch and reset to latest code from origin/main
-#   2. Build Docker image (tagged with git SHA)
-#   3. Stop and remove old container
-#   4. Start new container with configured volumes
-#   5. Run database setup (idempotent)
-#   6. Execute smoke checks
-#
-# This script is IDEMPOTENT - safe to run multiple times.
-#
-# Prerequisites:
-#   - Docker installed and running
-#   - Git repository cloned to /srv/webapps/games_hispanistica/app
-#   - passwords.env configured in /srv/webapps/games_hispanistica/config/
-#   - Docker network exists (set via DOCKER_NETWORK env, default: games-network)
-#     Production: export DOCKER_NETWORK=corapan-network in passwords.env
-#
-# Usage:
-#   cd /srv/webapps/games_hispanistica/app
-#   bash scripts/deploy/deploy_prod.sh
-#
-# =============================================================================
 
 set -euo pipefail
 
-# Configuration (from app_identity)
-CONTAINER_NAME="games-webapp"
-IMAGE_NAME="games-webapp"
-HOST_PORT=7000
-CONTAINER_PORT=5000
-
-# Docker network (configurable via env, default: corapan-network)
-# Production: MUST use corapan-network for compatibility with host PostgreSQL
-DOCKER_NETWORK="${DOCKER_NETWORK:-corapan-network}"
-
-# Paths (on the host)
+CONTAINER_NAME="games-web-prod"
+COMPOSE_FILE="infra/docker-compose.prod.yml"
 BASE_DIR="/srv/webapps/games_hispanistica"
-APP_DIR="${BASE_DIR}/app"
-DATA_DIR="${BASE_DIR}/data"
-MEDIA_DIR="${BASE_DIR}/media"
 CONFIG_DIR="${BASE_DIR}/config"
-LOGS_DIR="${BASE_DIR}/logs"
+ENV_FILE="${CONFIG_DIR}/passwords.env"
+EXPECTED_DB_HOST="${GAMES_DB_HOST:-games-db-prod}"
+BACKEND_NETWORK="${GAMES_BACKEND_NETWORK:-games-backend-prod}"
+HOST_HEALTH_URL="http://127.0.0.1:7000/health"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -55,23 +21,131 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_success() { echo -e "${GREEN}[✓]${NC} $1"; }
+log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# Track if we need to rollback
-OLD_IMAGE_ID=""
-DEPLOYMENT_FAILED=0
-
-cleanup_on_error() {
-    if [ $DEPLOYMENT_FAILED -eq 1 ]; then
-        log_error "Deployment failed! Attempting cleanup..."
-        # Show recent logs
-        log_info "Container logs (last 50 lines):"
+show_container_logs() {
+    if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+        log_info "Recent logs for ${CONTAINER_NAME}:"
         docker logs "${CONTAINER_NAME}" 2>&1 | tail -50 || true
     fi
 }
-trap cleanup_on_error EXIT
+
+trap show_container_logs ERR
+
+read_env_var() {
+    local key="$1"
+    local value
+    value=$(grep -E "^${key}=" "${ENV_FILE}" | tail -n 1 | cut -d= -f2- || true)
+    value="${value#\"}"
+    value="${value%\"}"
+    value="${value#\'}"
+    value="${value%\'}"
+    printf '%s' "${value}"
+}
+
+parse_db_url() {
+    local db_url="$1"
+    python3 - "$db_url" <<'PY'
+from urllib.parse import urlparse
+import sys
+
+url = sys.argv[1]
+parsed = urlparse(url)
+host = parsed.hostname or ""
+port = parsed.port or 5432
+user = parsed.username or ""
+database = parsed.path.lstrip("/") if parsed.path else ""
+
+if not host or not user or not database:
+    raise SystemExit("invalid database URL")
+
+print(f"{host}|{port}|{user}|{database}")
+PY
+}
+
+assert_db_target() {
+    local label="$1"
+    local host="$2"
+    local port="$3"
+    local database="$4"
+
+    if [ "${host}" != "${EXPECTED_DB_HOST}" ]; then
+        log_error "${label} must target ${EXPECTED_DB_HOST}, got ${host}"
+        exit 1
+    fi
+
+    if [ "${port}" != "5432" ]; then
+        log_error "${label} must target port 5432, got ${port}"
+        exit 1
+    fi
+
+    if [ -z "${database}" ]; then
+        log_error "${label} must include a database name"
+        exit 1
+    fi
+}
+
+check_db_connectivity() {
+    local label="$1"
+    local host="$2"
+    local user="$3"
+    local database="$4"
+
+    log_info "Checking ${label} reachability via ${BACKEND_NETWORK}: ${user}@${host}:5432/${database}"
+    if docker run --rm --network "${BACKEND_NETWORK}" postgres:16-alpine \
+        pg_isready -h "${host}" -p 5432 -U "${user}" -d "${database}" > /dev/null 2>&1; then
+        log_success "${label} is reachable"
+    else
+        log_error "${label} is not reachable via backend network '${BACKEND_NETWORK}'"
+        log_error "Provision the external DB service and attach it to '${BACKEND_NETWORK}' before deploying."
+        exit 1
+    fi
+}
+
+wait_for_container_health() {
+    local timeout_seconds="$1"
+    local attempt=0
+
+    while [ "${attempt}" -lt "${timeout_seconds}" ]; do
+        local status
+        status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${CONTAINER_NAME}" 2>/dev/null || echo "missing")
+
+        if [ "${status}" = "healthy" ] || [ "${status}" = "none" ]; then
+            log_success "Container health status: ${status}"
+            return 0
+        fi
+
+        if [ "${status}" = "unhealthy" ] || [ "${status}" = "missing" ]; then
+            log_error "Container health status: ${status}"
+            return 1
+        fi
+
+        attempt=$((attempt + 2))
+        sleep 2
+    done
+
+    log_error "Timed out waiting for container health"
+    return 1
+}
+
+wait_for_host_health() {
+    local timeout_seconds="$1"
+    local attempt=0
+
+    while [ "${attempt}" -lt "${timeout_seconds}" ]; do
+        if curl -sf "${HOST_HEALTH_URL}" > /dev/null; then
+            log_success "Host health check passed: ${HOST_HEALTH_URL}"
+            return 0
+        fi
+        attempt=$((attempt + 2))
+        sleep 2
+    done
+
+    log_error "Host health check failed: ${HOST_HEALTH_URL}"
+    return 1
+}
 
 echo "=============================================="
 echo "games_hispanistica Production Deployment"
@@ -79,384 +153,109 @@ echo "=============================================="
 echo "Started at: $(date)"
 echo ""
 
-# -----------------------------------------------------------------------------
-# Step 0: Pre-flight checks
-# -----------------------------------------------------------------------------
 log_info "Running pre-flight checks..."
 
-# Verify we're in the right directory
 if [ ! -f "pyproject.toml" ]; then
-    log_error "Not in repository root. Expected to find pyproject.toml"
-    log_error "Run this script from: ${APP_DIR}"
+    log_error "Run this script from the repository root"
     exit 1
 fi
 
-# Verify config exists
-if [ ! -f "${CONFIG_DIR}/passwords.env" ]; then
-    log_error "Missing ${CONFIG_DIR}/passwords.env"
-    log_error "Run server_bootstrap.sh and configure passwords.env first"
+if [ ! -f "${COMPOSE_FILE}" ]; then
+    log_error "Missing compose file: ${COMPOSE_FILE}"
     exit 1
 fi
 
-# Parse AUTH_DATABASE_URL from passwords.env for preflight checks
-log_info "Parsing database configuration from passwords.env..."
-if ! AUTH_DATABASE_URL=$(grep '^AUTH_DATABASE_URL=' "${CONFIG_DIR}/passwords.env" | cut -d= -f2- | tr -d '"' | tr -d "'"); then
-    log_error "Failed to extract AUTH_DATABASE_URL from passwords.env"
+if [ ! -f "${ENV_FILE}" ]; then
+    log_error "Missing environment file: ${ENV_FILE}"
+    log_error "Provision the production environment file before deploying."
     exit 1
 fi
 
-if [ -z "$AUTH_DATABASE_URL" ]; then
-    log_error "AUTH_DATABASE_URL is empty in passwords.env"
+if ! command -v docker > /dev/null 2>&1; then
+    log_error "Docker is not installed or not in PATH"
     exit 1
 fi
 
-# Parse database connection details using Python (never log password)
-DB_PARSE_RESULT=$(python3 -c "
-from urllib.parse import urlparse
-import sys
-
-try:
-    url = '${AUTH_DATABASE_URL}'
-    parsed = urlparse(url)
-    
-    # Extract components
-    host = parsed.hostname or 'localhost'
-    port = parsed.port or 5432
-    user = parsed.username or 'postgres'
-    dbname = parsed.path.lstrip('/') or 'postgres'
-    
-    # Output format: host|port|user|dbname (no password)
-    print(f'{host}|{port}|{user}|{dbname}')
-except Exception as e:
-    print(f'ERROR: {e}', file=sys.stderr)
-    sys.exit(1)
-" 2>&1)
-
-if [ $? -ne 0 ]; then
-    log_error "Failed to parse AUTH_DATABASE_URL: ${DB_PARSE_RESULT}"
+if ! docker info > /dev/null 2>&1; then
+    log_error "Docker daemon is not accessible"
     exit 1
 fi
 
-# Split parsed result
-IFS='|' read -r DB_HOST DB_PORT DB_USER DB_NAME <<< "$DB_PARSE_RESULT"
-
-log_success "Database config parsed: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
-
-# Preflight: Test PostgreSQL connectivity from within Docker network
-log_info "Preflight: Testing PostgreSQL connectivity via Docker network..."
-if docker run --rm --network "${DOCKER_NETWORK}" postgres:16-alpine \
-    pg_isready -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" > /dev/null 2>&1; then
-    log_success "PostgreSQL is reachable from Docker network '${DOCKER_NETWORK}'"
-else
-    log_error "PostgreSQL preflight check failed!"
-    log_error "Cannot reach ${DB_HOST}:${DB_PORT} from Docker network '${DOCKER_NETWORK}'"
-    log_error "Verify:"
-    log_error "  1. PostgreSQL is running and accessible"
-    log_error "  2. AUTH_DATABASE_URL in passwords.env is correct"
-    log_error "  3. Network '${DOCKER_NETWORK}' can reach the database host"
+if ! docker compose version > /dev/null 2>&1; then
+    log_error "docker compose is required for production deployments"
     exit 1
 fi
 
-# Docker access diagnostics
-log_info "Docker diagnostics:"
-echo "  User: $(whoami) (UID: $(id -u), GID: $(id -g))"
-echo "  Groups: $(groups)"
-
-# Check docker socket
-if [ -e /var/run/docker.sock ]; then
-    echo "  Socket: /var/run/docker.sock ($(ls -l /var/run/docker.sock | awk '{print $1, $3, $4}'))"
-else
-    echo "  Socket: /var/run/docker.sock NOT FOUND"
+if ! docker network inspect "${BACKEND_NETWORK}" > /dev/null 2>&1; then
+    log_error "Required backend network '${BACKEND_NETWORK}' does not exist"
+    log_error "Provision the external backend network together with the dedicated DB service before deploying."
+    exit 1
 fi
+log_success "Backend network available: ${BACKEND_NETWORK}"
 
-# Check docker context
-if command -v docker &> /dev/null; then
-    DOCKER_CONTEXT=$(docker context show 2>/dev/null || echo "default")
-    echo "  Context: ${DOCKER_CONTEXT}"
-else
-    log_error "Docker command not found in PATH"
+AUTH_DATABASE_URL=$(read_env_var "AUTH_DATABASE_URL")
+QUIZ_DATABASE_URL=$(read_env_var "QUIZ_DATABASE_URL")
+
+if [ -z "${AUTH_DATABASE_URL}" ]; then
+    log_error "AUTH_DATABASE_URL is missing in ${ENV_FILE}"
     exit 1
 fi
 
-# Test docker daemon access
-log_info "Testing Docker daemon access..."
-if docker info > /dev/null 2>&1; then
-    DOCKER_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "unknown")
-    log_success "Docker daemon accessible (Server version: ${DOCKER_VERSION})"
-else
-    DOCKER_EXIT_CODE=$?
-    log_error "Docker daemon NOT accessible (exit code: ${DOCKER_EXIT_CODE})"
-    echo ""
-    log_error "Possible causes:"
-    log_error "  1. Docker daemon not running"
-    log_error "  2. User '$(whoami)' lacks permission to access /var/run/docker.sock"
-    log_error "  3. Docker running in rootless mode with different socket"
-    log_error "  4. Wrong docker context (current: ${DOCKER_CONTEXT})"
-    echo ""
-    log_error "Solutions:"
-    log_error "  • Add user to docker group: sudo usermod -aG docker $(whoami)"
-    log_error "  • Or run as root: sudo bash ${BASH_SOURCE[0]}"
-    log_error "  • Or check: systemctl status docker"
-    exit 2
+if [ -z "${QUIZ_DATABASE_URL}" ]; then
+    log_error "QUIZ_DATABASE_URL is missing in ${ENV_FILE}"
+    exit 1
 fi
 
-# Verify Docker network exists (or auto-create)
-log_info "Checking Docker network: ${DOCKER_NETWORK}..."
-if docker network inspect "${DOCKER_NETWORK}" &> /dev/null; then
-    NETWORK_SUBNET=$(docker network inspect "${DOCKER_NETWORK}" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
-    log_success "Network '${DOCKER_NETWORK}' exists (subnet: ${NETWORK_SUBNET})"
-else
-    log_warn "Network '${DOCKER_NETWORK}' does not exist"
-    log_info "Creating network '${DOCKER_NETWORK}' with subnet 172.18.0.0/16 (corapan standard)..."
-    
-    if docker network create \
-        --driver bridge \
-        --subnet=172.18.0.0/16 \
-        --gateway=172.18.0.1 \
-        "${DOCKER_NETWORK}" > /dev/null 2>&1; then
-        log_success "Network '${DOCKER_NETWORK}' created successfully"
-    else
-        NETWORK_EXIT_CODE=$?
-        log_error "Failed to create network '${DOCKER_NETWORK}' (exit code: ${NETWORK_EXIT_CODE})"
-        echo ""
-        log_error "Possible causes:"
-        log_error "  1. Subnet 172.18.0.0/16 already in use by another network"
-        log_error "  2. Insufficient Docker permissions"
-        echo ""
-        log_error "Check existing networks:"
-        docker network ls
-        echo ""
-        log_error "If subnet conflict, run: docker network inspect <conflicting-network>"
-        log_error "Then either remove conflict or run server_bootstrap.sh manually"
-        exit 3
-    fi
+IFS='|' read -r AUTH_DB_HOST AUTH_DB_PORT AUTH_DB_USER AUTH_DB_NAME <<< "$(parse_db_url "${AUTH_DATABASE_URL}")"
+IFS='|' read -r QUIZ_DB_HOST QUIZ_DB_PORT QUIZ_DB_USER QUIZ_DB_NAME <<< "$(parse_db_url "${QUIZ_DATABASE_URL}")"
+
+assert_db_target "AUTH_DATABASE_URL" "${AUTH_DB_HOST}" "${AUTH_DB_PORT}" "${AUTH_DB_NAME}"
+assert_db_target "QUIZ_DATABASE_URL" "${QUIZ_DB_HOST}" "${QUIZ_DB_PORT}" "${QUIZ_DB_NAME}"
+
+if [ "${AUTH_DB_NAME}" = "${QUIZ_DB_NAME}" ]; then
+    log_error "AUTH_DATABASE_URL and QUIZ_DATABASE_URL must point to different databases"
+    exit 1
 fi
 
-log_success "Pre-flight checks passed"
-echo ""
+log_success "Auth DB target: ${AUTH_DB_USER}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}"
+log_success "Quiz DB target: ${QUIZ_DB_USER}@${QUIZ_DB_HOST}:${QUIZ_DB_PORT}/${QUIZ_DB_NAME}"
 
-# -----------------------------------------------------------------------------
-# Step 1: Update code from Git
-# -----------------------------------------------------------------------------
-log_info "Fetching latest code from origin/main..."
+log_info "Validating compose configuration..."
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config > /dev/null
+log_success "Compose configuration is valid"
 
-git fetch origin
-git reset --hard origin/main
+check_db_connectivity "Auth DB" "${AUTH_DB_HOST}" "${AUTH_DB_USER}" "${AUTH_DB_NAME}"
+check_db_connectivity "Quiz DB" "${QUIZ_DB_HOST}" "${QUIZ_DB_USER}" "${QUIZ_DB_NAME}"
 
-GIT_SHA=$(git rev-parse --short HEAD)
-GIT_SHA_FULL=$(git rev-parse HEAD)
-log_success "Code updated to: ${GIT_SHA}"
-echo ""
+log_info "Deploying web service via docker compose..."
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build --force-recreate
 
-# -----------------------------------------------------------------------------
-# Step 2: Build Docker image
-# -----------------------------------------------------------------------------
-# Tag with both :latest and :sha for potential rollback
-IMAGE_TAG_LATEST="${IMAGE_NAME}:latest"
-IMAGE_TAG_SHA="${IMAGE_NAME}:${GIT_SHA}"
-
-log_info "Building Docker image: ${IMAGE_TAG_SHA}..."
-
-# Store old image ID for potential rollback
-OLD_IMAGE_ID=$(docker images -q "${IMAGE_TAG_LATEST}" 2>/dev/null || echo "")
-
-# Build without BuildKit (server compatibility)
-DOCKER_BUILDKIT=0 docker build \
-    -t "${IMAGE_TAG_SHA}" \
-    -t "${IMAGE_TAG_LATEST}" \
-    --build-arg GIT_COMMIT="${GIT_SHA_FULL}" \
-    .
-
-log_success "Docker image built: ${IMAGE_TAG_SHA}"
-echo ""
-
-# -----------------------------------------------------------------------------
-# Step 3: Stop and remove old container
-# -----------------------------------------------------------------------------
-log_info "Stopping old container (if running)..."
-
-docker stop "${CONTAINER_NAME}" 2>/dev/null || true
-docker rm "${CONTAINER_NAME}" 2>/dev/null || true
-
-log_success "Old container removed"
-echo ""
-
-# -----------------------------------------------------------------------------
-# Step 4: Start new container
-# -----------------------------------------------------------------------------
-log_info "Starting new container: ${CONTAINER_NAME}..."
-
-# Always remove any leftover container before starting (idempotent)
-docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
-
-# Run container - must succeed or script aborts
-docker run -d \
-    --name "${CONTAINER_NAME}" \
-    --restart unless-stopped \
-    --network "${DOCKER_NETWORK}" \
-    -p "${HOST_PORT}:${CONTAINER_PORT}" \
-    -v "${DATA_DIR}:/app/data:rw" \
-    -v "${MEDIA_DIR}:/app/media:rw" \
-    -v "${LOGS_DIR}:/app/logs" \
-    --env-file "${CONFIG_DIR}/passwords.env" \
-    -e "FLASK_ENV=production" \
-    -e "GIT_COMMIT=${GIT_SHA}" \
-    "${IMAGE_TAG_LATEST}"
-
-# Verify container is actually running after docker run
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    DEPLOYMENT_FAILED=1
-    log_error "Container '${CONTAINER_NAME}' is not running after docker run!"
-    log_error "Showing container logs:"
-    docker logs "${CONTAINER_NAME}" 2>&1 | tail -50 || true
+    log_error "Container '${CONTAINER_NAME}' is not running after compose up"
     exit 1
 fi
+log_success "Container is running: ${CONTAINER_NAME}"
 
-log_success "Container started and verified running"
+log_info "Running auth database setup..."
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T web python scripts/setup_prod_db.py
+log_success "Auth database setup completed"
+
+log_info "Running quiz database setup..."
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T web python scripts/init_quiz_db.py
+log_success "Quiz database setup completed"
+
+wait_for_container_health 90
+wait_for_host_health 60
+
 echo ""
-
-# -----------------------------------------------------------------------------
-# Step 5: Wait for container to be ready
-# -----------------------------------------------------------------------------
-log_info "Waiting for container to be ready..."
-
-WAIT_SECONDS=10
-for i in $(seq 1 $WAIT_SECONDS); do
-    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-        # Container is running, check if it's healthy
-        HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "${CONTAINER_NAME}" 2>/dev/null || echo "none")
-        if [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "none" ]; then
-            break
-        fi
-    fi
-    sleep 1
-done
-
-# Verify container is still running
-if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    DEPLOYMENT_FAILED=1
-    log_error "Container failed to stay running!"
-    exit 1
-fi
-
-log_success "Container is ready"
-echo ""
-
-# -----------------------------------------------------------------------------
-# Postdeploy Assertions
-# -----------------------------------------------------------------------------
-log_info "Running postdeploy assertions..."
-
-# Assert 1: Verify container is on correct Docker network
-CONTAINER_NETWORK=$(docker inspect "${CONTAINER_NAME}" --format='{{.HostConfig.NetworkMode}}' 2>/dev/null || echo "")
-if [ "$CONTAINER_NETWORK" != "${DOCKER_NETWORK}" ]; then
-    DEPLOYMENT_FAILED=1
-    log_error "Postdeploy assertion failed: Container network mismatch!"
-    log_error "  Expected: ${DOCKER_NETWORK}"
-    log_error "  Actual:   ${CONTAINER_NETWORK}"
-    exit 1
-fi
-log_success "✓ Container on correct network: ${DOCKER_NETWORK}"
-
-# Assert 2: Verify AUTH_DATABASE_URL in container matches expected configuration
-CONTAINER_DB_URL=$(docker inspect "${CONTAINER_NAME}" --format='{{range .Config.Env}}{{println .}}{{end}}' | grep '^AUTH_DATABASE_URL=' | cut -d= -f2-)
-
-# Parse container's AUTH_DATABASE_URL
-CONTAINER_DB_PARSE=$(python3 -c "
-from urllib.parse import urlparse
-import sys
-
-try:
-    url = '${CONTAINER_DB_URL}'
-    parsed = urlparse(url)
-    
-    host = parsed.hostname or 'localhost'
-    port = parsed.port or 5432
-    user = parsed.username or 'postgres'
-    dbname = parsed.path.lstrip('/') or 'postgres'
-    
-    print(f'{host}|{port}|{user}|{dbname}')
-except Exception as e:
-    print(f'ERROR: {e}', file=sys.stderr)
-    sys.exit(1)
-" 2>&1)
-
-if [ $? -ne 0 ]; then
-    DEPLOYMENT_FAILED=1
-    log_error "Failed to parse container's AUTH_DATABASE_URL"
-    exit 1
-fi
-
-IFS='|' read -r CONT_DB_HOST CONT_DB_PORT CONT_DB_USER CONT_DB_NAME <<< "$CONTAINER_DB_PARSE"
-
-# Compare database config (without password)
-if [ "$CONT_DB_HOST" != "$DB_HOST" ] || \
-   [ "$CONT_DB_PORT" != "$DB_PORT" ] || \
-   [ "$CONT_DB_USER" != "$DB_USER" ] || \
-   [ "$CONT_DB_NAME" != "$DB_NAME" ]; then
-    DEPLOYMENT_FAILED=1
-    log_error "Postdeploy assertion failed: Database config mismatch!"
-    log_error "  Expected: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
-    log_error "  Container: ${CONT_DB_USER}@${CONT_DB_HOST}:${CONT_DB_PORT}/${CONT_DB_NAME}"
-    exit 1
-fi
-log_success "✓ Container database config matches: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
-
-log_success "All postdeploy assertions passed"
-echo ""
-
-# -----------------------------------------------------------------------------
-# Step 6: Run database setup
-# -----------------------------------------------------------------------------
-log_info "Running database setup (idempotent)..."
-
-if docker exec "${CONTAINER_NAME}" python scripts/setup_prod_db.py; then
-    log_success "Database setup completed"
-else
-    log_warn "Database setup returned non-zero (check logs above)"
-    log_warn "Continuing with deployment..."
-fi
-echo ""
-
-# -----------------------------------------------------------------------------
-# Step 7: Run smoke checks
-# -----------------------------------------------------------------------------
-log_info "Running smoke checks..."
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "${SCRIPT_DIR}/smoke_check.sh" ]; then
-    if bash "${SCRIPT_DIR}/smoke_check.sh"; then
-        log_success "Smoke checks passed"
-    else
-        DEPLOYMENT_FAILED=1
-        log_error "Smoke checks failed!"
-        exit 1
-    fi
-else
-    # Inline basic health check
-    sleep 2
-    if curl -sf "http://localhost:${HOST_PORT}/health" > /dev/null; then
-        log_success "Basic health check passed"
-    else
-        DEPLOYMENT_FAILED=1
-        log_error "Health check failed!"
-        exit 1
-    fi
-fi
-echo ""
-
-# -----------------------------------------------------------------------------
-# Summary
-# -----------------------------------------------------------------------------
 echo "=============================================="
 echo -e "${GREEN}Deployment Successful${NC}"
 echo "=============================================="
 echo "Container: ${CONTAINER_NAME}"
-echo "Image:     ${IMAGE_TAG_SHA}"
-echo "Port:      ${HOST_PORT} -> ${CONTAINER_PORT}"
-echo "Commit:    ${GIT_SHA}"
+echo "Compose:   ${COMPOSE_FILE}"
+echo "Network:   ${BACKEND_NETWORK}"
+echo "Health:    ${HOST_HEALTH_URL}"
 echo "Finished:  $(date)"
 echo ""
 
-# Show container status
-docker ps --filter "name=${CONTAINER_NAME}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps

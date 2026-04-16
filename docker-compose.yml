@@ -1,58 +1,48 @@
-version: '3.8'
+# Compatibility mirror of the canonical production compose file.
+# Use infra/docker-compose.prod.yml as the source of truth.
 
 services:
   web:
+    image: games-web-prod:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: corapan-container
+    container_name: games-web-prod
     ports:
-      # Port 6000 (extern) -> 8000 (intern im Container)
-      # nginx reverse proxy leitet dann an localhost:6000 weiter
-      - "6000:8000"
+      - "127.0.0.1:7000:5000"
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: "false"
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY is required}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:?AUTH_DATABASE_URL is required}
+      QUIZ_DATABASE_URL: ${QUIZ_DATABASE_URL:?QUIZ_DATABASE_URL is required}
+      AUTH_HASH_ALGO: ${AUTH_HASH_ALGO:-argon2}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-true}
+      FLASK_SESSION_SECURE: ${FLASK_SESSION_SECURE:-true}
+      FLASK_SESSION_SAMESITE: ${FLASK_SESSION_SAMESITE:-lax}
+      DB_WAIT_SECONDS: ${DB_WAIT_SECONDS:-120}
+      ADMIN_BOOTSTRAP: ${ADMIN_BOOTSTRAP:-0}
+      START_ADMIN_USERNAME: ${START_ADMIN_USERNAME:-admin}
+      START_ADMIN_PASSWORD: ${START_ADMIN_PASSWORD:-}
+      START_ADMIN_EMAIL: ${START_ADMIN_EMAIL:-admin@games.hispanistica.com}
+      GIT_COMMIT: ${GIT_COMMIT:-unknown}
     volumes:
-      # Media-Dateien (read-write, Upload/Import benötigt Schreibzugriff)
-      - ~/corapan/media/mp3-full:/app/media/mp3-full
-      - ~/corapan/media/mp3-split:/app/media/mp3-split
-      - ~/corapan/media/mp3-temp:/app/media/mp3-temp
-      - ~/corapan/media/transcripts:/app/media/transcripts
-      - ~/corapan/media/quiz:/app/media/quiz
-      - ~/corapan/media/releases:/app/media/releases
-      
-      # Config & Credentials (read-only)
-      # NOTE: mounting passwords.env is legacy (env-based auth). Migrations use DB-based auth (AUTH_BACKEND=db).
-      # This mount is kept only for rollback/legacy compatibility and will be removed in a final cleanup step.
-      - ~/corapan/passwords.env:/app/passwords.env:ro
-      - ~/corapan/config/keys:/app/config/keys:ro
-      
-      # Datenbank (read-only, wird extern neu geschrieben bei neuen Medien)
-      - ~/corapan/data/db:/app/data/db:ro
-      
-      # Counters (read-write, App muss schreiben können)
-      - ~/corapan/data/counters:/app/data/counters
-      
-      # Logs (damit sie auf dem Host bleiben)
-      - ~/corapan/logs:/app/logs
-    
-    restart: unless-stopped
-    
+      - ${GAMES_DATA_DIR:-/srv/webapps/games_hispanistica/data}:/app/data
+      - ${GAMES_MEDIA_DIR:-/srv/webapps/games_hispanistica/media}:/app/media
+      - ${GAMES_LOGS_DIR:-/srv/webapps/games_hispanistica/logs}:/app/logs
+      - ${GAMES_KEYS_DIR:-/srv/webapps/games_hispanistica/config/keys}:/app/config/keys:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-    
-    # Resource Limits (optional, für kleine VPS anpassen)
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - backend
 
 networks:
-  default:
-    name: corapan-network
+  backend:
+    name: ${GAMES_BACKEND_NETWORK:-games-backend-prod}
+    external: true
