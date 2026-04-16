@@ -47,7 +47,7 @@ Wenn alles bereits eingerichtet ist:
 
 > `-UsePostgres` ist deprecated (Postgres ist Default).
 
-Wenn du seeden willst:
+Wenn du seeden willst: 
 ```powershell
 $env:QUIZ_DEV_SEED_MODE = 'single'
 .\scripts\dev-start.ps1
