@@ -55,12 +55,12 @@
 |---------|-------|-------|
 | Container name | `games-web-prod` | |
 | Image name | `games-web-prod:latest` | Built via compose |
-| Network | `games-backend-prod` (prod)<br>`games-network-dev` (dev) | Production network is external and must exist before deploy |
+| Network | `games-backend-prod` (prod)<br>`games-network-dev` (dev) | Production network belongs to games and is auto-created by deploy if missing |
 | Web bind | `127.0.0.1:7000:5000` | Reverse proxy target |
 
 **Network Configuration:**
 - **Development:** Uses `games-network-dev`
-- **Production:** Uses external `games-backend-prod`
+- **Production:** Uses `games-backend-prod`, created by the deploy script if absent
 - **Override:** Set `GAMES_BACKEND_NETWORK=your-network-name` in `.env.prod` or `passwords.env`
 
 ### PostgreSQL
@@ -96,7 +96,7 @@ START_ADMIN_PASSWORD=
 START_ADMIN_EMAIL=admin@games.hispanistica.com
 ```
 
-**Note:** Production deployment no longer uses host PostgreSQL routing or shared corapan infrastructure. The dedicated DB service and backend network must be provisioned separately.
+**Note:** Production deployment no longer uses host PostgreSQL routing or shared corapan infrastructure. The backend network may be created by the deploy script, but the dedicated DB service remains an external prerequisite.
 
 ### Nginx
 
@@ -157,7 +157,8 @@ sudo cp /srv/webapps/games_hispanistica/config/passwords.env.template \
 sudo nano /srv/webapps/games_hispanistica/config/passwords.env
 # Fill in real values!
 
-# Provision external backend network + dedicated PostgreSQL service first.
+# Provision the dedicated PostgreSQL service first.
+# The deploy script may create the games backend network if it is missing.
 # The repository does not create games-db-prod for you.
 ```
 

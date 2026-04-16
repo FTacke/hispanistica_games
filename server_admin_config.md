@@ -28,7 +28,7 @@ The old single-container deployment with host PostgreSQL routing via localhost, 
 - Auth DB: games_hispanistica
 - Quiz DB: games_hispanistica_quiz
 
-Both databases are required in production. The repository does not provision the dedicated PostgreSQL service; that infrastructure must exist before deployment.
+Both databases are required in production. The deploy script may create the dedicated games backend network if it is missing, but the repository does not provision the dedicated PostgreSQL service; that infrastructure must exist before deployment.
 
 ## Required Environment Variables
 
@@ -74,9 +74,9 @@ Remove ADMIN_BOOTSTRAP and START_ADMIN_PASSWORD again after the initial bootstra
 ## Deployment Sequence
 
 1. Check out the target commit into /srv/webapps/games_hispanistica/app.
-2. Verify that the backend network games-backend-prod exists.
-3. Verify that the dedicated DB service games-db-prod is reachable on that network.
-4. Run bash scripts/deploy/deploy_prod.sh from the repository root.
+2. Run bash scripts/deploy/deploy_prod.sh from the repository root.
+3. If games-backend-prod is missing, the deploy script creates it.
+4. The deploy script then verifies that the dedicated DB service games-db-prod is reachable on that network.
 5. The deploy script rebuilds the web service via docker compose.
 6. The deploy script runs scripts/setup_prod_db.py for the auth database.
 7. The deploy script runs scripts/init_quiz_db.py for the quiz database.
@@ -116,11 +116,12 @@ Do not use any of the following as the production database path:
 
 The following infrastructure is outside this repository and must be provided separately:
 
-- External backend Docker network games-backend-prod
 - Dedicated PostgreSQL service games-db-prod attached to that network
 - Databases games_hispanistica and games_hispanistica_quiz
 - Credentials for the games_app database user
 - Nginx or equivalent reverse proxy to 127.0.0.1:7000
+
+The backend network itself is not a foreign dependency: if games-backend-prod is missing, scripts/deploy/deploy_prod.sh may create it for the games stack.
 
 ## Siehe auch
 

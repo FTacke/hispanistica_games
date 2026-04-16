@@ -131,6 +131,10 @@ Der Quellcode ist öffentlich auf [GitHub](https://github.com/FTacke/hispanistic
 
 ## Dokumentation
 
+### Produktionshinweis
+
+Der Produktionsdeploy läuft über Docker Compose auf einem Self-Hosted GitHub Actions Runner. Das kanonische Deploy-Skript kann das dedizierte games-Backend-Netz bei Bedarf selbst erzeugen. Der dedizierte PostgreSQL-Service `games-db-prod` bleibt trotzdem eine externe Voraussetzung; es gibt keinen Fallback auf Host-Postgres, `host.docker.internal` oder fremde corapan-Ressourcen.
+
 ### Technische Dokumentation
 
 - **[startme.md](startme.md)** – Lokales Setup für Entwicklung

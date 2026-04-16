@@ -10,8 +10,10 @@ COMPOSE_FILE="infra/docker-compose.prod.yml"
 BASE_DIR="/srv/webapps/games_hispanistica"
 CONFIG_DIR="${BASE_DIR}/config"
 ENV_FILE="${CONFIG_DIR}/passwords.env"
-EXPECTED_DB_HOST="${GAMES_DB_HOST:-games-db-prod}"
-BACKEND_NETWORK="${GAMES_BACKEND_NETWORK:-games-backend-prod}"
+DEFAULT_DB_HOST="games-db-prod"
+DEFAULT_BACKEND_NETWORK="games-backend-prod"
+EXPECTED_DB_HOST="${GAMES_DB_HOST:-${DEFAULT_DB_HOST}}"
+BACKEND_NETWORK="${GAMES_BACKEND_NETWORK:-${DEFAULT_BACKEND_NETWORK}}"
 HOST_HEALTH_URL="http://127.0.0.1:7000/health"
 
 RED='\033[0;31m'
@@ -43,6 +45,36 @@ read_env_var() {
     value="${value#\'}"
     value="${value%\'}"
     printf '%s' "${value}"
+}
+
+read_env_or_default() {
+    local key="$1"
+    local default_value="$2"
+    local file_value
+    file_value=$(read_env_var "$key")
+    if [ -n "$file_value" ]; then
+        printf '%s' "$file_value"
+    else
+        printf '%s' "$default_value"
+    fi
+}
+
+assert_isolation_rules() {
+    case "${BACKEND_NETWORK}" in
+        corapan-network|corapan-network-prod|corapan-*)
+            log_error "Refusing to use foreign network '${BACKEND_NETWORK}'"
+            log_error "games deployment must stay isolated from corapan resources"
+            exit 1
+            ;;
+    esac
+
+    case "${EXPECTED_DB_HOST}" in
+        corapan-db-prod|corapan-db|db)
+            log_error "Refusing to use foreign database host '${EXPECTED_DB_HOST}'"
+            log_error "games deployment must not target corapan database services"
+            exit 1
+            ;;
+    esac
 }
 
 parse_db_url() {
@@ -94,14 +126,38 @@ check_db_connectivity() {
     local database="$4"
 
     log_info "Checking ${label} reachability via ${BACKEND_NETWORK}: ${user}@${host}:5432/${database}"
-    if docker run --rm --network "${BACKEND_NETWORK}" postgres:16-alpine \
-        pg_isready -h "${host}" -p 5432 -U "${user}" -d "${database}" > /dev/null 2>&1; then
+    local output
+    if output=$(docker run --rm --network "${BACKEND_NETWORK}" postgres:16-alpine \
+        pg_isready -h "${host}" -p 5432 -U "${user}" -d "${database}" 2>&1); then
         log_success "${label} is reachable"
     else
         log_error "${label} is not reachable via backend network '${BACKEND_NETWORK}'"
-        log_error "Provision the external DB service and attach it to '${BACKEND_NETWORK}' before deploying."
+        if [ -n "${output}" ]; then
+            log_error "pg_isready output: ${output}"
+        fi
+        log_error "The backend network belongs to games and may be created by this script, but the database service remains an external prerequisite."
+        log_error "Provision the dedicated DB service '${EXPECTED_DB_HOST}' and attach it to '${BACKEND_NETWORK}' before deploying."
         exit 1
     fi
+}
+
+ensure_backend_network() {
+    if docker network inspect "${BACKEND_NETWORK}" > /dev/null 2>&1; then
+        log_success "Backend network available: ${BACKEND_NETWORK}"
+        return 0
+    fi
+
+    log_warn "Backend network '${BACKEND_NETWORK}' does not exist"
+    log_info "Creating backend network '${BACKEND_NETWORK}' for the games stack..."
+    docker network create "${BACKEND_NETWORK}" > /dev/null
+
+    if docker network inspect "${BACKEND_NETWORK}" > /dev/null 2>&1; then
+        log_success "Backend network created: ${BACKEND_NETWORK}"
+        return 0
+    fi
+
+    log_error "Failed to create backend network '${BACKEND_NETWORK}'"
+    exit 1
 }
 
 wait_for_container_health() {
@@ -171,6 +227,11 @@ if [ ! -f "${ENV_FILE}" ]; then
     exit 1
 fi
 
+BACKEND_NETWORK=$(read_env_or_default "GAMES_BACKEND_NETWORK" "${BACKEND_NETWORK}")
+EXPECTED_DB_HOST=$(read_env_or_default "GAMES_DB_HOST" "${EXPECTED_DB_HOST}")
+
+assert_isolation_rules
+
 if ! command -v docker > /dev/null 2>&1; then
     log_error "Docker is not installed or not in PATH"
     exit 1
@@ -186,12 +247,7 @@ if ! docker compose version > /dev/null 2>&1; then
     exit 1
 fi
 
-if ! docker network inspect "${BACKEND_NETWORK}" > /dev/null 2>&1; then
-    log_error "Required backend network '${BACKEND_NETWORK}' does not exist"
-    log_error "Provision the external backend network together with the dedicated DB service before deploying."
-    exit 1
-fi
-log_success "Backend network available: ${BACKEND_NETWORK}"
+ensure_backend_network
 
 AUTH_DATABASE_URL=$(read_env_var "AUTH_DATABASE_URL")
 QUIZ_DATABASE_URL=$(read_env_var "QUIZ_DATABASE_URL")
@@ -228,6 +284,7 @@ check_db_connectivity "Auth DB" "${AUTH_DB_HOST}" "${AUTH_DB_USER}" "${AUTH_DB_N
 check_db_connectivity "Quiz DB" "${QUIZ_DB_HOST}" "${QUIZ_DB_USER}" "${QUIZ_DB_NAME}"
 
 log_info "Deploying web service via docker compose..."
+export GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build --force-recreate
 
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
