@@ -21,6 +21,105 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Test-TcpPort {
+    param(
+        [Parameter(Mandatory = $true)][string]$HostName,
+        [Parameter(Mandatory = $true)][int]$Port,
+        [int]$TimeoutMs = 1000
+    )
+
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $connect = $client.BeginConnect($HostName, $Port, $null, $null)
+        if (-not $connect.AsyncWaitHandle.WaitOne($TimeoutMs, $false)) {
+            return $false
+        }
+
+        $client.EndConnect($connect)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $client.Dispose()
+    }
+}
+
+function Wait-ForPostgresService {
+    param(
+        [Parameter(Mandatory = $true)][string]$ContainerName,
+        [Parameter(Mandatory = $true)][string]$HostName,
+        [Parameter(Mandatory = $true)][int]$Port,
+        [int]$MaxWaitSeconds = 60
+    )
+
+    $waited = 0
+    while ($waited -lt $MaxWaitSeconds) {
+        $status = docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' $ContainerName 2>$null
+        if (($status -eq 'healthy' -or $status -eq 'running') -and (Test-TcpPort -HostName $HostName -Port $Port)) {
+            return $true
+        }
+
+        Start-Sleep -Seconds 2
+        $waited += 2
+    }
+
+    return $false
+}
+
+function Test-ContainerPortPublished {
+    param(
+        [Parameter(Mandatory = $true)][string]$ContainerName,
+        [Parameter(Mandatory = $true)][int]$ContainerPort,
+        [Parameter(Mandatory = $true)][string]$HostName,
+        [Parameter(Mandatory = $true)][int]$HostPort
+    )
+
+    $portSpec = docker inspect --format="{{with index .NetworkSettings.Ports '$($ContainerPort)/tcp'}}{{(index . 0).HostIp}}:{{(index . 0).HostPort}}{{end}}" $ContainerName 2>$null
+    if (-not $portSpec) {
+        return $false
+    }
+
+    $expectedPorts = @("$HostPort", "$HostName`:$HostPort", "0.0.0.0:$HostPort", "::$HostPort")
+    if ($expectedPorts -notcontains $portSpec.Trim()) {
+        return $false
+    }
+
+    return (Test-TcpPort -HostName $HostName -Port $HostPort)
+}
+
+function Get-ContainerComposeWorkingDir {
+    param(
+        [Parameter(Mandatory = $true)][string]$ContainerName
+    )
+
+    try {
+        $inspectJson = docker inspect $ContainerName 2>$null | ConvertFrom-Json
+        if (-not $inspectJson) {
+            return $null
+        }
+
+        return $inspectJson[0].Config.Labels.'com.docker.compose.project.working_dir'
+    } catch {
+        return $null
+    }
+}
+
+function Test-ContainerMatchesRepo {
+    param(
+        [Parameter(Mandatory = $true)][string]$ContainerName,
+        [Parameter(Mandatory = $true)][string]$ExpectedWorkingDir
+    )
+
+    $containerWorkingDir = Get-ContainerComposeWorkingDir -ContainerName $ContainerName
+    if (-not $containerWorkingDir) {
+        return $false
+    }
+
+    $expected = [System.IO.Path]::GetFullPath($ExpectedWorkingDir).TrimEnd('\').ToLowerInvariant()
+    $actual = [System.IO.Path]::GetFullPath($containerWorkingDir).TrimEnd('\').ToLowerInvariant()
+    return $actual -eq $expected
+}
+
 # Repository root
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
@@ -75,12 +174,63 @@ $dockerAvailable = Get-Command docker -ErrorAction SilentlyContinue
 if ($dockerAvailable) {
     $pgRunning = docker ps --filter "name=hispanistica_auth_db" --format "{{.Names}}" 2>$null
     $quizPgRunning = docker ps --filter "name=hispanistica_quiz_db" --format "{{.Names}}" 2>$null
-    if (-not $pgRunning -or -not $quizPgRunning) {
+    $authPortReady = $false
+    $quizPortReady = $false
+    $authMatchesRepo = $false
+    $quizMatchesRepo = $false
+
+    if ($pgRunning) {
+        $authMatchesRepo = Test-ContainerMatchesRepo -ContainerName 'hispanistica_auth_db' -ExpectedWorkingDir $repoRoot
+    }
+
+    if ($quizPgRunning) {
+        $quizMatchesRepo = Test-ContainerMatchesRepo -ContainerName 'hispanistica_quiz_db' -ExpectedWorkingDir $repoRoot
+    }
+
+    if ($pgRunning -and $authMatchesRepo) {
+        $authPortReady = Test-ContainerPortPublished -ContainerName 'hispanistica_auth_db' -ContainerPort 5432 -HostName '127.0.0.1' -HostPort 54321
+    }
+
+    if ($quizPgRunning -and $quizMatchesRepo) {
+        $quizPortReady = Test-ContainerPortPublished -ContainerName 'hispanistica_quiz_db' -ContainerPort 5432 -HostName '127.0.0.1' -HostPort 54322
+    }
+
+    if ($pgRunning -and -not $authMatchesRepo) {
+        Write-Host "Removing stale auth DB container from a different compose workspace..." -ForegroundColor Yellow
+        docker rm -f hispanistica_auth_db | Out-Null
+        $pgRunning = $null
+    }
+
+    if ($quizPgRunning -and -not $quizMatchesRepo) {
+        Write-Host "Removing stale quiz DB container from a different compose workspace..." -ForegroundColor Yellow
+        docker rm -f hispanistica_quiz_db | Out-Null
+        $quizPgRunning = $null
+    }
+
+    if (-not $pgRunning -or -not $quizPgRunning -or -not $authPortReady -or -not $quizPortReady) {
         Write-Host "Starting Docker PostgreSQL..." -ForegroundColor Yellow
-        docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db hispanistica_quiz_db
+        if (($pgRunning -and -not $authPortReady) -or ($quizPgRunning -and -not $quizPortReady)) {
+            Write-Host "Detected stale PostgreSQL containers without usable host port bindings. Recreating..." -ForegroundColor Yellow
+            if ($pgRunning) {
+                docker rm -f hispanistica_auth_db | Out-Null
+            }
+            if ($quizPgRunning) {
+                docker rm -f hispanistica_quiz_db | Out-Null
+            }
+            docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db hispanistica_quiz_db
+        } else {
+            docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db hispanistica_quiz_db
+        }
 
         Write-Host "Waiting for PostgreSQL..." -ForegroundColor Gray
-        Start-Sleep -Seconds 5
+        $authReady = Wait-ForPostgresService -ContainerName 'hispanistica_auth_db' -HostName '127.0.0.1' -Port 54321
+        $quizReady = Wait-ForPostgresService -ContainerName 'hispanistica_quiz_db' -HostName '127.0.0.1' -Port 54322
+        if (-not $authReady -or -not $quizReady) {
+            Write-Host "ERROR: PostgreSQL host ports are not reachable after startup." -ForegroundColor Red
+            Write-Host "  Check: docker compose -f docker-compose.dev-postgres.yml ps" -ForegroundColor Gray
+            Write-Host "  Check: docker inspect hispanistica_auth_db" -ForegroundColor Gray
+            exit 1
+        }
     } else {
         Write-Host "Docker PostgreSQL already running." -ForegroundColor Gray
     }

@@ -37,7 +37,7 @@ Das Skript:
 
 ---
 
-## Nur neu starten (ohne Neuinstallation)
+## Nur neu starten (ohne Neuinstallation) 
 
 Wenn alles bereits eingerichtet ist:
 
