@@ -16,7 +16,7 @@ services:
     ports:
       - "${AUTH_DB_PORT:-54321}:5432"
     volumes:
-      - ./data/db/postgres_dev_auth:/var/lib/postgresql/data
+      - ${GAMES_DATA_DIR:-./data}/db/postgres_dev_auth:/var/lib/postgresql/data
       - ./:/app:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "hispanistica_auth", "-d", "hispanistica_auth"]
@@ -36,7 +36,7 @@ services:
     ports:
       - "${QUIZ_DB_PORT:-54322}:5432"
     volumes:
-      - ./data/db/postgres_dev_quiz:/var/lib/postgresql/data
+      - ${GAMES_DATA_DIR:-./data}/db/postgres_dev_quiz:/var/lib/postgresql/data
       - ./:/app:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "hispanistica_quiz", "-d", "hispanistica_quiz"]

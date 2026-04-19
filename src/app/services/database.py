@@ -7,7 +7,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
+from ..config.runtime_paths import get_data_dir
+
+DATA_ROOT = get_data_dir(Path(__file__).resolve().parents[3])
 PRIVATE_DB_ROOT = DATA_ROOT / "db"
 PUBLIC_DB_ROOT = DATA_ROOT / "db_public"
 
@@ -23,6 +25,7 @@ def get_connection(name: str) -> sqlite3.Connection:
     path = DATABASES.get(name)
     if path is None:
         raise KeyError(f"Unknown database identifier: {name}")
+    path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(str(path), detect_types=sqlite3.PARSE_DECLTYPES)
     connection.row_factory = sqlite3.Row
     return connection

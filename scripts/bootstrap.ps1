@@ -64,6 +64,9 @@ if (Test-Path $constraintsFile) {
     & uv pip install --python $pythonExe -r $requirementsFile
 }
 
+Write-Host "[bootstrap] Stelle PostgreSQL-Driver fuer postgresql+psycopg sicher"
+& uv pip install --python $pythonExe "psycopg[binary]"
+
 if ($Dev) {
     $requirementsDevFile = Join-Path $repoRoot "requirements-dev.txt"
     if (Test-Path $requirementsDevFile) {

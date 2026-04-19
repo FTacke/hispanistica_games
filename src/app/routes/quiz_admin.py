@@ -21,6 +21,7 @@ from flask_jwt_extended import jwt_required
 
 from ..auth import Role
 from ..auth.decorators import require_role
+from ..config.runtime_paths import get_data_dir, get_media_dir, get_repo_root
 
 
 blueprint = Blueprint("quiz_admin", __name__, url_prefix="/quiz-admin")
@@ -43,13 +44,13 @@ def generate_release_id() -> str:
 
 def get_project_root() -> Path:
     """Get the project root directory."""
-    # Flask app is in src/app, project root is 2 levels up
-    return Path(current_app.root_path).parent.parent
+    return get_repo_root(Path(current_app.root_path).parent.parent)
 
 
 def get_media_releases_path() -> Path:
     """Get the media/releases directory path."""
-    return get_project_root() / "media" / "releases"
+    media_root = Path(current_app.config.get("MEDIA_DIR") or get_media_dir(get_project_root()))
+    return media_root / "releases"
 
 
 # =============================================================================
@@ -775,7 +776,7 @@ def get_release_logs(release_id: str) -> Response:
     """
     import glob
     
-    logs_dir = get_project_root() / "data" / "import_logs"
+    logs_dir = Path(current_app.config.get("DATA_DIR") or get_data_dir(get_project_root())) / "import_logs"
     
     if not logs_dir.exists():
         return jsonify({"logs": "", "filename": None}), 200

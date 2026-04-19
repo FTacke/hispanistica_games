@@ -7,9 +7,11 @@ from pathlib import Path
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
+from src.app.config.runtime_paths import get_db_dir  # noqa: E402
+
 # Set database URL if not already set
 if "AUTH_DATABASE_URL" not in os.environ:
-    db_path = repo_root / "data" / "db" / "auth.db"
+    db_path = get_db_dir(repo_root) / "auth.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
     os.environ["AUTH_DATABASE_URL"] = f"sqlite:///{db_path}"
 

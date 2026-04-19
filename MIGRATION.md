@@ -31,8 +31,20 @@ Diese Datei beschreibt, welche großen/generierten Ordner **nicht** aus Git reko
 
 Große Inhalte außerhalb des Repo halten, z. B.:
 
-- `C:\hispanistica-data\media\releases\`
-- `C:\hispanistica-data\quiz_releases\`
+- `C:\dev\games.hispanistica\media\releases\`
+- `C:\dev\games.hispanistica\data\`
+- `C:\dev\games.hispanistica\logs\`
+
+Empfohlenes lokales Modell:
+
+```text
+C:\dev\games.hispanistica\
+├── app\
+├── config\
+├── data\
+├── logs\
+└── media\
+```
 
 Anschließend über bestehende Release-/Deploy-Skripte synchronisieren.
 

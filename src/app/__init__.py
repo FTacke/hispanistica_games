@@ -17,6 +17,7 @@ from .routes import register_blueprints
 
 # Import load_config from the config.py module (bypassing the config package)
 from .config import load_config
+from .config.runtime_paths import get_logs_dir, get_media_dir
 
 
 def _verify_critical_dependencies() -> list[str]:
@@ -102,7 +103,7 @@ def _verify_media_storage(app: Flask) -> None:
 
     This fails fast in non-test environments if /app/media is not writable.
     """
-    media_root = Path(app.config.get("MEDIA_DIR") or Path(__file__).resolve().parents[2] / "media")
+    media_root = Path(app.config.get("MEDIA_DIR") or get_media_dir(Path(__file__).resolve().parents[2]))
     required_dirs = [
         media_root / "quiz",
         media_root / "releases",
@@ -468,8 +469,8 @@ def setup_logging(app: Flask) -> None:
     """Configure application logging."""
     if not app.debug:
         # Create logs directory
-        log_dir = Path(__file__).resolve().parents[2] / "logs"
-        log_dir.mkdir(exist_ok=True)
+        log_dir = Path(app.config.get("LOGS_DIR") or get_logs_dir(Path(__file__).resolve().parents[2]))
+        log_dir.mkdir(parents=True, exist_ok=True)
 
         # Setup rotating file handler
         file_handler = RotatingFileHandler(

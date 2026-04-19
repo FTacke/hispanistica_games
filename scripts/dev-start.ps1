@@ -21,6 +21,31 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Get-RuntimeRoot {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoRoot
+    )
+
+    $candidateRoot = Split-Path -Parent $RepoRoot
+    if ((Split-Path -Leaf $RepoRoot) -ieq 'app') {
+        foreach ($dirName in @('config', 'data', 'logs', 'media')) {
+            if (Test-Path (Join-Path $candidateRoot $dirName)) {
+                return $candidateRoot
+            }
+        }
+    }
+
+    return $RepoRoot
+}
+
+function Get-ComposePathValue {
+    param(
+        [Parameter(Mandatory = $true)][string]$PathValue
+    )
+
+    return ([System.IO.Path]::GetFullPath($PathValue)) -replace '\\', '/'
+}
+
 function Test-TcpPort {
     param(
         [Parameter(Mandatory = $true)][string]$HostName,
@@ -44,6 +69,52 @@ function Test-TcpPort {
     }
 }
 
+function Get-ExcludedTcpPortRanges {
+    $ranges = @()
+
+    try {
+        $output = netsh interface ipv4 show excludedportrange protocol=tcp 2>$null
+        foreach ($line in $output) {
+            if ($line -match '^\s*(\d+)\s+(\d+)') {
+                $ranges += [PSCustomObject]@{
+                    Start = [int]$matches[1]
+                    End = [int]$matches[2]
+                }
+            }
+        }
+    } catch {
+        return @()
+    }
+
+    return $ranges
+}
+
+function Test-TcpPortUsable {
+    param(
+        [Parameter(Mandatory = $true)][int]$Port,
+        [object[]]$ExcludedRanges = @()
+    )
+
+    foreach ($range in $ExcludedRanges) {
+        if ($Port -ge $range.Start -and $Port -le $range.End) {
+            return $false
+        }
+    }
+
+    $listener = $null
+    try {
+        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
+        $listener.Start()
+        return $true
+    } catch {
+        return $false
+    } finally {
+        if ($listener) {
+            $listener.Stop()
+        }
+    }
+}
+
 function Get-FreeTcpPort {
     param(
         [Parameter(Mandatory = $true)][int]$PreferredPort,
@@ -51,13 +122,15 @@ function Get-FreeTcpPort {
         [int]$MaxPort = 54550
     )
 
+    $excludedRanges = Get-ExcludedTcpPortRanges
+
     for ($candidate = $PreferredPort; $candidate -le $MaxPort; $candidate++) {
         if ($ExcludedPorts -contains $candidate) {
             continue
         }
 
         $listener = Get-NetTCPConnection -LocalPort $candidate -State Listen -ErrorAction SilentlyContinue
-        if (-not $listener) {
+        if ((-not $listener) -and (Test-TcpPortUsable -Port $candidate -ExcludedRanges $excludedRanges)) {
             return $candidate
         }
     }
@@ -158,6 +231,15 @@ function Test-ContainerMatchesRepo {
 # Repository root
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
+$runtimeRoot = Get-RuntimeRoot -RepoRoot $repoRoot
+
+$env:GAMES_BASE_DIR = [System.IO.Path]::GetFullPath($runtimeRoot)
+$env:GAMES_DATA_DIR = Get-ComposePathValue -PathValue (Join-Path $runtimeRoot 'data')
+$env:GAMES_LOGS_DIR = [System.IO.Path]::GetFullPath((Join-Path $runtimeRoot 'logs'))
+$env:GAMES_MEDIA_DIR = [System.IO.Path]::GetFullPath((Join-Path $runtimeRoot 'media'))
+$env:MEDIA_ROOT = $env:GAMES_MEDIA_DIR
+
+Write-Host "Runtime root: $($env:GAMES_BASE_DIR)" -ForegroundColor Gray
 
 $preferredAuthDbPort = if ($env:AUTH_DB_PORT) { [int]$env:AUTH_DB_PORT } else { 54321 }
 $preferredQuizDbPort = if ($env:QUIZ_DB_PORT) { [int]$env:QUIZ_DB_PORT } else { 54322 }
@@ -215,6 +297,9 @@ $maskedAuthUrl = $env:AUTH_DATABASE_URL -replace ':(.+?)@', ':*****@'
 $maskedQuizUrl = $env:QUIZ_DATABASE_URL -replace ':(.+?)@', ':*****@'
 Write-Host "AUTH_DATABASE_URL = $maskedAuthUrl"
 Write-Host "QUIZ_DATABASE_URL = $maskedQuizUrl"
+Write-Host "GAMES_DATA_DIR = $($env:GAMES_DATA_DIR)"
+Write-Host "GAMES_LOGS_DIR = $($env:GAMES_LOGS_DIR)"
+Write-Host "GAMES_MEDIA_DIR = $($env:GAMES_MEDIA_DIR)"
 if ($selectedAuthDbPort -ne 54321) {
     Write-Host "AUTH_DB_PORT fallback = $selectedAuthDbPort (54321 already in use)"
 }
@@ -276,6 +361,12 @@ if ($dockerAvailable) {
             docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db hispanistica_quiz_db
         } else {
             docker compose -f docker-compose.dev-postgres.yml up -d hispanistica_auth_db hispanistica_quiz_db
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "ERROR: Docker PostgreSQL failed to start with AUTH_DB_PORT=$selectedAuthDbPort and QUIZ_DB_PORT=$selectedQuizDbPort." -ForegroundColor Red
+            Write-Host "Hint: this is often caused by Windows excluded port ranges or another local service." -ForegroundColor Yellow
+            exit 1
         }
 
         Write-Host "Waiting for PostgreSQL..." -ForegroundColor Gray

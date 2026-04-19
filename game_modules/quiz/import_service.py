@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 from .models import QuizTopic, QuizQuestion
 from .release_model import QuizContentRelease
 from .validation import validate_quiz_unit, ValidationError, QuizUnitSchema
+from src.app.config.runtime_paths import get_data_dir, get_runtime_root
 
 
 def to_jsonable(obj: Any) -> Any:
@@ -113,9 +114,10 @@ class QuizImportService:
         if project_root is None:
             # Auto-detect: service is in game_modules/quiz/, root is 2 levels up
             project_root = Path(__file__).parent.parent.parent
-        
-        self.project_root = project_root
-        self.import_logs_dir = project_root / "data" / "import_logs"
+
+        self.project_root = project_root.resolve()
+        self.runtime_root = get_runtime_root(self.project_root)
+        self.import_logs_dir = get_data_dir(self.project_root) / "import_logs"
         self.import_logs_dir.mkdir(parents=True, exist_ok=True)
     
     def _normalize_request_id(self, request_id: Optional[str]) -> str:

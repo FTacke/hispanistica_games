@@ -22,17 +22,27 @@ user active.
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import argparse
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.app.config.runtime_paths import get_db_dir
 
 
 def main():
+    default_db_path = get_db_dir(ROOT) / "auth.db"
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--db",
-        help="Path to sqlite DB file (defaults data/db/auth.db)",
-        default="data/db/auth.db",
+        help="Path to sqlite DB file (defaults to the configured runtime data directory)",
+        default=str(default_db_path),
     )
     parser.add_argument(
         "--username", default=os.environ.get("START_ADMIN_USERNAME", "admin")
@@ -86,10 +96,7 @@ def main():
         parser.error("--password is required (or set START_ADMIN_PASSWORD env)")
 
     # initialize auth engine and create tables
-    import sys
-
     # ensure repository package path is available when running the script directly
-    ROOT = Path(__file__).resolve().parents[1]
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
 

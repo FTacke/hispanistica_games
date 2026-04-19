@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from .runtime_paths import get_data_dir, get_db_dir, get_logs_dir, get_media_dir, get_repo_root, get_runtime_root
+
 # Re-export from countries module
 from .countries import (
     LOCATIONS,
@@ -34,8 +36,11 @@ DEFAULT_SECRET_SENTINEL = "___SENTINEL_CHANGE_ME___"
 class BaseConfig:
     """Base configuration (Production defaults)."""
 
-    # Project paths
-    PROJECT_ROOT = Path(__file__).resolve().parents[3]
+    # Project + runtime paths
+    PROJECT_ROOT = get_repo_root()
+    RUNTIME_ROOT = get_runtime_root(PROJECT_ROOT)
+    DATA_DIR = get_data_dir(PROJECT_ROOT)
+    LOGS_DIR = get_logs_dir(PROJECT_ROOT)
 
     # Flask
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", DEFAULT_SECRET_SENTINEL)
@@ -68,10 +73,10 @@ class BaseConfig:
 
     # Database paths
     # NOTE: This directory contains runtime DBs such as auth.db.
-    DB_DIR = PROJECT_ROOT / "data" / "db"
+    DB_DIR = get_db_dir(PROJECT_ROOT)
 
     # Media paths (override with MEDIA_ROOT or MEDIA_DIR env)
-    MEDIA_DIR = Path(os.getenv("MEDIA_ROOT", os.getenv("MEDIA_DIR", PROJECT_ROOT / "media")))
+    MEDIA_DIR = get_media_dir(PROJECT_ROOT)
 
     # Auth DB (used only when AUTH_BACKEND=db) - DSN required in non-test envs
     AUTH_DATABASE_URL = os.getenv("AUTH_DATABASE_URL")

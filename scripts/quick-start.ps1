@@ -12,9 +12,27 @@
 
 $ErrorActionPreference = 'Stop'
 
+function Get-RuntimeRoot {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoRoot
+    )
+
+    $candidateRoot = Split-Path -Parent $RepoRoot
+    if ((Split-Path -Leaf $RepoRoot) -ieq 'app') {
+        foreach ($dirName in @('config', 'data', 'logs', 'media')) {
+            if (Test-Path (Join-Path $candidateRoot $dirName)) {
+                return $candidateRoot
+            }
+        }
+    }
+
+    return $RepoRoot
+}
+
 # Ensure we're in repo root
 $repoRoot = $PSScriptRoot
 Set-Location $repoRoot
+$runtimeRoot = Get-RuntimeRoot -RepoRoot $repoRoot
 
 Write-Host "`nHispanistica Games - Quick Start" -ForegroundColor Cyan
 Write-Host "=================================`n" -ForegroundColor Cyan
@@ -33,7 +51,12 @@ if (Test-Path $activateScript) {
 }
 
 # Set environment variables
-$dbPath = "data/db/auth.db"
+$env:GAMES_BASE_DIR = $runtimeRoot
+$env:GAMES_DATA_DIR = Join-Path $runtimeRoot "data"
+$env:GAMES_LOGS_DIR = Join-Path $runtimeRoot "logs"
+$env:GAMES_MEDIA_DIR = Join-Path $runtimeRoot "media"
+$env:MEDIA_ROOT = $env:GAMES_MEDIA_DIR
+$dbPath = Join-Path $env:GAMES_DATA_DIR "db\auth.db"
 $env:AUTH_DATABASE_URL = "sqlite:///$dbPath"
 $env:FLASK_SECRET_KEY = "dev-secret-change-me"
 $env:JWT_SECRET_KEY = "dev-jwt-secret-change-me"
@@ -44,7 +67,7 @@ Write-Host "Database: SQLite ($dbPath)" -ForegroundColor Green
 # Check if SQLite DB exists
 if (-not (Test-Path $dbPath)) {
     Write-Host "`nWARN: Auth database not found!" -ForegroundColor Yellow
-    Write-Host "Run first-time setup: .\scripts\dev-setup.ps1`n" -ForegroundColor Yellow
+    Write-Host "Run first-time setup: .\scripts\bootstrap.ps1 and then .\scripts\dev-start.ps1`n" -ForegroundColor Yellow
     exit 1
 }
 

@@ -162,11 +162,14 @@ Der Produktionsdeploy läuft über Docker Compose auf einem Self-Hosted GitHub A
 ## Setup (Windows, copy-paste)
 
 ```powershell
-git clone https://github.com/FTacke/hispanistica_games.git
-cd hispanistica_games
+mkdir games.hispanistica
+cd games.hispanistica
+mkdir config data logs media
+git clone https://github.com/FTacke/hispanistica_games.git app
+cd app
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 .\scripts\bootstrap.ps1
-python -m src.app.main
+.\scripts\dev-start.ps1
 ```
 
 Optional für zusätzliche Dev-Tools:
@@ -174,6 +177,12 @@ Optional für zusätzliche Dev-Tools:
 ```powershell
 .\scripts\bootstrap.ps1 -Dev
 ```
+
+Das empfohlene lokale Modell ist damit produktionsnah:
+
+- Workspace-Root: `games.hispanistica/`
+- Git-Repo: `games.hispanistica/app/`
+- Laufzeitpfade: `games.hispanistica/{config,data,logs,media}`
 
 Wenn `.env` fehlt, gibt `scripts/bootstrap.ps1` nur einen Hinweis aus und verändert keinen bestehenden Zustand.
 

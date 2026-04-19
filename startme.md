@@ -8,11 +8,24 @@
 
 **Ein Befehl startet alles:** Docker PostgreSQL, Virtualenv, Dependencies, Auth-DB, Quiz-DB, Dev-Server.
 
-```powershell
+**Empfohlene lokale Struktur:**
 
+```text
+games.hispanistica/
+├── app/     # Git-Repo
+├── config/  # lokale Secrets/Config
+├── data/    # persistente Dev-Daten
+├── logs/    # Laufzeit-Logs
+└── media/   # große Mediendateien + Releases
+```
+
+```powershell
+cd ..
+mkdir config, data, logs, media -Force
+cd .\app
 .\scripts\dev-start.ps1    # Täglicher Start (Postgres default)
 
-\scripts\dev-setup.ps1 -UsePostgres   # Erstmaliges Setup (nicht verwenden)
+.\scripts\bootstrap.ps1    # Erstinstallation der Python-Dependencies
 
 $env:QUIZ_DEV_SEED_MODE='single'; .\scripts\dev-start.ps1
 
@@ -25,7 +38,7 @@ $env:QUIZ_DEV_SEED_MODE='single'; .\scripts\dev-start.ps1
 
 Das Skript:
 1. Startet PostgreSQL via Docker (Ports 54321 Auth + 54322 Quiz)
-2. Richtet `.venv` + Python-Dependencies ein
+2. Nutzt `.venv` im Repo und die Parent-Verzeichnisse `data`, `logs`, `media`
 3. Erstellt Auth-DB (PostgreSQL)
 4. Legt den Admin-User an (admin / change-me)
 5. Initialisiert Quiz-Module mit Demo-Daten
