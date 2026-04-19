@@ -67,6 +67,9 @@ if (Test-Path $constraintsFile) {
 Write-Host "[bootstrap] Stelle PostgreSQL-Driver fuer postgresql+psycopg sicher"
 & uv pip install --python $pythonExe "psycopg[binary]"
 
+Write-Host "[bootstrap] Stelle ULID-Dependency fuer Quiz-Tools sicher"
+& uv pip install --python $pythonExe "ulid-py"
+
 if ($Dev) {
     $requirementsDevFile = Join-Path $repoRoot "requirements-dev.txt"
     if (Test-Path $requirementsDevFile) {

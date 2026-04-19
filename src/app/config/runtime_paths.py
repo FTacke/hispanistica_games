@@ -18,6 +18,10 @@ def get_repo_root(repo_root: str | Path | None = None) -> Path:
     return _resolve_path(repo_root or DEFAULT_REPO_ROOT)
 
 
+def _is_filesystem_root(path: Path) -> bool:
+    return path.parent == path
+
+
 def get_runtime_root(repo_root: str | Path | None = None) -> Path:
     repo_root_path = get_repo_root(repo_root)
 
@@ -27,7 +31,9 @@ def get_runtime_root(repo_root: str | Path | None = None) -> Path:
 
     if repo_root_path.name.lower() == "app":
         candidate_root = repo_root_path.parent
-        if any((candidate_root / name).exists() for name in RUNTIME_SENTINELS):
+        if not _is_filesystem_root(candidate_root) and any(
+            (candidate_root / name).exists() for name in RUNTIME_SENTINELS
+        ):
             return candidate_root
 
     return repo_root_path

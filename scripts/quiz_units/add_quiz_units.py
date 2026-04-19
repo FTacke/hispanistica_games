@@ -34,7 +34,9 @@ import argparse
 import csv
 import json
 import re
+import secrets
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -42,23 +44,38 @@ from typing import Dict, List, Optional, Tuple
 
 # ---------- ULID handling (as in old script) ----------
 
+CROCKFORD_BASE32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+
+def _encode_crockford_base32(value: int, length: int) -> str:
+    chars = ["0"] * length
+    for index in range(length - 1, -1, -1):
+        value, remainder = divmod(value, 32)
+        chars[index] = CROCKFORD_BASE32[remainder]
+    return "".join(chars)
+
+
+def _fallback_ulid_str() -> str:
+    """Generate a valid 26-character ULID using only the standard library."""
+    timestamp_ms = int(time.time() * 1000)
+    if timestamp_ms >= 2**48:
+        raise RuntimeError(f"Timestamp exceeds ULID range: {timestamp_ms}")
+
+    randomness = secrets.randbits(80)
+    ulid_value = (timestamp_ms << 80) | randomness
+    return _encode_crockford_base32(ulid_value, 26)
+
 def new_ulid_str() -> str:
     """
     Returns a 26-character ULID string.
 
-    Expects a package named 'ulid' to be available.
-    - Common APIs:
-      - ulid.new() -> ULID object (str(...) yields 26 chars)
-      - ulid.ULID() -> ULID object (str(...) yields 26 chars)
+    Preferred path: use an installed ULID library if available.
+    Fallback path: generate a standards-compliant ULID locally.
     """
     try:
         import ulid  # type: ignore
-    except Exception as e:
-        raise RuntimeError(
-            "Missing dependency 'ulid'. Install it in your venv, "
-            "or adjust new_ulid_str() to your ULID library.\n"
-            f"Import error: {e}"
-        )
+    except Exception:
+        return _fallback_ulid_str()
 
     # Try common variants
     if hasattr(ulid, "new"):
@@ -68,10 +85,10 @@ def new_ulid_str() -> str:
         u = ulid.ULID()
         s = str(u)
     else:
-        raise RuntimeError("Unknown 'ulid' API. Expected ulid.new() or ulid.ULID().")
+        return _fallback_ulid_str()
 
     if len(s) != 26:
-        raise RuntimeError(f"ULID string length must be 26, got {len(s)}: {s}")
+        return _fallback_ulid_str()
 
     return s
 
