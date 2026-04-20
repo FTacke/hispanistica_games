@@ -184,6 +184,7 @@
   }
 
   const API_BASE = '/api/quiz';
+  const ANON_SESSION_TOKEN_KEY = 'quiz:anonymousSessionToken';
   const TIMER_SECONDS_DEFAULT = 40;
   const TIMER_WARNING = 10;
   const TIMER_DANGER = 5;
@@ -201,6 +202,23 @@
   const DEBUG = new URLSearchParams(window.location.search).has('quizDebug') ||
     window.localStorage.getItem('quizDebug') === '1';
   let debugCallCounter = 0;
+  const nativeFetch = window.fetch.bind(window);
+
+  function getAnonymousSessionToken() {
+    try {
+      return window.sessionStorage.getItem(ANON_SESSION_TOKEN_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getCacheStorage() {
+    try {
+      return getAnonymousSessionToken() ? window.sessionStorage : window.localStorage;
+    } catch (e) {
+      return window.localStorage;
+    }
+  }
   
   /**
    * Fetch helper with X-Trace-ID header for request correlation
@@ -208,8 +226,14 @@
   function quizFetch(url, options = {}) {
     const headers = new Headers(options.headers || {});
     headers.set('X-Trace-ID', TRACE_ID);
-    return fetch(url, { ...options, headers });
+    const anonymousSessionToken = getAnonymousSessionToken();
+    if (anonymousSessionToken) {
+      headers.set('X-Quiz-Session', anonymousSessionToken);
+    }
+    return nativeFetch(url, { ...options, headers });
   }
+
+  const fetch = quizFetch;
 
   function debugLog(fnName, data) {
     if (!DEBUG) return;
@@ -241,17 +265,17 @@
 
   function getCachedRunIdForTopic(topicId) {
     if (!topicId) return null;
-    return window.localStorage.getItem(`${RUN_ID_CACHE_KEY_PREFIX}${topicId}`);
+    return getCacheStorage().getItem(`${RUN_ID_CACHE_KEY_PREFIX}${topicId}`);
   }
 
   function setCachedRunIdForTopic(topicId, runId) {
     if (!topicId || !runId) return;
-    window.localStorage.setItem(`${RUN_ID_CACHE_KEY_PREFIX}${topicId}`, runId);
+    getCacheStorage().setItem(`${RUN_ID_CACHE_KEY_PREFIX}${topicId}`, runId);
   }
 
   function getCachedScoreForRun(runId) {
     if (!runId) return null;
-    const raw = window.localStorage.getItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`);
+    const raw = getCacheStorage().getItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`);
     if (raw === null) return null;
     const parsed = Number(raw);
     return Number.isFinite(parsed) ? parsed : null;
@@ -260,7 +284,7 @@
   function setCachedScoreForRun(runId, score) {
     if (!runId) return;
     if (!Number.isFinite(score)) return;
-    window.localStorage.setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(Math.round(score)));
+    getCacheStorage().setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(Math.round(score)));
   }
 
   // View states for single-stage architecture
@@ -317,6 +341,8 @@
     selectedAnswerId: null,
     lastAnswerResult: null,
     lastOutcome: null, // ✅ FIX: Track last outcome (null, 'correct', 'wrong', 'timeout')
+    postAnswerState: null,
+    postAnswerServerData: null,
     advanceCallback: null,
     runningScore: 0,
     displayedScore: null, // Start with null to indicate "loading"
@@ -352,6 +378,14 @@
     if (!container) {
       debugLog('init', { error: 'container not found' });
       return;
+    }
+
+    if (container.dataset.playerAuthenticated === '1' && container.dataset.playerAnonymous !== '1') {
+      try {
+        window.sessionStorage.removeItem(ANON_SESSION_TOKEN_KEY);
+      } catch (e) {
+        // ignore storage issues
+      }
     }
 
     state.topicId = container.dataset.topic;
@@ -531,6 +565,11 @@
       }
       
       const stateData = await response.json();
+      const postAnswer = stateData.post_answer || null;
+
+      if (typeof stateData.current_index === 'number') {
+        state.currentIndex = stateData.current_index;
+      }
       
       // Calculate server clock offset for drift correction
       const clientNowMs = Date.now();
@@ -552,6 +591,8 @@
       state.serverIsExpired = stateData.is_expired || false;
       state.serverRemainingSeconds = stateData.remaining_seconds;
       state.serverRemainingSecondsAtMs = Date.now() + state.serverClockOffsetMs;
+      state.postAnswerState = postAnswer;
+      state.postAnswerServerData = stateData;
       
       // Update timer state from server ONLY if still in ANSWERING phase
       if (stateData.phase === 'ANSWERING' && stateData.expires_at_ms && !stateData.is_expired) {
@@ -569,17 +610,34 @@
       }
       
       // Update phase from server (NOT_STARTED, ANSWERING or POST_ANSWER)
-      if (stateData.phase === 'POST_ANSWER' || stateData.is_expired) {
+      if (stateData.phase === 'POST_ANSWER' && postAnswer) {
         state.phase = PHASE.POST_ANSWER;
-        state.isAnswered = true;  // ✅ FIX: Mark as answered
-        state.lastOutcome = stateData.last_answer_result || 'timeout';  // ✅ FIX: Store last result
-        debugLog('loadStateForResume', { action: 'restored POST_ANSWER phase from server', lastOutcome: state.lastOutcome });
+        state.isAnswered = true;
+        state.lastOutcome = postAnswer.result || stateData.last_answer_result || 'timeout';
+        state.nextQuestionIndex = typeof stateData.current_index === 'number' ? stateData.current_index : null;
+        if (typeof postAnswer.question_index === 'number') {
+          state.currentIndex = postAnswer.question_index;
+        }
+        debugLog('loadStateForResume', {
+          action: 'restored POST_ANSWER phase from server',
+          lastOutcome: state.lastOutcome,
+          currentIndex: state.currentIndex,
+          nextQuestionIndex: state.nextQuestionIndex
+        });
       } else if (stateData.phase === 'NOT_STARTED' || !stateData.timer_started) {
         // Timer not started yet - need to call /question/start
         state.phase = PHASE.NOT_STARTED;
+        state.postAnswerState = null;
+        state.postAnswerServerData = null;
+        state.isAnswered = false;
+        state.lastOutcome = null;
         debugLog('loadStateForResume', { action: 'phase NOT_STARTED, will need to start timer' });
       } else {
         state.phase = PHASE.ANSWERING;
+        state.postAnswerState = null;
+        state.postAnswerServerData = null;
+        state.isAnswered = false;
+        state.lastOutcome = null;
       }
       
       // Update run questions and joker state
@@ -681,7 +739,11 @@
       setCachedScoreForRun(state.runId, state.runningScore);
 
       if (typeof data.current_index === 'number') {
-        state.currentIndex = data.current_index;
+        if (state.phase === PHASE.POST_ANSWER) {
+          state.nextQuestionIndex = data.current_index;
+        } else {
+          state.currentIndex = data.current_index;
+        }
       }
       
       debugLog('restoreRunningScore', { 
@@ -728,7 +790,11 @@
         setCachedScoreForRun(state.runId, state.runningScore);
 
         if (typeof data.current_index === 'number') {
-          state.currentIndex = data.current_index;
+          if (state.phase === PHASE.POST_ANSWER) {
+            state.nextQuestionIndex = data.current_index;
+          } else {
+            state.currentIndex = data.current_index;
+          }
         }
         return data;
       } else {
@@ -1210,15 +1276,26 @@
    * ✅ NEW: Server sagt POST_ANSWER -> keine Timer-Start, nur UI anzeigen
    */
   async function loadCurrentQuestionForPostAnswer() {
-    debugLog('loadCurrentQuestionForPostAnswer', { action: 'start', index: state.currentIndex, outcome: state.lastOutcome });
+    const postAnswer = state.postAnswerState || {};
+    const resumeQuestionIndex = typeof postAnswer.question_index === 'number'
+      ? postAnswer.question_index
+      : state.currentIndex;
+
+    debugLog('loadCurrentQuestionForPostAnswer', {
+      action: 'start',
+      index: resumeQuestionIndex,
+      outcome: state.lastOutcome,
+      nextQuestionIndex: state.nextQuestionIndex
+    });
     
-    if (state.currentIndex >= state.runQuestions.length) {
+    if (resumeQuestionIndex >= state.runQuestions.length) {
       debugLog('loadCurrentQuestionForPostAnswer', { action: 'finished, calling finishRun' });
       await finishRun();
       return;
     }
     
-    const questionConfig = state.runQuestions[state.currentIndex];
+    state.currentIndex = resumeQuestionIndex;
+    const questionConfig = state.runQuestions[resumeQuestionIndex];
     const questionId = questionConfig.question_id;
     
     // Fetch question details (need this to render the question)
@@ -1241,26 +1318,56 @@
     // ✅ KEY DIFFERENCE: Phase stays POST_ANSWER, no timer start
     state.phase = PHASE.POST_ANSWER;
     state.isAnswered = true;
+    setUIState(STATE.ANSWERED_LOCKED);
     
     // Apply appropriate UI based on outcome
     if (state.lastOutcome === 'timeout') {
       // Timeout: all answers locked+inactive, no correct reveal
       applyTimeoutUI();
     } else if (state.lastOutcome === 'correct' || state.lastOutcome === 'wrong') {
-      // User answered: show result styling
-      // Note: We don't have selected_answer_id on resume, so just lock all
-      setUIState(STATE.ANSWERED_LOCKED);
+      showAnswerResult(
+        postAnswer.selected_answer_id,
+        state.lastOutcome,
+        postAnswer.correct_option_id
+      );
     } else {
       // Unknown state - just lock
       setUIState(STATE.ANSWERED_LOCKED);
     }
     
-    // Show explanation card with generic message for resume
-    showExplanationCard('Drücke "Weiter" um fortzufahren.');
+    showExplanationCard(
+      postAnswer.explanation_key || 'Drücke "Weiter" um fortzufahren.',
+      state.lastOutcome === 'correct' ? 'correct' : 'wrong'
+    );
+
+    const stateData = state.postAnswerServerData || {};
+    const finished = !!stateData.finished;
+    const levelCompleted = !!stateData.level_completed;
+    if (levelCompleted) {
+      const levelIndex = Math.floor(resumeQuestionIndex / 2);
+      state.pendingLevelUp = true;
+      state.pendingLevelUpData = buildLevelResult({
+        levelCompleted: true,
+        levelPerfect: !!stateData.level_perfect,
+        levelBonus: stateData.level_bonus || 0,
+        runningScore: stateData.running_score || state.runningScore,
+        bonusAppliedNow: !!stateData.level_perfect && (stateData.level_bonus || 0) > 0,
+        difficulty: questionConfig.difficulty,
+        levelCorrectCount: stateData.level_correct_count || 0,
+        levelQuestionsInLevel: stateData.level_questions_in_level || 2,
+      }, levelIndex);
+      state.pendingLevelUpData.nextQuestionIndex = state.nextQuestionIndex;
+      state.pendingLevelUpData.finished = finished;
+      state.pendingTransition = finished ? 'LEVEL_UP_THEN_FINAL' : 'LEVEL_UP';
+    } else {
+      state.pendingLevelUp = false;
+      state.pendingLevelUpData = null;
+      state.pendingTransition = finished ? 'FINAL' : 'NEXT_QUESTION';
+    }
     
-    // Set pending transition to next question
-    state.pendingTransition = 'NEXT_QUESTION';
-    state.nextQuestionIndex = state.currentIndex + 1;
+    if (!Number.isFinite(state.nextQuestionIndex)) {
+      state.nextQuestionIndex = resumeQuestionIndex + 1;
+    }
     
     debugLog('loadCurrentQuestionForPostAnswer', { action: 'complete', pendingTransition: state.pendingTransition });
   }

@@ -13,13 +13,19 @@ NOTE: Quiz module uses JSONB columns which require PostgreSQL.
 """
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Generator
 
 import pytest
 from flask import Flask
+from sqlalchemy import select
 
-from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
+from src.app.extensions.sqlalchemy_ext import (
+    init_engine,
+    init_quiz_engine,
+    get_quiz_engine,
+    get_session,
+)
 
 
 # ============================================================================
@@ -56,6 +62,7 @@ def quiz_app() -> Generator[Flask, None, None]:
     )
     # Quiz module requires PostgreSQL for JSONB columns
     app.config["AUTH_DATABASE_URL"] = QUIZ_TEST_DB_URL
+    app.config["QUIZ_DATABASE_URL"] = QUIZ_TEST_DB_URL
     app.config["TESTING"] = True
     app.config["SECRET_KEY"] = "test-secret"
     app.config["JWT_SECRET_KEY"] = "test-secret"
@@ -67,10 +74,12 @@ def quiz_app() -> Generator[Flask, None, None]:
     
     register_extensions(app)
     init_engine(app)
+    init_quiz_engine(app)
     
     # Create quiz tables
     from game_modules.quiz.models import QuizBase
-    engine = get_engine()
+    engine = get_quiz_engine()
+    QuizBase.metadata.drop_all(bind=engine)
     QuizBase.metadata.create_all(bind=engine)
     
     # Register quiz blueprint
@@ -545,6 +554,49 @@ class TestQuizAuth:
         assert data.get("success") is True
         assert data.get("run", {}).get("run_id")
 
+    def test_anonymous_sessions_are_isolated_with_header_tokens(self, quiz_client, seeded_quiz_db_v2):
+        """One cookie jar can still address two anonymous sessions independently via X-Quiz-Session."""
+        first = quiz_client.post("/api/quiz/auth/register", json={"anonymous": True})
+        second = quiz_client.post("/api/quiz/auth/register", json={"anonymous": True})
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+
+        first_data = first.get_json()
+        second_data = second.get_json()
+
+        assert first_data["player_id"] != second_data["player_id"]
+        assert first_data["session_token"] != second_data["session_token"]
+
+        session_a = quiz_client.get(
+            "/api/quiz/auth/session",
+            headers={"X-Quiz-Session": first_data["session_token"]},
+        )
+        session_b = quiz_client.get(
+            "/api/quiz/auth/session",
+            headers={"X-Quiz-Session": second_data["session_token"]},
+        )
+
+        assert session_a.status_code == 200
+        assert session_b.status_code == 200
+        assert session_a.get_json()["player_id"] == first_data["player_id"]
+        assert session_b.get_json()["player_id"] == second_data["player_id"]
+
+        run_a = quiz_client.post(
+            "/api/quiz/test_topic_v2/run/start",
+            json={"force_new": True},
+            headers={"X-Quiz-Session": first_data["session_token"]},
+        )
+        run_b = quiz_client.post(
+            "/api/quiz/test_topic_v2/run/start",
+            json={"force_new": True},
+            headers={"X-Quiz-Session": second_data["session_token"]},
+        )
+
+        assert run_a.status_code == 200
+        assert run_b.status_code == 200
+        assert run_a.get_json()["run"]["run_id"] != run_b.get_json()["run"]["run_id"]
+
 
 # ============================================================================
 # Run Lifecycle Tests
@@ -605,6 +657,102 @@ class TestRunLifecycle:
         
         # Should be different run
         assert second_run_id != first_run_id
+
+
+class TestAnonymousCleanup:
+    """Tests for anonymous retention/cleanup rules."""
+
+    def test_cleanup_keeps_in_progress_runs_but_deletes_old_finished_anonymous_data(self, quiz_app):
+        from game_modules.quiz import services
+        from game_modules.quiz.models import QuizPlayer, QuizRun, QuizSession, QuizTopic
+
+        now = datetime.now(timezone.utc)
+        finished_player_id = "anon-finished-player"
+        protected_player_id = "anon-protected-player"
+
+        with get_session() as session:
+            session.add(
+                QuizTopic(
+                    id="cleanup-topic",
+                    title_key="cleanup.topic",
+                    description_key="cleanup.topic.desc",
+                    is_active=True,
+                )
+            )
+            finished_player = QuizPlayer(
+                id=finished_player_id,
+                name="Anonym",
+                normalized_name="anon::finished",
+                is_anonymous=True,
+                created_at=now - timedelta(hours=5),
+                last_seen_at=now - timedelta(hours=4),
+            )
+            protected_player = QuizPlayer(
+                id=protected_player_id,
+                name="Anonym",
+                normalized_name="anon::protected",
+                is_anonymous=True,
+                created_at=now - timedelta(hours=5),
+                last_seen_at=now - timedelta(hours=4),
+            )
+            session.add_all([finished_player, protected_player])
+            session.flush()
+
+            session.add_all([
+                QuizSession(
+                    id="anon-finished-session",
+                    player_id=finished_player.id,
+                    token_hash="finished-token-hash",
+                    created_at=now - timedelta(hours=5),
+                    expires_at=now + timedelta(days=1),
+                ),
+                QuizSession(
+                    id="anon-protected-session",
+                    player_id=protected_player.id,
+                    token_hash="protected-token-hash",
+                    created_at=now - timedelta(hours=5),
+                    expires_at=now + timedelta(days=1),
+                ),
+            ])
+
+            session.add_all([
+                QuizRun(
+                    id="anon-finished-run",
+                    player_id=finished_player.id,
+                    topic_id="cleanup-topic",
+                    status="finished",
+                    created_at=now - timedelta(hours=5),
+                    finished_at=now - timedelta(hours=4),
+                    current_index=10,
+                    run_questions=[],
+                    joker_remaining=2,
+                    joker_used_on=[],
+                ),
+                QuizRun(
+                    id="anon-protected-run",
+                    player_id=protected_player.id,
+                    topic_id="cleanup-topic",
+                    status="in_progress",
+                    created_at=now - timedelta(hours=5),
+                    current_index=3,
+                    run_questions=[],
+                    joker_remaining=2,
+                    joker_used_on=[],
+                ),
+            ])
+
+        with get_session() as session:
+            result = services.cleanup_anonymous_data(session, now=now)
+
+        assert result["deleted_sessions"] == 2
+        assert result["deleted_runs"] == 1
+        assert result["deleted_players"] == 1
+
+        with get_session() as session:
+            assert session.get(QuizRun, "anon-finished-run") is None
+            assert session.get(QuizPlayer, finished_player_id) is None
+            assert session.get(QuizRun, "anon-protected-run") is not None
+            assert session.get(QuizPlayer, protected_player_id) is not None
 
 
 # ============================================================================

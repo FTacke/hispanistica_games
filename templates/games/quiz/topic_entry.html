@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="game-shell" data-game="quiz" data-topic="{{ topic_id }}">
+<div class="game-shell" data-game="quiz" data-topic="{{ topic_id }}" data-player-authenticated="{{ 1 if player_authenticated else 0 }}" data-player-anonymous="{{ 1 if player_anonymous else 0 }}">
   <div class="md3-page quiz-page-stack" role="main" aria-label="Quiz Entry">
     
     <!-- Back link -->

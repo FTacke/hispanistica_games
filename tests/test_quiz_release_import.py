@@ -11,7 +11,12 @@ import pytest
 from flask import Flask
 from sqlalchemy import text
 
-from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
+from src.app.extensions.sqlalchemy_ext import (
+    init_engine,
+    init_quiz_engine,
+    get_quiz_engine,
+    get_session,
+)
 
 
 QUIZ_TEST_DB_URL = os.environ.get(
@@ -33,6 +38,7 @@ def import_app() -> Generator[Flask, None, None]:
         static_folder=str(static_dir),
     )
     app.config["AUTH_DATABASE_URL"] = QUIZ_TEST_DB_URL
+    app.config["QUIZ_DATABASE_URL"] = QUIZ_TEST_DB_URL
     app.config["TESTING"] = True
     app.config["SECRET_KEY"] = "test-secret"
     app.config["JWT_SECRET_KEY"] = "test-secret"
@@ -41,11 +47,13 @@ def import_app() -> Generator[Flask, None, None]:
 
     register_extensions(app)
     init_engine(app)
+    init_quiz_engine(app)
 
     # Create quiz tables
     from game_modules.quiz.models import QuizBase
 
-    engine = get_engine()
+    engine = get_quiz_engine()
+    QuizBase.metadata.drop_all(bind=engine)
     QuizBase.metadata.create_all(bind=engine)
 
     # Ensure release_id columns exist (migration 0010)

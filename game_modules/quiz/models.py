@@ -29,6 +29,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Index,
     ARRAY,
+    text as sql_text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -58,6 +59,10 @@ class QuizPlayer(QuizBase):
     # Relationships
     sessions: Mapped[List["QuizSession"]] = relationship("QuizSession", back_populates="player", cascade="all, delete-orphan")
     runs: Mapped[List["QuizRun"]] = relationship("QuizRun", back_populates="player", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_quiz_players_anonymous_last_seen", "is_anonymous", "last_seen_at"),
+    )
 
 
 class QuizSession(QuizBase):
@@ -165,6 +170,14 @@ class QuizRun(QuizBase):
     question_started_at_ms: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     deadline_at_ms: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
+    # Persisted post-answer state for deterministic refresh/resume.
+    post_answer_pending: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    post_answer_question_index: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    post_answer_result: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    post_answer_selected_answer_id: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    post_answer_correct_option_id: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    post_answer_explanation_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # Relationships
     player: Mapped["QuizPlayer"] = relationship("QuizPlayer", back_populates="runs")
     topic: Mapped["QuizTopic"] = relationship("QuizTopic", back_populates="runs")
@@ -174,6 +187,14 @@ class QuizRun(QuizBase):
     __table_args__ = (
         Index("ix_quiz_runs_player_topic_status", "player_id", "topic_id", "status"),
         Index("ix_quiz_runs_created_at", "created_at"),
+        Index("ix_quiz_runs_finished_at", "finished_at"),
+        Index(
+            "uq_quiz_runs_active_player_topic",
+            "player_id",
+            "topic_id",
+            unique=True,
+            postgresql_where=sql_text("status = 'in_progress'"),
+        ),
     )
 
 

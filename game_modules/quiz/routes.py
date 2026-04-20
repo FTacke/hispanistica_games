@@ -138,6 +138,7 @@ blueprint = Blueprint("quiz", __name__)
 
 # Cookie name for game session token
 QUIZ_SESSION_COOKIE = "quiz_session"
+QUIZ_SESSION_HEADER = "X-Quiz-Session"
 
 
 @blueprint.after_request
@@ -152,6 +153,12 @@ def add_trace_id_header(response):
 # Session Management
 # ============================================================================
 
+def _get_request_quiz_session_token() -> str | None:
+    header_token = request.headers.get(QUIZ_SESSION_HEADER)
+    if header_token:
+        return header_token.strip()
+    return request.cookies.get(QUIZ_SESSION_COOKIE)
+
 def ensure_quiz_session() -> str:
     """Ensure a quiz session cookie exists (create if missing).
     
@@ -161,7 +168,7 @@ def ensure_quiz_session() -> str:
     This function should ONLY be called from HTML routes that need to
     establish a session before the user interacts with the API.
     """
-    token = request.cookies.get(QUIZ_SESSION_COOKIE)
+    token = _get_request_quiz_session_token()
     
     if token:
         # Verify existing token
@@ -198,7 +205,7 @@ def quiz_auth_required(f: Callable) -> Callable:
     """
     @wraps(f)
     def decorated(*args: Any, **kwargs: Any) -> Any:
-        token = request.cookies.get(QUIZ_SESSION_COOKIE)
+        token = _get_request_quiz_session_token()
         
         if not token:
             quiz_log("QUIZ_AUTH_NO_SESSION", level="warn", code="NO_SESSION")
@@ -226,7 +233,7 @@ def quiz_auth_optional(f: Callable) -> Callable:
     """Decorator to optionally load quiz player if authenticated."""
     @wraps(f)
     def decorated(*args: Any, **kwargs: Any) -> Any:
-        token = request.cookies.get(QUIZ_SESSION_COOKIE)
+        token = _get_request_quiz_session_token()
         g.quiz_player_id = None
         g.quiz_player_name = None
         g.quiz_player_anonymous = None
@@ -438,6 +445,8 @@ def api_register():
             "success": True,
             "player_id": result.player_id,
             "player_name": result.player_name,
+            "is_anonymous": anonymous,
+            "session_token": result.session_token if anonymous else None,
         }))
         
         response.set_cookie(
@@ -551,7 +560,7 @@ def api_auth_name_pin():
 @blueprint.route("/api/quiz/auth/logout", methods=["POST"])
 def api_logout():
     """Logout player (invalidate session)."""
-    token = request.cookies.get(QUIZ_SESSION_COOKIE)
+    token = _get_request_quiz_session_token()
     
     if token:
         with get_session() as session:
@@ -593,7 +602,20 @@ def api_start_run(topic_id: str):
             quiz_log("QUIZ_RUN_START_FAIL", level="warn", topic_id=topic_id, reason="TOPIC_NOT_FOUND")
             return jsonify({"error": "Topic not found", "code": "TOPIC_NOT_FOUND"}), 404
         
-        run, is_new = services.start_run(session, g.quiz_player_id, topic_id, force_new)
+        try:
+            run, is_new = services.start_run(session, g.quiz_player_id, topic_id, force_new)
+        except ValueError as exc:
+            quiz_log(
+                "QUIZ_RUN_START_FAIL",
+                level="error",
+                topic_id=topic_id,
+                reason="INVALID_QUESTION_SET",
+                detail=str(exc),
+            )
+            return jsonify({
+                "error": "Topic is not ready for a run",
+                "code": "INVALID_QUESTION_SET",
+            }), 409
         state = services.get_run_state(session, run)
         
         quiz_log("QUIZ_RUN_START_OK", level="info", 
@@ -959,99 +981,35 @@ def api_get_run_state(run_id: str):
                      run_id=run_id, reason="RUN_NOT_FOUND_OR_NOT_OWNED")
             return jsonify({"error": "Run not found", "code": "RUN_NOT_FOUND"}), 404
 
-        # Get server time
+        try:
+            timeout_result = services.sync_timeout_state(session, run)
+            if timeout_result and timeout_result.success:
+                quiz_log(
+                    "QUIZ_AUTO_TIMEOUT_APPLIED",
+                    level="warn",
+                    run_id=run.id,
+                    question_index=run.post_answer_question_index,
+                )
+        except IntegrityError:
+            session.rollback()
+            session.expire_all()
+            quiz_log("QUIZ_AUTO_TIMEOUT_DUPLICATE_PREVENTED", level="info", run_id=run_id)
+            stmt_reload = select(QuizRun).where(
+                and_(
+                    QuizRun.id == run_id,
+                    QuizRun.player_id == g.quiz_player_id,
+                )
+            )
+            run = session.execute(stmt_reload).scalar_one()
+
+        # Get server time after any timeout sync side effect
         server_now = datetime.now(timezone.utc)
         server_now_ms = int(server_now.timestamp() * 1000)
-        
-        # Calculate remaining time from server perspective
+        post_answer_state = services.get_post_answer_state(run)
         remaining_seconds = services.get_remaining_seconds(run)
-        is_expired = services.is_question_expired(run)
+        is_expired = services.is_question_expired(run) if not post_answer_state else False
         
-        # AUTO-TIMEOUT: If expired and no answer recorded yet, create timeout record
-        if is_expired and run.question_started_at and run.current_index < services.QUESTIONS_PER_RUN:
-            # Check if there's already an answer for current_index
-            stmt_check = select(QuizRunAnswer).where(
-                and_(
-                    QuizRunAnswer.run_id == run.id,
-                    QuizRunAnswer.question_index == run.current_index
-                )
-            )
-            existing_answer = session.execute(stmt_check).scalar_one_or_none()
-            
-            if not existing_answer:
-                # Re-check within same transaction to prevent race conditions
-                session.flush()
-                stmt_recheck = select(QuizRunAnswer).where(
-                    and_(
-                        QuizRunAnswer.run_id == run.id,
-                        QuizRunAnswer.question_index == run.current_index
-                    )
-                )
-                recheck_answer = session.execute(stmt_recheck).scalar_one_or_none()
-                
-                if not recheck_answer:
-                    try:
-                        # Create timeout answer record (idempotent server-side timeout)
-                        quiz_log("QUIZ_AUTO_TIMEOUT_APPLIED", level="warn", 
-                                 run_id=run.id, question_index=run.current_index)
-                        
-                        question_config = run.run_questions[run.current_index]
-                        timeout_answer = QuizRunAnswer(
-                            id=str(uuid.uuid4()),
-                            run_id=run.id,
-                            question_id=question_config["question_id"],
-                            question_index=run.current_index,
-                            selected_answer_id=None,
-                            result="timeout",
-                            answered_at_ms=int(run.expires_at.timestamp() * 1000),
-                            used_joker=False,
-                            created_at=server_now,
-                        )
-                        session.add(timeout_answer)
-                        
-                        # Advance to next question and clear timer state
-                        run.current_index += 1
-                        run.question_started_at = None
-                        run.expires_at = None
-                        run.time_limit_seconds = services.TIMER_SECONDS
-                        run.question_started_at_ms = None
-                        run.deadline_at_ms = None
-                        
-                        session.flush()  # Persist changes - may raise IntegrityError
-                        
-                    except IntegrityError:
-                        # Uniqueness violation - another request already created timeout answer
-                        # Rollback this transaction and reload existing answer
-                        session.rollback()
-                        quiz_log("QUIZ_AUTO_TIMEOUT_DUPLICATE_PREVENTED", level="info", 
-                                 run_id=run.id, question_index=run.current_index)
-                        
-                        # Reload run and answer state after rollback
-                        session.expire_all()
-                        stmt_reload = select(QuizRun).where(
-                            and_(
-                                QuizRun.id == run_id,
-                                QuizRun.player_id == g.quiz_player_id,
-                            )
-                        )
-                        run = session.execute(stmt_reload).scalar_one()
-                        # Continue with reloaded state
-        
-        # Determine phase based on timer and answer state
-        # Check if current question has been answered
-        stmt_current_answer = select(QuizRunAnswer).where(
-            and_(
-                QuizRunAnswer.run_id == run.id,
-                QuizRunAnswer.question_index == run.current_index
-            )
-        )
-        current_answer = session.execute(stmt_current_answer).scalar_one_or_none()
-        
-        # Phase logic:
-        # - POST_ANSWER: Answer exists for current question (or timeout occurred)
-        # - ANSWERING: Timer running (has expires_at)
-        # - NOT_STARTED: No answer and no timer
-        if current_answer:
+        if post_answer_state:
             phase = "POST_ANSWER"
         elif run.expires_at:
             phase = "ANSWERING"
@@ -1059,7 +1017,7 @@ def api_get_run_state(run_id: str):
             phase = "NOT_STARTED"
         
         # Timer started flag for frontend
-        timer_started = run.expires_at is not None
+        timer_started = run.expires_at is not None and not post_answer_state
         
         # Calculate current score
         stmt_answers = select(QuizRunAnswer).where(
@@ -1082,6 +1040,9 @@ def api_get_run_state(run_id: str):
                 session, run, last_answer.question_index, last_answer.result
             )
 
+        if post_answer_state:
+            last_answer_result = post_answer_state.get("result") or last_answer_result
+
         current_index = run.current_index
         is_run_finished = (run.status != "in_progress") or (current_index >= services.QUESTIONS_PER_RUN)
 
@@ -1100,6 +1061,7 @@ def api_get_run_state(run_id: str):
             "is_expired": is_expired,
             "phase": phase,
             "timer_started": timer_started,
+            "post_answer": post_answer_state,
             # Score and progress
             "running_score": running_score,
             "next_question_index": (current_index if not is_run_finished else None),

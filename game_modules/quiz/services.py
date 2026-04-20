@@ -220,41 +220,98 @@ def hash_session_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def _get_config_int(key: str, default: int) -> int:
+    try:
+        if current_app:
+            return int(current_app.config.get(key, default))
+    except Exception:
+        pass
+    return default
+
+
+def get_anonymous_session_retention_hours() -> int:
+    return _get_config_int("QUIZ_ANONYMOUS_SESSION_RETENTION_HOURS", 3)
+
+
+def get_anonymous_run_retention_hours() -> int:
+    return _get_config_int("QUIZ_ANONYMOUS_RUN_RETENTION_HOURS", 3)
+
+
+def get_anonymous_player_retention_hours() -> int:
+    return _get_config_int("QUIZ_ANONYMOUS_PLAYER_RETENTION_HOURS", 3)
+
+
+def clear_post_answer_state(run: QuizRun) -> None:
+    run.post_answer_pending = False
+    run.post_answer_question_index = None
+    run.post_answer_result = None
+    run.post_answer_selected_answer_id = None
+    run.post_answer_correct_option_id = None
+    run.post_answer_explanation_key = None
+
+
+def set_post_answer_state(
+    run: QuizRun,
+    *,
+    question_index: int,
+    result: str,
+    selected_answer_id: Optional[str],
+    correct_option_id: Optional[str],
+    explanation_key: Optional[str],
+) -> None:
+    run.post_answer_pending = True
+    run.post_answer_question_index = question_index
+    run.post_answer_result = result
+    run.post_answer_selected_answer_id = selected_answer_id
+    run.post_answer_correct_option_id = (
+        str(correct_option_id) if correct_option_id is not None else None
+    )
+    run.post_answer_explanation_key = explanation_key
+
+
+def get_post_answer_state(run: QuizRun) -> Optional[Dict[str, Any]]:
+    if not run.post_answer_pending:
+        return None
+
+    return {
+        "pending": True,
+        "question_index": run.post_answer_question_index,
+        "result": run.post_answer_result,
+        "selected_answer_id": run.post_answer_selected_answer_id,
+        "correct_option_id": run.post_answer_correct_option_id,
+        "explanation_key": run.post_answer_explanation_key,
+    }
+
+
 # ============================================================================
 # Player Authentication
 # ============================================================================
 
 def register_player(session: Session, name: str, pin: Optional[str], anonymous: bool = False) -> AuthResult:
-    """Register a new player or return existing anonymous player.
+    """Register a new player.
     
     Args:
         session: SQLAlchemy session
         name: Player name (ignored if anonymous)
         pin: 4-character PIN (required if not anonymous)
-        anonymous: If True, use shared "Anonym" account
+        anonymous: If True, create a dedicated anonymous player for this session
         
     Returns:
         AuthResult with session token on success
     """
     if anonymous:
-        # Find or create the shared anonymous player
-        stmt = select(QuizPlayer).where(QuizPlayer.is_anonymous)
-        player = session.execute(stmt).scalar_one_or_none()
-        
-        if not player:
-            player = QuizPlayer(
-                id=str(uuid.uuid4()),
-                name="Anonym",
-                normalized_name="anonym",
-                pin_hash=None,
-                is_anonymous=True,
-                created_at=datetime.now(timezone.utc),
-                last_seen_at=datetime.now(timezone.utc),
-            )
-            session.add(player)
-            session.flush()
-        
-        # Create session for anonymous player
+        player = QuizPlayer(
+            id=str(uuid.uuid4()),
+            name="Anonym",
+            normalized_name=f"anonym::{uuid.uuid4().hex}",
+            pin_hash=None,
+            is_anonymous=True,
+            created_at=datetime.now(timezone.utc),
+            last_seen_at=datetime.now(timezone.utc),
+        )
+        session.add(player)
+        session.flush()
+
         return _create_player_session(session, player)
     
     # Validate name
@@ -518,12 +575,17 @@ def get_topic(session: Session, topic_id: str) -> Optional[QuizTopic]:
 
 def get_current_run(session: Session, player_id: str, topic_id: str) -> Optional[QuizRun]:
     """Get player's in-progress run for a topic."""
-    stmt = select(QuizRun).where(
-        and_(
-            QuizRun.player_id == player_id,
-            QuizRun.topic_id == topic_id,
-            QuizRun.status == "in_progress"
+    stmt = (
+        select(QuizRun)
+        .where(
+            and_(
+                QuizRun.player_id == player_id,
+                QuizRun.topic_id == topic_id,
+                QuizRun.status == "in_progress"
+            )
         )
+        .order_by(desc(QuizRun.created_at))
+        .limit(1)
     )
     return session.execute(stmt).scalar_one_or_none()
 
@@ -608,6 +670,10 @@ def start_run(session: Session, player_id: str, topic_id: str, force_new: bool =
     
     # Build questions for new run
     run_questions = _build_run_questions(session, player_id, topic_id)
+    if len(run_questions) != QUESTIONS_PER_RUN:
+        raise ValueError(
+            f"TOPIC_{topic_id}_QUESTION_SET_INVALID:{len(run_questions)}"
+        )
     
     # Create new run
     run = QuizRun(
@@ -622,6 +688,7 @@ def start_run(session: Session, player_id: str, topic_id: str, force_new: bool =
         joker_used_on=[],
         question_started_at_ms=None,
         deadline_at_ms=None,
+        post_answer_pending=False,
     )
     session.add(run)
 
@@ -846,6 +913,12 @@ def start_question(session: Session, run: QuizRun, question_index: int, started_
     # Only set if this is the current question and not already started
     if run.current_index != question_index:
         return False
+
+    if question_index >= len(run.run_questions):
+        return False
+
+    if run.post_answer_pending:
+        clear_post_answer_state(run)
     
     if run.question_started_at is not None:
         # Already started, don't overwrite (idempotent)
@@ -1005,6 +1078,14 @@ def submit_answer(
     # Advance to next question and clear timer state
     next_index = question_index + 1
     run.current_index = next_index
+    set_post_answer_state(
+        run,
+        question_index=question_index,
+        result=result,
+        selected_answer_id=(str(selected_answer_id) if selected_answer_id is not None else None),
+        correct_option_id=(str(correct_id) if correct_id is not None else None),
+        explanation_key=question.explanation_key,
+    )
     
     # Clear server-based timer fields
     run.question_started_at = None
@@ -1344,6 +1425,11 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
     # Update run
     run.status = "finished"
     run.finished_at = datetime.now(timezone.utc)
+    clear_post_answer_state(run)
+    run.question_started_at = None
+    run.expires_at = None
+    run.question_started_at_ms = None
+    run.deadline_at_ms = None
     
     # Get player name for snapshot
     player = run.player
@@ -1365,6 +1451,115 @@ def finish_run(session: Session, run: QuizRun) -> ScoreResult:
         tokens_count=tokens_count,
         breakdown=breakdown,
     )
+
+
+def sync_timeout_state(session: Session, run: QuizRun) -> Optional[AnswerResult]:
+    """Persist a timeout answer exactly once if the active question has expired."""
+    if run.status != "in_progress":
+        return None
+
+    if run.current_index >= QUESTIONS_PER_RUN:
+        return None
+
+    if not run.question_started_at or not run.expires_at:
+        return None
+
+    if not is_question_expired(run):
+        return None
+
+    stmt = select(QuizRunAnswer).where(
+        and_(
+            QuizRunAnswer.run_id == run.id,
+            QuizRunAnswer.question_index == run.current_index,
+        )
+    )
+    existing_answer = session.execute(stmt).scalar_one_or_none()
+    if existing_answer:
+        return None
+
+    answered_at_ms = int(run.expires_at.timestamp() * 1000)
+    return submit_answer(
+        session,
+        run,
+        question_index=run.current_index,
+        selected_answer_id=None,
+        answered_at_ms=answered_at_ms,
+        used_joker=False,
+    )
+
+
+def cleanup_anonymous_data(
+    session: Session,
+    now: Optional[datetime] = None,
+) -> Dict[str, int]:
+    """Delete stale anonymous sessions/data according to retention policy."""
+    now = now or datetime.now(timezone.utc)
+    session_cutoff = now - timedelta(hours=get_anonymous_session_retention_hours())
+    run_cutoff = now - timedelta(hours=get_anonymous_run_retention_hours())
+    player_cutoff = now - timedelta(hours=get_anonymous_player_retention_hours())
+
+    result = {
+        "deleted_sessions": 0,
+        "deleted_runs": 0,
+        "deleted_players": 0,
+    }
+
+    stale_sessions = list(
+        session.execute(
+            select(QuizSession)
+            .join(QuizPlayer)
+            .where(
+                and_(
+                    QuizPlayer.is_anonymous,
+                    QuizPlayer.last_seen_at < session_cutoff,
+                )
+            )
+        ).scalars().all()
+    )
+    for game_session in stale_sessions:
+        session.delete(game_session)
+    result["deleted_sessions"] = len(stale_sessions)
+
+    stale_runs = list(
+        session.execute(
+            select(QuizRun)
+            .join(QuizPlayer)
+            .where(
+                and_(
+                    QuizPlayer.is_anonymous,
+                    QuizRun.status.in_(["finished", "abandoned"]),
+                    QuizRun.finished_at.is_not(None),
+                    QuizRun.finished_at < run_cutoff,
+                )
+            )
+            .order_by(QuizRun.finished_at.asc())
+        ).scalars().all()
+    )
+    for run in stale_runs:
+        session.delete(run)
+    result["deleted_runs"] = len(stale_runs)
+
+    session.flush()
+
+    stale_players = list(
+        session.execute(
+            select(QuizPlayer).where(
+                and_(
+                    QuizPlayer.is_anonymous,
+                    QuizPlayer.last_seen_at < player_cutoff,
+                )
+            )
+        ).scalars().all()
+    )
+    for player in stale_players:
+        if player.sessions:
+            continue
+        if player.runs:
+            continue
+        session.delete(player)
+        result["deleted_players"] += 1
+
+    return result
 
 
 # ============================================================================

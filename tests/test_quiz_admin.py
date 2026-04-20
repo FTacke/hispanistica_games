@@ -22,7 +22,12 @@ from flask import Blueprint, Flask, g
 from flask_jwt_extended import create_access_token
 from sqlalchemy import text
 
-from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
+from src.app.extensions.sqlalchemy_ext import (
+    init_engine,
+    init_quiz_engine,
+    get_quiz_engine,
+    get_session,
+)
 
 
 # ============================================================================
@@ -51,6 +56,7 @@ def admin_app() -> Generator[Flask, None, None]:
         static_folder=str(static_dir)
     )
     app.config["AUTH_DATABASE_URL"] = QUIZ_TEST_DB_URL
+    app.config["QUIZ_DATABASE_URL"] = QUIZ_TEST_DB_URL
     app.config["TESTING"] = True
     app.config["PROPAGATE_EXCEPTIONS"] = False
     app.config["SECRET_KEY"] = "test-secret"
@@ -85,11 +91,13 @@ def admin_app() -> Generator[Flask, None, None]:
             g.role = None
     
     init_engine(app)
+    init_quiz_engine(app)
     
     # Create quiz tables
     from game_modules.quiz.models import QuizBase
     from game_modules.quiz.release_model import QuizContentRelease
-    engine = get_engine()
+    engine = get_quiz_engine()
+    QuizBase.metadata.drop_all(bind=engine)
     QuizBase.metadata.create_all(bind=engine)
     
     # Ensure release_id column exists (migration 0010)
@@ -525,10 +533,12 @@ class TestCSRFProtection:
                 g.role = None
         
         init_engine(app)
+        init_quiz_engine(app)
         
         from game_modules.quiz.models import QuizBase
         from game_modules.quiz.release_model import QuizContentRelease
-        engine = get_engine()
+        engine = get_quiz_engine()
+        QuizBase.metadata.drop_all(bind=engine)
         QuizBase.metadata.create_all(bind=engine)
         
         with engine.connect() as conn:

@@ -235,6 +235,23 @@ def register_maintenance_commands(app: Flask) -> None:
         count = services.anonymize_soft_deleted_users_older_than(days)
         app.logger.info(f"Anonymized {count} users soft-deleted older than {days} days")
 
+    @app.cli.command("quiz-cleanup-anonymous")
+    @with_appcontext
+    def quiz_cleanup_anonymous_command():
+        """Delete stale anonymous quiz sessions and expired anonymous quiz data."""
+        from .extensions.sqlalchemy_ext import get_quiz_session
+        from game_modules.quiz import services as quiz_services
+
+        with get_quiz_session() as session:
+            result = quiz_services.cleanup_anonymous_data(session)
+
+        app.logger.info(
+            "Quiz anonymous cleanup: sessions=%s runs=%s players=%s",
+            result["deleted_sessions"],
+            result["deleted_runs"],
+            result["deleted_players"],
+        )
+
 
 def register_context_processors(app: Flask) -> None:
     """Expose helpers to the template engine."""

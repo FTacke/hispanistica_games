@@ -44,6 +44,23 @@ def resolve_quiz_db_url() -> str | None:
     return None
 
 
+def apply_quiz_migrations(engine) -> None:
+    """Apply idempotent SQL migrations after model-based table creation."""
+    migrations_dir = repo_root / "game_modules" / "quiz" / "migrations"
+    migration_files = sorted(migrations_dir.glob("*.sql"))
+
+    if not migration_files:
+        return
+
+    with engine.begin() as connection:
+        for migration_file in migration_files:
+            sql = migration_file.read_text(encoding="utf-8").strip()
+            if not sql:
+                continue
+            print(f"Applying quiz migration: {migration_file.name}")
+            connection.exec_driver_sql(sql)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Initialize Quiz module database (PostgreSQL)")
     parser.add_argument("--seed", action="store_true", help="Seed demo content")
@@ -90,6 +107,7 @@ def main():
 
     # Create all Quiz tables
     QuizBase.metadata.create_all(bind=engine)
+    apply_quiz_migrations(engine)
     print('[OK] Quiz database tables initialized.')
 
     if args.seed:

@@ -106,6 +106,15 @@ class BaseConfig:
 
     # DEV-only: quiz seed mode (none/single/all). Default to none for safety.
     QUIZ_DEV_SEED_MODE = os.getenv("QUIZ_DEV_SEED_MODE", "none")
+    QUIZ_ANONYMOUS_SESSION_RETENTION_HOURS = int(
+        os.getenv("QUIZ_ANONYMOUS_SESSION_RETENTION_HOURS", "3")
+    )
+    QUIZ_ANONYMOUS_RUN_RETENTION_HOURS = int(
+        os.getenv("QUIZ_ANONYMOUS_RUN_RETENTION_HOURS", "3")
+    )
+    QUIZ_ANONYMOUS_PLAYER_RETENTION_HOURS = int(
+        os.getenv("QUIZ_ANONYMOUS_PLAYER_RETENTION_HOURS", "3")
+    )
 
 
 class DevConfig(BaseConfig):

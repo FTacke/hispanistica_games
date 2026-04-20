@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="game-shell" data-game="quiz" data-topic="{{ topic_id }}">
+<div class="game-shell" data-game="quiz" data-topic="{{ topic_id }}" data-player-authenticated="{{ 1 if player_name or player_anonymous else 0 }}" data-player-anonymous="{{ 1 if player_anonymous else 0 }}">
   <!-- Accessibility: Live region for answer feedback -->
   <div class="quiz-sr-only" aria-live="polite" aria-atomic="true" id="quiz-a11y-announce"></div>
   
@@ -26,7 +26,12 @@
       <!-- Rechts: Spielerstatus + Spiel beenden -->
       <div class="quiz-hud__actions">
         <!-- Spielerstatus-Chip: nur Icon + Name -->
-        {% if player_name %}
+        {% if player_anonymous %}
+          <span class="quiz-hud__status-chip quiz-hud__status-chip--anon">
+            <span class="material-symbols-rounded">person_off</span>
+            <span>Anonym</span>
+          </span>
+        {% elif player_name %}
           <span class="quiz-hud__status-chip">
             <span class="material-symbols-rounded">person</span>
             <span>{{ player_name }}</span>

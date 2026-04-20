@@ -11,10 +11,49 @@
   'use strict';
 
   const API_BASE = '/api/quiz';
+  const ANON_SESSION_TOKEN_KEY = 'quiz:anonymousSessionToken';
 
   const DEBUG = new URLSearchParams(window.location.search).has('quizDebug') ||
     window.localStorage.getItem('quizDebug') === '1';
   let debugCallCounter = 0;
+  const nativeFetch = window.fetch.bind(window);
+
+  function getAnonymousSessionToken() {
+    try {
+      return window.sessionStorage.getItem(ANON_SESSION_TOKEN_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setAnonymousSessionToken(token) {
+    try {
+      if (token) {
+        window.sessionStorage.setItem(ANON_SESSION_TOKEN_KEY, token);
+      }
+    } catch (e) {
+      // ignore storage issues
+    }
+  }
+
+  function clearAnonymousSessionToken() {
+    try {
+      window.sessionStorage.removeItem(ANON_SESSION_TOKEN_KEY);
+    } catch (e) {
+      // ignore storage issues
+    }
+  }
+
+  function quizFetch(url, options = {}) {
+    const headers = new Headers(options.headers || {});
+    const anonymousSessionToken = getAnonymousSessionToken();
+    if (anonymousSessionToken) {
+      headers.set('X-Quiz-Session', anonymousSessionToken);
+    }
+    return nativeFetch(url, { ...options, headers });
+  }
+
+  const fetch = quizFetch;
 
   function debugLog(fnName, data) {
     if (!DEBUG) return;
@@ -29,8 +68,13 @@
    * Initialize the entry page
    */
   function init() {
-    const topicId = document.querySelector('.game-shell')?.dataset.topic;
+    const shell = document.querySelector('.game-shell');
+    const topicId = shell?.dataset.topic;
     if (!topicId) return;
+
+    if (shell?.dataset.playerAuthenticated === '1' && shell?.dataset.playerAnonymous !== '1') {
+      clearAnonymousSessionToken();
+    }
 
     debugLog('init', { topicId });
 
@@ -292,6 +336,7 @@
 
       try {
         debugLog('auth.submit', { topicId, name });
+        clearAnonymousSessionToken();
         // Use unified endpoint: auto-create if unknown, login if known + PIN correct
         const response = await fetch(`${API_BASE}/auth/name-pin`, {
           method: 'POST',
@@ -367,9 +412,15 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ anonymous: true })
         });
+
+        const data = await response.json().catch(() => ({}));
         
         if (!response.ok) {
           throw new Error('Anonymous login failed');
+        }
+
+        if (data.session_token) {
+          setAnonymousSessionToken(data.session_token);
         }
         
         // ✅ CHANGE 1: Nach Anonym direkt neuen Run starten und ins Quiz
@@ -411,6 +462,7 @@
       try {
         debugLog('logout', {});
         await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+        clearAnonymousSessionToken();
         window.location.reload();
       } catch (error) {
         console.error('Logout failed:', error);
