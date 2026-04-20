@@ -40,18 +40,20 @@
     return Number.isFinite(parsed) ? parsed : fallback;
   }
 
+  function normalizeScore(value) {
+    return Math.round(coerceFiniteNumber(value, 0));
+  }
+
   const SCORE_TRACE_LIMIT = 400;
 
   function pushScoreTrace(event, details = {}) {
-    let runningScore = null;
-    let displayedScore = null;
+    let score = null;
     let runId = null;
     let currentIndex = null;
 
     try {
       if (state) {
-        runningScore = state.runningScore;
-        displayedScore = state.displayedScore;
+        score = state.score;
         runId = state.runId;
         currentIndex = state.currentIndex;
       }
@@ -64,9 +66,7 @@
       ts: Number(performance.now().toFixed(2)),
       runId,
       currentIndex,
-      runningScore,
-      displayedScore,
-      scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
+      score,
       ...details,
     };
 
@@ -95,7 +95,7 @@
    */
   function normalizeAnswerResponse(raw) {
     const required = ['result', 'is_correct', 'correct_option_id', 'explanation_key',
-                      'joker_remaining', 'earned_points', 'running_score', 'difficulty'];
+                      'joker_remaining', 'earned_points', 'difficulty'];
     
     const missing = required.filter(field => raw[field] === undefined);
     if (missing.length > 0) {
@@ -115,16 +115,10 @@
     }
     
     const earnedPoints = coerceFiniteNumber(raw.earned_points, 0);
-    const runningScore = coerceFiniteNumber(raw.running_score, null);
+    const runningScore = normalizeScore(raw.running_score);
     const levelBonus = coerceFiniteNumber(raw.level_bonus, 0);
     const levelCorrectCount = coerceFiniteNumber(raw.level_correct_count, 0);
     const levelQuestionsInLevel = coerceFiniteNumber(raw.level_questions_in_level, 2);
-
-    if (runningScore === null) {
-      const error = '❌ normalizeAnswerResponse: running_score must be numeric';
-      console.error(error, raw);
-      throw new Error(error);
-    }
 
     return {
       result: raw.result,
@@ -205,11 +199,7 @@
    * Normalisiert /finish API Response
    */
   function normalizeFinishResponse(raw) {
-    const totalScore = coerceFiniteNumber(raw.total_score, null);
-    if (totalScore === null) {
-      console.error('❌ normalizeFinishResponse: total_score missing or not a number', raw);
-      throw new Error('normalizeFinishResponse: total_score is required');
-    }
+    const totalScore = normalizeScore(raw.total_score);
     
     return {
       totalScore,
@@ -224,10 +214,10 @@
    * Normalisiert /status API Response
    */
   function normalizeStatusResponse(raw) {
-    const runningScore = coerceFiniteNumber(raw.running_score, null);
-    if (!raw.run_id || runningScore === null) {
+    const runningScore = normalizeScore(raw.running_score);
+    if (!raw.run_id) {
       console.error('❌ normalizeStatusResponse: Missing required fields', raw);
-      throw new Error('normalizeStatusResponse: run_id and running_score are required');
+      throw new Error('normalizeStatusResponse: run_id is required');
     }
     
     return {
@@ -319,8 +309,7 @@
       runId: state.runId,
       currentIndex: state.currentIndex,
       currentView: state.currentView,
-      runningScore: state.runningScore,
-      displayedScore: state.displayedScore,
+      score: state.score,
       lastAnswer: state.lastAnswerResult ? {
         finished: state.lastAnswerResult.finished,
         is_run_finished: state.lastAnswerResult.is_run_finished,
@@ -353,14 +342,12 @@
     if (!runId) return null;
     const raw = getCacheStorage().getItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`);
     if (raw === null) return null;
-    return coerceFiniteNumber(raw, null);
+    return normalizeScore(raw);
   }
 
   function setCachedScoreForRun(runId, score) {
     if (!runId) return;
-    const normalizedScore = coerceFiniteNumber(score, null);
-    if (normalizedScore === null) return;
-    getCacheStorage().setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(Math.round(normalizedScore)));
+    getCacheStorage().setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(normalizeScore(score)));
   }
 
   // View states for single-stage architecture
@@ -420,8 +407,7 @@
     postAnswerState: null,
     postAnswerServerData: null,
     advanceCallback: null,
-    runningScore: 0,
-    displayedScore: null, // Start with null to indicate "loading"
+    score: 0,
     pendingLevelUp: false,
     pendingLevelUpData: null,
     pendingTransition: null, // ✅ TEIL 2: What to do after POST_ANSWER "Weiter"
@@ -447,6 +433,7 @@
   async function init() {
     debugLog('init', { action: 'start' });
     pushScoreTrace('init:start');
+    renderScore(state.score);
     
     // Setup audio button event delegation (once)
     setupAudioButtonDelegation();
@@ -472,10 +459,8 @@
       const cachedRunId = getCachedRunIdForTopic(state.topicId);
       const cachedScore = getCachedScoreForRun(cachedRunId);
       if (typeof cachedScore === 'number') {
-        state.runningScore = cachedScore;
-        state.displayedScore = cachedScore;
-        pushScoreTrace('score:set:cache:topic-run', { cachedRunId, cachedScore });
-        updateScoreDisplay();
+        applyScore(cachedScore, { source: 'cache:topic-run', cache: false });
+        pushScoreTrace('score:set:cache:topic-run', { cachedRunId, cachedScore: state.score });
         debugLog('init', { action: 'applied cached score', cachedRunId, cachedScore });
       }
     } catch (e) {
@@ -501,10 +486,8 @@
       // Apply cached score for this run ASAP (still server will replace via /status)
       const cachedScoreForThisRun = getCachedScoreForRun(state.runId);
       if (typeof cachedScoreForThisRun === 'number') {
-        state.runningScore = cachedScoreForThisRun;
-        state.displayedScore = cachedScoreForThisRun;
-        pushScoreTrace('score:set:cache:run', { cachedScore: cachedScoreForThisRun });
-        updateScoreDisplay();
+        applyScore(cachedScoreForThisRun, { source: 'cache:run', cache: false });
+        pushScoreTrace('score:set:cache:run', { cachedScore: state.score });
         debugLog('init', { action: 'applied cached score for run', cachedScoreForThisRun });
       }
       state.currentIndex = runData.current_index;
@@ -657,7 +640,7 @@
       const stateData = await response.json();
       const postAnswer = stateData.post_answer || null;
 
-      const resumedRunningScore = coerceFiniteNumber(stateData.running_score, null);
+      const resumedRunningScore = normalizeScore(stateData.running_score);
       pushScoreTrace('state:response', {
         traceId: response.headers.get('X-Trace-ID') || null,
         phase: stateData.phase,
@@ -665,13 +648,8 @@
         resumedRunningScore,
         currentIndex: stateData.current_index ?? null,
       });
-      if (resumedRunningScore !== null) {
-        state.runningScore = resumedRunningScore;
-        state.displayedScore = resumedRunningScore;
-        pushScoreTrace('score:set:state-resume', { resumedRunningScore });
-        updateScoreDisplay();
-        setCachedScoreForRun(state.runId, resumedRunningScore);
-      }
+      applyScore(stateData.running_score, { source: 'state:resume' });
+      pushScoreTrace('score:set:state-resume', { resumedRunningScore: state.score });
 
       if (typeof stateData.current_index === 'number') {
         state.currentIndex = stateData.current_index;
@@ -688,7 +666,7 @@
         offsetMs: state.serverClockOffsetMs,
         expiresAtMs: stateData.expires_at_ms,
         remainingSeconds: stateData.remaining_seconds,
-        runningScore: resumedRunningScore,
+        score: state.score,
         phase: stateData.phase,
         isExpired: stateData.is_expired
       });
@@ -819,51 +797,34 @@
         return;
       }
       
-      const data = await response.json();
+      const data = normalizeStatusResponse(await response.json());
       debugLog('restoreRunningScore', { serverData: data });
       pushScoreTrace('status:response', {
         traceId: response.headers.get('X-Trace-ID') || null,
-        payloadRunningScore: data.running_score ?? null,
-        currentIndex: data.current_index ?? null,
+        payloadRunningScore: data.runningScore,
+        currentIndex: data.currentIndex ?? null,
       });
       
-      // Validate response
-      const normalizedScore = coerceFiniteNumber(data.running_score, null);
-      if (normalizedScore === null) {
-        console.error('Invalid response: running_score is not a number', data);
-        debugLog('restoreRunningScore', { error: 'invalid response', data });
-        alert('Ungültige Antwort vom Server.');
-        window.location.href = `/quiz/${state.topicId}`;
-        return;
-      }
-      
-      state.runningScore = normalizedScore;
-      state.displayedScore = state.runningScore;
+      const normalizedScore = applyScore(data.runningScore, { source: 'status:restore' });
       pushScoreTrace('score:set:status-restore', { normalizedScore });
-      updateScoreDisplay();
       
       debugLog('restoreRunningScore', { 
-        runningScore: state.runningScore,
-        level_completed: data.level_completed,
-        level_perfect: data.level_perfect
+        score: state.score,
+        level_completed: data.levelCompleted,
+        level_perfect: data.levelPerfect
       });
-      updateScoreDisplay();
 
-      // Keep cache in sync to prevent 0-flash on future refresh
-      setCachedScoreForRun(state.runId, state.runningScore);
-
-      if (typeof data.current_index === 'number') {
+      if (typeof data.currentIndex === 'number') {
         if (state.phase === PHASE.POST_ANSWER) {
-          state.nextQuestionIndex = data.current_index;
+          state.nextQuestionIndex = data.currentIndex;
         } else {
-          state.currentIndex = data.current_index;
+          state.currentIndex = data.currentIndex;
         }
       }
       
       debugLog('restoreRunningScore', { 
         action: 'complete', 
-        finalScore: state.runningScore,
-        displayedScore: state.displayedScore
+        finalScore: state.score
       });
     } catch (error) {
       console.error('Failed to restore score:', error);
@@ -890,37 +851,29 @@
         return null;
       }
       
-      const data = await response.json();
+      const data = normalizeStatusResponse(await response.json());
       
       debugLog('fetchStatusAndApply', {
-        running_score: data.running_score,
-        current_index: data.current_index
+        running_score: data.runningScore,
+        current_index: data.currentIndex
       });
       pushScoreTrace('status:fallback-response', {
-        payloadRunningScore: data.running_score ?? null,
-        currentIndex: data.current_index ?? null,
+        payloadRunningScore: data.runningScore,
+        currentIndex: data.currentIndex ?? null,
       });
-      
-      const normalizedScore = coerceFiniteNumber(data.running_score, null);
-      if (normalizedScore !== null) {
-        state.runningScore = normalizedScore;
-        pushScoreTrace('score:set:status-fallback', { normalizedScore });
-        await updateScoreWithAnimation(state.runningScore);
 
-        setCachedScoreForRun(state.runId, state.runningScore);
+      const normalizedScore = applyScore(data.runningScore, { source: 'status:fallback' });
+      pushScoreTrace('score:set:status-fallback', { normalizedScore });
 
-        if (typeof data.current_index === 'number') {
-          if (state.phase === PHASE.POST_ANSWER) {
-            state.nextQuestionIndex = data.current_index;
-          } else {
-            state.currentIndex = data.current_index;
-          }
+      if (typeof data.currentIndex === 'number') {
+        if (state.phase === PHASE.POST_ANSWER) {
+          state.nextQuestionIndex = data.currentIndex;
+        } else {
+          state.currentIndex = data.currentIndex;
         }
-        return data;
-      } else {
-        console.error('❌ /status response missing running_score');
-        return null;
       }
+
+      return data;
       
     } catch (error) {
       console.error('❌ fetchStatusAndApply error:', error);
@@ -1094,6 +1047,44 @@
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
+  function renderScore(score) {
+    const normalizedScore = normalizeScore(score);
+    const scoreDisplay = document.getElementById('quiz-score-display');
+    const scoreChip = document.getElementById('quiz-score-chip');
+
+    if (scoreDisplay) {
+      scoreDisplay.textContent = String(normalizedScore);
+    }
+
+    if (scoreChip) {
+      scoreChip.setAttribute('aria-label', `${normalizedScore} Punkte`);
+    }
+
+    pushScoreTrace('score:render', { normalizedScore });
+    return normalizedScore;
+  }
+
+  function applyScore(scoreValue, options = {}) {
+    const { source = 'unknown', cache = true } = options;
+    const previousScore = state.score;
+    const normalizedScore = normalizeScore(scoreValue);
+
+    state.score = normalizedScore;
+    pushScoreTrace('score:apply', {
+      source,
+      rawScore: scoreValue ?? null,
+      previousScore,
+      normalizedScore,
+    });
+    renderScore(normalizedScore);
+
+    if (cache && state.runId) {
+      setCachedScoreForRun(state.runId, normalizedScore);
+    }
+
+    return normalizedScore;
+  }
+
   function setTimerA11yLabel(totalSeconds) {
     const timerEl = document.getElementById('quiz-timer');
     if (!timerEl) {
@@ -1101,31 +1092,6 @@
     }
 
     timerEl.setAttribute('aria-label', `Verbleibende Zeit ${formatTimerDisplay(totalSeconds)}`);
-  }
-
-  function updateScoreDisplay() {
-    const scoreDisplay = document.getElementById('quiz-score-display');
-    const scoreChip = document.getElementById('quiz-score-chip');
-    if (!scoreDisplay) {
-      return;
-    }
-
-    const nextScore = Math.round(
-      coerceFiniteNumber(state.displayedScore, coerceFiniteNumber(state.runningScore, 0))
-    );
-
-    state.displayedScore = nextScore;
-    state.runningScore = coerceFiniteNumber(state.runningScore, nextScore);
-    pushScoreTrace('score:dom-write', {
-      nextScore,
-      scoreDisplayBefore: scoreDisplay.textContent,
-    });
-
-    scoreDisplay.textContent = String(nextScore);
-
-    if (scoreChip) {
-      scoreChip.setAttribute('aria-label', `${nextScore} Punkte`);
-    }
   }
 
   /**
@@ -1168,28 +1134,6 @@
     }
     
     requestAnimationFrame(updateValue);
-  }
-
-  /**
-   * Update score with count-up animation
-   */
-  function updateScoreWithAnimation(targetScore) {
-    const scoreDisplay = document.getElementById('quiz-score-display');
-    const nextScore = Math.round(coerceFiniteNumber(targetScore, 0));
-
-    state.displayedScore = nextScore;
-
-    if (!scoreDisplay) {
-      updateScoreDisplay();
-      return;
-    }
-
-    animateCountUp(scoreDisplay, nextScore);
-
-    const scoreChip = document.getElementById('quiz-score-chip');
-    if (scoreChip) {
-      scoreChip.setAttribute('aria-label', `${nextScore} Punkte`);
-    }
   }
 
   /**
@@ -1529,7 +1473,7 @@
         levelCompleted: true,
         levelPerfect: !!stateData.level_perfect,
         levelBonus: stateData.level_bonus || 0,
-        runningScore: stateData.running_score || state.runningScore,
+        runningScore: normalizeScore(stateData.running_score ?? state.score),
         bonusAppliedNow: !!stateData.level_perfect && (stateData.level_bonus || 0) > 0,
         difficulty: questionConfig.difficulty,
         levelCorrectCount: stateData.level_correct_count || 0,
@@ -2311,7 +2255,7 @@
       state.lastOutcome = answer.result; // 'correct' or 'wrong'
       
       // CRITICAL: Validate and update score from backend (source of truth)
-      const oldScore = state.runningScore;
+      const oldScore = state.score;
       const hasNumericRunningScore = typeof answer.runningScore === 'number';
       const earnedPoints = answer.earnedPoints;
 
@@ -2347,12 +2291,12 @@
           // Best-effort; scoring display is already corrected.
         }
       } else {
-        state.runningScore = answer.runningScore;
+        const newScore = applyScore(answer.runningScore, { source: 'answer' });
         debugLog('handleAnswerClick', {
           action: 'updating score from /answer',
           oldScore,
-          newScore: state.runningScore,
-          difference: state.runningScore - oldScore,
+          newScore,
+          difference: newScore - oldScore,
           bonusAppliedNow: answer.bonusAppliedNow
         });
 
@@ -2362,19 +2306,6 @@
         } else {
           announceA11y(answer.result === 'timeout' ? 'Zeit abgelaufen' : 'Antwort falsch');
         }
-
-        // Update score display: HUD zeigt scoreAfterQuestions (ohne Bonus)
-        // Bonus wird erst auf LevelUp visuell "applied"
-        if (answer.levelCompleted && answer.levelBonus > 0 && answer.bonusAppliedNow) {
-            // Backend hat Bonus schon in runningScore eingerechnet
-            // HUD zeigt Score OHNE Bonus (für jetzt)
-            state.displayedScore = answer.runningScore - answer.levelBonus;
-            updateScoreDisplay();
-        } else {
-            // Kein Bonus oder Bonus nicht applied: direkt anzeigen
-            updateScoreWithAnimation(answer.runningScore);
-        }
-        setCachedScoreForRun(state.runId, state.runningScore);
       }
       
       // Show explanation card with result status
@@ -2572,7 +2503,7 @@
         state.lastAnswerResult = {
           result: 'timeout',
           correct_option_id: null,
-          running_score: state.runningScore,
+          running_score: state.score,
           level_completed: false
         };
         
@@ -2621,12 +2552,9 @@
       
       // Update score (timeout earns 0, but running total must still be correct)
       if (typeof answer.runningScore === 'number') {
-        const oldScore = state.runningScore;
-        state.runningScore = answer.runningScore;
-        state.displayedScore = state.runningScore;
-        updateScoreDisplay();
-        setCachedScoreForRun(state.runId, state.runningScore);
-        debugLog('handleTimeout', { action: 'updated score from /answer', oldScore, newScore: state.runningScore });
+        const oldScore = state.score;
+        const newScore = applyScore(answer.runningScore, { source: 'timeout:answer' });
+        debugLog('handleTimeout', { action: 'updated score from /answer', oldScore, newScore });
       } else {
         console.error('❌ running_score missing in timeout response; falling back to /status', data);
         const statusData = await fetchStatusAndApply();
@@ -3344,8 +3272,7 @@
     // ✅ PHASE 3: Beim Verlassen von LevelUp wird Bonus visuell "applied"
     // HUD Score muss auf scoreAfterBonus aktualisiert werden
     if (state.pendingLevelUpData && state.pendingLevelUpData.scoreAfterBonus) {
-      state.runningScore = state.pendingLevelUpData.scoreAfterBonus;
-      updateScoreWithAnimation(state.runningScore);
+      applyScore(state.pendingLevelUpData.scoreAfterBonus, { source: 'level-up:advance' });
       debugLog('advanceFromLevelUp', { 
         action: 'applied bonus to global score', 
         scoreAfterBonus: state.pendingLevelUpData.scoreAfterBonus 
@@ -3412,7 +3339,7 @@
         console.error('❌ Failed to normalize finish response:', e);
         // Fallback auf cached score
         finish = {
-          totalScore: state.runningScore || 0,
+          totalScore: state.score || 0,
           tokensCount: 0,
           breakdown: [],
           rank: null
@@ -3420,8 +3347,7 @@
       }
       
       // Update score to final value
-      state.runningScore = finish.totalScore;
-      state.displayedScore = finish.totalScore;
+      applyScore(finish.totalScore, { source: 'finish' });
       
       // Store finish data for render
       state.finishData = finish;
@@ -3436,7 +3362,7 @@
       debugLog('finishRun', { error: error.message });
       // Show finish screen anyway with cached data
       state.finishData = {
-        totalScore: state.runningScore || 0,
+        totalScore: state.score || 0,
         tokensCount: 0,
         breakdown: [],
         rank: null

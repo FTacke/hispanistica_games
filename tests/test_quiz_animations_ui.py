@@ -303,11 +303,13 @@ class TestExplanationCardCSS:
 class TestJavaScriptFunctions:
     """Test JavaScript file has required functions."""
     
-    def test_js_has_update_score_display(self):
-        """JavaScript should have updateScoreDisplay function."""
+    def test_js_has_central_score_functions(self):
+        """JavaScript should expose a single normalized score update/render path."""
         with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
             js = f.read()
-            assert 'updateScoreDisplay' in js
+            assert 'function normalizeScore(value)' in js
+            assert 'function renderScore(score)' in js
+            assert 'function applyScore(scoreValue, options = {})' in js
     
     def test_js_has_show_points_pop(self):
         """JavaScript should have showPointsPop function."""
@@ -333,11 +335,12 @@ class TestJavaScriptFunctions:
             js = f.read()
             assert 'TRANSITION_DURATION_MS' in js
     
-    def test_js_has_current_score_state(self):
-        """JavaScript state should track runningScore (source of truth from server)."""
+    def test_js_has_single_score_state(self):
+        """JavaScript state should use a single score field without a displayed shadow state."""
         with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
             js = f.read()
-            assert 'runningScore' in js  # ✅ FIX: actual state field name
+            assert 'score: 0,' in js
+            assert 'displayedScore' not in js
 
     def test_js_formats_timer_display(self):
         """JavaScript should format timer values as MM:SS for the status bar."""
@@ -346,20 +349,30 @@ class TestJavaScriptFunctions:
             assert 'formatTimerDisplay' in js
             assert "padStart(2, '0')" in js
 
-    def test_js_coerces_numeric_score_values(self):
+    def test_js_normalizes_score_values_before_render(self):
         """JavaScript should sanitize score values before rendering them."""
         with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
             js = f.read()
             assert 'coerceFiniteNumber' in js
-            assert 'state.displayedScore = nextScore;' in js
+            assert 'return Math.round(coerceFiniteNumber(value, 0));' in js
+            assert 'state.score = normalizedScore;' in js
 
     def test_js_applies_resume_score_from_state_endpoint(self):
         """Initial resume flow should apply running_score from /state before question render."""
         with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
             js = f.read()
-            assert 'const resumedRunningScore = coerceFiniteNumber(stateData.running_score, null);' in js
-            assert 'state.runningScore = resumedRunningScore;' in js
-            assert 'setCachedScoreForRun(state.runId, resumedRunningScore);' in js
+            assert "const resumedRunningScore = normalizeScore(stateData.running_score);" in js
+            assert "applyScore(stateData.running_score, { source: 'state:resume' });" in js
+
+    def test_js_routes_all_score_updates_through_apply_score(self):
+        """All score entry points should flow through the same centralized updater."""
+        with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
+            js = f.read()
+            assert "applyScore(data.runningScore, { source: 'status:restore' });" in js
+            assert "applyScore(data.runningScore, { source: 'status:fallback' });" in js
+            assert "applyScore(answer.runningScore, { source: 'answer' });" in js
+            assert "applyScore(answer.runningScore, { source: 'timeout:answer' });" in js
+            assert "document.getElementById('quiz-score-display')?.textContent" not in js
 
 
 class TestQuizI18n:

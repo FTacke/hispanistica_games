@@ -365,8 +365,7 @@ test.describe('Quiz Module - Gameplay Flow', () => {
       scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
       scoreTrace: Array.isArray(window.__quizScoreTrace) ? window.__quizScoreTrace : [],
       state: window.quizState ? {
-        runningScore: window.quizState.runningScore,
-        displayedScore: window.quizState.displayedScore,
+        score: window.quizState.score,
         currentIndex: window.quizState.currentIndex,
       } : null,
     }));
@@ -381,8 +380,7 @@ test.describe('Quiz Module - Gameplay Flow', () => {
       scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
       scoreTrace: Array.isArray(window.__quizScoreTrace) ? window.__quizScoreTrace : [],
       state: window.quizState ? {
-        runningScore: window.quizState.runningScore,
-        displayedScore: window.quizState.displayedScore,
+        score: window.quizState.score,
         currentIndex: window.quizState.currentIndex,
       } : null,
     }));
@@ -396,6 +394,51 @@ test.describe('Quiz Module - Gameplay Flow', () => {
       initialDiag.scoreText,
       `Initial/refresh score divergence:\n${JSON.stringify({ initialDiag, refreshDiag, networkTrace }, null, 2)}`
     ).toBe(refreshDiag.scoreText);
+
+    expect(initialDiag.state?.score).toBe(Number(initialDiag.scoreText));
+    expect(refreshDiag.state?.score).toBe(Number(refreshDiag.scoreText));
+  });
+
+  test('should render a safe zero score when state or status returns invalid score data', async ({ page }) => {
+    await page.route('**/api/quiz/run/*/state', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      delete data.running_score;
+      await route.fulfill({
+        status: response.status(),
+        headers: response.headers(),
+        body: JSON.stringify(data),
+      });
+    });
+
+    await page.route('**/api/quiz/run/*/status', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      data.running_score = 'not-a-number';
+      await route.fulfill({
+        status: response.status(),
+        headers: response.headers(),
+        body: JSON.stringify(data),
+      });
+    });
+
+    const uniqueName = `SafeScoreUser${Date.now()}`;
+    await ensureLoggedOut(page);
+    await gotoAnyTopicEntry(page);
+    await authOnEntry(page, uniqueName, 'TEST');
+    await startRunFromEntry(page);
+
+    await expect(page.locator('.quiz-question')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#quiz-score-display')).toHaveText('0', { timeout: 5000 });
+
+    const diag = await page.evaluate(() => ({
+      scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
+      stateScore: window.quizState?.score ?? null,
+      trace: Array.isArray(window.__quizScoreTrace) ? window.__quizScoreTrace : [],
+    }));
+
+    expect(diag.scoreText, JSON.stringify(diag, null, 2)).toBe('0');
+    expect(diag.stateScore, JSON.stringify(diag, null, 2)).toBe(0);
   });
 
   test('should show LevelUp stage after a perfect level', async ({ page }) => {
