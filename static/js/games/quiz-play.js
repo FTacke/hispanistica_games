@@ -39,6 +39,52 @@
     const parsed = typeof value === 'number' ? value : Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
   }
+
+  const SCORE_TRACE_LIMIT = 400;
+
+  function pushScoreTrace(event, details = {}) {
+    let runningScore = null;
+    let displayedScore = null;
+    let runId = null;
+    let currentIndex = null;
+
+    try {
+      if (state) {
+        runningScore = state.runningScore;
+        displayedScore = state.displayedScore;
+        runId = state.runId;
+        currentIndex = state.currentIndex;
+      }
+    } catch (e) {
+      // ignore state access before initialization
+    }
+
+    const entry = {
+      event,
+      ts: Number(performance.now().toFixed(2)),
+      runId,
+      currentIndex,
+      runningScore,
+      displayedScore,
+      scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
+      ...details,
+    };
+
+    try {
+      const trace = Array.isArray(window.__quizScoreTrace) ? window.__quizScoreTrace : [];
+      trace.push(entry);
+      if (trace.length > SCORE_TRACE_LIMIT) {
+        trace.splice(0, trace.length - SCORE_TRACE_LIMIT);
+      }
+      window.__quizScoreTrace = trace;
+    } catch (e) {
+      // ignore trace storage issues
+    }
+
+    if (DEBUG) {
+      console.log('[quiz-score-trace]', entry);
+    }
+  }
   
   // ============================================================================
   // API RESPONSE MAPPERS (inline für non-module Kontext)
@@ -249,7 +295,18 @@
     if (anonymousSessionToken) {
       headers.set('X-Quiz-Session', anonymousSessionToken);
     }
-    return nativeFetch(url, { ...options, headers });
+    const method = options.method || 'GET';
+    pushScoreTrace('request:start', { url, method });
+    return nativeFetch(url, { ...options, headers }).then((response) => {
+      pushScoreTrace('request:end', {
+        url,
+        method,
+        status: response.status,
+        ok: response.ok,
+        traceId: response.headers.get('X-Trace-ID') || null,
+      });
+      return response;
+    });
   }
 
   const fetch = quizFetch;
@@ -389,6 +446,7 @@
    */
   async function init() {
     debugLog('init', { action: 'start' });
+    pushScoreTrace('init:start');
     
     // Setup audio button event delegation (once)
     setupAudioButtonDelegation();
@@ -416,6 +474,7 @@
       if (typeof cachedScore === 'number') {
         state.runningScore = cachedScore;
         state.displayedScore = cachedScore;
+        pushScoreTrace('score:set:cache:topic-run', { cachedRunId, cachedScore });
         updateScoreDisplay();
         debugLog('init', { action: 'applied cached score', cachedRunId, cachedScore });
       }
@@ -444,6 +503,7 @@
       if (typeof cachedScoreForThisRun === 'number') {
         state.runningScore = cachedScoreForThisRun;
         state.displayedScore = cachedScoreForThisRun;
+        pushScoreTrace('score:set:cache:run', { cachedScore: cachedScoreForThisRun });
         updateScoreDisplay();
         debugLog('init', { action: 'applied cached score for run', cachedScoreForThisRun });
       }
@@ -454,9 +514,14 @@
       
       // ✅ NEW: Load complete state from /state endpoint for timer resume
       const serverState = await loadStateForResume();
+      pushScoreTrace('init:after-load-state', {
+        serverPhase: serverState?.phase ?? null,
+        serverRunningScore: serverState?.running_score ?? null,
+      });
       
       // Restore score from server (source of truth)
       await restoreRunningScore();
+      pushScoreTrace('init:after-restore-score');
       
       // Check if already finished
       if (state.currentIndex >= 10) {
@@ -555,6 +620,12 @@
     }
 
     const startData = await startResp.json();
+    pushScoreTrace('run:start-response', {
+      isNew: !!startData.is_new,
+      runId: startData.run?.run_id ?? null,
+      currentIndex: startData.run?.current_index ?? null,
+      payloadRunningScore: startData.run?.running_score ?? null,
+    });
     debugLog('startOrResumeRun', {
       action: 'start response',
       is_new: startData.is_new,
@@ -587,9 +658,17 @@
       const postAnswer = stateData.post_answer || null;
 
       const resumedRunningScore = coerceFiniteNumber(stateData.running_score, null);
+      pushScoreTrace('state:response', {
+        traceId: response.headers.get('X-Trace-ID') || null,
+        phase: stateData.phase,
+        payloadRunningScore: stateData.running_score ?? null,
+        resumedRunningScore,
+        currentIndex: stateData.current_index ?? null,
+      });
       if (resumedRunningScore !== null) {
         state.runningScore = resumedRunningScore;
         state.displayedScore = resumedRunningScore;
+        pushScoreTrace('score:set:state-resume', { resumedRunningScore });
         updateScoreDisplay();
         setCachedScoreForRun(state.runId, resumedRunningScore);
       }
@@ -742,6 +821,11 @@
       
       const data = await response.json();
       debugLog('restoreRunningScore', { serverData: data });
+      pushScoreTrace('status:response', {
+        traceId: response.headers.get('X-Trace-ID') || null,
+        payloadRunningScore: data.running_score ?? null,
+        currentIndex: data.current_index ?? null,
+      });
       
       // Validate response
       const normalizedScore = coerceFiniteNumber(data.running_score, null);
@@ -755,6 +839,7 @@
       
       state.runningScore = normalizedScore;
       state.displayedScore = state.runningScore;
+      pushScoreTrace('score:set:status-restore', { normalizedScore });
       updateScoreDisplay();
       
       debugLog('restoreRunningScore', { 
@@ -811,10 +896,15 @@
         running_score: data.running_score,
         current_index: data.current_index
       });
+      pushScoreTrace('status:fallback-response', {
+        payloadRunningScore: data.running_score ?? null,
+        currentIndex: data.current_index ?? null,
+      });
       
       const normalizedScore = coerceFiniteNumber(data.running_score, null);
       if (normalizedScore !== null) {
         state.runningScore = normalizedScore;
+        pushScoreTrace('score:set:status-fallback', { normalizedScore });
         await updateScoreWithAnimation(state.runningScore);
 
         setCachedScoreForRun(state.runId, state.runningScore);
@@ -1026,6 +1116,10 @@
 
     state.displayedScore = nextScore;
     state.runningScore = coerceFiniteNumber(state.runningScore, nextScore);
+    pushScoreTrace('score:dom-write', {
+      nextScore,
+      scoreDisplayBefore: scoreDisplay.textContent,
+    });
 
     scoreDisplay.textContent = String(nextScore);
 
@@ -1926,6 +2020,10 @@
     
     const config = state.runQuestions[state.currentIndex];
     const q = state.questionData;
+    pushScoreTrace('renderQuestion:start', {
+      questionId: config?.question_id ?? null,
+      difficulty: config?.difficulty ?? null,
+    });
     
     // Update header
     const difficulty = config.difficulty;

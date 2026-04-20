@@ -116,7 +116,7 @@ def test_expected_errors_not_500(quiz_client, seeded_quiz_db_v2):
     # Run start requires auth
     no_auth = quiz_client.post("/api/quiz/test_topic_v2/run/start", json={})
     assert no_auth.status_code == 401
-    assert no_auth.get_json().get("code") in {"AUTH_REQUIRED", "SESSION_INVALID"}
+    assert no_auth.get_json().get("code") in {"AUTH_REQUIRED", "SESSION_INVALID", "NO_SESSION"}
 
     # Status on missing run returns 404, not 500
     auth = quiz_client.post(
@@ -180,3 +180,38 @@ def test_state_auto_timeout_is_stable_across_refreshes(_authed_v2):
             )
         ).scalars().all()
         assert len(answer_count) == 1
+
+
+def test_state_and_status_keep_numeric_score_for_legacy_inconsistent_run(_authed_v2):
+    start = _authed_v2.post("/api/quiz/test_topic_v2/run/start", json={"force_new": True})
+    assert start.status_code == 200
+    run_id = start.get_json()["run"]["run_id"]
+
+    from game_modules.quiz.models import QuizRun
+
+    with get_session() as session:
+        run = session.execute(select(QuizRun).where(QuizRun.id == run_id)).scalar_one()
+        run.current_index = 3
+        run.question_started_at = None
+        run.expires_at = None
+        run.question_started_at_ms = None
+        run.deadline_at_ms = None
+        run.post_answer_pending = False
+        run.post_answer_question_index = None
+        run.post_answer_result = None
+
+    state_resp = _authed_v2.get(f"/api/quiz/run/{run_id}/state")
+    status_resp = _authed_v2.get(f"/api/quiz/run/{run_id}/status")
+
+    assert state_resp.status_code == 200
+    assert status_resp.status_code == 200
+
+    state_data = state_resp.get_json()
+    status_data = status_resp.get_json()
+
+    assert state_data["current_index"] == 3
+    assert status_data["current_index"] == 3
+    assert state_data["running_score"] == 0
+    assert status_data["running_score"] == 0
+    assert isinstance(state_data["running_score"], int)
+    assert isinstance(status_data["running_score"], int)

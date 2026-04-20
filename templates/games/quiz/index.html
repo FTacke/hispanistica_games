@@ -3,9 +3,9 @@
 {% set page_section = 'Quiz' %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/games/quiz.css') }}">
-  <script src="{{ url_for('static', filename='js/games/quiz-i18n.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/games/quiz-topics.js') }}" defer></script>
+  <link rel="stylesheet" href="{{ asset_url('css/games/quiz.css') }}">
+  <script src="{{ asset_url('js/games/quiz-i18n.js') }}" defer></script>
+  <script src="{{ asset_url('js/games/quiz-topics.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import uuid
 from datetime import datetime
+from functools import lru_cache
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -256,11 +258,25 @@ def register_maintenance_commands(app: Flask) -> None:
 def register_context_processors(app: Flask) -> None:
     """Expose helpers to the template engine."""
 
+    @lru_cache(maxsize=512)
+    def _get_static_asset_version(asset_path_str: str, mtime_ns: int) -> str:
+        asset_path = Path(asset_path_str)
+        return hashlib.sha256(asset_path.read_bytes()).hexdigest()[:12]
+
+    def asset_url(filename: str) -> str:
+        static_root = Path(app.static_folder or "static")
+        asset_path = static_root.joinpath(*filename.split("/"))
+        if not asset_path.is_file():
+            return url_for("static", filename=filename)
+
+        version = _get_static_asset_version(str(asset_path), asset_path.stat().st_mtime_ns)
+        return url_for("static", filename=filename, v=version)
+
     @app.context_processor
     def inject_utilities():  # pragma: no cover - thin wrapper
         return {
             "now": datetime.utcnow,
-            
+            "asset_url": asset_url,
         }
 
 

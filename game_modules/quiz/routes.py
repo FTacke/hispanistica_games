@@ -955,11 +955,27 @@ def api_get_run_status(run_id: str):
             "level_questions_in_level": level_questions_in_level,
         }
 
+        quiz_log(
+            "QUIZ_STATUS",
+            level="debug",
+            run_id=run.id,
+            topic_id=run.topic_id,
+            current_index=current_index,
+            answer_count=len(answers),
+            post_answer_pending=run.post_answer_pending,
+            post_answer_question_index=run.post_answer_question_index,
+            post_answer_result=run.post_answer_result,
+            running_score=running_score,
+            finished=is_run_finished,
+        )
+
         _quiz_debug_log(
             "api_get_run_status.response",
             run_id=run.id,
             player_id=getattr(g, "quiz_player_id", None),
+            topic_id=run.topic_id,
             current_index=current_index,
+            answer_count=len(answers),
             running_score=running_score,
             finished=is_run_finished,
             level_completed=level_completed,
@@ -1114,7 +1130,10 @@ def api_get_run_state(run_id: str):
         
         if should_log:
             quiz_log("QUIZ_STATE", level="info" if is_expired or debug_flag else "debug",
-                     run_id=run.id, phase=phase, current_index=current_index,
+                     run_id=run.id, topic_id=run.topic_id, phase=phase, current_index=current_index,
+                     answer_count=len(answers), post_answer_pending=run.post_answer_pending,
+                     post_answer_question_index=run.post_answer_question_index,
+                     post_answer_result=run.post_answer_result,
                      timer_started=timer_started, remaining_seconds=remaining_seconds,
                      is_expired=is_expired, running_score=running_score,
                      debug=debug_flag)

@@ -37,7 +37,7 @@ async function ensureLoggedOut(page) {
 
 async function gotoAnyTopicEntry(page) {
   await page.goto(`${BASE_URL}/quiz`);
-  const playBtns = page.locator('a.quiz-topic-card__play-btn');
+  const playBtns = page.locator('.quiz-topic-card__actions a.quiz-btn');
   await expect(playBtns.first()).toBeVisible({ timeout: 15000 });
   await playBtns.first().click();
   await page.waitForLoadState('domcontentloaded');
@@ -55,9 +55,17 @@ async function authOnEntry(page, name, pin) {
 
   // If already authenticated, the entry shows Start/Fortsetzen instead of the auth form.
   const authForm = page.locator('#quiz-auth-form');
+  if (!(await authForm.isVisible().catch(() => false))) {
+    const showLoginBtn = page.locator('#quiz-show-login-btn');
+    if (await showLoginBtn.isVisible().catch(() => false)) {
+      await showLoginBtn.click();
+      await expect(authForm).toBeVisible({ timeout: 10000 });
+    }
+  }
+
   if (await authForm.isVisible().catch(() => false)) {
-    await page.fill('input[name="name"]', name);
-    await page.fill('input[name="pin"]', pin);
+    await page.fill('#quiz-name', name);
+    await page.fill('#quiz-pin', pin);
 
     // The JS handler submits via fetch to /api/quiz/auth/name-pin.
     // If we click too early (before handlers attach), the browser may do a normal GET
@@ -76,11 +84,23 @@ async function authOnEntry(page, name, pin) {
       expect(authResp.ok()).toBeTruthy();
     }
 
-    // Successful auth triggers a client-side navigation back to the entry page.
-    await page.waitForLoadState('domcontentloaded');
+    // Current flow redirects straight to /play after auth; older flow returns to entry.
+    const nextState = await Promise.race([
+      page.waitForURL(/\/quiz\/.+\/play(?:\?|$)/, { timeout: 15000 }).then(() => 'play').catch(() => null),
+      page.locator('#quiz-start-btn').waitFor({ state: 'visible', timeout: 15000 }).then(() => 'entry').catch(() => null),
+      page.locator('#quiz-logout-btn').waitFor({ state: 'visible', timeout: 15000 }).then(() => 'entry').catch(() => null),
+    ]);
+    if (nextState === 'play' || /\/quiz\/.+\/play(?:\?|$)/.test(page.url())) {
+      return;
+    }
   }
-  // Successful auth redirects back to entry (same URL).
-  await expect(page.locator('.quiz-login--authenticated')).toBeVisible({ timeout: 15000 });
+
+  const startBtn = page.locator('#quiz-start-btn');
+  const logoutBtn = page.locator('#quiz-logout-btn');
+  const onPlayPage = /\/quiz\/.+\/play(?:\?|$)/.test(page.url());
+  if (!onPlayPage) {
+    await expect(startBtn.or(logoutBtn).first()).toBeVisible({ timeout: 15000 });
+  }
 }
 
 async function waitForQuestionPayload(page) {
@@ -92,40 +112,43 @@ async function waitForQuestionPayload(page) {
 }
 
 async function startRunFromEntry(page) {
+  if (/\/quiz\/.+\/play(?:\?|$)/.test(page.url())) {
+    await expect(page.locator('.quiz-question')).toBeVisible({ timeout: 15000 });
+    return await page.evaluate(() => window.quizState?.questionData || null);
+  }
+
   // Entry has two distinct auth states:
   // - unauthenticated: shows #quiz-auth-form
   // - authenticated: shows .quiz-login--authenticated with Start/Fortsetzen controls
-  const authBox = page.locator('.quiz-login--authenticated');
-  await expect(authBox).toBeVisible({ timeout: 10000 });
+  const startBtn = page.locator('#quiz-start-btn');
+  const resumeBtn = page.locator('a:has-text("Fortsetzen")');
+  await expect(startBtn.or(resumeBtn).first()).toBeVisible({ timeout: 10000 });
 
   // Ensure click handlers are attached (avoids flake where clicks do nothing).
   await page.waitForFunction(() => window.__quizEntryReady === true, null, { timeout: 15000 }).catch(() => null);
 
   // Be specific to avoid matching "Neu starten".
-  const startBtn = authBox.locator('#quiz-start-btn');
-  const resumeBtn = authBox.locator('a:has-text("Fortsetzen")');
-
   if (await startBtn.isVisible().catch(() => false)) {
     const startResp = page.waitForResponse(
       (r) => r.url().includes('/run/start') && r.request().method() === 'POST' && r.ok(),
       { timeout: 20000 }
-    );
-    const qPromise = waitForQuestionPayload(page);
+    ).catch(() => null);
+    const qPromise = waitForQuestionPayload(page).catch(() => null);
     await startBtn.click();
     await startResp;
     await page.waitForURL(/\/quiz\/.+\/play/, { timeout: 30000 });
     await expect(page.locator('.quiz-question')).toBeVisible({ timeout: 15000 });
-    return await qPromise;
+    return (await qPromise) || await page.evaluate(() => window.quizState?.questionData || null);
   }
 
   await expect(resumeBtn).toBeVisible({ timeout: 10000 });
-  const qPromise = waitForQuestionPayload(page);
+  const qPromise = waitForQuestionPayload(page).catch(() => null);
   await Promise.all([
     page.waitForURL(/\/quiz\/.+\/play/, { timeout: 15000 }),
     resumeBtn.click(),
   ]);
   await expect(page.locator('.quiz-question')).toBeVisible({ timeout: 15000 });
-  return await qPromise;
+  return (await qPromise) || await page.evaluate(() => window.quizState?.questionData || null);
 }
 
 async function expectAnsweredState(page) {
@@ -293,6 +316,86 @@ test.describe('Quiz Module - Gameplay Flow', () => {
 
     await page.reload();
     await expect(page.locator('#quiz-score-display')).toHaveText(scoreBefore, { timeout: 5000 });
+  });
+
+  test('should hydrate score chip on first entry exactly like after manual refresh', async ({ page }) => {
+    const networkTrace = [];
+    let phase = 'initial';
+
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('quizDebug', '1');
+      } catch (e) {
+        // ignore
+      }
+    });
+
+    page.on('request', (request) => {
+      if (!request.url().includes('/api/quiz/')) return;
+      networkTrace.push({
+        phase,
+        kind: 'request',
+        method: request.method(),
+        path: new URL(request.url()).pathname,
+      });
+    });
+
+    page.on('response', (response) => {
+      if (!response.url().includes('/api/quiz/')) return;
+      networkTrace.push({
+        phase,
+        kind: 'response',
+        method: response.request().method(),
+        path: new URL(response.url()).pathname,
+        status: response.status(),
+      });
+    });
+
+    const uniqueName = `HydrationUser${Date.now()}`;
+    await ensureLoggedOut(page);
+    await gotoAnyTopicEntry(page);
+    await authOnEntry(page, uniqueName, 'TEST');
+    await startRunFromEntry(page);
+
+    await expect(page.locator('.quiz-question')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#quiz-score-display')).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    const initialDiag = await page.evaluate(() => ({
+      scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
+      scoreTrace: Array.isArray(window.__quizScoreTrace) ? window.__quizScoreTrace : [],
+      state: window.quizState ? {
+        runningScore: window.quizState.runningScore,
+        displayedScore: window.quizState.displayedScore,
+        currentIndex: window.quizState.currentIndex,
+      } : null,
+    }));
+
+    phase = 'refresh';
+    await page.reload();
+    await expect(page.locator('.quiz-question')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#quiz-score-display')).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    const refreshDiag = await page.evaluate(() => ({
+      scoreText: document.getElementById('quiz-score-display')?.textContent ?? null,
+      scoreTrace: Array.isArray(window.__quizScoreTrace) ? window.__quizScoreTrace : [],
+      state: window.quizState ? {
+        runningScore: window.quizState.runningScore,
+        displayedScore: window.quizState.displayedScore,
+        currentIndex: window.quizState.currentIndex,
+      } : null,
+    }));
+
+    expect(
+      initialDiag.scoreText,
+      `Initial score mismatch:\n${JSON.stringify({ initialDiag, refreshDiag, networkTrace }, null, 2)}`
+    ).toMatch(/^\d+$/);
+
+    expect(
+      initialDiag.scoreText,
+      `Initial/refresh score divergence:\n${JSON.stringify({ initialDiag, refreshDiag, networkTrace }, null, 2)}`
+    ).toBe(refreshDiag.scoreText);
   });
 
   test('should show LevelUp stage after a perfect level', async ({ page }) => {

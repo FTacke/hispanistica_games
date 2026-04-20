@@ -66,9 +66,21 @@ class TestQuestionStatusLayout:
 
     def test_play_template_versions_quiz_assets(self):
         html = Path('templates/games/quiz/play.html').read_text(encoding='utf-8')
-        assert "css/games/quiz.css') }}?v=" in html
-        assert "js/games/quiz-i18n.js') }}?v=" in html
-        assert "js/games/quiz-play.js') }}?v=" in html
+        assert "asset_url('css/games/quiz.css')" in html
+        assert "asset_url('js/games/quiz-i18n.js')" in html
+        assert "asset_url('js/games/quiz-play.js')" in html
+
+    def test_index_template_versions_quiz_assets(self):
+        html = Path('templates/games/quiz/index.html').read_text(encoding='utf-8')
+        assert "asset_url('css/games/quiz.css')" in html
+        assert "asset_url('js/games/quiz-i18n.js')" in html
+        assert "asset_url('js/games/quiz-topics.js')" in html
+
+    def test_entry_template_versions_quiz_assets(self):
+        html = Path('templates/games/quiz/topic_entry.html').read_text(encoding='utf-8')
+        assert "asset_url('css/games/quiz.css')" in html
+        assert "asset_url('js/games/quiz-i18n.js')" in html
+        assert "asset_url('js/games/quiz-entry.js')" in html
 
 
 class TestAnswerStates:
@@ -365,6 +377,12 @@ class TestQuizHtmlCaching:
         source = Path('game_modules/quiz/routes.py').read_text(encoding='utf-8')
         assert '_set_quiz_html_no_store' in source
         assert 'no-store, no-cache, must-revalidate, private' in source
+
+    def test_app_exposes_asset_url_helper(self):
+        source = Path('src/app/__init__.py').read_text(encoding='utf-8')
+        assert 'def asset_url(filename: str) -> str:' in source
+        assert 'hashlib.sha256' in source
+        assert '"asset_url": asset_url' in source
     
     def test_js_answer_states_use_new_classes(self):
         """JavaScript should use new answer state classes."""
