@@ -586,6 +586,14 @@
       const stateData = await response.json();
       const postAnswer = stateData.post_answer || null;
 
+      const resumedRunningScore = coerceFiniteNumber(stateData.running_score, null);
+      if (resumedRunningScore !== null) {
+        state.runningScore = resumedRunningScore;
+        state.displayedScore = resumedRunningScore;
+        updateScoreDisplay();
+        setCachedScoreForRun(state.runId, resumedRunningScore);
+      }
+
       if (typeof stateData.current_index === 'number') {
         state.currentIndex = stateData.current_index;
       }
@@ -601,6 +609,7 @@
         offsetMs: state.serverClockOffsetMs,
         expiresAtMs: stateData.expires_at_ms,
         remainingSeconds: stateData.remaining_seconds,
+        runningScore: resumedRunningScore,
         phase: stateData.phase,
         isExpired: stateData.is_expired
       });

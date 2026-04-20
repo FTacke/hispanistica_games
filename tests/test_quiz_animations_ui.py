@@ -341,6 +341,14 @@ class TestJavaScriptFunctions:
             assert 'coerceFiniteNumber' in js
             assert 'state.displayedScore = nextScore;' in js
 
+    def test_js_applies_resume_score_from_state_endpoint(self):
+        """Initial resume flow should apply running_score from /state before question render."""
+        with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
+            js = f.read()
+            assert 'const resumedRunningScore = coerceFiniteNumber(stateData.running_score, null);' in js
+            assert 'state.runningScore = resumedRunningScore;' in js
+            assert 'setCachedScoreForRun(state.runId, resumedRunningScore);' in js
+
 
 class TestQuizI18n:
     """Test required quiz translations exist for status chips."""
