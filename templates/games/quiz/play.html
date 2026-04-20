@@ -58,32 +58,39 @@
     <main class="quiz-question-container" id="quiz-question-container">
       <div class="quiz-question-wrapper" id="quiz-question-wrapper" data-transition-state="idle">
         <div class="quiz-question" id="quiz-question">
-          <!-- Card Header: Level links + Fortschritt rechts (eine Zeile) -->
-          <div class="quiz-question-card__meta">
-            <div class="quiz-level-chip" id="quiz-level-chip">
-              <span class="material-symbols-rounded">signal_cellular_alt</span>
-              <span data-i18n="ui.quiz.level_label">Level</span>
-              <span id="quiz-level-num">1</span>
-            </div>
-            <div class="quiz-stat-chip quiz-stat-chip--progress quiz-question-progress" id="quiz-progress">
-              <span class="quiz-progress-label" data-i18n="ui.quiz.question_label">Frage</span>
-              <span id="quiz-question-current">1</span>
-              <span class="quiz-progress-sep">/</span>
-              <span id="quiz-question-total">10</span>
-              <span class="quiz-progress-compact" id="quiz-question-compact" aria-hidden="true">1/10</span>
-            </div>
-            <div class="quiz-question-meta-stats" aria-label="Joker und Timer">
-              <!-- Joker -->
-              <button type="button" class="quiz-stat-chip quiz-stat-chip--joker" id="quiz-joker-btn">
-                <span class="material-symbols-rounded">casino</span>
+          <!-- Card Header: Zwei konsistente Statuszeilen -->
+          <div class="quiz-question-card__meta" aria-label="Spielstatus">
+            <div class="quiz-question-status-row quiz-question-status-row--top" role="group" aria-label="Statuszeile oben">
+              <div class="quiz-level-chip" id="quiz-level-chip">
+                <span class="material-symbols-rounded" aria-hidden="true">signal_cellular_alt</span>
+                <span data-i18n="ui.quiz.level_label">Level</span>
+                <span id="quiz-level-num">1</span>
+              </div>
+              <div class="quiz-stat-chip quiz-stat-chip--progress quiz-question-progress" id="quiz-progress" aria-label="Fragenfortschritt">
+                <span class="quiz-progress-label" data-i18n="ui.quiz.question_label">Frage</span>
+                <span id="quiz-question-current">1</span>
+                <span class="quiz-progress-sep">/</span>
+                <span id="quiz-question-total">10</span>
+                <span class="quiz-progress-compact" id="quiz-question-compact" aria-hidden="true">1/10</span>
+              </div>
+              <button type="button" class="quiz-stat-chip quiz-stat-chip--joker" id="quiz-joker-btn" aria-label="50 zu 50 Joker">
+                <span class="material-symbols-rounded" aria-hidden="true">casino</span>
                 <span>50:50</span>
                 <span class="quiz-joker__count" id="quiz-joker-count">2</span>
               </button>
+            </div>
 
-              <!-- Timer - stärker durch filled style -->
-              <div class="quiz-stat-chip quiz-stat-chip--timer" id="quiz-timer">
-                <span class="material-symbols-rounded">timer</span>
-                <span id="quiz-timer-display">30</span>
+            <div class="quiz-question-status-row quiz-question-status-row--bottom" role="group" aria-label="Statuszeile unten">
+              <div class="quiz-stat-chip quiz-score-chip" id="quiz-score-chip" aria-label="0 Punkte">
+                <span class="material-symbols-rounded" aria-hidden="true">emoji_events</span>
+                <span class="quiz-score-chip__value" id="quiz-score-display">0</span>
+                <span class="quiz-score-chip__label" data-i18n="ui.quiz.points">Punkte</span>
+                <span class="quiz-score-chip__pop" id="quiz-score-pop" aria-hidden="true"></span>
+              </div>
+
+              <div class="quiz-stat-chip quiz-stat-chip--timer" id="quiz-timer" aria-live="polite" aria-label="Verbleibende Zeit 00:30">
+                <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+                <span id="quiz-timer-display">00:30</span>
               </div>
             </div>
           </div>

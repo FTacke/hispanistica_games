@@ -12,6 +12,8 @@ Tests verify:
 These tests focus on the DOM structure and CSS classes.
 """
 
+from pathlib import Path
+
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
@@ -30,26 +32,37 @@ def client(quiz_app: Flask) -> FlaskClient:
 class TestScoreChipUI:
     """Test Score Chip component in quiz header."""
     
-    def test_score_chip_exists_in_play_template(self, client: FlaskClient):
+    def test_score_chip_exists_in_play_template(self):
         """Score chip should be present in the quiz play template."""
-        # We test the template directly since play requires authentication
-        response = client.get("/quiz/demo_topic/play")
-        # May redirect to entry if not authenticated, but template structure matters
-        if response.status_code == 200:
-            html = response.data.decode('utf-8')
-            assert 'quiz-score-chip' in html
-            assert 'quiz-score-display' in html
-            assert 'quiz-score-pop' in html
-            # Check for trophy/star icon
-            assert 'emoji_events' in html or 'star' in html
+        html = Path('templates/games/quiz/play.html').read_text(encoding='utf-8')
+        assert 'quiz-score-chip' in html
+        assert 'quiz-score-display' in html
+        assert 'quiz-score-pop' in html
+        assert 'emoji_events' in html or 'star' in html
     
-    def test_score_chip_value_element(self, client: FlaskClient):
+    def test_score_chip_value_element(self):
         """Score chip should have a value element for displaying the score."""
-        response = client.get("/quiz/demo_topic/play")
-        if response.status_code == 200:
-            html = response.data.decode('utf-8')
-            assert 'id="quiz-score-display"' in html
-            assert 'quiz-score-chip__value' in html
+        html = Path('templates/games/quiz/play.html').read_text(encoding='utf-8')
+        assert 'id="quiz-score-display"' in html
+        assert 'quiz-score-chip__value' in html
+
+
+class TestQuestionStatusLayout:
+    """Test the two-row question status layout in play mode."""
+
+    def test_play_template_has_two_status_rows(self):
+        html = Path('templates/games/quiz/play.html').read_text(encoding='utf-8')
+        assert 'quiz-question-status-row--top' in html
+        assert 'quiz-question-status-row--bottom' in html
+        assert 'id="quiz-joker-btn"' in html
+        assert 'id="quiz-timer-display"' in html
+
+    def test_css_has_two_row_status_grid(self):
+        css = Path('static/css/games/quiz.css').read_text(encoding='utf-8')
+        assert '.quiz-question-status-row--top' in css
+        assert '.quiz-question-status-row--bottom' in css
+        assert 'grid-template-areas: "level progress joker";' in css
+        assert 'grid-template-areas: "score timer";' in css
 
 
 class TestAnswerStates:
@@ -307,6 +320,13 @@ class TestJavaScriptFunctions:
         with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
             js = f.read()
             assert 'runningScore' in js  # ✅ FIX: actual state field name
+
+    def test_js_formats_timer_display(self):
+        """JavaScript should format timer values as MM:SS for the status bar."""
+        with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
+            js = f.read()
+            assert 'formatTimerDisplay' in js
+            assert "padStart(2, '0')" in js
     
     def test_js_answer_states_use_new_classes(self):
         """JavaScript should use new answer state classes."""

@@ -967,8 +967,38 @@
   /**
    * Update the score display (instant, no animation)
    */
+  function formatTimerDisplay(totalSeconds) {
+    const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+    const minutes = Math.floor(safeSeconds / 60);
+    const seconds = safeSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  function setTimerA11yLabel(totalSeconds) {
+    const timerEl = document.getElementById('quiz-timer');
+    if (!timerEl) {
+      return;
+    }
+
+    timerEl.setAttribute('aria-label', `Verbleibende Zeit ${formatTimerDisplay(totalSeconds)}`);
+  }
+
   function updateScoreDisplay() {
-    return;
+    const scoreDisplay = document.getElementById('quiz-score-display');
+    const scoreChip = document.getElementById('quiz-score-chip');
+    if (!scoreDisplay) {
+      return;
+    }
+
+    const nextScore = Number.isFinite(state.displayedScore)
+      ? Math.round(state.displayedScore)
+      : Math.round(Number(state.runningScore) || 0);
+
+    scoreDisplay.textContent = String(nextScore);
+
+    if (scoreChip) {
+      scoreChip.setAttribute('aria-label', `${nextScore} Punkte`);
+    }
   }
 
   /**
@@ -1017,15 +1047,37 @@
    * Update score with count-up animation
    */
   function updateScoreWithAnimation(targetScore) {
-    state.displayedScore = targetScore;
-    updateScoreDisplay();
+    const scoreDisplay = document.getElementById('quiz-score-display');
+    const nextScore = Math.round(Number(targetScore) || 0);
+
+    state.displayedScore = nextScore;
+
+    if (!scoreDisplay) {
+      updateScoreDisplay();
+      return;
+    }
+
+    animateCountUp(scoreDisplay, nextScore);
+
+    const scoreChip = document.getElementById('quiz-score-chip');
+    if (scoreChip) {
+      scoreChip.setAttribute('aria-label', `${nextScore} Punkte`);
+    }
   }
 
   /**
    * Show points pop animation on score chip (longer duration, more visible)
    */
   function showPointsPop(points) {
-    return;
+    const pointsPop = document.getElementById('quiz-score-pop');
+    if (!pointsPop || !Number.isFinite(points) || points <= 0) {
+      return;
+    }
+
+    pointsPop.textContent = `+${Math.round(points)}`;
+    pointsPop.classList.remove('quiz-score-chip__pop--animate');
+    void pointsPop.offsetWidth;
+    pointsPop.classList.add('quiz-score-chip__pop--animate');
   }
 
   /**
@@ -1687,7 +1739,8 @@
     
     if (timerDisplay) {
       const totalTime = state.timeLimitSeconds || TIMER_SECONDS_DEFAULT;
-      timerDisplay.textContent = totalTime;
+      timerDisplay.textContent = formatTimerDisplay(totalTime);
+      setTimerA11yLabel(totalTime);
     }
     
     if (timerEl) {
@@ -1779,7 +1832,8 @@
       const timerDisplay = document.getElementById('quiz-timer-display');
       
       if (timerDisplay) {
-        timerDisplay.textContent = remaining;
+        timerDisplay.textContent = formatTimerDisplay(remaining);
+        setTimerA11yLabel(remaining);
       }
       
       // Update timer styling based on remaining time
@@ -1848,6 +1902,10 @@
     const compactProgress = document.getElementById('quiz-question-compact');
     if (compactProgress) {
       compactProgress.textContent = `${state.currentIndex + 1}/10`;
+    }
+    const progressEl = document.getElementById('quiz-progress');
+    if (progressEl) {
+      progressEl.setAttribute('aria-label', `Frage ${state.currentIndex + 1} von 10`);
     }
     
     // Update joker button
