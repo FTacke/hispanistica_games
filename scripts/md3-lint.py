@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""MD3 Linting
+"""MD3 Linting helper.
 
-Checks Material Design 3 compliance in templates and CSS.
-Includes dashboard-specific token guardrails.
+The former quiz content dashboard guardrails were removed with the legacy
+quiz import UI.
 """
 from __future__ import annotations
 
@@ -11,11 +11,7 @@ import re
 import sys
 
 
-DASHBOARD_FILES = [
-    Path("templates/admin/quiz_content.html"),
-    Path("static/css/admin/quiz_content.css"),
-    Path("static/js/admin/quiz_content.js"),
-]
+DASHBOARD_FILES: list[Path] = []
 
 INLINE_STYLE_RE = re.compile(r"\bstyle\s*=", re.IGNORECASE)
 HARDCODED_COLOR_RE = re.compile(r"#(?:[0-9a-fA-F]{3,8})\b|rgb\(|hsl\(", re.IGNORECASE)
@@ -38,6 +34,7 @@ def main() -> None:
     """Run MD3 lint checks."""
     print("Running MD3 lint checks...")
     print("  Note: Full linting is done via md3-forms-auth-guard.py")
+    print("  No dashboard-specific files are currently registered.")
 
     errors: list[str] = []
     for file_path in DASHBOARD_FILES:

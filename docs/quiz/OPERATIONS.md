@@ -20,7 +20,7 @@ docker compose -f docker-compose.dev-postgres.yml up -d
 .\scripts\dev-start.ps1
 ```
 
-**DEV Admin (DEV only):** `admin_dev` / `0000`
+**DEV Admin (DEV only):** `admin` / `change-me`
 
 **Default DB URLs:**
 - Auth: `postgresql+psycopg://hispanistica_auth:hispanistica_auth@localhost:54321/hispanistica_auth`

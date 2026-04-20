@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flask import Flask, jsonify, request, current_app
+from flask import Flask, jsonify, request
 from flask_caching import Cache
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
@@ -179,18 +179,6 @@ def register_jwt_handlers() -> None:
 
         Returns machine-readable code for client-side handling.
         """
-        # DEBUG: Log 401s for quiz-admin API routes (safe instrumentation)
-        if current_app.debug and request.path.startswith("/quiz-admin/api/"):
-            current_app.logger.warning(
-                "[401 Auth Debug] Unauthorized request to %s %s | "
-                "has_jwt_cookie=%s | has_auth_header=%s | error=%s",
-                request.method,
-                request.path,
-                "jwt_access_token" in request.cookies,
-                "Authorization" in request.headers,
-                error_string
-            )
-        
         # Safety check: Public (infra) routes should never reach here
         PUBLIC_PREFIXES = ("/static/", "/favicon", "/robots.txt", "/health")
         if request.path.startswith(PUBLIC_PREFIXES):

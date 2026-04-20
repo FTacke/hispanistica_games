@@ -92,7 +92,7 @@ DIRS=(
     "${BASE_DIR}/config"
     "${BASE_DIR}/data"
     "${BASE_DIR}/logs"
-    "${BASE_DIR}/media/releases"
+    "${BASE_DIR}/media/quiz"
     "${BASE_DIR}/runner"
 )
 
@@ -104,11 +104,6 @@ for dir in "${DIRS[@]}"; do
         log_success "Created: $dir"
     fi
 done
-
-# Create media/current symlink placeholder
-if [ ! -L "${BASE_DIR}/media/current" ] && [ ! -d "${BASE_DIR}/media/current" ]; then
-    log_warn "media/current symlink not set (create after first content release)"
-fi
 
 echo ""
 

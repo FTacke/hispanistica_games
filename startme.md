@@ -44,7 +44,7 @@ Das Skript:
 5. Initialisiert Quiz-Module mit Demo-Daten
 6. Startet den Flask Dev-Server auf einem freien Port (Standard: 8000, wird im Terminal angezeigt) 
 
-**Login (DEV):** `admin_dev` / `0000`
+**Login (DEV):** `admin` / `change-me`
 
 **Quiz Demo:** http://localhost:<PORT>/quiz
 

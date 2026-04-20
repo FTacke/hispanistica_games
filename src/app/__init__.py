@@ -213,8 +213,7 @@ def create_app(env_name: str | None = None) -> Flask:
     register_error_handlers(app)
     setup_logging(app)
     
-    # Note: Quiz units auto-seeding has been moved to scripts/quiz_seed.py
-    # and is now triggered by dev-start.ps1 before server start (DEV only)
+    # Quiz unit tooling is maintained separately under scripts/quiz_units.
 
     return app
 

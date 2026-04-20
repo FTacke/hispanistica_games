@@ -109,7 +109,7 @@ class BasedOnSchema:
     """Source reference information for quiz unit."""
     chapter_title: str
     chapter_url: str
-    course_title: str = "Spanische Linguistik @ School"
+    course_title: str = "Linguistik im Spanischunterricht"
     course_url: Optional[str] = None
 
 
@@ -515,9 +515,9 @@ def validate_quiz_unit(data: Dict[str, Any], filename: str = "") -> QuizUnitSche
                 errors.append(f"Field 'based_on.chapter_url' must be a valid HTTP/HTTPS URL{context}")
             
             # Optional fields with defaults
-            course_title = based_on.get("course_title", "Spanische Linguistik @ School").strip()
+            course_title = based_on.get("course_title", "Linguistik im Spanischunterricht").strip()
             if not course_title:
-                course_title = "Spanische Linguistik @ School"
+                course_title = "Linguistik im Spanischunterricht"
             
             course_url = based_on.get("course_url")
             if course_url is not None:

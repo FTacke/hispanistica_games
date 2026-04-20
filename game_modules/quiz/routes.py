@@ -1338,8 +1338,7 @@ def api_get_question(question_id: str):
 #   1. @jwt_required() - Valid JWT token (set by auth middleware)
 #   2. @require_role(Role.ADMIN) - Admin role check
 #
-# This ensures consistent authentication across all admin APIs and eliminates
-# the need for separate QUIZ_ADMIN_KEY environment variables.
+# This ensures consistent authentication across all admin APIs.
 # ============================================================================
 
 

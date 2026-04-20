@@ -73,7 +73,6 @@ services:
       - ./media/mp3-temp:/app/media/mp3-temp
       - ./media/transcripts:/app/media/transcripts
       - ./media/quiz:/app/media/quiz
-      - ./media/releases:/app/media/releases
       
       # Data directories
       - ./data/db:/app/data/db

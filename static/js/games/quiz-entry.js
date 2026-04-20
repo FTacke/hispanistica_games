@@ -120,7 +120,7 @@
         if (basedOnContainer && topic.based_on && topic.based_on.chapter_title) {
           const chapterTitle = escapeHtml(topic.based_on.chapter_title);
           const chapterUrl = escapeHtml(topic.based_on.chapter_url || '');
-          const courseTitle = escapeHtml(topic.based_on.course_title || 'Spanische Linguistik @ School');
+          const courseTitle = escapeHtml(topic.based_on.course_title || 'Linguistik im Spanischunterricht');
           
           let basedOnHTML = '<div class="quiz-info-card__based-on-section">';
           basedOnHTML += '<span class="quiz-info-card__label">Grundlage</span>';

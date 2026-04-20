@@ -498,9 +498,6 @@ def logout_player(session: Session, token: str) -> bool:
 
 def get_active_topics(session: Session) -> List[QuizTopic]:
     """Get all active quiz topics ordered by order_index.
-    
-    Visibility is controlled solely by is_active flag.
-    Release tracking (release_id) is now only used for import history, not visibility.
     """
     stmt = select(QuizTopic).where(
         QuizTopic.is_active

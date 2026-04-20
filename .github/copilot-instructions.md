@@ -37,15 +37,12 @@ This script:
 1. Starts Docker PostgreSQL containers (Auth + Quiz DBs)
 2. Activates `.venv` Python environment
 3. Initializes Auth DB schema (if needed)
-4. Runs Quiz auto-pipeline: normalize → seed → prune (if `QUIZ_DEV_SEED_MODE` set)
-5. Starts Flask dev server on port 8000 (or next available port)
+4. Starts Flask dev server on port 8000 (or next available port)
 
 **Environment Variables**:
-- `QUIZ_DEV_SEED_MODE=single` → Seed one quiz topic from `content/quiz/topics/*.json`
-- `QUIZ_DEV_SEED_MODE=all` → Seed all topics
 - `QUIZ_MECHANICS_VERSION=v2` (default) → Use v2 mechanics (10 questions per run)
 
-**Login (DEV)**: Username `admin_dev` / Password `0000`
+**Login (DEV)**: Username `admin` / Password `change-me`
 
 ### Testing
 
@@ -54,22 +51,15 @@ pytest -v
 ```
 
 Tests are in `tests/`. Key test files:
-- `test_import_service.py` → Quiz content import/publish pipeline
-- `test_quiz_release_filtering.py` → Release-based filtering
+- `test_quiz_module.py` → Quiz module baseline coverage
+- `test_quiz_unit.py` → Quiz unit validation coverage
 
 Use `runTests` tool when available instead of terminal commands.
 
-### Production Content Deployment
+### Quiz Unit Tooling
 
-**DEV vs PROD workflows are strictly separated**:
-- **DEV**: Content auto-synced from `content/quiz/topics/*.json` via `dev-start.ps1` (automatic normalize/seed/prune)
-- **PROD**: Content uploaded via rsync → imported via CLI → published via Admin Dashboard
-
-**Production pipeline** (see [startme.md](../startme.md) and [docs/components/quiz/OPERATIONS.md](../docs/components/quiz/OPERATIONS.md)):
-1. Create release folder: `quiz_releases/release_YYYYMMDD_HHMM/units/` + `/audio/`
-2. rsync upload to server
-3. Import: `python manage.py import-content --units-path media/current/units --audio-path media/current/audio --release 2026-01-06_1430`
-4. Publish: `python manage.py publish-release --release 2026-01-06_1430`
+Quiz unit preparation is handled explicitly under `scripts/quiz_units/`.
+There is no longer an in-app dashboard, release import CLI, or dev auto-seed pipeline.
 
 ## Project-Specific Conventions
 
@@ -102,12 +92,7 @@ Quiz content in `content/quiz/topics/*.json` uses versioned schemas:
 - **v2 (current)**: 10 questions per unit (5 difficulty levels × 2 questions each). Detected by `quiz_unit_version: "2.0.0"`
 - **v1 (legacy)**: Variable questions per difficulty. Default if no `quiz_unit_version` field.
 
-**Always normalize before seeding**:
-```powershell
-python scripts/quiz_units_normalize.py --write --topics-dir content/quiz/topics
-```
-
-This generates missing ULIDs for questions and creates `questions_statistics` for leaderboard display.
+Quiz unit maintenance scripts now live under `scripts/quiz_units/`.
 
 ### 3. CSS Architecture Rules
 
@@ -163,8 +148,8 @@ All dev scripts in `scripts/*.ps1` follow these patterns:
 |------|---------|
 | [startme.md](../startme.md) | Daily dev workflow (MUST READ) |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Documentation conventions (strict rules) |
-| [manage.py](../manage.py) | Production CLI (import/publish content) |
-| [scripts/dev-start.ps1](../scripts/dev-start.ps1) | Dev server start (PostgreSQL + auto-seed) |
+| [manage.py](../manage.py) | Project CLI |
+| [scripts/dev-start.ps1](../scripts/dev-start.ps1) | Dev server start (PostgreSQL) |
 | [src/app/__init__.py](../src/app/__init__.py) | Application factory |
 | [game_modules/quiz/services.py](../game_modules/quiz/services.py) | Quiz business logic (player auth, run management) |
 | [game_modules/quiz/models.py](../game_modules/quiz/models.py) | Quiz database models (PostgreSQL-only) |
@@ -176,8 +161,8 @@ All dev scripts in `scripts/*.ps1` follow these patterns:
 1. **DO NOT use SQLite for quiz**: Models require PostgreSQL ARRAY/JSONB types
 2. **DO NOT use legacy `--md3-*` CSS tokens**: Always use `--md-sys-*` canonical tokens
 3. **DO NOT add component rules to branding.css**: Only `:root` variable declarations allowed
-4. **DO NOT mix DEV and PROD workflows**: Auto-seeding is DEV-only; PROD uses rsync + import CLI
-5. **DO NOT skip normalization**: Always run `quiz_units_normalize.py` before seeding new content
+4. **DO NOT assume auto-seeding exists**: Quiz unit tooling is no longer wired into app startup
+5. **DO NOT recreate release/import side paths**: Keep quiz unit tooling isolated under `scripts/quiz_units/`
 6. **DO NOT create docs without front-matter**: All `.md` files need YAML metadata (see CONTRIBUTING.md)
 7. **DO NOT use uppercase in doc filenames**: Always `kebab-case` (e.g., `auth-flow.md`, not `Auth_Flow.md`)
 

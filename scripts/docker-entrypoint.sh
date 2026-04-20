@@ -21,7 +21,7 @@ if [ ! -d "$MEDIA_ROOT" ]; then
     fi
 fi
 
-for dir in "quiz" "releases"; do
+for dir in "quiz"; do
     target="$MEDIA_ROOT/$dir"
     if ! mkdir -p "$target"; then
         echo "ERROR: Failed to create media directory: $target"

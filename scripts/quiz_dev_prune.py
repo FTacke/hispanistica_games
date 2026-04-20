@@ -87,7 +87,6 @@ def main() -> int:
         QuizPlayer,
         QuizQuestionStats,
     )
-    from game_modules.quiz.release_model import QuizContentRelease
 
     app = create_app()
 
@@ -99,7 +98,6 @@ def main() -> int:
                 ("quiz_scores", QuizScore),
                 ("quiz_questions", QuizQuestion),
                 ("quiz_topics", QuizTopic),
-                ("quiz_content_releases", QuizContentRelease),
                 ("quiz_question_stats", QuizQuestionStats),
                 ("quiz_sessions", QuizSession),
                 ("quiz_players", QuizPlayer),
@@ -115,7 +113,6 @@ def main() -> int:
             session.query(QuizScore).delete(synchronize_session=False)
             session.query(QuizQuestion).delete(synchronize_session=False)
             session.query(QuizTopic).delete(synchronize_session=False)
-            session.query(QuizContentRelease).delete(synchronize_session=False)
             session.query(QuizQuestionStats).delete(synchronize_session=False)
             session.query(QuizSession).delete(synchronize_session=False)
             session.query(QuizPlayer).delete(synchronize_session=False)

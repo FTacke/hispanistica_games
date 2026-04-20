@@ -115,16 +115,6 @@ media/current/*
 !media/current/README.md
 
 # =============================================================================
-# Quiz Content Releases (deployed via rsync, not tracked)
-# =============================================================================
-# Local quiz content releases are deployed to production via rsync
-# Only skeleton documentation and example structure are tracked in Git
-content/quiz_releases/*
-!content/quiz_releases/README.md
-!content/quiz_releases/.keep
-!content/quiz_releases/EXAMPLE_RELEASE/**
-
-# =============================================================================
 # Content & Seed Data (NEVER COMMIT - managed outside Git)
 # =============================================================================
 # Quiz seed data & media (legacy paths - content now in content/quiz/)
@@ -137,14 +127,6 @@ game_modules/quiz/quiz_units/topics/**/*.ogg
 static/quiz-media/**/*.mp3
 static/quiz-media/**/*.wav
 static/quiz-media/**/*.ogg
-
-# Production media releases (uploaded via rsync, not Git)
-media/releases/*
-!media/releases/README.md
-media/current
-!media/current/
-media/current/*
-!media/current/README.md
 
 # Import logs (production-generated)
 data/import_logs/*.log

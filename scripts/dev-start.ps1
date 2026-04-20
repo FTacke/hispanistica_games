@@ -292,6 +292,9 @@ if (-not $env:QUIZ_DEV_SEED_MODE) {
     $quizSeedNote = " (default)"
 }
 
+$devAdminUsername = if ($env:START_ADMIN_USERNAME) { $env:START_ADMIN_USERNAME } else { "admin" }
+$devAdminPassword = if ($env:START_ADMIN_PASSWORD) { $env:START_ADMIN_PASSWORD } else { "change-me" }
+
 Write-Host "Starting Hispanistica Games dev server..." -ForegroundColor Cyan
 $maskedAuthUrl = $env:AUTH_DATABASE_URL -replace ':(.+?)@', ':*****@'
 $maskedQuizUrl = $env:QUIZ_DATABASE_URL -replace ':(.+?)@', ':*****@'
@@ -406,7 +409,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "[OK] Auth DB schema ready`n" -ForegroundColor Green
 
-Write-Host "Ensuring DEV admin (admin_dev/0000)..." -ForegroundColor Cyan
+Write-Host "Ensuring DEV admin ($devAdminUsername/$devAdminPassword)..." -ForegroundColor Cyan
 & $venvPython (Join-Path $repoRoot "manage.py") ensure-dev-admin
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`nERROR: DEV admin provisioning failed!" -ForegroundColor Red
@@ -449,37 +452,8 @@ if ($env:QUIZ_DEV_MIGRATE_CONTENT -eq "1") {
     Write-Host "[OK] Quiz content migration complete`n" -ForegroundColor Green
 }
 
-$quizDevSeedMode = $env:QUIZ_DEV_SEED_MODE
-
-Write-Host "`nRunning quiz content pipeline..." -ForegroundColor Cyan
-Write-Host "  Seed mode: $quizDevSeedMode" -ForegroundColor Gray
-
-if ($quizDevSeedMode -eq "none") {
-    Write-Host "[SKIP] Quiz seeding skipped (QUIZ_DEV_SEED_MODE=none)" -ForegroundColor Yellow
-} elseif ($quizDevSeedMode -eq "single") {
-    $quizSeedSingleScript = Join-Path $repoRoot "scripts\quiz_seed_single.py"
-    $quizSeedSingleFile = Join-Path $repoRoot "content\quiz\topics\variation_aussprache_v2.json"
-    if (-not (Test-Path $quizSeedSingleFile)) {
-        Write-Host "`nERROR: Missing $quizSeedSingleFile" -ForegroundColor Red
-        Write-Host "Run: python scripts/quiz_content_migrate_difficulty_1_3.py" -ForegroundColor Yellow
-        exit 1
-    }
-    & $venvPython $quizSeedSingleScript --file $quizSeedSingleFile
-} else {
-    Write-Host "  1) Normalize JSON units (IDs + statistics)" -ForegroundColor Gray
-    Write-Host "  2) Seed database (upsert)" -ForegroundColor Gray
-    Write-Host "  3) Soft prune removed topics" -ForegroundColor Gray
-    
-    $quizSeedScript = Join-Path $repoRoot "scripts\quiz_seed.py"
-    & $venvPython $quizSeedScript --prune-soft
-}
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "`nERROR: Quiz seed pipeline failed!" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "[OK] Quiz content ready`n" -ForegroundColor Green
+Write-Host "`nQuiz unit import/seed pipeline removed from dev-start." -ForegroundColor Yellow
+Write-Host "Use the tooling under scripts\quiz_units explicitly when needed.`n" -ForegroundColor Yellow
 
 # Pick a free port (default 8000)
 $port = 8000
@@ -494,7 +468,7 @@ $env:PORT = $port
 
 # Run the dev server
 Write-Host "Starting Flask dev server at http://localhost:$port" -ForegroundColor Cyan
-Write-Host "Login: admin_dev / 0000`n" -ForegroundColor Cyan
+Write-Host "Login: $devAdminUsername / $devAdminPassword`n" -ForegroundColor Cyan
 
 $serverProcess = Start-Process -FilePath $venvPython -ArgumentList "-m", "src.app.main" -NoNewWindow -PassThru
 

@@ -63,9 +63,5 @@ echo "╔═══════════════════════�
 echo "║  ✓ MIGRATION COMPLETE                                     ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
-echo "Next: Test import via Admin Dashboard"
-echo "  POST /quiz-admin/api/releases/release_20260107_223906_7b66/import"
-echo ""
-echo "Expected response:"
-echo '  {"ok": true, "questions_imported": 18, "errors": []}'
+echo "Next: Run a manual post-migration verification against the current quiz workflows."
 echo ""

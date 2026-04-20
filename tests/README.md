@@ -12,25 +12,8 @@ This directory contains integration tests and unit tests for the CO.RA.PAN web a
   - Tests pagination and error handling
 
 ### Unit Tests (Quiz Module)
-- `test_import_service.py` - Tests for QuizImportService (production content pipeline)
-  - Tests import creates release record and imports units
-  - Tests import idempotency (UPSERT behavior)
-  - Tests publish/unpublish operations
-  - Tests list releases
-  - Tests dry-run mode (validation only)
-
-- `test_quiz_release_filtering.py` - Tests for release-based content filtering
-  - Tests published releases are visible
-  - Tests draft releases are hidden
-  - Tests unpublished releases are hidden
-  - Tests legacy data without release_id remains visible
-  - Tests mixed scenarios (published + draft + legacy)
-  - Tests question selection filters by release
-
-### Test Fixtures
-- `fixtures/releases/test_release_001/` - Minimal test data for content import
-  - `units/test_unit_001.json` - Valid quiz unit with 2 questions
-  - `audio/` - Audio directory (empty for minimal tests)
+- `test_quiz_module.py` - Core quiz module behavior
+- `test_quiz_unit.py` - Quiz unit validation and parsing
 
 ## Running Tests
 
@@ -64,29 +47,13 @@ pytest tests/ --cov=src/app --cov=game_modules --cov-report=html
 
 # Run specific test file
 pytest tests/test_advanced_datatables_results.py -v
-pytest tests/test_import_service.py -v
-pytest tests/test_quiz_release_filtering.py -v
+pytest tests/test_quiz_module.py -v
+pytest tests/test_quiz_unit.py -v
 
 # Run specific test
 pytest tests/test_advanced_datatables_results.py::test_datatables_json_structure -v
-pytest tests/test_import_service.py::test_import_creates_release_and_units -v
-pytest tests/test_quiz_release_filtering.py::test_published_release_visible -v
+pytest tests/test_quiz_unit.py -v
 ```
-
-### Running Quiz Import Tests
-
-```bash
-# Run all import service tests
-pytest tests/test_import_service.py -v
-
-# Run with detailed output
-pytest tests/test_import_service.py -v -s
-
-# Run specific test
-pytest tests/test_import_service.py::test_import_idempotent -v
-```
-
-**Note:** Import tests use in-memory SQLite (no PostgreSQL required).
 
 ### Test Behavior Without BlackLab
 

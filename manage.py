@@ -1,30 +1,17 @@
 #!/usr/bin/env python3
-"""
-games_hispanistica CLI
+"""games_hispanistica CLI.
 
 Command-line interface for production operations.
 
 Commands:
-  import-content    Import quiz content from JSON files
-  publish-release   Publish a previously imported release
-  unpublish-release Unpublish a release (rollback)
-  list-releases     List available content releases
+    import-content    Import quiz content from JSON files
+    publish-release   Publish a previously imported release
+    unpublish-release Unpublish a release (rollback)
+    list-releases     List available content releases
 
 Usage:
-  python manage.py import-content --help
-  python manage.py publish-release --help
-  
-Production Example:
-  # After rsync upload and symlink activation
-  python manage.py import-content \\
-    --units-path media/current/units \\
-    --audio-path media/current/audio \\
-    --release 2026-01-06_1430
-  
-  python manage.py publish-release --release 2026-01-06_1430
-
-See also:
-  games_hispanistica_production.md - Full production documentation
+    python manage.py import-content --help
+    python manage.py publish-release --help
 """
 
 import sys
@@ -70,32 +57,16 @@ def _init_cli_app() -> None:
 @click.option('--release', required=True, help='Release ID (e.g., 2026-01-06_1430)')
 @click.option('--dry-run', is_flag=True, help='Validate without writing to database')
 def import_content(units_path, audio_path, release, dry_run):
-    """Import quiz content from JSON files
-    
-    This command imports quiz units and audio files from a release directory.
-    Content is imported as 'draft' status (not published).
-    
-    Example:
-        python manage.py import-content \\
-            --units-path media/current/units \\
-            --audio-path media/current/audio \\
-            --release 2026-01-06_1430
-    
-    Exit codes:
-        0 = success
-        2 = validation error
-        3 = filesystem error
-        4 = database error
-    """
+    """Import quiz content from JSON files."""
     from game_modules.quiz.import_service import QuizImportService
     from src.app.extensions.sqlalchemy_ext import get_quiz_session
-    
+
     try:
         _init_cli_app()
         request_id = os.getenv("REQUEST_ID") or f"cli-{uuid.uuid4().hex[:12]}"
         click.echo(f"Request ID: {request_id}")
         service = QuizImportService()
-        
+
         with get_quiz_session() as session:
             result = service.import_release(
                 session=session,
@@ -105,36 +76,34 @@ def import_content(units_path, audio_path, release, dry_run):
                 dry_run=dry_run,
                 request_id=request_id,
             )
-        
+
         if result.success:
             click.echo("[OK] Import successful")
             click.echo(f"  Units: {result.units_imported}")
             click.echo(f"  Questions: {result.questions_imported}")
             click.echo(f"  Audio files: {result.audio_files_processed}")
-            
+
             if result.warnings:
-                click.echo(f"\n⚠️  Warnings: {len(result.warnings)}")
+                click.echo(f"\nWarnings: {len(result.warnings)}")
                 for warning in result.warnings:
                     click.echo(f"  - {warning}")
-            
+
             if dry_run:
                 click.echo("\n(Dry-run: no data written)")
-            
+
             sys.exit(0)
-        else:
-            click.echo("[FAIL] Import failed", err=True)
-            for error in result.errors:
-                click.echo(f"  - {error}", err=True)
-            
-            # Determine exit code from error types
-            error_text = " ".join(result.errors)
-            if "not found" in error_text.lower() or "directory" in error_text.lower():
-                sys.exit(3)  # Filesystem error
-            elif "validation" in error_text.lower() or "invalid" in error_text.lower():
-                sys.exit(2)  # Validation error
-            else:
-                sys.exit(4)  # Database/other error
-    
+
+        click.echo("[FAIL] Import failed", err=True)
+        for error in result.errors:
+            click.echo(f"  - {error}", err=True)
+
+        error_text = " ".join(result.errors)
+        if "not found" in error_text.lower() or "directory" in error_text.lower():
+            sys.exit(3)
+        if "validation" in error_text.lower() or "invalid" in error_text.lower():
+            sys.exit(2)
+        sys.exit(4)
+
     except Exception as e:
         click.echo(f"[FAIL] Fatal error: {e}", err=True)
         logger.exception("Import failed with exception")
@@ -144,43 +113,33 @@ def import_content(units_path, audio_path, release, dry_run):
 @cli.command('publish-release')
 @click.option('--release', required=True, help='Release ID to publish')
 def publish_release(release):
-    """Publish a previously imported release
-    
-    Sets status='published' and published_at=NOW() for all units in release.
-    Makes content visible to end users.
-    
-    Only one release can be published at a time.
-    Publishing a new release automatically unpublishes the previous one.
-    
-    Example:
-        python manage.py publish-release --release 2026-01-06_1430
-    """
+    """Publish a previously imported release."""
     from game_modules.quiz.import_service import QuizImportService
     from src.app.extensions.sqlalchemy_ext import get_quiz_session
-    
+
     try:
         _init_cli_app()
         request_id = os.getenv("REQUEST_ID") or f"cli-{uuid.uuid4().hex[:12]}"
         click.echo(f"Request ID: {request_id}")
         service = QuizImportService()
-        
+
         with get_quiz_session() as session:
             result = service.publish_release(
                 session=session,
                 release_id=release,
                 request_id=request_id,
             )
-        
+
         if result.success:
             click.echo(f"[OK] Release '{release}' published")
             click.echo(f"  Units affected: {result.units_affected}")
             sys.exit(0)
-        else:
-            click.echo("[FAIL] Publish failed", err=True)
-            for error in result.errors:
-                click.echo(f"  - {error}", err=True)
-            sys.exit(4)
-    
+
+        click.echo("[FAIL] Publish failed", err=True)
+        for error in result.errors:
+            click.echo(f"  - {error}", err=True)
+        sys.exit(4)
+
     except Exception as e:
         click.echo(f"[FAIL] Fatal error: {e}", err=True)
         logger.exception("Publish failed with exception")
@@ -190,40 +149,33 @@ def publish_release(release):
 @cli.command('unpublish-release')
 @click.option('--release', required=True, help='Release ID to unpublish')
 def unpublish_release(release):
-    """Unpublish a release (rollback)
-    
-    Sets status='unpublished' and sets unpublished_at for the release.
-    Makes content invisible to end users.
-    
-    Example:
-        python manage.py unpublish-release --release 2026-01-06_1430
-    """
+    """Unpublish a release (rollback)."""
     from game_modules.quiz.import_service import QuizImportService
     from src.app.extensions.sqlalchemy_ext import get_quiz_session
-    
+
     try:
         _init_cli_app()
         request_id = os.getenv("REQUEST_ID") or f"cli-{uuid.uuid4().hex[:12]}"
         click.echo(f"Request ID: {request_id}")
         service = QuizImportService()
-        
+
         with get_quiz_session() as session:
             result = service.unpublish_release(
                 session=session,
                 release_id=release,
                 request_id=request_id,
             )
-        
+
         if result.success:
             click.echo(f"[OK] Release '{release}' unpublished")
             click.echo(f"  Units affected: {result.units_affected}")
             sys.exit(0)
-        else:
-            click.echo("[FAIL] Unpublish failed", err=True)
-            for error in result.errors:
-                click.echo(f"  - {error}", err=True)
-            sys.exit(4)
-    
+
+        click.echo("[FAIL] Unpublish failed", err=True)
+        for error in result.errors:
+            click.echo(f"  - {error}", err=True)
+        sys.exit(4)
+
     except Exception as e:
         click.echo(f"[FAIL] Fatal error: {e}", err=True)
         logger.exception("Unpublish failed with exception")
@@ -232,46 +184,37 @@ def unpublish_release(release):
 
 @cli.command('list-releases')
 def list_releases():
-    """List all content releases
-    
-    Shows release ID, status, counts, and timestamps.
-    
-    Example:
-        python manage.py list-releases
-    """
+    """List all content releases."""
     from game_modules.quiz.import_service import QuizImportService
     from src.app.extensions.sqlalchemy_ext import get_quiz_session
-    
+
     try:
         _init_cli_app()
         service = QuizImportService()
-        
+
         with get_quiz_session() as session:
             releases = service.list_releases(session=session)
-        
+
         if not releases:
             click.echo("No releases found")
             sys.exit(0)
-        
-        # Print header
+
         click.echo(f"{'Release ID':<20} {'Status':<12} {'Units':<8} {'Questions':<10} {'Imported At':<20}")
         click.echo("-" * 80)
-        
-        # Print releases
-        for r in releases:
-            status_display = r['status']
-            if r['status'] == 'published':
+
+        for release_row in releases:
+            status_display = release_row['status']
+            if release_row['status'] == 'published':
                 status_display = click.style(status_display, fg='green', bold=True)
-            elif r['status'] == 'draft':
+            elif release_row['status'] == 'draft':
                 status_display = click.style(status_display, fg='yellow')
-            
-            imported_at = r['imported_at'][:19] if r['imported_at'] else "not imported"
-            
+
+            imported_at = release_row['imported_at'][:19] if release_row['imported_at'] else 'not imported'
             click.echo(
-                f"{r['release_id']:<20} "
+                f"{release_row['release_id']:<20} "
                 f"{status_display:<12} "
-                f"{r['units_count'] or 0:<8} "
-                f"{r['questions_count'] or 0:<10} "
+                f"{release_row['units_count'] or 0:<8} "
+                f"{release_row['questions_count'] or 0:<10} "
                 f"{imported_at:<20}"
             )
 
@@ -283,7 +226,7 @@ def list_releases():
 
 @cli.command("ensure-dev-admin")
 def ensure_dev_admin():
-    """Ensure DEV admin user exists (admin_dev/0000). DEV only."""
+    """Ensure DEV admin user exists (admin/change-me by default). DEV only."""
     env = os.environ.get("ENV") or os.environ.get("FLASK_ENV")
     if env != "dev":
         raise RuntimeError("Refusing to create dev admin outside ENV=dev")
@@ -291,35 +234,49 @@ def ensure_dev_admin():
     from src.app import create_app
     from src.app.auth import services
 
+    target_username = (os.environ.get("START_ADMIN_USERNAME") or "admin").strip().lower()
+    target_password = os.environ.get("START_ADMIN_PASSWORD") or "change-me"
+    target_email = (os.environ.get("START_ADMIN_EMAIL") or f"{target_username}@dev.local").strip().lower()
+    legacy_username = "admin_dev"
+
     app = create_app(env)
     with app.app_context():
-        user = services.find_user_by_username_or_email("admin_dev")
+        user = services.find_user_by_username_or_email(target_username)
+        legacy_user = services.find_user_by_username_or_email(legacy_username)
+
+        if not user and legacy_user:
+            services.update_user_profile(str(legacy_user.id), username=target_username)
+            user = services.find_user_by_username_or_email(target_username)
+
         if not user:
             user, _ = services.create_user(
-                username="admin_dev",
-                email="admin_dev@dev.local",
+                username=target_username,
+                email=target_email,
                 role="admin",
                 generate_reset_token=False,
             )
 
-        services.update_user_password(str(user.id), services.hash_password("0000"))
-        services.admin_update_user(str(user.id), role="admin", is_active=True)
-        click.echo("[OK] ensured dev admin: admin_dev")
+        services.update_user_password(str(user.id), services.hash_password(target_password))
+        services.admin_update_user(
+            str(user.id),
+            email=target_email,
+            role="admin",
+            is_active=True,
+        )
+
+        legacy_user = services.find_user_by_username_or_email(legacy_username)
+        if legacy_user and str(legacy_user.id) != str(user.id):
+            services.admin_update_user(str(legacy_user.id), is_active=False)
+
+        click.echo(f"[OK] ensured dev admin: {target_username}")
     sys.exit(0)
 
 
 @cli.command('quiz-db-report')
 @click.option('--json', 'as_json', is_flag=True, help='Output JSON')
-@click.option('--minimal', is_flag=True, help='Only output core counts (topics/questions/releases)')
+@click.option('--minimal', is_flag=True, help='Only output core counts (topics/questions)')
 def quiz_db_report(as_json, minimal):
-    """Read-only DB report for quiz tables and releases.
-    
-    Outputs counts for core tables and published/current release metadata.
-    
-    Example:
-        python manage.py quiz-db-report
-        python manage.py quiz-db-report --json
-    """
+    """Read-only DB report for quiz tables and releases."""
     import json as json_lib
     from game_modules.quiz.models import QuizTopic, QuizQuestion, QuizRun, QuizScore
     from game_modules.quiz.release_model import QuizContentRelease
@@ -344,25 +301,25 @@ def quiz_db_report(as_json, minimal):
                     "quiz_runs": session.query(QuizRun).count(),
                     "quiz_scores": session.query(QuizScore).count(),
                 })
-            
+
             published = session.query(QuizContentRelease).filter(
                 QuizContentRelease.status == "published"
             ).order_by(QuizContentRelease.published_at.desc()).all()
-            
+
             published_releases = [
                 {
-                    "release_id": r.release_id,
-                    "status": r.status,
-                    "published_at": r.published_at.isoformat() if r.published_at else None,
-                    "imported_at": r.imported_at.isoformat() if r.imported_at else None,
-                    "units_count": r.units_count,
-                    "questions_count": r.questions_count,
+                    "release_id": release_row.release_id,
+                    "status": release_row.status,
+                    "published_at": release_row.published_at.isoformat() if release_row.published_at else None,
+                    "imported_at": release_row.imported_at.isoformat() if release_row.imported_at else None,
+                    "units_count": release_row.units_count,
+                    "questions_count": release_row.questions_count,
                 }
-                for r in published
+                for release_row in published
             ]
-            
+
             current_release_id = published[0].release_id if published else None
-            
+
             report = {
                 "db_dialect": dialect,
                 "counts": counts,
@@ -380,16 +337,16 @@ def quiz_db_report(as_json, minimal):
         click.echo("Counts:")
         for key, value in counts.items():
             click.echo(f"  {key}: {value}")
-        
+
         click.echo("\nPublished Releases:")
         if not published_releases:
             click.echo("  (none)")
         else:
-            for r in published_releases:
+            for release_row in published_releases:
                 click.echo(
-                    f"  - {r['release_id']} | published_at={r['published_at']} | imported_at={r['imported_at']} | units={r['units_count']} | questions={r['questions_count']}"
+                    f"  - {release_row['release_id']} | published_at={release_row['published_at']} | imported_at={release_row['imported_at']} | units={release_row['units_count']} | questions={release_row['questions_count']}"
                 )
-        
+
         click.echo(f"\nCurrent release id: {current_release_id}")
         sys.exit(0)
     

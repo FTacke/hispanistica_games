@@ -3,7 +3,7 @@
 -- Previous: VARCHAR(50)
 -- New: VARCHAR(100)
 -- 
--- Run this migration before using quiz_seed.py with long topic slugs
+-- Run this migration before importing quiz data with long topic slugs
 
 -- Alter quiz_questions primary key
 ALTER TABLE quiz_questions ALTER COLUMN id TYPE VARCHAR(100);
