@@ -348,6 +348,15 @@ class TestQuizI18n:
     def test_points_translation_exists(self):
         js = Path('static/js/games/quiz-i18n.js').read_text(encoding='utf-8')
         assert 'points: "Punkte"' in js
+
+
+class TestQuizHtmlCaching:
+    """Test quiz HTML responses opt out of caching stale assets."""
+
+    def test_quiz_routes_disable_html_caching(self):
+        source = Path('game_modules/quiz/routes.py').read_text(encoding='utf-8')
+        assert '_set_quiz_html_no_store' in source
+        assert 'no-store, no-cache, must-revalidate, private' in source
     
     def test_js_answer_states_use_new_classes(self):
         """JavaScript should use new answer state classes."""

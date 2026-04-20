@@ -141,6 +141,15 @@ QUIZ_SESSION_COOKIE = "quiz_session"
 QUIZ_SESSION_HEADER = "X-Quiz-Session"
 
 
+def _set_quiz_html_no_store(response):
+    """Prevent stale quiz page HTML from caching old asset references."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    response.headers["Vary"] = "Cookie"
+    return response
+
+
 @blueprint.after_request
 def add_trace_id_header(response):
     """Add X-Trace-ID header to response for client correlation."""
@@ -259,12 +268,13 @@ def quiz_auth_optional(f: Callable) -> Callable:
 @quiz_auth_optional
 def quiz_index():
     """Quiz start page with topic selection (canonical: /quiz)."""
-    return render_template(
+    response = make_response(render_template(
         "games/quiz/index.html",
         page_name="quiz",
         player_name=g.quiz_player_name,
         player_authenticated=g.quiz_player_id is not None,
-    )
+    ))
+    return _set_quiz_html_no_store(response)
 
 
 @blueprint.route("/quiz/<topic_id>")
@@ -282,7 +292,7 @@ def quiz_topic_entry(topic_id: str):
             run = services.get_current_run(session, g.quiz_player_id, topic_id)
             has_run = run is not None
         
-        return render_template(
+        response = make_response(render_template(
             "games/quiz/topic_entry.html",
             page_name="quiz",
             topic_id=topic_id,
@@ -291,7 +301,8 @@ def quiz_topic_entry(topic_id: str):
             player_authenticated=g.quiz_player_id is not None,
             player_anonymous=g.quiz_player_anonymous,
             has_existing_run=has_run,
-        )
+        ))
+        return _set_quiz_html_no_store(response)
 
 
 @blueprint.route("/quiz/<topic_id>/play")
@@ -336,8 +347,8 @@ def quiz_play(topic_id: str):
         
         quiz_log("QUIZ_SESSION_COOKIE_SET", level="info", 
                  cookie_set=True, topic_id=topic_id)
-        
-        return response
+
+        return _set_quiz_html_no_store(response)
 
 
 # LEGACY REDIRECTS: /games/quiz/* → /quiz/*
