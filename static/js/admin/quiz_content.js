@@ -224,6 +224,7 @@ const API = {
 
   async upload(formData) {
     const headers = {
+      'Accept': 'application/json',
       'X-CSRF-TOKEN': getCsrfToken(),
       // NOTE: Do NOT set Content-Type for FormData - browser sets it with boundary
     };

@@ -27,6 +27,11 @@ cache = Cache(
 )
 
 
+def _is_json_api_request() -> bool:
+    """Return True when the current request should receive JSON errors."""
+    return request.path.startswith("/api/") or request.path.startswith("/quiz-admin/api/")
+
+
 def register_extensions(app: Flask) -> None:
     """Attach Flask extensions to the app."""
     jwt.init_app(app)
@@ -79,7 +84,7 @@ def register_jwt_handlers() -> None:
         error_code = "access_expired" if token_type == "access" else "refresh_expired"
 
         # API endpoints: Return JSON error with code
-        if request.path.startswith("/api/"):
+        if _is_json_api_request():
             return jsonify(
                 {
                     "error": "token_expired",
@@ -129,7 +134,7 @@ def register_jwt_handlers() -> None:
             return jsonify({"authenticated": False}), 200
 
         # API endpoints: Return JSON error with code
-        if request.path.startswith("/api/"):
+        if _is_json_api_request():
             return jsonify(
                 {
                     "error": "invalid_token",
@@ -193,7 +198,7 @@ def register_jwt_handlers() -> None:
             return jsonify({"authenticated": False}), 200
 
         # API endpoints: Return JSON error with code
-        if request.path.startswith("/api/"):
+        if _is_json_api_request():
             return jsonify(
                 {
                     "error": "unauthorized",

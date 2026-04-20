@@ -402,11 +402,14 @@ def register_security_headers(app: Flask) -> None:
 def register_error_handlers(app: Flask) -> None:
     """Register custom error handlers for common HTTP errors."""
 
+    def is_json_api_request() -> bool:
+        return request.path.startswith("/api/") or request.path.startswith("/quiz-admin/api/")
+
     @app.errorhandler(400)
     def bad_request(error):
         """Handle 400 Bad Request errors."""
         app.logger.warning(f"Bad request: {error}")
-        if request.path.startswith("/api/") :
+        if is_json_api_request():
             return jsonify({"error": "Bad request", "message": str(error)}), 400
         return render_template("errors/400.html", error=error), 400
 
@@ -418,7 +421,7 @@ def register_error_handlers(app: Flask) -> None:
         )
 
         # API requests get JSON response
-        if request.path.startswith("/api/") :
+        if is_json_api_request():
             return jsonify({"error": "Unauthorized", "message": str(error)}), 401
 
         # AJAX/fetch requests get JSON response (check Accept header)
@@ -445,14 +448,14 @@ def register_error_handlers(app: Flask) -> None:
         app.logger.warning(
             f"Forbidden access attempt: {request.path} from {request.remote_addr}"
         )
-        if request.path.startswith("/api/") :
+        if is_json_api_request():
             return jsonify({"error": "Forbidden", "message": str(error)}), 403
         return render_template("errors/403.html", error=error), 403
 
     @app.errorhandler(404)
     def not_found(error):
         """Handle 404 Not Found errors."""
-        if request.path.startswith("/api/") :
+        if is_json_api_request():
             return jsonify({"error": "Not found", "message": str(error)}), 404
         return render_template("errors/404.html", error=error), 404
 
@@ -460,7 +463,7 @@ def register_error_handlers(app: Flask) -> None:
     def internal_error(error):
         """Handle 500 Internal Server errors."""
         app.logger.error(f"Server Error: {error}", exc_info=True)
-        if request.path.startswith("/api/") :
+        if is_json_api_request():
             return jsonify({"error": "Internal server error"}), 500
         return render_template("errors/500.html"), 500
 

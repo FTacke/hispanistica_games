@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Generator
 
 import pytest
-from flask import Flask
+from flask import Blueprint, Flask, g
 from flask_jwt_extended import create_access_token
 from sqlalchemy import text
 
@@ -52,6 +52,7 @@ def admin_app() -> Generator[Flask, None, None]:
     )
     app.config["AUTH_DATABASE_URL"] = QUIZ_TEST_DB_URL
     app.config["TESTING"] = True
+    app.config["PROPAGATE_EXCEPTIONS"] = False
     app.config["SECRET_KEY"] = "test-secret"
     app.config["JWT_SECRET_KEY"] = "test-secret"
     app.config["JWT_TOKEN_LOCATION"] = ["cookies", "headers"]
@@ -127,6 +128,74 @@ def _cleanup_admin_test_data():
 def admin_client(admin_app: Flask):
     """Test client for admin module."""
     return admin_app.test_client()
+
+
+@pytest.fixture
+def admin_error_app() -> Generator[Flask, None, None]:
+    """Create app with quiz-admin routes and global error handlers."""
+    project_root = Path(__file__).resolve().parents[1]
+    template_dir = project_root / "templates"
+    static_dir = project_root / "static"
+
+    app = Flask(
+        __name__,
+        template_folder=str(template_dir),
+        static_folder=str(static_dir)
+    )
+    app.config["TESTING"] = True
+    app.config["SECRET_KEY"] = "test-secret"
+    app.config["JWT_SECRET_KEY"] = "test-secret"
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies", "headers"]
+    app.config["JWT_COOKIE_SECURE"] = False
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
+
+    from src.app.extensions import register_extensions
+    from src.app.__init__ import register_error_handlers
+    from src.app.routes.quiz_admin import blueprint as quiz_admin_blueprint
+    from src.app.routes.public import blueprint as public_blueprint
+    from src.app.auth import Role
+    from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
+
+    register_extensions(app)
+    register_error_handlers(app)
+
+    @app.before_request
+    def set_auth_context():
+        try:
+            verify_jwt_in_request(optional=True, locations=["cookies", "headers"])
+            identity = get_jwt_identity()
+            token = get_jwt() or {}
+            g.user = token.get("username") or identity
+            role_value = token.get("role")
+            try:
+                g.role = Role(role_value) if role_value else None
+            except (ValueError, KeyError):
+                g.role = None
+        except Exception:
+            g.user = None
+            g.role = None
+
+    app.register_blueprint(public_blueprint)
+    app.register_blueprint(quiz_admin_blueprint)
+
+    debug_blueprint = Blueprint("quiz_admin_test_errors", __name__, url_prefix="/quiz-admin/api")
+
+    @debug_blueprint.get("/_boom")
+    def boom():
+        raise RuntimeError("boom")
+
+    app.register_blueprint(debug_blueprint)
+
+    ctx = app.app_context()
+    ctx.push()
+    yield app
+    ctx.pop()
+
+
+@pytest.fixture
+def admin_error_client(admin_error_app: Flask):
+    """Test client with global error handlers registered."""
+    return admin_error_app.test_client()
 
 
 @pytest.fixture
@@ -258,6 +327,32 @@ class TestAccessControl:
             }
         )
         assert response.status_code == 200
+
+
+class TestApiErrorResponses:
+    """Ensure quiz-admin API errors stay JSON, not HTML."""
+
+    def test_upload_without_auth_returns_json_401(self, admin_error_client):
+        """Unauthorized upload requests must return JSON on quiz-admin/api routes."""
+        response = admin_error_client.post(
+            "/quiz-admin/api/upload-unit",
+            content_type="multipart/form-data",
+            data={}
+        )
+
+        assert response.status_code == 401
+        assert response.headers["Content-Type"].startswith("application/json")
+        data = response.get_json()
+        assert data["error"] == "unauthorized"
+
+    def test_quiz_admin_internal_error_returns_json_500(self, admin_error_client):
+        """Unhandled quiz-admin API exceptions must not render HTML error pages."""
+        response = admin_error_client.get("/quiz-admin/api/_boom")
+
+        assert response.status_code == 500
+        assert response.headers["Content-Type"].startswith("application/json")
+        data = response.get_json()
+        assert data["error"] == "Internal server error"
 
 
 # ============================================================================
