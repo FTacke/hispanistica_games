@@ -34,6 +34,11 @@
   }
   
   console.log('[QUIZ] trace_id:', TRACE_ID);
+
+  function coerceFiniteNumber(value, fallback = null) {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
   
   // ============================================================================
   // API RESPONSE MAPPERS (inline für non-module Kontext)
@@ -63,6 +68,18 @@
       }
     }
     
+    const earnedPoints = coerceFiniteNumber(raw.earned_points, 0);
+    const runningScore = coerceFiniteNumber(raw.running_score, null);
+    const levelBonus = coerceFiniteNumber(raw.level_bonus, 0);
+    const levelCorrectCount = coerceFiniteNumber(raw.level_correct_count, 0);
+    const levelQuestionsInLevel = coerceFiniteNumber(raw.level_questions_in_level, 2);
+
+    if (runningScore === null) {
+      const error = '❌ normalizeAnswerResponse: running_score must be numeric';
+      console.error(error, raw);
+      throw new Error(error);
+    }
+
     return {
       result: raw.result,
       isCorrect: raw.is_correct,
@@ -71,15 +88,15 @@
       nextQuestionIndex: raw.next_question_index !== undefined ? raw.next_question_index : null,
       finished: !!raw.finished,
       jokerRemaining: raw.joker_remaining,
-      earnedPoints: raw.earned_points,
-      runningScore: raw.running_score,
+      earnedPoints,
+      runningScore,
       levelCompleted: !!raw.level_completed,
       levelPerfect: !!raw.level_perfect,
-      levelBonus: raw.level_bonus || 0,
+      levelBonus,
       bonusAppliedNow: !!(raw.bonus_applied_now),
       difficulty: raw.difficulty,
-      levelCorrectCount: raw.level_correct_count !== undefined ? raw.level_correct_count : 0,
-      levelQuestionsInLevel: raw.level_questions_in_level !== undefined ? raw.level_questions_in_level : 2,
+      levelCorrectCount,
+      levelQuestionsInLevel,
       raw
     };
   }
@@ -142,13 +159,14 @@
    * Normalisiert /finish API Response
    */
   function normalizeFinishResponse(raw) {
-    if (typeof raw.total_score !== 'number') {
+    const totalScore = coerceFiniteNumber(raw.total_score, null);
+    if (totalScore === null) {
       console.error('❌ normalizeFinishResponse: total_score missing or not a number', raw);
       throw new Error('normalizeFinishResponse: total_score is required');
     }
     
     return {
-      totalScore: raw.total_score,
+      totalScore,
       tokensCount: 0,
       breakdown: raw.breakdown || [],
       rank: raw.rank !== undefined ? raw.rank : null,
@@ -160,7 +178,8 @@
    * Normalisiert /status API Response
    */
   function normalizeStatusResponse(raw) {
-    if (!raw.run_id || typeof raw.running_score !== 'number') {
+    const runningScore = coerceFiniteNumber(raw.running_score, null);
+    if (!raw.run_id || runningScore === null) {
       console.error('❌ normalizeStatusResponse: Missing required fields', raw);
       throw new Error('normalizeStatusResponse: run_id and running_score are required');
     }
@@ -170,15 +189,15 @@
       topicId: raw.topic_id,
       status: raw.status,
       currentIndex: raw.current_index,
-      runningScore: raw.running_score,
+      runningScore,
       nextQuestionIndex: raw.next_question_index !== undefined ? raw.next_question_index : null,
       finished: !!raw.finished,
       jokerRemaining: raw.joker_remaining,
       levelCompleted: !!raw.level_completed,
       levelPerfect: !!raw.level_perfect,
-      levelBonus: raw.level_bonus || 0,
-      levelCorrectCount: raw.level_correct_count || 0,
-      levelQuestionsInLevel: raw.level_questions_in_level || 2,
+      levelBonus: coerceFiniteNumber(raw.level_bonus, 0),
+      levelCorrectCount: coerceFiniteNumber(raw.level_correct_count, 0),
+      levelQuestionsInLevel: coerceFiniteNumber(raw.level_questions_in_level, 2),
       raw
     };
   }
@@ -277,14 +296,14 @@
     if (!runId) return null;
     const raw = getCacheStorage().getItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`);
     if (raw === null) return null;
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) ? parsed : null;
+    return coerceFiniteNumber(raw, null);
   }
 
   function setCachedScoreForRun(runId, score) {
     if (!runId) return;
-    if (!Number.isFinite(score)) return;
-    getCacheStorage().setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(Math.round(score)));
+    const normalizedScore = coerceFiniteNumber(score, null);
+    if (normalizedScore === null) return;
+    getCacheStorage().setItem(`${SCORE_CACHE_KEY_PREFIX}${runId}`, String(Math.round(normalizedScore)));
   }
 
   // View states for single-stage architecture
@@ -716,7 +735,8 @@
       debugLog('restoreRunningScore', { serverData: data });
       
       // Validate response
-      if (typeof data.running_score !== 'number') {
+      const normalizedScore = coerceFiniteNumber(data.running_score, null);
+      if (normalizedScore === null) {
         console.error('Invalid response: running_score is not a number', data);
         debugLog('restoreRunningScore', { error: 'invalid response', data });
         alert('Ungültige Antwort vom Server.');
@@ -724,7 +744,7 @@
         return;
       }
       
-      state.runningScore = data.running_score;
+      state.runningScore = normalizedScore;
       state.displayedScore = state.runningScore;
       updateScoreDisplay();
       
@@ -783,8 +803,9 @@
         current_index: data.current_index
       });
       
-      if (typeof data.running_score === 'number') {
-        state.runningScore = data.running_score;
+      const normalizedScore = coerceFiniteNumber(data.running_score, null);
+      if (normalizedScore !== null) {
+        state.runningScore = normalizedScore;
         await updateScoreWithAnimation(state.runningScore);
 
         setCachedScoreForRun(state.runId, state.runningScore);
@@ -990,9 +1011,12 @@
       return;
     }
 
-    const nextScore = Number.isFinite(state.displayedScore)
-      ? Math.round(state.displayedScore)
-      : Math.round(Number(state.runningScore) || 0);
+    const nextScore = Math.round(
+      coerceFiniteNumber(state.displayedScore, coerceFiniteNumber(state.runningScore, 0))
+    );
+
+    state.displayedScore = nextScore;
+    state.runningScore = coerceFiniteNumber(state.runningScore, nextScore);
 
     scoreDisplay.textContent = String(nextScore);
 
@@ -1048,7 +1072,7 @@
    */
   function updateScoreWithAnimation(targetScore) {
     const scoreDisplay = document.getElementById('quiz-score-display');
-    const nextScore = Math.round(Number(targetScore) || 0);
+    const nextScore = Math.round(coerceFiniteNumber(targetScore, 0));
 
     state.displayedScore = nextScore;
 

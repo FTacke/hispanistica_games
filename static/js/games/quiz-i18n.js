@@ -56,6 +56,7 @@
         your_result: "Dein Ergebnis",
         total_points: "Gesamtpunkte",
         your_score: "Deine Punkte",
+        points: "Punkte",
         tokens_earned: "Erhaltene Tokens",
         result_note: "Basierend auf Schwierigkeit & Zeit",
         breakdown_title: "Ergebnis pro Stufe",

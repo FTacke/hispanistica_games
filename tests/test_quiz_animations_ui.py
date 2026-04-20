@@ -64,6 +64,12 @@ class TestQuestionStatusLayout:
         assert 'grid-template-areas: "level progress joker";' in css
         assert 'grid-template-areas: "score timer";' in css
 
+    def test_play_template_versions_quiz_assets(self):
+        html = Path('templates/games/quiz/play.html').read_text(encoding='utf-8')
+        assert "css/games/quiz.css') }}?v=" in html
+        assert "js/games/quiz-i18n.js') }}?v=" in html
+        assert "js/games/quiz-play.js') }}?v=" in html
+
 
 class TestAnswerStates:
     """Test Answer component states."""
@@ -327,6 +333,21 @@ class TestJavaScriptFunctions:
             js = f.read()
             assert 'formatTimerDisplay' in js
             assert "padStart(2, '0')" in js
+
+    def test_js_coerces_numeric_score_values(self):
+        """JavaScript should sanitize score values before rendering them."""
+        with open('static/js/games/quiz-play.js', 'r', encoding='utf-8') as f:
+            js = f.read()
+            assert 'coerceFiniteNumber' in js
+            assert 'state.displayedScore = nextScore;' in js
+
+
+class TestQuizI18n:
+    """Test required quiz translations exist for status chips."""
+
+    def test_points_translation_exists(self):
+        js = Path('static/js/games/quiz-i18n.js').read_text(encoding='utf-8')
+        assert 'points: "Punkte"' in js
     
     def test_js_answer_states_use_new_classes(self):
         """JavaScript should use new answer state classes."""
