@@ -11,6 +11,8 @@ from flask import (
     jsonify,
 )
 
+from ..extensions import limiter
+
 logger = logging.getLogger(__name__)
 
 blueprint = Blueprint("public", __name__)
@@ -41,6 +43,7 @@ def login_page():
 
 
 @blueprint.get("/health")
+@limiter.exempt
 def health_check():
     """
     Simple health check endpoint for monitoring.

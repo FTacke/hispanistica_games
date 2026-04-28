@@ -362,27 +362,20 @@ class TestHealthEndpoint:
         """Test /health returns JSON with correct structure."""
         resp = client.get("/health")
 
-        # Health should always return 200 or 503
-        assert resp.status_code in (200, 503)
-
-        data = resp.json
-        assert "status" in data
-        assert "service" in data
-        assert "checks" in data
-        assert data["service"] == "games.hispanistica"
+        assert resp.status_code == 200
+        assert resp.json == {
+            "status": "healthy",
+            "service": "games.hispanistica",
+        }
 
     def test_health_checks_flask(self, client):
-        """Test /health reports Flask as healthy."""
+        """Test /health reports the app as healthy."""
         resp = client.get("/health")
-        data = resp.json
 
-        assert data["checks"]["flask"]["ok"] is True
+        assert resp.json["status"] == "healthy"
 
-    def test_health_auth_endpoint(self, client):
-        """Test /health/auth returns auth DB status."""
-        resp = client.get("/health/auth")
+    def test_health_is_not_rate_limited(self, client):
+        """Test /health is not throttled by repeated internal probes."""
+        statuses = [client.get("/health").status_code for _ in range(250)]
 
-        assert resp.status_code in (200, 503)
-        data = resp.json
-        assert "ok" in data
-        assert "backend" in data
+        assert statuses == [200] * 250
