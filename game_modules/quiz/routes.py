@@ -332,6 +332,7 @@ def quiz_play(topic_id: str):
                 topic_id=topic_id,
                 topic_title_key=topic.title_key,
                 player_name=player_name,
+                player_anonymous=player.is_anonymous if player else True,
             )
         )
         
