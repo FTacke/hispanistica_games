@@ -419,7 +419,8 @@
     finishData: null,
     // ✅ NEW: TimerController state
     activeTimerAttemptId: null,
-    timeoutSubmittedForAttemptId: {}
+    timeoutSubmittedForAttemptId: {},
+    isAnonymous: false,  // Set from data-player-anonymous at init; controls auto-advance after POST_ANSWER
   };
 
   // Expose state globally for debugging
@@ -453,6 +454,7 @@
     }
 
     state.topicId = container.dataset.topic;
+    state.isAnonymous = container.dataset.playerAnonymous === '1';
 
     // Prevent 0-flash on refresh: use cached score for last run (topic-scoped), then replace with server /status.
     try {
@@ -1245,6 +1247,7 @@
    * ✅ FIX: Nutzt Weiter-Button statt eigenen Navigation-Pfad
    */
   function startAutoAdvanceTimer() {
+    if (state.isAnonymous) return;
     cancelAutoAdvanceTimer();
     state.autoAdvanceTimer = setTimeout(() => {
       // Guard: nur wenn noch im richtigen Zustand

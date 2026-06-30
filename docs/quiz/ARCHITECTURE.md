@@ -341,12 +341,14 @@ if level_perfect:
 
 ### Frontend (quiz-play.js)
 
-| State | Function | Dependencies |
-|-------|----------|--------------|
-| QUESTION | `renderQuestion()` | Timer display, answer rendering |
-| QUESTION | `handleAnswerSelect()` | `/api/.../answer` contract |
-| LEVEL_UP | `renderLevelUp()` | Bonus animation, score update |
-| FINISH | `renderFinish()` | `/api/.../finish` contract, leaderboard |
+| State / Function | Dependencies |
+|------------------|--------------|
+| `renderQuestion()` | Timer display, answer rendering |
+| `handleAnswerSelect()` | `/api/.../answer` contract |
+| `startAutoAdvanceTimer()` | `state.isAnonymous`, `AUTO_ADVANCE_DELAY_MS` – kein Auto-Advance für Anonym |
+| `cancelAutoAdvanceTimer()` | Abgebrochen bei manuellem Weiter oder Phasenwechsel |
+| `renderLevelUp()` | Bonus animation, score update; kein Auto-Advance |
+| `renderFinish()` | `/api/.../finish` contract, leaderboard |
 
 ---
 
@@ -463,6 +465,25 @@ if level_perfect:
 - Timeout → `is_correct = false`, `points = 0`
 
 **Important:** Client-Timer ist **nur UI**. Server hat final say.
+
+### POST_ANSWER-Phase (Erklärungsanzeige & Weiter)
+
+Nach Antwortabgabe wechselt der Client in `PHASE.POST_ANSWER`:
+
+1. Erklärung wird angezeigt (`quiz-explanation-card`)
+2. `Weiter`-Button erscheint (immer, in allen Modi)
+3. **Auto-Advance-Timer** (`AUTO_ADVANCE_DELAY_MS = 20000 ms`):
+   - Nur für **angemeldete** Spieler: nach 20 s wird `Weiter` automatisch geklickt
+   - **Anonyme** Spieler: kein Auto-Advance – Weiter nur durch aktiven Klick
+4. Timer wird abgebrochen sobald der Spieler selbst klickt oder die Phase wechselt
+
+**Implementierung** (`quiz-play.js`):
+- `AUTO_ADVANCE_DELAY_MS = 20000` – konstant für alle Nicht-Anonym-Modi
+- `startAutoAdvanceTimer()` – Guard: `if (state.isAnonymous) return;`
+- `state.isAnonymous` – aus `container.dataset.playerAnonymous` beim Init gesetzt
+- `LEVEL_UP_AUTO_ADVANCE_MS = null` – Level-Up-Screen hat **kein** Auto-Advance
+
+**Rationale:** Anonyme Spieler haben 240 s Antwortzeit (vs. 40 s für Angemeldete). Ohne Auto-Advance bestimmen sie selbst das Tempo der Erklärungs-Lektüre.
 
 ---
 

@@ -97,7 +97,8 @@ Content (JSON) → Normalisierung → Import → DB → Runtime → Spieler
 
 **Run:** 10 Fragen (3 Levels: 4/4/2)  
 **Timer:** 40s (named) / 240s (anonym) pro Frage  
-**Joker:** 2× pro Run (50:50)
+**Joker:** 2× pro Run (50:50)  
+**POST_ANSWER:** Erklärung erscheint nach jeder Antwort; nach 20 s Auto-Weiter (nur angemeldete Spieler – anonym: manuell klicken)
 
 **Scoring:**
 - Punkte pro Frage: `difficulty × 10` (10/20/30)

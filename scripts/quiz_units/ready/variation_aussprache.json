@@ -178,7 +178,7 @@
     {
       "difficulty": 1,
       "type": "single_choice",
-      "prompt": "Wie heißt die Aussprachevariante des Spanischen, bei der /s/ und /θ/ nicht unterschieden werden?",
+      "prompt": "Wie heißt die Aussprachevariante des Spanischen, bei der <z>, <ce/ci> und <s> als [s] realisiert werden?",
       "explanation": "Beim *seseo* werden die Phoneme /s/ und /θ/ nicht unterschieden, sondern beide als [s] realisiert (z. B. *casa* und *caza* mit [s]). Beim *ceceo* fallen die beiden Phoneme zwar ebenfalls zusammen, werden jedoch als [θ] ausgesprochen. Der Begriff *distinción* bezeichnet demgegenüber die systematische Unterscheidung von /s/ und /θ/ (z. B. *casa* mit [s] vs. *caza* mit [θ]).",
       "answers": [
         {
@@ -753,7 +753,7 @@
       "answers": [
         {
           "text": "Ja, immer, das ist die einzig korrekte Aussprache",
-          "correct": true,
+          "correct": false,
           "id": "a1",
           "media": []
         },
@@ -765,7 +765,7 @@
         },
         {
           "text": "Es hängt vom Lernziel und der Zielvarietät ab",
-          "correct": false,
+          "correct": true,
           "id": "a3",
           "media": []
         },
