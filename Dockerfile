@@ -21,7 +21,9 @@ WORKDIR /app
 
 # Install Python dependencies to user site-packages
 COPY requirements.txt ./
-RUN pip install --user --no-cache-dir -r requirements.txt gunicorn>=21.2.0
+COPY requirements/runtime-constraints.txt ./requirements/runtime-constraints.txt
+RUN pip install --user --no-cache-dir -c requirements/runtime-constraints.txt \
+    -r requirements.txt gunicorn>=21.2.0
 
 # Copy and run dependency check script
 COPY scripts/check_python_deps.py ./scripts/check_python_deps.py
