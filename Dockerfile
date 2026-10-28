@@ -35,6 +35,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/home/gamesapp/.local/bin:$PATH
 
+# Security floor for libbrotli1 (CVE-2026-111497, DSA-6582-1). Installing it
+# explicitly and checking the version invalidates any cached apt layer and makes
+# the build fail instead of silently shipping a vulnerable library.
+ARG LIBBROTLI1_MIN_VERSION=1.1.0-2+deb13u1
+
 # Install runtime dependencies only (including libpq for psycopg2 runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
@@ -42,7 +47,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq5 \
     postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+    libbrotli1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && installed="$(dpkg-query -W -f='${Version}' libbrotli1)" \
+    && echo "libbrotli1 ${installed} (required >= ${LIBBROTLI1_MIN_VERSION})" \
+    && dpkg --compare-versions "${installed}" ge "${LIBBROTLI1_MIN_VERSION}"
 
 # Create non-root user for security
 RUN useradd -m -u 1000 -s /bin/bash gamesapp
